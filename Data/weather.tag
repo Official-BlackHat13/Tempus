@@ -1,0 +1,10 @@
+WeatherId
+AreaNumber
+EventDate
+EventTime
+WindVelocity
+WindDirection
+AirTemperature
+GndTemperature
+SnowInches
+Description

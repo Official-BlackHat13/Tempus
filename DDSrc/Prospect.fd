@@ -1,0 +1,14 @@
+#REPLACE FILE65 Prospect
+#REPLACE Prospect.Recnum |FN65,0
+#REPLACE Prospect.Prospect_Idno |FN65,1
+#REPLACE Prospect.CompanyName |FS65,2
+#REPLACE Prospect.ProspectName |FS65,3
+#REPLACE Prospect.Address1 |FS65,4
+#REPLACE Prospect.Address2 |FS65,5
+#REPLACE Prospect.City |FS65,6
+#REPLACE Prospect.State |FS65,7
+#REPLACE Prospect.Zip |FS65,8
+#REPLACE Prospect.OfficePhone |FS65,9
+#REPLACE Prospect.MobilePhone |FS65,10
+#REPLACE Prospect.Email |FS65,11
+#REPLACE Prospect.Rep_Idno |FN65,12

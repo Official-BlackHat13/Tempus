@@ -1,0 +1,6 @@
+CrewId
+CrewDate
+CrewChiefId
+Description
+CrewCount
+ChiefCount

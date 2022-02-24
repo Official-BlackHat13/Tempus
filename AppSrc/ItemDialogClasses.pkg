@@ -1,0 +1,511 @@
+// ItemDialogClasses.pkg
+
+#IFDEF doStandard
+#ELSE
+enumeration_list
+    // display object type
+    define doStandard
+    define doFormat
+    define doCheckbox
+    define doCombo
+end_enumeration_list
+#ENDIF
+
+declare_datafile Jcpars
+declare_datafile Jcoper
+
+// the following class is used by the 9 Esitem.Var1& fields
+register_procedure ReturnToItemList
+register_procedure DisplayHelpFile
+//
+register_function pbDupeValue returns integer
+register_function pnDupeValue returns number
+
+class ItemDialogMixin is a Mixin
+    //
+    procedure DoCommonConfiguration
+        Property Boolean pbCheckbox
+        //
+        Property Integer pfVarTag
+        Property Integer pfLinkCode
+        Property Integer pfLinkSymbl
+        Property Integer pfTagSymbl
+        Property Integer pfVarFlag
+        //
+        Property Integer piVarnum
+        //
+        Set Enabled_State to False
+        //
+        On_Key kSave_record Send ReturnToItemList
+        On_Key kHelp        Send DisplayHelpFile
+        On_Key kCancel      Send Request_Clear
+        On_Key Key_PgDn     Send DoDupeValue
+    end_procedure
+    //
+    procedure ShadowVariable
+        Set Enabled_State to False
+    end_procedure
+    //
+    procedure RestorePreviousValue
+        integer hDD iField
+        //
+        If (not(Visible_State(Self))) Procedure_Return
+        //
+        get Server     to hDD
+        get Data_Field to iField
+        send Display
+        set Field_Changed_State of hDD iField to FALSE
+    end_procedure
+    //
+    procedure DoTextColor integer bLocal
+        integer iFile fLinkCode fLinkSymbl fTagSymbl fVarFlag iLinkCode
+        string  sTagSymbl sVarFlag sLinkSymbl
+        //
+        integer iShadowColor
+        //
+        If (not(Data_File(Self))) Procedure_Return
+        //
+        set Color                 to clMenu
+        if (blocal) set TextColor to clBlack
+        else begin
+            Get piShadowColor                    to iShadowColor
+            If (not(iShadowColor)) Set TextColor to clBlack
+            Else                   Set TextColor to iShadowColor
+        end
+        //
+        If (not(bLocal)) Procedure_Return
+        //  could be Esitem, Esjitm, Eslitm
+        get Data_File   to iFile
+        //
+        get pfLinkCode  to fLinkCode
+        get pfLinkSymbl to fLinkSymbl
+        get pfTagSymbl  to fTagSymbl
+        get pfVarFlag   to fVarFlag
+        //
+        Get_Field_Value Jcoper.File_number fLinkCode  to iLinkCode
+        Get_Field_Value Jcoper.File_number fLinkSymbl to sLinkSymbl
+        Get_Field_Value Jcoper.File_number fTagSymbl  to sTagSymbl
+        Get_Field_Value iFile              fVarFlag   to sVarFlag
+        //
+        If (((iLinkCode) or (not(iLinkCode) and sLinkSymbl <> "")) and sTagSymbl contains "D") Begin
+                If (sVarFlag contains "D") Set Color to clYellow
+                Else                       Set Color to clAqua
+        End
+    End_Procedure
+    //
+    procedure EditVariable
+        integer iFile fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag iLinkCode
+        boolean bState
+        string  sVarTag sTagSymbl sVarFlag sLinkSymbl
+        //
+        If (not(Visible_State(Self))) Procedure_Return
+        //  could be Esitem, Esjitm, Eslitm
+        Get Data_File   to iFile
+        //
+        get pfVarTag    to fVarTag
+        get pfLinkCode  to fLinkCode
+        get pfLinkSymbl to fLinkSymbl
+        get pfTagSymbl  to fTagSymbl
+        get pfVarFlag   to fVarFlag
+        //
+        Get_Field_Value Jcoper.File_number fVarTag    to sVarTag
+        Get_Field_Value Jcoper.File_number fLinkCode  to iLinkCode
+        Get_Field_Value Jcoper.File_number fLinkSymbl to sLinkSymbl
+        Get_Field_Value Jcoper.File_number fTagSymbl  to sTagSymbl
+        Get_Field_Value iFile              fVarFlag   to sVarFlag
+        //
+        if (sVarTag = "")            procedure_return
+        // BC: 10/18/04 Need to allow editing saved value when picklist was seeded from a link
+        // "?D" indicates user-defined picklist filter, plain "D" implies use link as default
+        if (sTagSymbl CONTAINS "?D") procedure_return // would have to also have "OP" in modifiers
+        if (NOT(sTagSymbl CONTAINS "D")) begin
+            if (sTagSymbl CONTAINS "OP") procedure_return
+            if (sTagSymbl CONTAINS "CC") procedure_return
+        end
+        if (sTagSymbl CONTAINS "@")                                 procedure_return
+        if (sTagSymbl CONTAINS "^")                                 procedure_return
+        if (sTagSymbl CONTAINS "&" AND NOT(sTagSymbl CONTAINS "D")) procedure_return
+        //
+        move (sTagSymbl CONTAINS "D")                 to bState
+        if (NOT(bState)) move (sVarFlag CONTAINS "D") to bState
+        if      ((iLinkCode) AND NOT(bState))      procedure_return
+        else if (sLinkSymbl <> "" AND NOT(bState)) procedure_return
+        //
+        set Enabled_State                    to TRUE
+        //BC: 12/19/06 set color to indicate input is an overridable link
+        if (sTagSymbl contains "D") Begin
+            if (sVarFlag contains "D") set Color to 11663608 //clYellow
+            else set Color to 16316593 //clAqua
+        End
+        else if (NOT(pbCheckbox(self))) set Color to clWindow
+    end_procedure
+    //
+end_class
+
+// this class is for use with fields Esitem/Esjitm/Eslitm.Var1 - 9
+// in the ComponentItems package
+class dbVariableValueForm is a dbForm
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Size               to 13 58
+        //
+        on_key Key_Up_Arrow send Previous
+        //
+        send DoCommonConfiguration
+    end_procedure
+    //
+    Import_Class_Protocol ItemDialogMixin
+    //
+    procedure DoDupeValue
+        number nDupeValue
+        //
+        if (NOT(pbDupeValue(self))) procedure_return
+        //
+        get pnDupeValue          to nDupeValue
+        set Changed_Value item 0 to nDupeValue
+        //
+        send Next
+    end_procedure
+    //
+    //BC: 03/07 this procedure updated to enforce "Z" modifier and range check on input type 1
+    procedure Next
+        number nDupeValue
+        integer iOpcode iVarnum
+        //
+        get Value       to nDupeValue
+        set pnDupeValue to nDupeValue
+        set pbDupeValue to TRUE
+        //
+        move Jcoper.Opcode to iOpcode
+        get piVarnum       to iVarnum
+        move (iVarnum -1) to fieldindex
+        If (Jcoper.Var1_Tag_Symbl& contains "Z" and nDupeValue = 0) Begin
+            send Stop_Box "A non-zero value is required."
+            procedure_return //don't advance next
+        End
+        clear Esvars
+        move iOpcode to Esvars.Opcode
+        move iVarnum to Esvars.Varnum
+        find GE Esvars by Index.1
+        if ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum) Begin
+            If (Esvars.Range_Low<>0 or Esvars.Range_High<>0) ; 
+            if (nDupeValue < Esvars.Range_Low OR nDupeValue > Esvars.Range_High) begin
+                send Stop_Box ("Out of range." * string(Esvars.Range_Low) * "-" * string(Esvars.Range_High))
+                procedure_return //don't advance next
+            end
+        End
+        //
+        forward send Next
+    end_procedure
+    //
+    procedure DoNumericMask boolean bFormat
+        integer iDecimals iOpcode iVarnum
+        //
+        if (bFormat) begin
+            move Jcoper.Opcode to iOpcode
+            get piVarnum       to iVarnum
+            clear Esvars
+            move iOpcode to Esvars.Opcode
+            move iVarnum to Esvars.Varnum
+            find GE Esvars by Index.1
+            if ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum) ;
+                move Esvars.Decimals to iDecimals
+
+        end
+        else move Jcpars.Decimals to iDecimals
+        //
+        set numeric_mask item 0 to 8 iDecimals "*,"
+    end_procedure
+    //
+//    procedure Prompt
+//        integer hDD iOpcode iVarnum iWasValue iValue iField
+//        //
+//        get Server          to hDD
+//        send Refind_Records of hDD
+//        move Jcoper.Opcode  to iOpcode
+//        get piVarnum        to iVarnum
+//        //
+//        get Data_Field item 0                 to iField
+//        get Field_Current_Value of hDD iField to iWasValue
+//        //
+//        get IsSelectedItem  of oItemSelection iWasValue iOpcode iVarnum to iValue
+//        //
+//        if (iValue = iWasValue) procedure_return
+//        set Field_Changed_Value of hDD iField to iValue
+//    end_procedure
+    //
+end_class //  dbVariableValueForm
+
+class dbItemForm is a dbVariableValueForm
+
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Size to 13 68
+        //
+        on_key kSave_record send Request_Save
+    end_procedure
+     //
+End_Class
+
+// this class is for use with fields Esitem/Esjitm/Eslitm.Var1 - 9
+// in the ComponentItems package
+class dbVariableValueCheckbox is a dbCheckbox
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Size          to 13 35
+        set Label         to "***"
+        set Visible_State to FALSE
+        //
+        on_key Key_Up_Arrow send Previous
+        //
+        send DoCommonConfiguration
+        //
+        set pbCheckbox    to TRUE
+    end_procedure
+    //
+    Import_Class_Protocol ItemDialogMixin
+    //
+    procedure DoDupeValue
+        number nDupeValue
+        //
+        if (NOT(pbDupeValue(self))) procedure_return
+        //
+        get pnDupeValue          to nDupeValue
+        set Checked_State item 0 to nDupeValue
+        //
+        send Next
+    end_procedure
+    //
+    procedure Next
+        number nDupeValue
+        //
+        get Checked_State to nDupeValue
+        set pnDupeValue   to nDupeValue
+        set pbDupeValue   to TRUE
+        //
+        forward send Next
+    end_procedure
+    //
+end_class // dbVariableValueCheckbox
+
+Class dbItemCheckbox is a dbVariableValueCheckbox
+
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        on_key kSave_record send Request_Save
+    end_procedure
+     //
+End_Class
+
+// this class is for use with fields Esitem/Esjitm/Eslitm.Var1 - 9
+// in the ComponentItems package
+class dbVariableValueComboForm is a dbComboForm
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Size              to 13 68 //88 //78 // 58
+        set Entry_State       to FALSE
+    //    set Code_Display_Mode to CB_Code_Display_Both
+        set Visible_State     to FALSE
+        set Combo_Sort_State  to FALSE
+        //
+        send DoCommonConfiguration
+    end_procedure
+    //
+    Import_Class_Protocol ItemDialogMixin
+    //
+    procedure Combo_Fill_List
+        integer iOpcode iVarnum
+        string  sDefault
+        //
+        move Jcoper.Opcode to iOpcode
+        get piVarnum       to iVarnum
+        //
+        send Combo_Delete_Data
+        //
+        clear Esvars
+        move iOpcode to Esvars.Opcode
+        move iVarnum to Esvars.Varnum
+        //BC: 12/27/06 changed find logic to use index 2 to insulate from extraneous data, i.e. input type 1 or 2!
+        // loop logic assumes 1st combolist esvars record will always be found!
+        move 3       to Esvars.Input_Type
+        find GE Esvars by Index.2
+        if (FOUND) move Esvars.Description to sDefault
+        while ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum)
+            send Combo_Add_Item (trim(Esvars.Description)) Esvars.Itemnum
+            find GT Esvars by Index.2
+        loop
+    end_procedure
+    //
+    procedure DoDupeValue
+    end_procedure
+    //
+end_class // dbVariableValueComboForm
+
+class dbItemComboForm is a dbVariableValueComboForm
+
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Size to 13 68 //108 //68
+        //
+        on_key kSave_record send Request_Save
+    end_procedure
+     //
+End_Class
+
+// this class is for use with fields Jcoper.Var1_tag - 9
+// in the ComponentItems package
+class dbVariableTagForm is a dbForm
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        Property Integer pfLinkCode
+        Property Integer pfLinkSymbl
+        Property Integer pfTagSymbl
+        Property Integer pfItemFile
+        Property Integer pfItemField
+        Property Integer pfVarFlag
+        Property Integer phFormObj
+        Property Integer phCheckboxObj
+        Property Integer phComboFormObj
+        //
+        set Form_Border item 0 to Border_None
+        set Size               to 13 138 //148
+        //
+    end_procedure
+    //
+    procedure DisplayTag integer iShadowColor
+        boolean bLocal bDefault bFormat bCombo
+        //BC: next line
+        boolean bSuppressVarDisplay
+        integer iLinkCode iPos iInput hFormObj hCheckboxObj hComboFormObj
+        integer fVarTag fTagSymbl fItemFile fVarFlag fLinkCode fLinkSymbl
+        string  sVarTag sTagSymbl sVarFlag sLinkSymbl
+        //
+        get Data_Field     to fVarTag
+        get pfTagSymbl     to fTagSymbl
+        get pfItemFile     to fItemFile
+        get pfVarFlag      to fVarFlag
+        get pfLinkCode     to fLinkCode
+        get pfLinkSymbl    to fLinkSymbl
+        get phFormObj      to hFormObj
+        get phCheckboxObj  to hCheckboxObj
+        get phComboFormObj to hComboFormObj
+        //
+        Get_Field_Value Jcoper.File_number fVarTag    to sVarTag
+        Get_Field_Value Jcoper.File_number fTagSymbl  to sTagSymbl
+        Get_Field_Value fItemFile          fVarFlag   to sVarFlag
+        Get_Field_Value Jcoper.File_number fLinkCode  to iLinkCode
+        Get_Field_Value Jcoper.File_number fLinkSymbl to sLinkSymbl
+        //
+        //BC: next line
+        move ((left(sVarTag,1)="@") or (sVarTag="")) to bSuppressVarDisplay
+        //
+        if (sVarTag <> "") get IsLocalEntry ;
+            sTagSymbl ;
+            sVarFlag  ;
+            iLinkCode ;
+            sLinkSymbl ;
+            to bLocal
+        //
+        move (pos("I",sTagSymbl))                  to iPos
+        if (iPos) move (mid(sTagSymbl,1,(iPos+1))) to iInput
+        move (iInput = doCombo)                    to bCombo
+        move (iInput = doFormat)                   to bFormat
+        // if a comboform
+        if (iInput = doCombo) begin
+            set Visible_State    of hFormObj      to FALSE
+            set Visible_State    of hCheckboxObj  to FALSE
+            set Visible_State    of hComboFormObj to TRUE
+            send DoTextColor     of hComboFormObj bLocal
+            send Combo_Fill_List of hComboFormObj
+        end
+        // if a checkbox
+        else if (iInput = doCheckbox) begin
+            set Visible_State of hFormObj      to FALSE
+            set Visible_State of hComboFormObj to FALSE
+            set Visible_State of hCheckboxObj  to TRUE
+            set Enabled_State of hCheckboxObj  to TRUE
+            send DoTextColor  of hCheckboxObj  bLocal
+            set Enabled_State of hCheckboxObj  to FALSE
+        end
+        // else doStandard
+        else begin
+            set Visible_State  of hCheckboxObj  to FALSE
+            set Visible_State  of hComboFormObj to FALSE
+            //BC: next line changed
+            //set Visible_State  of hFormObj      to TRUE
+            set Visible_State  of hFormObj      to (NOT(bSuppressVarDisplay))
+            send DoNumericMask of hFormObj      bFormat //bCombo
+            send DoTextColor   of hFormObj      bLocal
+            //
+        //    if (bCombo) begin
+        //        set Prompt_Button_Mode of hFormObj to PB_PromptOn
+        //        //set Prompt_Object      of hFormObj to (oItemSelection(self))
+        //    end
+        //    else        begin
+        //        set Prompt_Button_Mode of hFormObj to PB_PromptOff
+        //        //set Prompt_Object      of hFormObj to 0
+        //    end
+        end
+        //
+        if (NOT(iShadowColor)) procedure_return
+        //
+        if (bLocal) begin
+            set TextColor to clBlack
+            procedure_return
+        end // if (bLocal)
+        //
+        //BC changed nex line
+        //if (left(sVarTag,1)="@") set TextColor to clMenu
+        if (bSuppressVarDisplay) set TextColor to clMenu
+        else                     set TextColor to iShadowColor
+    end_procedure // DisplayTag integer iShadowColor
+    //
+    function IsLocalEntry  ;
+        string  sTagsymbl  ;
+        string  sVarflag   ;
+        integer iLinkcode  ;
+        string  sLinkSymbl ;
+        returns boolean
+        //
+        boolean bLocal bDefault
+        //
+        move (NOT(sTagsymbl CONTAINS "OP" ;
+            OR    sTagsymbl CONTAINS "CC" ;
+            OR    sTagsymbl CONTAINS "@"  ;
+            OR    sTagsymbl CONTAINS "&"  ;
+            OR    sTagsymbl CONTAINS "^"  )) to bLocal
+        //
+        // BC: 10/18/04 when a link is used to seed a lookup and a "D" is used to allow overriding
+        // then editing must be allowed, so presence of a "D" has precedence in setting blocal
+        If not bLocal move (sTagsymbl CONTAINS "D" and not(sTagsymbl CONTAINS "?D")) to bLocal
+        //
+        if (bLocal) begin
+            move (sTagsymbl CONTAINS "D" OR sVarflag CONTAINS "D") to bDefault
+            if ((iLinkcode) AND NOT(bDefault)) move DFFALSE        to bLocal
+            else if (not(iLinkCode) and sLinksymbl <> "" ;
+                     AND NOT(bDefault)) move DFFALSE to bLocal
+        end // if (bLocal)
+        //
+        function_return bLocal
+    end_function
+    //
+end_class // dbVariableTagForm
+
+class dbItemTagForm is a dbVariableTagForm
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Label_Col_Offset         to 2
+        set Label_Justification_Mode to jMode_Right
+        //set Form_Border item 0       to Border_ClientEdge
+        set Size                     to 13 166 //186
+        //
+    end_procedure
+end_class

@@ -1,0 +1,56 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Quotedtl (# 26)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:QUOTEDTL
+  USER DISPLAY NAME         : Quotedtl
+  DATAFLEX FILE NAME        : Quotedtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16601     ( USED: 16601 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 49983 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  QuotedtlID       NUM   10.0     1  1   
+  2  QuotehdrID       NUM   10.0    12  2   Quotehdr.FIELD_1 (25,1)
+  3  MastOpsIdno      NUM   10.0    23  3   MastOps.FIELD_1 (11,1)
+  4  Quantity         NUM   10.2    34      
+  5  Price            NUM    8.2    48      
+  6  Amount           NUM   10.4    60      
+  7  Description      TEX    512    76      
+  8  Sequence         NUM    6.2 16459  2   
+  9  CreateDate       DAT     10 16469      
+ 10  CreateHr         NUM    5.0 16492      
+ 11  CreateMin        NUM    5.0 16498      
+ 12  CreateSec        NUM    5.0 16504      
+ 13  EditDate         DAT     10 16510      
+ 14  EditHr           NUM    5.0 16533      
+ 15  EditMin          NUM    5.0 16539      
+ 16  EditSec          NUM    5.0 16545      
+ 17  RecordOwner      NUM   10.0 16551      
+ 18  TaxRate          NUM    2.4 16562      
+ 19  TaxAmount        NUM    4.4 16570      
+ 20  EstimateItemID   NUM   10.0 16580      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    QuotedtlID      NO  NO       0      0       1     ON-LINE
+
+  2    QuotehdrID      NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       QuotedtlID      NO  NO 
+
+  3    MastOpsIdno     NO  NO       0      0       2     ON-LINE
+       QuotedtlID      NO  NO 
+

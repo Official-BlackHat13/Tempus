@@ -1,0 +1,706 @@
+Use TempusLinkPrecompile.pkg
+Use cCJCommandBarSystem.pkg
+Use Functions.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Global_Variable Integer giSalesRepId
+Global_Variable Integer giEmployeeId
+Global_Variable Integer giUserRights
+// Load Default View for Each User Group
+//      "Sales (50)" "50"
+//      "Operations (60)" "60"
+//      "Administration (70)" "70"
+//      "Management (80)" "80"            
+//      "SystemAdmin (90)" "90"
+Global_Variable String gsUserGroup
+Global_Variable Integer giCompanyIdno
+Global_Variable String gsCompanyName
+Global_Variable String gsUserFullName
+Global_Variable Integer giUserId
+Global_Variable String gsUsername
+Global_Variable String gsPassword
+
+Define TEMPUS_LINK
+//Define TRANS_DATA_DUMP
+
+Object oApplication is a cGlblApplication
+
+    Set peHelpType to htHtmlHelp
+    Set pbEnterKeyAsTabKey to True
+
+    Object oRegistry is a cRegistry
+    End_Object
+
+    Procedure OnCreate
+        Boolean bOk bChecker
+        String  sPath sReportOCX
+        //
+        Set phRootKey of oRegistry to HKEY_LOCAL_MACHINE
+        Get OpenKey   of oRegistry ("Software\Data Access Worldwide\Visual Dataflex\15.1\Defaults") to bOk
+        If (bOk) Begin
+            Move False to bOk
+            If (ValueExists(oRegistry, "VDFRootDir")) Begin
+                Get ReadString of oRegistry "VDFRootDir" to sPath
+                If (sPath <> "") Begin
+                    Move (sPath + "Bin\Codejock.CommandBars.v13.0.0.ocx")   to sReportOCX
+                    Get RegServer sReportOCX REGSERVER_REGISTER             to bOk
+//                    Move (sPath + "Bin\Codejock.SkinFramework.v12.0.2.ocx") to sReportOCX
+//                    Get RegServer sReportOCX REGSERVER_REGISTER             to bOk
+                    Move (sPath + "Bin\Codejock.ReportControl.v13.3.1.ocx") to sReportOCX
+                    File_Exist sReportOCX bOk
+                    Move (sPath + "Bin\ChadoSpellText.ocx")                 to sReportOCX
+                    Get RegServer sReportOCX REGSERVER_REGISTER             to bChecker
+//                    File_Exist sReportOCX bChecker
+                End
+            End
+        End
+        If (not(bOk)) Begin
+            Get GetApplicationPath to sPath
+            Move (sPath + "\Codejock.ReportControl.v12.1.1.ocx") to sReportOCX
+            File_Exist sReportOCX bOk
+        End
+        If (bOk) Begin
+            Get RegServer sReportOCX REGSERVER_REGISTER to bOk
+        End
+    End_Procedure
+End_Object
+
+//Use RegCheck.pkg
+
+Object oToolTipController is a cToolTipController
+    Move Self to ghoToolTipController
+End_Object
+
+Object oMain is a cGlblPanel
+
+    Set Label to "Tempus Link"
+    Set Location to 4 3
+    Set Size to 300 450
+    Set View_Mode to ViewMode_Zoom
+    Set pbSizeToClientArea to True
+
+    Object oCommandBarSystem is a cCJCommandBarSystem
+        Set pbTimerUpdate to True
+
+        Procedure OnCreateCommandBars
+            Handle hoOptions
+            Get OptionsObject to hoOptions
+            Forward Send OnCreateCommandBars
+        End_Procedure
+
+        Object oMenuBar is a cCJMenuBar
+
+            Object oFileMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup          
+                Set psCaption   to "&File"
+                Set psDescription to "Find, Save, Delete, Clear information or quit this application."
+                Set psCategory to "Menus"
+
+                Object oClearMenuItem is a cCJClearMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oClearAllMenu is a cCJClearAllMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oPromptMenuItem is a cCJPromptMenuItem
+                    Set pbAddToDesignerMenu to True
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oFindMenuItem is a cCJFindMenuItem
+                    Set pbAddToDesignerMenu to True
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oFindNextMenu is a cCJFindNextMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oFindPreviousMenu is a cCJFindPreviousMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oFindFirstMenu is a cCJFindFirstMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oFindLastMenu is a cCJFindLastMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oSaveMenuItem is a cCJSaveMenuItem
+                    Set pbAddToDesignerMenu to True
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oDeleteMenuItem is a cCJDeleteMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oExitMenu is a cCJExitMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+            End_Object
+
+            Object oViewMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup
+                Set psCaption to "&View"
+                Set psToolTip to "View"
+                Set psDescription to "Available Views"
+
+                Object oServicesMenuItem is a cCJMenuItem
+                    Set psCaption to "Services"
+                    Set psTooltip to "Services"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oServices of hoClient
+                    End_Procedure
+                End_Object
+            End_Object
+            
+            Object oReportMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup          
+                Set psCaption to "&Report"
+                Set psToolTip to "Report"
+                Set psDescription to "Available Reports"
+            End_Object
+
+            Object oNavigateMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup      
+                Set psCaption to "&Navigate"    
+                Set psTooltip to "Navigate"    
+                Set psDescription to "Move to different areas of the application"
+
+                Object oNextAreaMenu is a cCJNextAreaMenu
+                End_Object
+
+                Object oPriorAreaMenu is a cCJPriorAreaMenu
+                End_Object
+
+                Object oNextViewMenu is a cCJNextViewMenu
+                End_Object
+
+                Object oPriorViewMenu is a cCJPriorViewMenu
+                End_Object
+
+                Object oPromptMenu is a cCJPromptMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oZoomMenu is a cCJZoomMenuItem
+                End_Object
+
+            End_Object
+
+            Object oWindowMenu is a cCJMDIWindowsMenuItem
+                Set peControlType to xtpControlPopup
+                Set psCaption to "&Window"
+                Set psToolTip to "Window"
+                Set psDescription to "Display Current Views and set other display options."    
+
+                // These are the static windows items. More will be created in onInitPopup 
+                Object oDisplayOptionsMenu is a cCJMenuItem
+                    Set peControlType to xtpControlPopup          
+                    Set psCaption to "&Display Options"
+                    Set psToolTip to "Display Options"
+                    Set psDescription to "Set display options"
+
+                    Object oStatusbarMenu is a cCJStatusbarMenuItem
+                    End_Object
+
+                    Object oAutoArrangeIconsMenu is a cCJAutoArrangeIconsMenuItem
+                    End_Object
+
+                    Object oRestoreMenusMenu is a cCJRestoreMenusMenuItem
+                        Set pbControlBeginGroup to True
+                    End_Object
+
+                End_Object
+
+                Object oCascadeMenu is a cCJCascadeMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oHorizTile is a cCJTileHorizontally
+                End_Object
+
+                Object oVertTile is a cCJTileVertically
+                End_Object
+
+                Object oMinimizeMenuItem is a cCJMinimizeWindowsMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oRestoreMenuItem is a cCJRestoreWindowsMenuItem
+                End_Object
+
+                Object oArrangeIconsMenuItem is a cCJAutoArrangeIconsMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+            End_Object
+
+            Object oHelpMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup    
+                Set psCaption to "&Help"
+                Set psDescription to "Access Information for learning and using this DataFlex application."
+                Set psToolTip to "Help"
+
+                Object oHelpMenuItem is a cCJHelpMenuItem 
+                End_Object
+
+                Object oAboutMenuItem is a cCJAboutMenuItem
+                End_Object
+
+            End_Object
+        End_Object
+
+        Object oFindToolBar is a cCJToolbar
+            Set psTitle to "Finding Toolbar"
+
+            Object oFindFirstTool is a cCJFindFirstMenuItem
+            End_Object
+
+            Object oFindPreviousTool is a cCJFindPreviousMenuItem
+            End_Object
+
+            Object oFindMenuTool is a cCJFindMenuItem
+            End_Object
+
+            Object oFindNextTool is a cCJFindNextMenuItem
+            End_Object
+
+            Object oFindLastTool is a cCJFindLastMenuItem
+            End_Object
+
+            Object oPromptToolItem is a cCJPromptMenuItem
+                Set pbControlBeginGroup to True
+            End_Object
+
+        End_Object
+
+        Object oFileToolBar is a cCJToolbar
+            Set psTitle to "Data Entry Toolbar"
+
+            Object oClearToolItem is a cCJClearMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+            End_Object
+
+            Object oClearAllToolItem2 is a cCJClearAllMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+            End_Object
+
+            Object oSaveToolItem is a cCJSaveMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+                Set pbControlBeginGroup to True
+            End_Object
+
+            Object oDeleteToolItem is a cCJDeleteMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+            End_Object
+
+        End_Object
+
+        Object oEditToolBar is a cCJToolbar
+            Set psTitle to "Edit Toolbar"
+
+            Object oCutToolbarItem is a cCJCutMenuItem
+            End_Object
+
+            Object oCopyToolbarItem is a cCJCopyMenuItem
+            End_Object
+
+            Object oPasteToolbarItem is a cCJPasteMenuItem
+            End_Object
+
+            Object oDeleteEditToolbarItem is a cCJDeleteEditMenuItem
+                Set pbControlBeginGroup to True
+            End_Object
+
+        End_Object
+
+        Object oStatusBar is a cCJStatusBar
+
+            Object oStatusPane1 is a cCJStatusBarPane
+                Set piID to sbpIDIdlePane
+                Set pbStyleStretch to True
+            End_Object
+
+            Object oStatusPane2 is a cCJStatusBarPane
+                Set phoViewPane to Self
+                Set pbStyleStretch to True
+            End_Object
+
+        End_Object
+
+    End_Object
+
+    Object oClientArea is a cGlblClientArea
+
+        Property Boolean pbProcessing
+
+        Use cWSTransactionService.pkg
+        //
+        Object oWSTransactionService is a cWSTransactionService
+            //
+        End_Object
+
+        //Use TempusLogin.DG
+        Use StdAbout.pkg
+        Use CollectTransactionsProcess.bp
+        Use CollectLocationNotesProcess.bp
+        Use CollectAreaNotesProcess.bp
+        Use Services.vw
+
+//        Procedure DoProgramLogin
+//            Boolean bValid
+//            //
+//            Get IsValidLogin of oLoginDialog to bValid
+//            If (not(bValid)) Begin
+//                Send Exit_Application
+//            End
+//        End_Procedure
+
+        Procedure Activate_About
+            Send DoAbout "" "" "" "" ""
+        End_Procedure
+
+        Object oServiceTimer is a DFTimer
+            Set Timer_Active_State to True
+            //set Timeout            to 100 // 1/10th of a second
+            Set Timeout            to 600000 // = 600 seconds = 10 minutes
+            Procedure OnTimer
+                Send DoNewActivityCheck
+            End_Procedure
+        End_Object // oServiceTimer
+        
+        Object oCloseLocnotesTimer is a DFTimer
+            Set Timer_Active_State to True
+            // 6000/1000 = 1sec
+            // 60000 = 600sec = 10min
+            // 3600000 = 3600 sec = 60min = 1h
+            Set Timeout            to 3600000
+
+            Procedure OnTimer
+                Send DoAutoCloseCallCenterNotes
+            End_Procedure
+            
+            Procedure Start_Timer
+                Set Timer_Active_State of oCloseLocnotesTimer to True
+                Send Info_Box "Close Locnotes Timer started"
+            End_Procedure
+            
+            Procedure Stop_Timer
+                Set Timer_Active_State of oCloseLocnotesTimer to False
+            End_Procedure
+            
+        End_Object // oServiceTimer
+        
+        Procedure DoAutoCloseCallCenterNotes
+            DateTime dtNow dtLocNoteRes
+            Date dToday
+            TimeSpan tsTimeDiff
+            String sLocNoteResTime
+            Integer iHr iMin iSec iDayDiff iHrDiff iLocnoteIdno
+            Boolean bIsValid bSuccess
+            //
+            Move (CurrentDateTime())    to dtNow
+            //
+            Clear Locnotes
+            Move "3-RESOLVED" to Locnotes.Status
+            Find GE Locnotes by 7
+            While ((Found) and Locnotes.Status="3-RESOLVED")
+                If (Locnotes.ResolvedDate>="10/01/2018") Begin
+                    Move (Locnotes.ResolvedDate) to dtLocNoteRes
+                    Move (Trim(Locnotes.ResolvedTime)) to sLocNoteResTime
+                    Move (Left(sLocNoteResTime,5)) to sLocNoteResTime
+                    Showln ("Note#:"*String(Locnotes.LocnotesId)*" | ResolvedTime:"*sLocNoteResTime)
+                    Get IsTimeValid (&sLocNoteResTime) (&iHr) (&iMin) to bIsValid
+                    Move (DateSetHour(dtLocNoteRes, iHr)) to dtLocNoteRes
+                    Move (DateSetMinute(dtLocNoteRes, iMin)) to dtLocNoteRes
+                    Move (dtNow - dtLocNoteRes) to tsTimeDiff
+                    Move (DateGetDay(tsTimeDiff)) to iDayDiff
+                    Move (DateGetHour(tsTimeDiff)) to iHrDiff
+                    Showln ("tsTimeDiff:"*String(tsTimeDiff)*"| iDayDiff:"*String(iDayDiff)*"| iHrDiff:"*String(iHrDiff))
+                    If (iDayDiff>=1 or iHrDiff>=24) Begin
+                        //Trigger the DoCloseExpiredLocationsNote procedure on the remote server
+                        Get wsDoCloseExpiredLocationNote of oWSTransactionService Locnotes.LocnotesId to bSuccess
+                        If (bSuccess) Begin
+                            Showln ("Closed Note#"*String(Locnotes.LocnotesId))
+                        End
+                        If (not(bSuccess)) Begin
+                            Showln ("Closing of Note#"*String(Locnotes.LocnotesId)+" was not successfull.")
+                        End
+                    End
+                End
+                Move "3-RESOLVED" to Locnotes.Status
+                Find GT Locnotes by 7
+            Loop
+        End_Procedure
+        
+        Procedure DoNewActivityCheck
+            DateTime dtCurrent
+            Integer  iErrorId iCount iCollected
+            String sDateMonth sDateYear sServiceLocation
+            String   sLabel sOutput sResult sError
+            //
+            If (pbProcessing(Self)) Begin
+                Procedure_Return
+            End
+            //
+            Move (CurrentDateTime()) to dtCurrent
+            Move (DateGetMonth(dtCurrent)) to sDateMonth
+            Move (DateGetYear(dtCurrent)) to sDateYear
+            //
+            Set pbProcessing   to True
+            Get Label of oMain to sLabel
+            Set Label of oMain to (sLabel * "-Processing")
+            //
+            Get psHome of (phoWorkspace(ghoApplication)) to sOutput
+            If (not(Right(sOutput,1) = "\")) Begin
+                Move (sOutput + "\")                     to sOutput
+            End
+            Move (sOutput + "Document\Log\"+sDateYear+"_"+sDateMonth+"_Remote.log")   to sOutput
+            //  
+            Append_Output sOutput
+            Writeln "Start: " dtCurrent
+            //
+            Get psServiceLocation of oWSTransactionService to sServiceLocation
+            Writeln ("Service Location: "*sServiceLocation)
+            //
+            Move ""                                                                                     to sError
+            Get DoCollectAndProcessTransactions  of oCollectTransactionsProcess (&sError) (&iCollected) to iCount
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln (String(iCollected) * "transactions collected")
+            Writeln (String(iCount)     * "transactions processed")
+            //
+            Move ""                                                                        to sError
+            Get DoCollectAndProcessLocationNotes of oCollectLocationNotesProcess (&sError) to iCount
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln (String(iCount) * "location notes collected")
+            //
+            Move ""                                                                        to sError
+            Get DoCollectAndProcessAreaNotes     of oCollectAreaNotesProcess     (&sError) to iCount
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln (String(iCount) * "area notes collected")
+            //
+            Move ""                                                       to sError
+            Get DoUpdateMastOps  of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+//            //
+//            Move ""                                                       to sError
+//            Get DoUpdateClosedLocNotes    of oCollectTransactionsProcess (&sError) to sResult
+//            If (sError <> "") Begin
+//                Writeln sError
+//            End
+//            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateAreas    of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateCustomer of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            // Update SalesTaxGroup
+            Move ""                                                       to sError
+            Get DoUpdateTerms  of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            // Update SalesTaxGroup
+            Move ""                                                       to sError
+            Get DoUpdateSalesTaxGroup  of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateLocation of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateOpers    of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateOrder    of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateEmployer of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateEmployee of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateEquipmnt of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            // Update LocEquip
+            Move ""                                                       to sError
+            Get DoUpdateLocEquip of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            // Update SalesRep
+            Move ""                                                       to sError
+            Get DoUpdateSalesRep  of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            // Update WorkType
+            Move ""                                                       to sError
+            Get DoUpdateWorkType  of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            // Update User Records
+            Move ""                                                       to sError
+            Get DoUpdateUser     of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            // Update WebAppUserRights Records
+            Move ""                                                       to sError
+            Get DoUpdateWebAppUserRights of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            // Update WebAppUser Records
+            Move ""                                                       to sError
+            Get DoUpdateWebAppUser of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            // Update Contact Records
+            Move ""                                                       to sError
+            Get DoUpdateContact     of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+//            // Update System Records
+//            Move ""                                                       to sError
+//            Get DoUpdateSystem   of oCollectTransactionsProcess (&sError) to sResult
+//            If (sError <> "") Begin
+//                Writeln sError
+//            End
+//            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateInvoice  of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move ""                                                       to sError
+            Get DoUpdateReqtypes of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            //DoUpdateViewAccess            
+            Move ""                                                       to sError
+            Get DoUpdateViewAccess of oCollectTransactionsProcess (&sError) to sResult
+            If (sError <> "") Begin
+                Writeln sError
+            End
+            Writeln sResult
+            //
+            Move (CurrentDateTime()) to dtCurrent
+            Writeln "Stop: " dtCurrent
+            Close_Output
+            //
+            Set Label of oMain to sLabel
+            Set pbProcessing   to False
+        End_Procedure
+
+        Procedure Activating
+            Forward Send Activating
+            Set View_Mode of oClientArea to Viewmode_Zoom
+        End_Procedure
+
+        //
+        On_Key kUser Send DoNewActivityCheck
+        On_Key Key_Alt+Key_S Send DoAutoCloseCallCenterNotes
+
+    End_Object
+
+    Procedure Exit_Application
+        Boolean bProcessing
+        //
+        Get pbProcessing of oClientArea to bProcessing
+        //
+        If (bProcessing) Begin
+            Procedure_Return
+        End
+        //
+        Forward Send Exit_Application
+    End_Procedure
+
+    Procedure Activating
+        Forward Send Activating
+        Set View_Mode of oMain to Viewmode_Zoom
+    End_Procedure
+
+End_Object
+
+//Send Activate_oServices of (oClientArea(oMain))
+Start_UI

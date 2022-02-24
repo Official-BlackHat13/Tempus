@@ -1,0 +1,40 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Crmember (# 33)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CRMEMBER
+  USER DISPLAY NAME         : Crmember
+  DATAFLEX FILE NAME        : Crmember
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 73        ( USED: 73 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CrewMemberId     NUM   10.0     1  1   
+  2  CrewId           NUM   10.0    12  2   Crews.FIELD_1 (32,1)
+  3  CrewDate         DAT     10    23  3   
+  4  EmployeeId       NUM   10.0    46  3   Employee.FIELD_1 (1,1)
+  5  CrewChiefFlag    NUM    5.0    57      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CrewMemberId    NO  NO       0      0       1     ON-LINE
+
+  2    CrewId          NO  NO       0      0       2     ON-LINE
+       CrewMemberId    NO  NO 
+
+  3    EmployeeId      NO  NO       0      0       2     ON-LINE
+       CrewDate        NO  NO 
+

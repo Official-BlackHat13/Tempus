@@ -1,0 +1,32 @@
+Use cWebService.pkg
+Use Employer.DD
+Use Employee.DD
+
+Object oValidEmployeeLogin is a cWebService
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Set Main_DD to oEmployee_DD
+    
+    // psDocumentation provides high level documentation of your web service. 
+    // Clients using this service will see and use this documentation. 
+    Set psDocumentation to "Validate Employee Web Service"
+
+    { Published = True  }
+    { Description = "Employee Validation"  }
+    Function IsValidEmployee Integer iEmployeeIdno Integer iPIN Returns Boolean
+        Integer hoDD
+        //
+        Get Main_DD to hoDD
+        Send Clear of hoDD
+        Move iEmployeeIdno to Employee.EmployerIdno
+        Send Find of hoDD EQ 1
+        Function_Return ((Found) and Employee.PIN = iPIN and Employee.Status = "A")
+    End_Function
+End_Object
+
+

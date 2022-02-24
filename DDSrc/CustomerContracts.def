@@ -1,0 +1,52 @@
+-----------------------------------------------------------------------------
+  DATE: 10/17/2021      TIME: 17:11                                  PAGE:  1
+  FILE DEFINITION FOR FILE: CustomerContracts (# 87)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CustomerContracts
+  USER DISPLAY NAME         : CustomerContracts
+  DATAFLEX FILE NAME        : CustomerContracts
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 283       ( USED: 283 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 11 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-149\SQLExpress;Trusted_Connection=yes;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ContractIdno     NUM    8.0     1  1   
+  2  CustomerIdno     NUM    8.0    12  6   Customer.FIELD_1 (2,1)
+  3  DisplayName      ASC    100    23  2   
+  4  FileName         ASC    100   123  5   
+  5  StartDate        DAT     10   223  3   
+  6  ExpiryDate       DAT     10   239      
+  7  TempFlag         NUM    2.0   255      
+  8  AssignedCount    NUM    4.0   261      
+  9  ChangedFlag      NUM    2.0   267  4   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ContractIdno    NO  NO       0      0       1     ON-LINE
+
+  2    DisplayName     NO  NO       0      0       2     ON-LINE
+       ContractIdno    NO  NO 
+
+  3    StartDate       NO  NO       0      0       2     ON-LINE
+       ContractIdno    NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       ContractIdno    NO  NO 
+
+  5    FileName        NO  NO       0      0       1     ON-LINE
+
+  6    CustomerIdno    NO  NO       0      0       2     ON-LINE
+       ContractIdno    NO  NO 
+

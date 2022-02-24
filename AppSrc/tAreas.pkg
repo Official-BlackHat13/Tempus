@@ -1,0 +1,11 @@
+// tAreas.pkg
+// used to update remote server data
+
+Struct tAreas
+    Integer iRecId
+    Integer iNumber
+    String  sName
+    String  sManager
+    Integer iChangedFlag
+    Integer iEmployeeIdno
+End_Struct

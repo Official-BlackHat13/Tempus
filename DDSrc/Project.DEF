@@ -1,0 +1,44 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Project (# 35)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:PROJECT
+  USER DISPLAY NAME         : Project
+  DATAFLEX FILE NAME        : Project
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 246       ( USED: 246 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 3 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ProjectId        NUM   10.0     1  1   
+  2  CustomerIdno     NUM   10.0    12  2   
+  3  RepIdno          NUM   10.0    23      
+  4  Description      ASC     50    34  3   
+  5  CreatedDate      DAT     10    84      
+  6  CreatedBy        ASC     50   107      
+  7  LockedFlag       NUM    5.0   157      
+  8  LockedDate       DAT     10   163      
+  9  LockedBy         ASC     50   186      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ProjectId       NO  NO       0      0       1     ON-LINE
+
+  2    CustomerIdno    NO  NO       0      0       2     ON-LINE
+       ProjectId       NO  NO 
+
+  3    Description     NO  NO       0      0       2     ON-LINE
+       ProjectId       NO  NO 
+

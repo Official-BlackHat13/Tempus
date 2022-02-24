@@ -1,0 +1,58 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: User (# 220)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:User
+  USER DISPLAY NAME         : User
+  DATAFLEX FILE NAME        : User
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 225       ( USED: 225 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 308 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  UserId           NUM   10.0     1  1   
+  2  LoginName        ASC     20    12  2   
+  3  Password         ASC     20    32      
+  4  FirstName        ASC     50    52  3   
+  5  LastName         ASC     50   102  3   
+  6  State            ASC      1   152      
+  7  EditRights       ASC      1   153      
+  8  ChangedFlag      NUM    5.0   154  4   
+  9  CustContactId    NUM   10.0   160  5   
+ 10  SalesIdno        NUM   10.0   171      
+ 11  EditLevel        NUM   10.0   182      
+ 12  EmployeeIdno     NUM   10.0   193      
+ 13  RecordOwner      NUM   10.0   204      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    UserId          NO  NO       0      0       1     ON-LINE
+
+  2    LoginName       NO  NO       0      0       1     ON-LINE
+
+  3    FirstName       NO  NO       0      0       3     ON-LINE
+       LastName        NO  NO 
+       UserId          NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       UserId          NO  NO 
+
+  5    CustContactId   NO  NO       0      0       2     ON-LINE
+       UserId          NO  NO 
+
+  6    FirstName       NO  NO       0      0       3     ON-LINE
+       LastName        NO  NO 
+       UserId          NO  NO 
+

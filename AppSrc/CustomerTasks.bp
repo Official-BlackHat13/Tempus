@@ -1,0 +1,75 @@
+Use Batchdd.pkg
+Use Customer.DD
+
+Object oCustomerTasks is a BusinessProcess
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Set Main_DD to oCustomer_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+    
+    Procedure DoChangeCustomerStatus Integer iCustIdno String sToStatus Boolean bChilderen Boolean bPreviewChecked
+        Integer iCustFound iCustChanged iContFound iContChanged iLocFound iLocChanged
+        //
+        Clear Customer
+        Move iCustIdno to Customer.CustomerIdno
+        Find EQ Customer by 1
+        If ((Found) and Customer.CustomerIdno = iCustIdno) Begin
+            Increment iCustFound
+            If (not(bPreviewChecked)) Begin
+                Reread Customer
+                    Move sToStatus to Customer.Status
+                    Move 1 to Customer.ChangedFlag
+                    SaveRecord Customer
+                    Increment iCustChanged
+                Unlock
+            End
+            If (bChilderen) Begin
+                // Contacts
+                Clear Contact
+                Move iCustIdno to Contact.CustomerIdno
+                Find GE Contact by 1
+                While ((Found) and Contact.CustomerIdno = iCustIdno)
+                    Increment iContFound
+                    If (not(bPreviewChecked)) Begin
+                        Move sToStatus to Contact.Status
+                        Move 1 to Contact.ChangedFlag
+                        SaveRecord Contact
+                        Increment iContChanged
+                    End
+                    Find GT Contact by 1
+                Loop
+                // Location  
+                Clear Location
+                Move iCustIdno to Location.CustomerIdno
+                Find GE Location by 2
+                While ((Found) and Location.CustomerIdno = iCustIdno)
+                    Increment iLocFound
+                    If (not(bPreviewChecked)) Begin
+                        Move sToStatus to Location.Status
+                        Move 1 to Location.ChangedFlag
+                        SaveRecord Location
+                        Increment iLocChanged
+                    End
+                    Find GT Location by 2
+                Loop           
+            End
+        End
+        Clear Customer Location Contact
+        Move iCustIdno to Customer.CustomerIdno
+        Find EQ Customer by 1
+    End_Procedure
+
+End_Object
+

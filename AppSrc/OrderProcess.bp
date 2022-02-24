@@ -1,0 +1,678 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use SalesRep.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use cOrderDtlGlblDataDictionary.dd
+Use Contact.DD
+Use Eshead.DD
+Use Escomp.DD
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+Use Esitem.DD
+Use cDivisionMgrGlblDataDictionary.dd
+
+//Use tOrderDtl.pkg //Use Universal OrderDtl Struct
+Use tOrder.pkg //uncoment later to use for full order
+
+Object oOrderProcess is a BusinessProcess
+
+    Property Integer piEsheadId
+    Property Integer piJobNumber
+    Property tOrder[] ptThisOrder
+
+    Set Status_Panel_State to False
+    Set Display_Error_State to True
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oJcdept_DD is a cJcdeptDataDictionary
+    End_Object
+
+    Object oJccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to oJcdept_DD
+    End_Object
+
+    Object oJcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to oJccntr_DD
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oEshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEscomp_DD is a Escomp_DataDictionary
+        Set DDO_Server to oEshead_DD
+    End_Object
+
+    Object oEsitem_DD is a Esitem_DataDictionary
+        Set DDO_Server to oJcoper_DD
+        Set DDO_Server to oEscomp_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrderDtl_DD is a cOrderDtlGlblDataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set Constrain_file to Order.File_number
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oOrder_DD
+
+    Procedure OnProcess
+        Boolean bFail bDescriptionOk bDetailOk
+        Integer hoDD iEstimateId iEscompIdno iEsitemIdno iJobNumber iMastOpsIdno iPORequired iJcOpersIdno iDtlLine
+        Integer iQuoteID iRecId iSeq iNewOrdDtl iSkippedEsitem iCurrentEsitem iCurrentComp iCurrentOpCode iCurrLineNumber iOrderDtlIdno
+        Number nQty nPrice nTaxRate nTaxAmount nSqft nLnft nMatQty nTotManHrs nOSCost nMatCost nCompSeq nQuoteAmount
+        String sInvoiceDescription sInstructions sEsitemOpcode sDetailEsitemOpcode sInfoMsg
+        tOrderDtl[] thisOrderDtl //dynamic Array of the OrderDetail
+        Date    dToday
+        Sysdate dToday
+        //
+        Set Main_DD         to oOrder_DD
+        Get Main_DD         to hoDD
+        Send Clear_All      of hoDD
+        //
+        Get piEsheadId to iEstimateId
+        //
+//        Move -1 to iDtlLine
+        Clear Esitem
+        Move iEstimateId to Esitem.ESTIMATE_ID
+        Find GE Esitem by 2
+        While ((Found) and Esitem.ESTIMATE_ID = iEstimateId)
+            Move Esitem.COMPONENT_ID to iCurrentComp
+            Move Esitem.OPCODE to iCurrentOpCode
+            Relate Esitem
+            //
+            If (Eshead.QuoteReference<>0) Begin
+                Move Eshead.QuoteReference to iQuoteID
+            End
+            //
+            If (Jcoper.PRINT_FLAGS contains "J" or Jcoper.PRINT_FLAGS contains "S") Begin // Only use items that have appropiate flags set
+//                If (Jcoper.CSTCTR_IDNO <> iJcOpersIdno) Begin // Or Component Change
+//                    Move Jcoper.CSTCTR_IDNO to iJcOpersIdno 
+//                    // The outcome of this is: when multiple components are of the same category, lets say concrete,
+//                    // the next line will not be triggered.
+//                    Increment iDtlLine
+//                End  
+                If (Jcoper.PRINT_FLAGS contains "J") Begin
+                    Increment iDtlLine
+                End
+
+                // at this point I know there is no previous order and at least one Esitem with a matching MastOps exists
+                // Create Order Header Below
+                //On the first time around create a new Order Header
+                If (iJobNumber = 0) Begin
+                    Move Eshead.LocationIdno to Location.LocationIdno
+                    Send Request_Find of hoDD EQ Location.File_Number 1
+                    Move Eshead.RepIdno      to SalesRep.RepIdno
+                    Send Request_Find of hoDD EQ SalesRep.File_Number 1
+                    If (Found) Begin
+                        Move (YesNo_Box("Will this Order require a P.O Number?", "P.O. Required?", MB_DEFBUTTON1)) to iPORequired
+                        If (iPORequired= MBR_Yes) Begin
+                          Set Field_Changed_Value of hoDD Field Order.PO_Flag        to "1" 
+                        End
+                        Set Field_Changed_Value of hoDD Field Order.EsheadReference     to iEstimateId
+                        Set Field_Changed_Value of hoDD Field Order.JobOpenDate         to dToday
+//                                Set Field_Changed_Value of hoDD Field Order.QuoteReference      to iQuoteID
+//                                Set Field_Changed_Value of hoDD Field Order.QuoteAmount         to nQuoteAmount
+                        Set Field_Changed_Value of hoDD Field Order.WorkType            to Eshead.WorkType
+                        Set Field_Changed_Value of hoDD Field Order.BillingType         to Eshead.BillingType
+                        Set Field_Changed_Value of hoDD Field Order.Title               to Eshead.TITLE
+                        Set Field_Changed_Value of hoDD Field Order.EsheadReference     to Eshead.ESTIMATE_ID
+                        Set Field_Changed_Value of hoDD Field Order.EsheadAmount        to Eshead.Q1_X_$
+                        Get Request_Validate    of hoDD                                 to bFail
+                        If (bFail) Begin
+                            Send Stop_Box "Could not create Order Header - Validation Error"
+                            Procedure_Return
+                        End
+                        If (not(bFail)) Begin
+                            Send Request_Save   of hoDD
+                        End
+                        Get Field_Current_Value of hoDD Field Order.JobNumber to iJobNumber
+                        Set piJobNumber to iJobNumber
+                        // Update Estimate and Quote with the Job Number
+                        // Eshead
+                        If (iJobNumber<>0) Begin
+                            Reread Eshead
+                                Move iJobNumber to Eshead.OrderReference
+                                Move 1 to Eshead.LockedFlag
+                                Move "W" to Eshead.Status
+                                SaveRecord Eshead
+                            Unlock
+                        End
+                        // If there was a QuotePrior to the Estimate, Get Job Number to Quote too
+                        If (iQuoteID <> 0) Begin
+                            Clear Quotehdr
+                            Move iQuoteID to Quotehdr.QuotehdrID
+                            Find EQ Quotehdr by 1
+                            If ((Found) and Quotehdr.QuotehdrID = iQuoteID) Begin
+                                Reread Quotehdr
+                                    Move "W" to Quotehdr.Status
+                                    Move 1 to Quotehdr.LockedFlag
+                                    Move iJobNumber to Quotehdr.JobNumber
+                                    Move dToday to Quotehdr.OrderDate
+                                    SaveRecord Quotehdr
+                                Unlock
+                            End
+                        End
+                    End
+                End
+                // Collect all detail lines
+                If ((Right(Esitem.OPCODE, 3)) = "035") Begin
+//                    Move Jcoper.CSTCTR_IDNO to iJcOpersIdno
+//                    If (Jcoper.MAST_OPS_IDNO <> 0) Begin // make sure the main item has a MasterOperation associated
+//                        Clear MastOps
+//                        Move Jcoper.MAST_OPS_IDNO to iMastOpsIdno
+//                        Move iMastOpsIdno to MastOps.MastOpsIdno
+//                        Find EQ MastOps by 1
+//                        If ((Found) and MastOps.MastOpsIdno = iMastOpsIdno and MastOps.Status = "A") Begin
+                            //Move Jcoper.MAST_OPS_IDNO to thisOrderDtl[iDtlLine].iMastOpsIdno
+//                        End
+//                    End
+                    Move Esitem.ITEM_ID to thisOrderDtl[iDtlLine].iEsitemIdno
+                    Move Escomp.Sequence to thisOrderDtl[iDtlLine].nCompSeq
+                    Move Esitem.MastOpsIdno to thisOrderDtl[iDtlLine].iMastOpsIdno // replaced the JCOper.Mast_Ops_Idno
+                    Move Esitem.INSTRUCTION to thisOrderDtl[iDtlLine].sInvoiceDescription
+                    Move 1 to thisOrderDtl[iDtlLine].nQty // or Esitem.CALC_UNITS1
+                    Move Esitem.PROD_UNITS1 to thisOrderDtl[iDtlLine].nPrice
+                    //Find Item Tax Rate if applicable
+                    If (MastOps.IsTaxable) Begin
+                        Move SalesTaxGroup.Rate                     to thisOrderDtl[iDtlLine].nTaxRate
+                        Move (thisOrderDtl[iDtlLine].nQty*Esitem.PROD_UNITS1*nTaxRate/100) to thisOrderDtl[iDtlLine].nTaxAmount  // Calculated Tax Amount
+                    End
+                    Else Begin
+                        Move 0 to thisOrderDtl[iDtlLine].nTaxRate
+                        Move 0 to thisOrderDtl[iDtlLine].nTaxAmount
+                    End
+                End
+                If ((Right(Esitem.OPCODE,3)) = "040") Begin
+                    Move Esitem.VAR1 to thisOrderDtl[iDtlLine].nSqft
+                    Move Esitem.VAR2 to thisOrderDtl[iDtlLine].nLnft
+                    Move Esitem.VAR3 to thisOrderDtl[iDtlLine].nMatQty
+                    Move Esitem.VAR4 to thisOrderDtl[iDtlLine].nTotManHrs
+                    Move Esitem.VAR5 to thisOrderDtl[iDtlLine].nOSCost
+                    Move Esitem.VAR6 to thisOrderDtl[iDtlLine].nMatCost
+                    Move Esitem.INSTRUCTION to thisOrderDtl[iDtlLine].sInstructions
+                End
+            End
+            //
+            Clear Esitem
+            Move iEstimateId to Esitem.ESTIMATE_ID
+            Move iCurrentComp to Esitem.COMPONENT_ID
+            Move iCurrentOpCode to Esitem.OPCODE
+            Find GT Esitem by 2
+        Loop
+        // Write thisOrderDtl to the OrderDtl Table
+        Integer i iOrderLineItems iProcessedOrdDtl
+        Move (SizeOfArray(thisOrderDtl)-1) to iOrderLineItems
+        For i from 1 to (iOrderLineItems)
+            //Showln ("Array["+String(i)+"] - iEsitemIdno: " + String(thisOrderDtl[i].iEsitemIdno) + " - " + thisOrderDtl[i].sInvoiceDescription)
+            //
+            // Finaly - Build the Detail Record
+            Set Main_DD to oOrderDtl_DD
+            Move oOrderDtl_DD to hoDD
+            Send Clear_All of hoDD
+            //
+            Move iJobNumber to Order.JobNumber
+            Send Request_Find of hoDD EQ Order.File_Number 1
+            Move thisOrderDtl[i].iMastOpsIdno to MastOps.MastOpsIdno
+            Send Request_Find of hoDD EQ MastOps.File_Number 1
+            If (not(Found)) Begin
+                Send Stop_Box ("Could not find MastOps record for MastOpsIdno " * String(iMastOpsIdno))
+                //Procedure_Return
+            End
+            Else Begin
+
+                // Save to OrderDtl and done
+                Set Field_Changed_Value of hoDD Field OrderDtl.Sequence                 to thisOrderDtl[i].nCompSeq
+                Set Field_Changed_Value of hoDD Field OrderDtl.InvoiceDescription       to thisOrderDtl[i].sInvoiceDescription
+                Set Field_Changed_Value of hoDD Field OrderDtl.Quantity                 to thisOrderDtl[i].nQty
+                Set Field_Changed_Value of hoDD Field OrderDtl.Price                    to thisOrderDtl[i].nPrice
+                Set Field_Changed_Value of hoDD Field OrderDtl.TaxRate                  to thisOrderDtl[i].nTaxRate
+                Set Field_Changed_Value of hoDD Field OrderDtl.TaxAmount                to thisOrderDtl[i].nTaxAmount
+                Set Field_Changed_Value of hoDD Field OrderDtl.EsItemIdno               to thisOrderDtl[i].iEsitemIdno
+                Set Field_Changed_Value of hoDD Field OrderDtl.Sqft                     to thisOrderDtl[i].nSqft
+                Set Field_Changed_Value of hoDD Field OrderDtl.Lnft                     to thisOrderDtl[i].nLnft
+                Set Field_Changed_Value of hoDD Field OrderDtl.MatQuantity              to thisOrderDtl[i].nMatQty
+                Set Field_Changed_Value of hoDD Field OrderDtl.OSCost                   to thisOrderDtl[i].nOSCost
+                Set Field_Changed_Value of hoDD Field OrderDtl.MatCost                  to thisOrderDtl[i].nMatCost
+                Set Field_Changed_Value of hoDD Field OrderDtl.SubOnlyFlag              to (thisOrderDtl[i].nOSCost<>0)
+                Set Field_Changed_Value of hoDD Field OrderDtl.TotalManHours            to thisOrderDtl[i].nTotManHrs
+                Set Field_Changed_Value of hoDD Field OrderDtl.Instructions             to thisOrderDtl[i].sInstructions
+                Get Request_Validate    of hoDD                                         to bFail
+                If (bFail) Begin
+                    Send Stop_Box "Processing Stopped"
+                    Procedure_Return
+                End
+                Send Request_Save       of hoDD
+                //
+                Get Field_Current_Value of hoDD Field OrderDtl.OrderDtlIdno to iOrderDtlIdno
+                Get Field_Current_Value of hoDD Field OrderDtl.EsItemIdno to iEsitemIdno                               
+                Increment iNewOrdDtl
+            End
+            // Write the OrdDtl.OrderDtlIno to the 
+            Clear Esitem
+            Move iEsitemIdno to Esitem.ITEM_ID
+            Find EQ Esitem.ITEM_ID
+            If ((Found) and Esitem.ITEM_ID = iEsitemIdno) Begin
+                Reread Esitem
+                    Move iOrderDtlIdno to Esitem.OrderDtlReference
+                    SaveRecord Esitem
+                Unlock                 
+            End
+        Loop
+        
+        // Build ErrorMessage
+        Move ("Order with Job#"*String(iJobNumber)*" created.\n") to sInfoMsg
+        If (iDtlLine <> iNewOrdDtl) Begin
+            Move (Append(sInfoMsg,"\n *** ERROR - MISSMATCHED LINE ITEMS ***\n\n")) to sInfoMsg
+            Move (Append(sInfoMsg," - Line items on Estimate:"*String(iDtlLine)*"\n")) to sInfoMsg
+            Move (Append(sInfoMsg," - Line items on Order:"*String(iNewOrdDtl)*"\n\n")) to sInfoMsg
+            Move (Append(sInfoMsg," ---> PLEASE REPORT TO IT <---")) to sInfoMsg
+        End        
+        Send Info_Box (sInfoMsg)("Estimate --> Order")
+        
+        
+///////////////////////////////////////////////////////////OLD SECTION////////////////////////////////////////////////////////////////////////
+//        Move iEstimateId to Eshead.ESTIMATE_ID
+//        Find EQ Eshead by 1
+//        If ((Found) and Eshead.ESTIMATE_ID = iEstimateId) Begin
+//            Move Eshead.QuoteReference to iQuoteID
+//            Move Eshead.OrderReference to iJobNumber
+//            If (iJobNumber <> 0) Begin
+//                Send Stop_Box ("Only one Order per Estimate") "Order Exists"
+//                //Option for updating the current order here.
+//                Procedure_Return
+//            End
+//            Else Begin //Prepare for a new Order
+//                Move iQuoteID to Quotehdr.QuotehdrID
+//                Find EQ Quotehdr by 1
+//                If ((Found) and Quotehdr.QuotehdrID = iQuoteID) Begin
+//                    Move Quotehdr.Amount to nQuoteAmount
+//                End
+//                Set Main_DD to oOrder_DD
+//                Get Main_DD         to hoDD
+//                Send Clear_All of hoDD
+//                //
+//                
+//                Move iEstimateId to Esitem.ESTIMATE_ID
+//                Find GE Esitem by 2
+//                While ((Found) and iEstimateId = Esitem.ESTIMATE_ID)
+//                    Move Esitem.ITEM_ID to iCurrentEsitem
+//                    Move Esitem.COMPONENT_ID to iCurrentComp
+//                    Move Esitem.OPCODE to sEsitemOpcode
+//                    Move Esitem.LINE_NUMBER to iCurrLineNumber
+//                    Move 0 to iOrderDtlIdno
+//                    // Collect all Detail information for 035 and 040
+//                    Relate Esitem
+//                    //If (Right(sEsitemOpcode, 3) = "035" and iEstimateId = Esitem.ESTIMATE_ID) Begin
+//                    If (Jcoper.PRINT_FLAGS contains "J" or Jcoper.PRINT_FLAGS contains "L") Begin
+//                        //
+//                        If (Jcoper.MAST_OPS_IDNO <> 0) Begin
+//                            Clear MastOps
+//                            Move Jcoper.MAST_OPS_IDNO to iMastOpsIdno
+//                            Move iMastOpsIdno to MastOps.MastOpsIdno
+//                            Find EQ MastOps by 1
+//                            If ((Found) and MastOps.MastOpsIdno = iMastOpsIdno and MastOps.Status = "A") Begin
+//                                // at this point I know there is no previous order and at least one Esitem with a matching MastOps exists
+//                                // Create Order Header Below
+//                                //On the first time around create a new Order Header
+//                                If (iJobNumber = 0) Begin
+//                                    Move Eshead.LocationIdno to Location.LocationIdno
+//                                    Send Request_Find of hoDD EQ Location.File_Number 1
+//                                    Move Eshead.RepIdno      to SalesRep.RepIdno
+//                                    Send Request_Find of hoDD EQ SalesRep.File_Number 1
+//                                    If (Found) Begin
+//                                        Move (YesNo_Box("Will this Order require a P.O Number?", "P.O. Required?", MB_DEFBUTTON1)) to iPORequired
+//                                        If (iPORequired= MBR_Yes) Begin
+//                                          Set Field_Changed_Value of hoDD Field Order.PO_Flag        to "1" 
+//                                        End
+//                                        Set Field_Changed_Value of hoDD Field Order.EsheadReference     to iEstimateId
+//                                        Set Field_Changed_Value of hoDD Field Order.JobOpenDate         to dToday
+//                                        Set Field_Changed_Value of hoDD Field Order.QuoteReference      to iQuoteID
+//                                        Set Field_Changed_Value of hoDD Field Order.QuoteAmount         to nQuoteAmount
+//                                        Set Field_Changed_Value of hoDD Field Order.WorkType            to Eshead.WorkType
+//                                        Set Field_Changed_Value of hoDD Field Order.BillingType         to Eshead.BillingType
+//                                        Set Field_Changed_Value of hoDD Field Order.Title               to Eshead.TITLE
+//                                        Set Field_Changed_Value of hoDD Field Order.EsheadReference     to Eshead.ESTIMATE_ID
+//                                        Set Field_Changed_Value of hoDD Field Order.EsheadAmount        to Eshead.Q1_X_$
+//                                        Get Request_Validate    of hoDD                                 to bFail
+//                                        If (bFail) Begin
+//                                            Send Stop_Box "Could not create Order Header - Validation Error"
+//                                            Procedure_Return
+//                                        End
+//                                        If (not(bFail)) Begin
+//                                            Send Request_Save   of hoDD
+//                                        End
+//                                        Get Field_Current_Value of hoDD Field Order.JobNumber to iJobNumber
+//                                        Set piJobNumber to iJobNumber
+//                                        // Update Estimate and Quote with the Job Number
+//                                        // Eshead
+//                                        If (iJobNumber<>0) Begin
+//                                            Reread Eshead
+//                                                Move iJobNumber to Eshead.OrderReference
+//                                                Move 1 to Eshead.LockedFlag
+//                                                Move "W" to Eshead.Status
+//                                                SaveRecord Eshead
+//                                            Unlock
+//                                        End
+//                                        // If there was a QuotePrior to the Estimate, Get Job Number to Quote too
+//                                        If (iQuoteID <> 0) Begin
+//                                            Clear Quotehdr
+//                                            Move iQuoteID to Quotehdr.QuotehdrID
+//                                            Find EQ Quotehdr by 1
+//                                            If ((Found) and Quotehdr.QuotehdrID = iQuoteID) Begin
+//                                                Reread Quotehdr
+//                                                    Move "W" to Quotehdr.Status
+//                                                    Move 1 to Quotehdr.LockedFlag
+//                                                    Move iJobNumber to Quotehdr.JobNumber
+//                                                    Move dToday to Quotehdr.OrderDate
+//                                                    SaveRecord Quotehdr
+//                                                Unlock
+//                                            End
+//                                        End
+//                                    End
+//                                End
+//                                // Reset all previous values
+//                                Move "" to sInvoiceDescription
+//                                Move 0 to nPrice
+//                                Move 0 to nCompSeq
+//                                Move 0 to nSqft
+//                                Move 0 to nLnft
+//                                Move 0 to nMatQty
+//                                Move 0 to nTotManHrs
+//                                Move 0 to nOSCost
+//                                Move 0 to nMatCost
+//                                Move "" to sInstructions
+//                                
+//                                //Create the detail for each found Esitem record that contains "035" and/or a MastOps Link
+//                                Move Esitem.INSTRUCTION to sInvoiceDescription
+//                                Move Esitem.ITEM_ID to iEsitemIdno
+//                                Move Esitem.PROD_UNITS1 to nPrice
+//                                Move Escomp.Sequence to nCompSeq
+//                                //Quantity always 1
+//                                Move 1 to nQty
+//                                //Find Item Tax Rate if applicable
+//                                If (MastOps.IsTaxable) Begin
+//                                    Move SalesTaxGroup.Rate                                          to nTaxRate
+//                                    Move (nQty*Esitem.PROD_UNITS1*nTaxRate/100)                      to nTaxAmount  // Calculated Tax Amount
+//                                End
+//                                Else Begin
+//                                    Move 0 to nTaxRate
+//                                    Move 0 to nTaxAmount
+//                                End
+//                                If ((Right(sEsitemOpcode, 3)) = "035") Begin
+//                                    // Add Information from "040" to the information set
+//                                    Move ((Left(sEsitemOpcode,2))+"040") to sDetailEsitemOpcode
+//                                    Clear Esitem
+//                                    Constraint_Set 2
+//                                    Constrain Esitem.ESTIMATE_ID eq iEstimateId
+//                                    Constrain Esitem.COMPONENT_ID eq iCurrentComp
+//                                    Constrain Esitem.OPCODE eq sDetailEsitemOpcode
+//                                    
+//                                    Constrained_Find first Esitem by 2
+//                                    While ((Found) and Esitem.ESTIMATE_ID = iEstimateId and Esitem.OPCODE = sDetailEsitemOpcode)
+//                                        If ((Right(String(Esitem.OPCODE), 3)) = "040") Begin
+//                                            Move True to bDetailOk
+//                                            Move Esitem.VAR1 to nSqft
+//                                            Move Esitem.VAR2 to nLnft
+//                                            Move Esitem.VAR3 to nMatQty
+//                                            Move Esitem.VAR4 to nTotManHrs
+//                                            Move Esitem.VAR5 to nOSCost
+//                                            Move Esitem.VAR6 to nMatCost
+//                                            Move Esitem.INSTRUCTION to sInstructions
+//                                        End
+//                                        Constrained_Find Next
+//                                    Loop
+//                                    Constraint_Set 2 Delete    
+//                                End
+//                                
+//                                // Finaly - Build the Detail Record
+//                                Set Main_DD to oOrderDtl_DD
+//                                Move oOrderDtl_DD to hoDD
+//                                Send Clear_All of hoDD
+//                                //
+//                                Move iJobNumber to Order.JobNumber
+//                                Send Request_Find of hoDD EQ Order.File_Number 1
+//                                Move iMastOpsIdno to MastOps.MastOpsIdno
+//                                Send Request_Find of hoDD EQ MastOps.File_Number 1
+//                                If (not(Found)) Begin
+//                                    Send Stop_Box ("Could not find MastOps record for MastOpsIdno " * String(iMastOpsIdno))
+//                                    //Procedure_Return
+//                                End
+//                                Else Begin
+//                                    //Increment Sequence Number
+//                                    Increment iSeq
+//                                    // Save to OrderDtl and done
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.Sequence                 to nCompSeq
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.InvoiceDescription       to sInvoiceDescription
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.Quantity                 to nQty
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.Price                    to nPrice
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.TaxRate                  to nTaxRate
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.TaxAmount                to nTaxAmount
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.EsItemIdno               to iEsitemIdno
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.Sqft                     to nSqft
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.Lnft                     to nLnft
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.MatQuantity              to nMatQty
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.OSCost                   to nOSCost
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.MatCost                  to nMatCost
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.TotalManHours            to nTotManHrs
+//                                    Set Field_Changed_Value of hoDD Field OrderDtl.Instructions             to sInstructions
+//                                    Get Request_Validate    of hoDD                                         to bFail
+//                                    If (bFail) Begin
+//                                        Send Stop_Box "Processing Stopped"
+//                                        Procedure_Return
+//                                    End
+//                                    Send Request_Save       of hoDD
+//                                    //
+//                                    Get Field_Current_Value of hoDD Field OrderDtl.OrderDtlIdno to iOrderDtlIdno                               
+//                                    Increment iNewDtl
+//                                End 
+//                            End
+//                            Else Begin
+//                                Send Info_Box ("MastOpsIdno ("*String(Jcoper.MAST_OPS_IDNO)* ") not Active - This Item was skipped")
+//                                Increment iSkippedEsitem
+//                            End
+//                        End
+//                        Else Begin
+//                            Send Stop_Box ("No link to MastOps for Operation ("* Jcoper.NAME * String(Esitem.OPCODE)*")")
+//                            Increment iSkippedEsitem
+//                        End
+//                    End
+//                    // Find original record & Save OrderDetail Reference
+//                    Clear Esitem
+//                    Move iEstimateId to Esitem.ESTIMATE_ID
+//                    Move iCurrentComp to Esitem.COMPONENT_ID
+//                    Move iCurrLineNumber to Esitem.LINE_NUMBER
+//                    //Move sEsitemOpcode to Esitem.OPCODE
+//                    Find EQ Esitem by 3
+//                    If ((Found) and Esitem.ITEM_ID = iCurrentEsitem and iOrderDtlIdno <> 0) Begin
+//                        Reread Esitem
+//                            Move iOrderDtlIdno to Esitem.OrderDtlReference
+//                            SaveRecord Esitem
+//                        Unlock                            
+//                    End  
+//                    Find GT Esitem by Index.3
+//                Loop
+//            End //End of New Order
+//        End
+//        Else Begin
+//            Send Info_Box "Could not find Estimate" "Error"
+//        End
+    End_Procedure
+
+    Function DoCreateOrderFromEstimate Integer iEstimateIdno Returns Integer
+        Integer iJobNumber
+        //
+        Set piEsheadId to iEstimateIdno
+        Set piJobNumber    to 0
+        //
+        Send DoProcess
+        //
+        Get piJobNumber to iJobNumber
+        
+        Function_Return     iJobNumber
+    End_Function
+    
+    Function CreateOrderFromEstimate Integer iEstimateIdno Returns Integer
+        Integer iJobNumber
+        Integer iCurrentComp iCurrentOpCode iQuoteID iPORequired iHeader iDtlLine
+        Boolean bNewLine
+        Date dToday
+        tOrder[] tThisOrder
+        //
+        Sysdate dToday
+        Decrement iDtlLine
+        //
+        Clear Esitem
+        Move iEstimateIdno to Esitem.ESTIMATE_ID
+        Find GE Esitem by 2
+        While ((Found) and Esitem.ESTIMATE_ID = iEstimateIdno)
+           
+            
+            Move Esitem.COMPONENT_ID to iCurrentComp
+            Move Esitem.OPCODE to iCurrentOpCode
+            Relate Esitem
+            //
+            If (Eshead.QuoteReference<>0) Begin
+                Move Eshead.QuoteReference to iQuoteID
+            End
+            //
+            If (Jcoper.PRINT_FLAGS contains "J" or Jcoper.PRINT_FLAGS contains "S") Begin // Only use items that have appropiate flags set 
+//                If (bNewLine and (Right(Esitem.OPCODE, 3)) = "035") Begin
+//                    Increment iDtlLine
+//                End
+//                Move False to bNewLine 
+                // at this point I know there is no previous order and at least one Esitem with a matching MastOps exists
+                // Store Order Header in Array
+                //On the first time around create a new Order Header
+                If (SizeOfArray(tThisOrder) = 0) Begin
+                    Move (YesNo_Box("Will this Order require a P.O Number?", "P.O. Required?", MB_DEFBUTTON1)) to iPORequired
+                    //
+                    Move Eshead.ESTIMATE_ID             to tThisOrder[iHeader].iEsheadReference
+                    //Move Eshead.QuoteReference          to tThisOrder[iHeader].iQuoteReference //Should this realy be done?
+                    Move Eshead.LocationIdno            to tThisOrder[iHeader].iLocIdno
+                    Move Eshead.CustomerIdno            to tThisOrder[iHeader].iCustIdno
+                    Move dToday                         to tThisOrder[iHeader].dOpen
+                    Move Eshead.WorkType                to tThisOrder[iHeader].sWorkType
+                    Move Eshead.BillingType             to tThisOrder[iHeader].sBillingType
+                    Move Eshead.TITLE                   to tThisOrder[iHeader].sTitle
+                    Move Eshead.Q1_X_$                  to tThisOrder[iHeader].nEsheadAmount
+                    Move (iPORequired=MBR_Yes)          to tThisOrder[iHeader].iPO_Flag
+                End
+                
+                // Collect all detail lines
+                If ((Right(Esitem.OPCODE, 3)) = "035") Begin
+                    Increment iDtlLine
+                    Move Esitem.ITEM_ID                 to tThisOrder[iHeader].tOrderDtl[iDtlLine].iEsitemIdno
+                    Move Escomp.Sequence                to tThisOrder[iHeader].tOrderDtl[iDtlLine].nCompSeq
+                    Move Esitem.MastOpsIdno             to tThisOrder[iHeader].tOrderDtl[iDtlLine].iMastOpsIdno // replaced the JCOper.Mast_Ops_Idno
+                    Move Esitem.INSTRUCTION             to tThisOrder[iHeader].tOrderDtl[iDtlLine].sInvoiceDescription
+                    Move 1                              to tThisOrder[iHeader].tOrderDtl[iDtlLine].nQty // or Esitem.CALC_UNITS1
+                    Move Esitem.PROD_UNITS1             to tThisOrder[iHeader].tOrderDtl[iDtlLine].nPrice
+                    //Find Item Tax Rate if applicable
+                    If (MastOps.IsTaxable) Begin
+                        Move SalesTaxGroup.Rate         to tThisOrder[iHeader].tOrderDtl[iDtlLine].nTaxRate
+                        Move (tThisOrder[iHeader].tOrderDtl[iDtlLine].nQty*Esitem.PROD_UNITS1*tThisOrder[iHeader].tOrderDtl[iDtlLine].nTaxRate/100) to tThisOrder[iHeader].tOrderDtl[iDtlLine].nTaxAmount  // Calculated Tax Amount
+                    End
+                    Else Begin
+                        Move 0 to tThisOrder[iHeader].tOrderDtl[iDtlLine].nTaxRate
+                        Move 0 to tThisOrder[iHeader].tOrderDtl[iDtlLine].nTaxAmount
+                    End
+                End
+                If ((Right(Esitem.OPCODE,3)) = "040") Begin
+                    Move Esitem.VAR1                    to tThisOrder[iHeader].tOrderDtl[iDtlLine].nSqft
+                    Move Esitem.VAR2                    to tThisOrder[iHeader].tOrderDtl[iDtlLine].nLnft
+                    Move Esitem.VAR3                    to tThisOrder[iHeader].tOrderDtl[iDtlLine].nMatQty
+                    Move Esitem.VAR4                    to tThisOrder[iHeader].tOrderDtl[iDtlLine].nTotManHrs
+                    Move Esitem.VAR5                    to tThisOrder[iHeader].tOrderDtl[iDtlLine].nOSCost
+                    Move Esitem.VAR6                    to tThisOrder[iHeader].tOrderDtl[iDtlLine].nMatCost
+                    Move Esitem.INSTRUCTION             to tThisOrder[iHeader].tOrderDtl[iDtlLine].sInstructions
+                End
+            End
+            //
+            Clear Esitem
+            Move iEstimateIdno to Esitem.ESTIMATE_ID
+            Move iCurrentComp to Esitem.COMPONENT_ID
+            Move iCurrentOpCode to Esitem.OPCODE
+            Find GT Esitem by 2
+        Loop
+        // Do Process
+        Set ptThisOrder to tThisOrder
+        //Send OnProcess
+    End_Function
+    
+    Function UpdateInvoiceAmountOnOrders Integer iJobNumber Returns Number
+        Number nTotalInvoiceAmount
+        Integer iInvoiceCount
+        Move 0 to nTotalInvoiceAmount
+        
+        Open Invhdr
+        Clear Invhdr
+        Move iJobNumber to Invhdr.JobNumber
+        Find GE Invhdr by 2
+        While ((Found) and Invhdr.JobNumber = iJobNumber)
+            If (Invhdr.VoidFlag = 0) Begin
+                Increment iInvoiceCount
+                Add Invhdr.TotalAmount to nTotalInvoiceAmount
+            End
+            //
+            Move iJobNumber to Invhdr.JobNumber
+            Find GT Invhdr by 2
+        Loop
+        Function_Return nTotalInvoiceAmount
+    End_Function
+
+    Function UpdateCostOnOrders Returns Boolean
+        Boolean bOk
+        
+        Constraint_Set 1
+        Constrained_Find
+        
+        Function_Return bOk
+    End_Function
+
+End_Object

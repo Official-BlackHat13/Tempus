@@ -1,0 +1,17 @@
+[Workspace]
+Home=..\
+AppSrcPath=.\AppSrc
+AppHTMLPath=.\AppHtml
+BitmapPath=.\Bitmaps
+IdeSrcPath=.\IdeSrc
+DataPath=.\Data
+DDSrcPath=.\DdSrc
+HelpPath=.\Help
+ProgramPath=.\Programs
+FileList=.\Data\Filelist.cfg
+Description=Tempus
+DataServerName=IPM-149
+[WebServices]
+ServiceLocation=https://ipm-149/TempusField/TransactionService.wso
+WSDLLocation=https://ipm-149/TempusField/TransactionService.wso?WSDL
+WebsiteRoot=https://ipm-149

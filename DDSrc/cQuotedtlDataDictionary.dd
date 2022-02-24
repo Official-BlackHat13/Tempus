@@ -1,0 +1,129 @@
+Use cGlblDataDictionary.pkg
+
+Open Quotedtl
+Open System
+Open Quotehdr
+Open MastOps
+
+Register_Function QuantityValidation Integer iField Number nQuantity Returns Integer
+Register_Function PriceValidation Integer iField Number nPrice Returns Integer
+
+Class cQuotedtlDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Quotedtl.File_Number
+
+        Set Add_Server_File to Quotehdr.File_Number
+        Set Add_Server_File to MastOps.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Quotedtl.QuotedtlID to File_Field System.QuoteDtlId
+
+        Set Field_Validate_msg Field Quotedtl.Quantity to get_QuantityValidation
+
+        Set Field_Entry_msg Field Quotedtl.Price to PriceEntry
+        Set Field_Validate_msg Field Quotedtl.Price to get_PriceValidation
+        Set Field_Mask_Type Field Quotedtl.Price to Mask_Currency_Window
+        Set Field_Mask Field Quotedtl.Price to "$ #,###,##0.00"
+
+        Set Field_Option Field Quotedtl.Amount DD_NOENTER to True
+        Set Field_Mask_Type Field Quotedtl.Amount to Mask_Currency_Window
+        Set Field_Mask Field Quotedtl.Amount to "$ #,###,##0.00"
+
+        Set Field_Class_Name Field Quotedtl.Description to "cDbTextEdit"
+
+        Set Field_Mask_Type Field Quotedtl.TaxRate to Mask_Numeric_Window
+        Set Field_Mask Field Quotedtl.TaxRate to "#0.0000 %"
+
+        Set Field_Mask_Type Field Quotedtl.TaxAmount to Mask_Currency_Window
+        Set Field_Mask Field Quotedtl.TaxAmount to "$ #,###,##0.0000"
+
+    End_Procedure
+    
+    Procedure OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Quotedtl.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    
+    Procedure PriceEntry integer iField number nPrice
+        If (nPrice = 0) Begin
+            Set Field_Changed_Value iField to MastOps.Sellrate
+        End
+    End_Procedure   // PriceEntry
+
+    Function PriceValidation integer iField number nPrice Returns Integer
+        Boolean bState
+        Number  nQuantity
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field Quotedtl.Quantity to nQuantity
+            Set Field_Changed_Value Field Quotedtl.Amount   to (nQuantity * nPrice)
+        End
+    End_Function   // PriceValidation
+
+    Function QuantityValidation Integer iField Number nQuantity Returns Integer
+        Boolean bState
+        Number  nPrice
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field Quotedtl.Price to nPrice
+            Set Field_Changed_Value Field Quotedtl.Amount to (nQuantity * nPrice)
+        End
+    End_Function   // QuantityValidation
+
+//    Function DescriptionValidation Integer iField String sDescription Returns Boolean
+//        Move (Replaces("'", sDescription, "")) to sDescription // Remove all apostrophies from text
+//        //Move (Replaces(String(Character(10)),sDescription,"")) to sDescription // Remove all NL (ASCII 10)
+//        Move (Replaces(String(Character(7)),sDescription," - ")) to sDescription // Remove all BEL (ASCII 7)
+//        Set Field_Changed_Value iField to sDescription
+//        Function_Return False
+//    End_Function
+
+    Procedure Backout
+        Forward Send Backout
+        // Insert Code Here
+        // Subtract sales tax from quote again
+        Subtract Quotedtl.TaxAmount                                     from Quotehdr.TaxTotal
+        Subtract Quotedtl.Amount                                        from Quotehdr.SubTotal
+        Move (Quotehdr.TaxTotal+Quotehdr.SubTotal)                      to Quotehdr.Amount
+    End_Procedure   // Backout
+ 
+    Procedure Update
+        String sDescription
+        Forward Send Update
+        // Insert Code Here
+        // Remove appostrophies and BEL
+        Move Quotedtl.Description to sDescription
+        Move (Replaces("'", sDescription, "")) to sDescription // Remove all apostrophies from text
+        Move (Replaces(String(Character(7)),sDescription," - ")) to sDescription // Remove all BEL (ASCII 7)
+        Move sDescription to Quotedtl.Description
+        // Apply Sales Tax if nessasary
+        If (MastOps.IsTaxable) Move SalesTaxGroup.Rate                          to Quotedtl.TaxRate
+        Else Move 0 to QuoteDtl.TaxRate
+        Move (QuoteDtl.Quantity * QuoteDtl.Price * QuoteDtl.TaxRate/100.00)     to QuoteDtl.TaxAmount
+        //Update parent record
+        Add QuoteDtl.TaxAmount                                                  to Quotehdr.TaxTotal
+        Add QuoteDtl.Amount                                                     to Quotehdr.SubTotal
+        Move (Quotehdr.TaxTotal+Quotehdr.SubTotal)                              to Quotehdr.Amount
+  
+  
+        //Add Quotedtl.Amount to Quotehdr.Amount
+    End_Procedure   // Update
+
+End_Class

@@ -1,0 +1,3 @@
+TypeIdno
+ShortCode
+Description

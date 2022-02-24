@@ -1,0 +1,16 @@
+QuotedtlID
+QuotehdrID
+MastOpsIdno
+Quantity
+Price
+Amount
+Description
+Sequence
+CreateDate
+CreateHr
+CreateMin
+CreateSec
+EditDate
+EditHr
+EditMin
+EditSec

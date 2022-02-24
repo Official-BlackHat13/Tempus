@@ -1,0 +1,8 @@
+#REPLACE FILE22 Crystal
+#REPLACE Crystal.Recnum |FN22,0
+#REPLACE Crystal.CrystalId |FN22,1
+#REPLACE Crystal.Description |FS22,2
+#REPLACE Crystal.FileName |FS22,3
+#REPLACE Crystal.Flag01 |FN22,4
+#REPLACE Crystal.Flag02 |FN22,5
+#REPLACE Crystal.Flag03 |FN22,6

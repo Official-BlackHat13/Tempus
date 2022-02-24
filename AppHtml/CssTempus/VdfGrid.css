@@ -1,0 +1,59 @@
+/*------------------------------
+    GRID STYLE
+-------------------------------*/	
+
+.VdfGrid {
+    border: 1px solid #ccc;
+}
+
+.VdfGrid th{
+    border: 1px solid white;
+    color: #466381;
+    background: #cee3ef;
+}
+	
+.VdfGrid .VdfHeaderIndex {
+    text-decoration: underline;
+    cursor: pointer;
+} 
+
+.VdfGrid .VdfHeaderSelected {
+	text-decoration: underline; 
+	cursor: pointer; 
+	color: #466381; 
+	background: #cee3ef; 
+	font-style: italic;
+}
+
+.VdfGrid .VdfHeaderSelected.ReverseSort {
+	text-decoration: underline; 
+	cursor: pointer; 
+	color: #ffffff; 
+	background: #cee3ef; 
+	font-style: italic;
+}
+
+.VdfGrid td{
+}
+
+.VdfGrid input{
+}
+
+.VdfGrid .EmptyRow .DeleteButton, .VdfGrid .NewRow .DeleteButton{
+    visibility: hidden;
+}
+
+.VdfGrid .DeleteButton{
+    border: 0px solid black;
+    height: 20px;
+    width: 20px;
+    cursor: pointer;
+    background: url(../Images/Buttons/Delete.gif) no-repeat;
+}
+
+.VdfGrid .VdfRowEven{
+    background-color: #f0f0ff;
+}
+
+.VdfGrid .VdfRowOdd{
+}

@@ -1,0 +1,389 @@
+Use cGroupedGridSortHandler.pkg
+
+Struct tdGroupedGridGroupRowData
+    String sGroup
+    tDataSourceRow[] RowData
+End_Struct
+
+Class cCJGroupedGridDataSource is a cCJGridDataSource
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        {Visibility=Private}
+        Property tdGroupedGridGroupRowData[] pRemovedRows
+        {Visibility=Private}
+        Property String[] psaGroupValues
+    End_Procedure
+    
+    Function RowTagValue Integer iRow String ByRef sRowType Returns String
+        tDataSourceRow[] TheData
+        String sRetVal
+        Integer iRows
+        
+        Get DataSource to TheData
+        Get RowCount to iRows
+        If (iRow>=iRows) Begin
+            Function_Return ''
+        End
+        Move TheData[iRow].vTag to sRetVal
+        // this will have either G: or R: as the first two characters (identifies Group or Row)
+        Move (Left(sRetVal,1)) to sRowType
+        Move (Right(sRetVal,Length(sRetVal)-2)) to sRetVal
+        Function_Return sRetVal
+    End_Function
+    
+    Procedure StoreRemovedRowData tdGroupedGridGroupRowData RowData 
+        tdGroupedGridGroupRowData[] RemovedRows
+        Integer i iGroups iIndex
+        
+        Move -1 to iIndex
+        Get pRemovedRows to RemovedRows   
+        Move (SizeOfArray(RemovedRows)-1) to iGroups
+        For i from 0 to iGroups
+            If (RemovedRows[i].sGroup = RowData.sGroup) Begin
+                Move i to iIndex    
+            End
+            If (iIndex>-1) ;
+                Break
+        Loop
+        If (iIndex=-1) Begin
+            Move (SizeOfArray(RemovedRows)) to iIndex
+        End
+        Move RowData.sGroup  to RemovedRows[iIndex].sGroup
+        Move RowData.RowData to RemovedRows[iIndex].RowData
+        Set pRemovedRows to RemovedRows 
+    End_Procedure
+    
+    Function RemovedRowData String sGroup Boolean bDeleteOnFind Boolean ByRef bFound Returns tdGroupedGridGroupRowData
+        tdGroupedGridGroupRowData RowData
+        tdGroupedGridGroupRowData[] RemovedRows
+        Integer iIndex i iGroups        
+
+        Move False to bFound
+        Get pRemovedRows to RemovedRows   
+        Move (SizeOfArray(RemovedRows)-1) to iGroups
+        For i from 0 to iGroups
+            If (RemovedRows[i].sGroup = sGroup) Begin
+                Move True to bFound
+                Move RemovedRows[i] to RowData
+                If (bDeleteOnFind) Begin
+                    Move (RemoveFromArray(RemovedRows,i)) to RemovedRows
+                    Set pRemovedRows to RemovedRows
+                End
+                Function_Return RowData
+            End
+        Loop
+        Function_Return RowData
+    End_Function
+    
+
+    Function pbGrouping Returns Boolean
+        String[] saGroupValues
+        Get psaGroupValues to saGroupValues
+        Function_Return (SizeOfArray(saGroupValues)>0) 
+    End_Function
+    
+    Function IsGroupRow Integer iRow Returns Boolean
+        Boolean bRetVal 
+        String  sType sValue
+        
+        Get RowTagValue iRow (&sType) to sValue
+        Move (sType="G") to bRetVal
+        Function_Return bRetVal
+    End_Function
+    
+    Function AdjustGroupIndexes Integer[] iaGroupIndexes Integer iIndex Returns Integer[]
+        Integer i iCount iValue iGroupIndex iRowIndex
+        
+        Move (SizeOfArray(iaGroupIndexes)-1) to iCount
+        For i from iIndex to iCount
+            Move iaGroupIndexes[i] to iValue
+            Move  (Hi(iValue)) to iGroupIndex
+            Move (Low(iValue)) to iRowIndex
+            Add 1 to iRowIndex
+            If (i>iIndex) Begin
+                Add 1 to iGroupIndex
+            End
+            Move (iGroupIndex*65536 + iRowIndex) to iValue
+            Move iValue to iaGroupIndexes[i]  
+        Loop
+        Function_Return iaGroupIndexes
+    End_Function
+        
+    Procedure AddGroupsToDataSource
+        String[] saGroupValues
+        Integer[] iaGroupIndexes
+        Integer i iRows iId iGroups iIndex iTotalRows iRowIndex iGroupIndex iCount
+        String sGroupValue sTag 
+        Boolean bGrouping
+        tDataSourceRow[] Value NewValue 
+        tDataSourceRow NewRow
+        Handle hoGroupColumn
+        
+        Get pbGrouping to bGrouping
+        Get DataSource to Value
+        // we are now going to adjust the 'public' data source by insering any group rows
+        // we also have to make sure the data source is sorted within the group
+        If bGrouping Begin
+            Delegate Get phoGroupColumn to hoGroupColumn
+            Get piColumnId of hoGroupColumn to iId
+            Get psaGroupValues to saGroupValues
+            Move (SizeOfArray(saGroupValues)) to iGroups
+            Move (ResizeArray(iaGroupIndexes,iGroups,0)) to iaGroupIndexes
+            // Create some dummy rows for the groups
+            For i from 0 to (iGroups-1)
+                Get CreateClearedDataSourceRow to NewRow
+                Move saGroupValues[i] to NewRow.sValue[iId]
+                Move 'G:0' to NewRow.vTag
+                Move NewRow to NewValue[i]
+                Move (i*65536 +i) to iaGroupIndexes[i]
+                Increment iTotalRows
+            Loop
+        End
+        Move (SizeOfArray(value)-1) to iRows
+        For i from 0 to iRows
+            Move ("R:"-String(value[i].vTag)) to value[i].vTag
+            If bGrouping Begin
+                Move value[i].sValue[iId] to sGroupValue
+                
+                Move (SearchArray(sGroupValue,saGroupValues)) to iIndex
+                Get AdjustGroupIndexes iaGroupIndexes iIndex to iaGroupIndexes
+                
+                Move  (Hi(iaGroupIndexes[iIndex])) to iGroupIndex
+                Move (Low(iaGroupIndexes[iIndex])) to iRowIndex
+         
+                If (iRowIndex>=iTotalRows) Begin
+                    Move Value[i] to NewValue[SizeOfArray(NewValue)]    
+                End
+                Else Begin
+                    Move (InsertInArray(NewValue,iRowIndex,Value[i])) to NewValue
+                End
+                // keep the row count for this group in the group row TAG value                
+                Move NewValue[iGroupIndex].vTag to sTag
+                Move (Left(sTag,2)) to sGroupValue
+                If (sGroupValue='G:') Begin
+                    Move (Right(sTag,Length(sTag)-2)) to sTag
+                    Move sTag to iCount
+                    Increment iCount
+                    Move (sGroupValue-String(iCount)) to NewValue[iGroupIndex].vTag
+                End              
+                Increment iTotalRows
+            End
+        Loop
+        If (not(bGrouping)) Begin
+            Move value to NewValue
+        End
+        Set pDataSource to NewValue
+    End_Procedure  
+        
+    {Visibility=Private}
+    Procedure EstablishGroupingValues
+        Handle hoGroupColumn
+        Boolean bReverseGroupByOrdering
+        Integer iId i iRows
+        String  sGroupValue
+        tDataSourceRow[] TheData
+        String[] saGroupValues
+        
+        Delegate Get phoGroupColumn to hoGroupColumn
+        If (hoGroupColumn>0) Begin
+            Get piColumnId of hoGroupColumn to iId
+            Get RowCount to iRows
+            Decrement iRows
+            Get DataSource to TheData
+            For i from 0 to iRows
+                Move TheData[i].sValue[iId] to sGroupValue
+                If (SearchArray(sGroupValue,saGroupValues)=-1) Begin
+                    Move sGroupValue to saGroupValues[SizeOfArray(saGroupValues)]        
+                End
+            Loop
+            Delegate Get pbReverseGroupOrdering to bReverseGroupByOrdering
+            Move (SortArray(saGroupValues)) to saGroupValues
+            If bReverseGroupByOrdering Begin
+                Move (ReverseArray(saGroupValues)) to saGroupValues
+            End
+        End
+        Set psaGroupValues to saGroupValues
+    End_Procedure
+    
+    Procedure InitializeDataSource tDataSourceRow[] DataSource
+        tdGroupedGridGroupRowData[] NoRemovedRows
+        Set pRemovedRows to NoRemovedRows
+        Send Reset
+        Set pDataSource to DataSource
+        Send EstablishGroupingValues
+        Send AddGroupsToDataSource
+        Set pbDataSourceSynchRequired to False
+    End_Procedure    
+    
+    // when sorting the grid we also need to sort any removed rows. Otherwise
+    // when they are added in again they won't be sorted correctly...
+    {Visibility=Private}
+    Procedure SortRemovedRows Handle hoGridSortHelper tGridSortRules GridSortRules
+        tdGroupedGridGroupRowData[] RemovedRows 
+        Integer i iGroups iSel
+        tDataSourceRow[] DataSource
+        
+        Get pRemovedRows to RemovedRows
+        Move (SizeOfArray(RemovedRows)-1) to iGroups
+        For i from 0 to iGroups
+            Move RemovedRows[i].RowData to DataSource
+            Get SortDataSource of hoGridSortHelper GridSortRules DataSource (&iSel) to DataSource 
+            Move DataSource to RemovedRows[i].RowData            
+        Loop     
+        Set pRemovedRows to RemovedRows
+    End_Procedure
+    
+    // sort datasource data based on rules in GridSortRules. This only sorts loaded data
+    // and it assumes that sorting it does not invalidate it some way
+    Procedure SortDataSource tGridSortRules GridSortRules
+        Handle hoGridSortHelper hoGroupColumn
+        Integer iSel 
+        tDataSourceRow[] DataSource
+        tDataSourceRow[] NewDataSource
+        tGridSortRules tNewSortRules 
+        
+        Get pDataSource to DataSource        
+        Delegate Get phoGroupColumn to hoGroupColumn
+        If (hoGroupColumn>0) Begin
+            Get piColumnId of hoGroupColumn to tNewSortRules.Rules[0].iColumn
+            Get peDataType of hoGroupColumn to tNewSortRules.Rules[0].eDataType
+            Get pbReverseGroupOrdering      to tNewSortRules.Rules[0].bDescending
+            
+            Move GridSortRules.Rules[0]     to tNewSortRules.Rules[1] 
+            Move GridSortRules.bDescending  to tNewSortRules.Rules[1].bDescending  
+        End
+        Else Begin
+            Move GridSortRules to tNewSortRules
+        End    
+        Get SelectedRow to iSel
+        Send SelectRow -1 False
+        Get Create (RefClass(cGroupedGridSortHandler)) to hoGridSortHelper
+        Get SortDataSource of hoGridSortHelper tNewSortRules DataSource (&iSel) to NewDataSource 
+        // also sort any removed row data so that it will be in the correct order when re-added
+        Send SortRemovedRows hoGridSortHelper tNewSortRules
+        Send Destroy of hoGridSortHelper 
+        Set pDataSource to NewDataSource
+        Send SelectRow iSel False
+    End_Procedure 
+    
+    // when expanding or collapsing rows we have to remove them from our data source
+    // because the row indexes are changed inside the grid
+    Procedure ExpandRow Integer iRow Boolean bExpand
+        tDataSourceRow[] TheData
+        tdGroupedGridGroupRowData taCollapsedRows
+        Handle hoColumn
+        Boolean bIsGroupRow bFound
+        String  sGroup
+        Integer i iRows iDeleteAtIndex iLastRow
+ 
+        Delegate Get phoGroupColumn to hoColumn
+        If (hoColumn=0) Begin
+            Procedure_Return
+        End  
+        // not really required but let's be safe and check we have got a row that we see as a group row
+        Get IsGroupRow iRow to bIsGroupRow
+        If (not(bIsGroupRow)) Begin
+            Procedure_Return
+        End
+        
+        Get DataSource to TheData
+        Move (SizeOfArray(TheData)-1) to iLastRow
+        If (bExpand=False) Begin
+            // Get the collection of rows that we are going to be losing...
+            Get GroupRowData iRow to taCollapsedRows
+            Send StoreRemovedRowData taCollapsedRows
+            // we need to store these rows because of course we are now going to remove them but have to be
+            // able to add them back in again should we then expand an item
+            // Plus of course when sorting we still need to sort the data for collapsed group rows.
+            Move (iRow+1) to iDeleteAtIndex // after each delete rows get shunted up so need to keep deleting at the same index
+            Repeat
+                Increment iRow
+                If (iRow>iLastRow) Begin
+                    Move True to bIsGroupRow
+                End
+                Else Begin
+                    Get IsGroupRow iRow to bIsGroupRow                
+                End
+                If (not(bIsGroupRow)) Begin
+                    Move (RemoveFromArray(TheData,iDeleteAtIndex)) to TheData  
+                End
+            Until (bIsGroupRow)           
+        End
+        Else Begin
+            // when expanding a group we to look for data that has been previously removed and add it in once more...
+            // We pass TRUE as our 2nd argument because if we find the data has been stored we can remove it now from the store
+            Get GroupRowValue iRow to sGroup
+            Get RemovedRowData sGroup True (&bFound) to taCollapsedRows
+            If (bFound) Begin
+                Move (SizeOfArray(taCollapsedRows.RowData)-1) to iRows
+                For i from 0 to iRows
+                    Increment iRow
+                    If (iRow>=SizeOfArray(TheData)) Begin
+                        Move taCollapsedRows.RowData[i] to TheData[iRow]  
+                    End
+                    Else Begin
+                        Move (InsertInArray(TheData,iRow,taCollapsedRows.RowData[i])) to TheData 
+                    End       
+                Loop        
+            End
+        End
+        Set pDataSource to TheData
+    End_Procedure
+    
+    Function GroupRowValue Integer iRow Returns String
+        String sRetVal
+        Boolean bIsGroup
+        Handle  hoGroupColumn
+        Integer iId
+        
+        Get IsGroupRow iRow to bIsGroup
+        If bIsGroup Begin
+            Delegate Get phoGroupColumn to hoGroupColumn
+            If (hoGroupColumn>0) Begin
+                Get piColumnId of hoGroupColumn to iId        
+                Get DataForCell iRow iId to sRetVal
+            End
+        End
+        Function_Return sRetVal
+    End_Function
+
+    // Get the expanded state. If expanded, get from the main data source
+    // If not we need to get from the RemovedRows array
+    Function GroupRowData Integer iRow Returns tdGroupedGridGroupRowData
+        tDataSourceRow[] GridData
+        tdGroupedGridGroupRowData GroupData
+        Boolean bIsGroup bFound
+        Integer iRows iLastRow
+        Handle  hoRow
+        Variant vRow
+        String  sGroup
+        
+        Get IsGroupRow iRow to bIsGroup
+        If (bIsGroup) Begin
+            Get GroupRowValue iRow to sGroup    
+            // Can we find the rows in our collection of removed rows..? Note we pass False as the 2nd argument because we
+            // don't want to delete it at this stage
+            Get RemovedRowData sGroup False (&bFound) to GroupData
+            If (not(bFound)) Begin
+                Move sGroup to GroupData.sGroup
+                Get DataSource to GridData
+                Move (SizeOfArray(GridData)-1) to iLastRow
+                Repeat
+                    Increment iRow
+                    If (iRow>iLastRow) Begin
+                        Move True to bIsGroup
+                    End
+                    Else Begin
+                        Get IsGroupRow iRow to bIsGroup
+                    End
+                    If (not(bIsGroup)) Begin
+                        Move GridData[iRow] to GroupData.RowData[iRows]
+                        Increment iRows
+                    End
+                Until (bIsGroup)
+            End
+        End
+        Function_Return GroupData
+    End_Function
+End_Class

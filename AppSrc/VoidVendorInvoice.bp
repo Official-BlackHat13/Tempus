@@ -1,0 +1,137 @@
+Use Batchdd.pkg
+Use Employer.DD
+Use cVendInvHdrGlblDataDictionary.dd
+Use cVendInvDtlGlblDataDictionary.dd
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use Employee.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Object oVoidVendorInvoice is a BusinessProcess
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oEmployee_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Object oVendInvHdr_DD is a cVendInvHdrGlblDataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oVendInvDtl_DD is a cVendInvDtlGlblDataDictionary
+        Set DDO_Server to oVendInvHdr_DD
+    End_Object
+
+    Set Main_DD to oVendInvDtl_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+
+    Function DoVoidVendInvoice Integer iVendInvHdrIdno String ByRef sErrorMsg Returns Boolean
+        Boolean bSuccess
+        //Start VOID process
+        Clear VendInvHdr
+        Move iVendInvHdrIdno to VendInvHdr.VendInvHdrIdno
+        Find EQ VendInvHdr by Index.1
+        If ((Found) and VendInvHdr.VendInvHdrIdno = iVendInvHdrIdno) Begin
+            // Find and release Transactions first
+            Clear Trans
+            Move 1                  to Trans.VendInvoicedFlag
+            Move iVendInvHdrIdno    to Trans.VendInvHdrIdno
+            Find GE Trans by Index.14
+            While ((Found) and Trans.VendInvHdrIdno = iVendInvHdrIdno and Trans.VendInvoicedFlag = 1)
+                Reread Trans
+                    Move 0 to Trans.VendInvoicedFlag
+                    Move 0 to Trans.VendInvHdrIdno
+                    SaveRecord Trans
+                Unlock
+                Clear Trans
+                Move 1 to Trans.VendInvoicedFlag
+                Move iVendInvHdrIdno to Trans.VendInvHdrIdno
+                Find GT Trans by Index.14
+            Loop
+            
+            // Change the VendVoidFlag
+            Reread VendInvHdr
+                Move 1 to VendInvHdr.VoidFlag
+                SaveRecord VendInvHdr
+            Unlock
+        End
+        Else Begin
+            Move ("Could not find Vendor Invoice# " + String(iVendInvHdrIdno)) to sErrorMsg
+            Function_Return False
+        End
+        Move ("Vendor Invoice# "+ String(iVendInvHdrIdno) + " was sucessfully Voided.") to sErrorMsg
+        Function_Return True        
+    End_Function
+
+End_Object
+

@@ -1,0 +1,12 @@
+#REPLACE FILE62 ProdNote
+#REPLACE ProdNote.Recnum |FN62,0
+#REPLACE ProdNote.ProdNoteIdno |FN62,1
+#REPLACE ProdNote.JobNumber |FN62,2
+#REPLACE ProdNote.Note |FS62,3
+#REPLACE ProdNote.CreatedDate |FD62,4
+#REPLACE ProdNote.CreatedBy |FS62,5
+#REPLACE ProdNote.AcknowledgedDate |FD62,6
+#REPLACE ProdNote.AcknowledgedBy |FS62,7
+#REPLACE ProdNote.DeletedFlag |FN62,8
+#REPLACE ProdNote.DeletedDate |FD62,9
+#REPLACE ProdNote.DeletedBy |FS62,10

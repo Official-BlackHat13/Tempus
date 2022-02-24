@@ -1,0 +1,15 @@
+#REPLACE FILE16 Equipmnt
+#REPLACE Equipmnt.Recnum |FN16,0
+#REPLACE Equipmnt.EquipIdno |FN16,1
+#REPLACE Equipmnt.EquipmentID |FS16,2
+#REPLACE Equipmnt.Description |FS16,3
+#REPLACE Equipmnt.MastOpsIdno |FN16,4
+#REPLACE Equipmnt.OperatedBy |FN16,5
+#REPLACE Equipmnt.ContractorRate |FN16,6
+#REPLACE Equipmnt.HoursUsed |FN16,7
+#REPLACE Equipmnt.ChangedFlag |FN16,8
+#REPLACE Equipmnt.Status |FS16,9
+#REPLACE Equipmnt.RentalRate |FN16,10
+#REPLACE Equipmnt.RecordOwner |FN16,11
+#REPLACE Equipmnt.Hr_Mat_MinFlag |FN16,12
+#REPLACE Equipmnt.CEPM_EquipIdno |FN16,13

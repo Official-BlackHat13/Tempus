@@ -1,0 +1,38 @@
+Use Windows.pkg
+Use cHtmlHelp.pkg
+Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Invdtl
+Open Trans
+
+Procedure DoFixInvoiceDetail
+    Integer iCount
+    //
+    Move 109857 to Invdtl.InvoiceIdno
+    Find ge Invdtl.InvoiceIdno
+    While ((Found) and Invdtl.InvoiceIdno = 109857)
+        Clear Trans
+        Move Invdtl.TransIdno to Trans.TransIdno
+        Find eq Trans.TransIdno
+        If (Found) Begin
+            Reread
+            Move 0 to Trans.InvoiceDate
+            Move 0 to Trans.InvoicedFlag
+            SaveRecord Trans
+            Unlock
+            Increment iCount
+        End
+        Find gt Invdtl.InvoiceIdno
+    Loop
+    Send Info_Box iCount
+End_Procedure
+
+Send DoFixInvoiceDetail

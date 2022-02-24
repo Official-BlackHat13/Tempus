@@ -1,0 +1,22 @@
+Use cGlblDataDictionary.pkg
+
+Open TMList_Hdr
+Open PropTM
+Open System
+
+Class cTMList_HdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to TMList_Hdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Client_File to PropTM.File_Number
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+
+        Set Field_Auto_Increment Field TMList_Hdr.TMList_Idno to File_Field System.LastTMRateHdr
+
+    End_Procedure
+
+End_Class

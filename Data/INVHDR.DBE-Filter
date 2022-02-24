@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<filters><ddofilters><tablename>INVHDR</tablename><tablenumber>14</tablenumber><filter><columnname>QBPaidFlag</columnname><mode>Eq</mode><value>0</value><iscolumn></iscolumn></filter><filter><columnname>VoidFlag</columnname><mode>Eq</mode><value>0</value><iscolumn></iscolumn></filter></ddofilters></filters>

@@ -1,0 +1,1922 @@
+Use TempusPrecompile.pkg
+Use cCJCommandBarSystem.pkg
+Use cRPCServer.pkg  // To control from one Editor to another.
+//Use cCJCommandBarSystem.pkg
+Use GlobalVariables.pkg
+
+
+
+//Define CE_CALC_ESTIMATE
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Define TEMPUS
+
+Object oApplication is a cGlblApplication
+    Set peHelpType to htHtmlHelp
+    Set pbEnterKeyAsTabKey to True
+    Set psCompany to "Interstate Companies"
+    Set psProduct to "Tempus"
+
+    Object oToolTip is a cToolTipController
+        Set pbBalloonStyle to True 
+        Set piIcon to TTI_INFO 
+        Set psTitle to "Tip"    
+        Move Self to ghoToolTipController
+    End_Object   
+    
+
+//    Object oRegistry is a cRegistry
+//    End_Object
+//
+//    Procedure OnCreate
+//        Boolean bOk bChecker
+//        String  sPath sReportOCX
+//        //
+//        Set phRootKey of oRegistry to HKEY_LOCAL_MACHINE
+//        Get OpenKey   of oRegistry ("Software\Data Access Worldwide\Visual Dataflex\15.1\Defaults") to bOk
+//        If (bOk) Begin
+//            Move False to bOk
+//            If (ValueExists(oRegistry, "VDFRootDir")) Begin
+//                Get ReadString of oRegistry "VDFRootDir" to sPath
+//                If (sPath <> "") Begin
+//                    Move (sPath + "Bin\Codejock.CommandBars.v13.0.0.ocx")   to sReportOCX
+//                    Get RegServer sReportOCX REGSERVER_REGISTER             to bOk
+////                    Move (sPath + "Bin\Codejock.SkinFramework.v12.0.2.ocx") to sReportOCX
+////                    Get RegServer sReportOCX REGSERVER_REGISTER             to bOk
+//                    Move (sPath + "Bin\Codejock.ReportControl.v13.3.1.ocx") to sReportOCX
+//                    File_Exist sReportOCX bOk
+//                    Move (sPath + "Bin\ChadoSpellText.ocx")                 to sReportOCX
+//                    Get RegServer sReportOCX REGSERVER_REGISTER             to bChecker
+////                    File_Exist sReportOCX bChecker
+//                End
+//            End
+//        End
+//        If (not(bOk)) Begin
+//            Get GetApplicationPath to sPath
+//            Move (sPath + "\Codejock.ReportControl.v13.3.1.ocx") to sReportOCX
+//            File_Exist sReportOCX bOk
+//        End
+//        If (bOk) Begin
+//            Get RegServer sReportOCX REGSERVER_REGISTER to bOk
+//        End
+//    End_Procedure
+End_Object
+
+//Define USE$REGCHECK
+//#IFDEF USE$REGCHECK
+//Use RegCheck.pkg
+//#ELSE
+//Send Info_Box "RegCheck is missing"
+//#ENDIF
+
+Object oMain is a cGlblPanel
+    Set Label to "Tempus"
+    Set Location to 25 111
+    Set Size to 300 450
+    //Set View_Mode to ViewMode_Zoom
+
+    Register_Object oClientArea
+
+    Object oCommandBarSystem is a cCJCommandBarSystem
+        Set pbTimerUpdate to True
+//        Send Activate_oMegellan of (oClientArea(oMain))
+        
+        Procedure OnCreateCommandBars
+            Handle hoOptions
+            Get OptionsObject to hoOptions
+            Forward Send OnCreateCommandBars
+        End_Procedure
+
+        Object oMenuBar is a cCJMenuBar
+
+            Object oFileMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup          
+                Set psCaption   to "&File"
+                Set psDescription to "Find, Save, Delete, Clear information or quit this application."
+                Set psCategory to "Menus"
+
+                Object oClearMenuItem is a cCJClearMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oClearAllMenu is a cCJClearAllMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oPromptMenuItem is a cCJPromptMenuItem
+                    Set pbAddToDesignerMenu to True
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oFindMenuItem is a cCJFindMenuItem
+                    Set pbAddToDesignerMenu to True
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oFindNextMenu is a cCJFindNextMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oFindPreviousMenu is a cCJFindPreviousMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oFindFirstMenu is a cCJFindFirstMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oFindLastMenu is a cCJFindLastMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oSaveMenuItem is a cCJSaveMenuItem
+                    Set pbAddToDesignerMenu to True
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oDeleteMenuItem is a cCJDeleteMenuItem
+                    Set pbAddToDesignerMenu to True
+                End_Object
+
+                Object oExitMenu is a cCJExitMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+            End_Object
+            
+  //          ======================================================================
+  
+            Object ooMenuButtonsMenuItem is a cCJMenuItem
+                    Set psCaption to "Buttons Menu"
+                    Set psTooltip to "MenuButtons"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oMenuButtons of hoClient
+                    End_Procedure
+                End_Object
+
+            Object oViewMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup
+                Set psCaption to "Pulldown Menu"
+                Set psToolTip to "View"
+                Set psDescription to "Available Views"
+
+                Object oMagellanDatabaseNavigatorMenuItem is a cCJMenuItem
+                    Set psCaption to "Search Engine"
+                    Set psTooltip to "Magellan - Database Navigator"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oMegellan of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oasMenuItem is a cCJMenuItem
+                    Set psCaption to "Customers - Contacts - Locations"
+                    Set psTooltip to "Customers - Contacts - Locations"
+                    Set peControlType to xtpControlPopup
+                   
+
+                    Object oOrganizationEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Customer Entry/Edit"
+                        Set psTooltip to "Organization Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oCustomerEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oContactEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Contact Entry/Edit"
+                        Set psTooltip to "Contact Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oContactEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oLocationEntryEditMenuItem1 is a cCJMenuItem
+                        Set psCaption to "Location Entry/Edit"
+                        Set psTooltip to "Location Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oLocationEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oOperationsEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Price Lists"
+                        Set psTooltip to "Price List / Operations Entry"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oOperationsEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oAreaStandardsMenuItem is a cCJMenuItem
+                        Set psCaption to "Areas Entry/Edit "
+                        Set psTooltip to "Area Standards"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oAreas of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oSnowbookMenuItem is a cCJMenuItem
+                        Set psCaption to "Snowbooks"
+                        Set psTooltip to "Snowbooks"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oSnowbook of hoClient
+                        End_Procedure
+                    End_Object             
+                End_Object
+
+                Object oEmployerEmployeeMenuItem is a cCJMenuItem
+                    Set psCaption to "Employer - Employee - Equipment"
+                    Set psTooltip to "Employer/Employee"
+                    Set peControlType to xtpControlPopup
+
+                    Object oEmployerEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Employer Entry/Edit"
+                        Set psTooltip to "Employer Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oEmployerEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oEmployeeEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Employee Entry/Edit"
+                        Set psTooltip to "Employee Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oEmployeeEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oEmployerContractMenuItem is a cCJMenuItem
+                        Set psCaption to "Employer Contract"
+                        Set psTooltip to "EmployerContract"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oEmployerContract of hoClient
+                        End_Procedure
+                    End_Object
+                End_Object
+
+                Object oQuotesMenuItem is a cCJMenuItem
+                    Set psCaption to "Quotes - Proposals - Sales Reps"
+                    Set psTooltip to "Quotes"
+                    Set peControlType to xtpControlPopup
+
+                    Object oEstimatingMenuItem is a cCJMenuItem
+                        Set psCaption to "Estimating"
+                        Set psTooltip to "Estimating"
+                        
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Runprogram background "TempusEstimating.exe"
+                        End_Procedure
+                        
+                    End_Object
+
+                    Object oQuoteEntryMenuItem is a cCJMenuItem
+                        Set psCaption to "Quote Entry/Edit"
+                        Set psTooltip to "Quote Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oQuoteEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oInvoiceReviewMenuItem is a cCJMenuItem
+                        Set psCaption to "Invoice Review"
+                        Set psTooltip to "Invoice Review"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oInvoiceReview of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oPrintQuotesMenuItem1 is a cCJMenuItem
+                        Set psCaption to "Print Quotes"
+                        Set psTooltip to "Print Quotes"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oPrintQuotes of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object ooContactEditMenuItem1 is a cCJMenuItem
+                        Set psCaption to "Contact Edit"
+                        Set psTooltip to "Contact Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oContactEdit of hoClient
+                        End_Procedure
+                    End_Object
+                   
+                End_Object
+
+                Object oJobCostingMenuItem is a cCJMenuItem
+                    Set psCaption to "Order Entry - Job Costing"
+                    Set psTooltip to "Job Costing"
+                    Set peControlType to xtpControlPopup
+
+                    Object oOrderEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Order Entry/Edit"
+                        Set psTooltip to "Order Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oOrderEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oPMOpenOrdersMenuItem is a cCJMenuItem
+                        Set psCaption to "Open Orders"
+                        Set psTooltip to "Open Orders"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oOrdersOpen of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oCostTransactionsEntryEditMenuItem is a cCJMenuItem
+                        Set pbActiveUpdate to True
+                        Set psCaption to "Transactions Entry/Edit"
+                        Set psTooltip to "Cost Transactions Entry/Edit"
+                        
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            //Send Activate_oTransactionEntry of hoClient
+                            Send Activate_oTransactions of hoClient
+                        End_Procedure
+
+                    End_Object
+
+                    Object oTransactionsMenuItem is a cCJMenuItem
+                        Set psCaption to "Transactions (NEW)"
+                        Set psTooltip to "Transactions (NEW)"
+                        
+                        Function IsVisible Returns Boolean 
+                            Function_Return (giUserRights GE 90) // System Admin Only
+                        End_Function
+                        
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oTransactions of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oJobCostsMenuItem is a cCJMenuItem
+                        Set psCaption to "Job Costs Entry/Edit"
+                        Set psTooltip to "Job Costs"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oJobCost of hoClient
+                        End_Procedure
+                        
+//                        Boolean bHasRights
+//                        Get HasRightsToView of oTransactionEntry to bHasRights
+//                        Set pbEnabled to bHasRights
+                                                
+                    End_Object
+//
+//                    Object oChangeOrderEntryEditMenuItem is a cCJMenuItem
+//                        Set psCaption to "Change Order Entry/Edit"
+//                        Set psTooltip to "Change Order Entry/Edit"
+//                    
+//                        Procedure OnExecute Variant vCommandBarControl
+//                            Handle hoClient
+//                            Get Client_Id to hoClient
+//                            Send Activate_oChangeOrder of hoClient
+//                        End_Procedure
+//                    End_Object
+                End_Object
+
+                Object oInvoicesBillingMenuItem is a cCJMenuItem
+                    Set psCaption to "Invoices - Billing"
+                    Set psTooltip to "Invoices/Billing"
+                    Set peControlType to xtpControlPopup
+
+                    Object oInvoiceEditorMenuItem is a cCJMenuItem
+                        Set psCaption to "Invoice Editor"
+                        Set psTooltip to "Invoice Editor"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oInvoiceEditor of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oCreditMemoMenuItem is a cCJMenuItem
+                        Set psCaption to "Credit Memo"
+                        Set psTooltip to "Credit Memo"
+                        
+                        Function IsVisible Returns Boolean 
+                            Function_Return (giUserRights GE 70) // Administration 70
+                        End_Function
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oCreditMemo of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oSnowInvoiceFinalEditMenuItem is a cCJMenuItem
+                        Set psCaption to "QB Invoice Edit"
+                        Set psTooltip to "QB Invoice Edit"
+                        
+                        Function IsVisible Returns Boolean 
+                            Function_Return (giUserRights GE 70) // Administration 70
+                        End_Function
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            //Send Activate_oInvoiceCorrect of hoClient
+                            Send Activate_oInvoiceFinalEdit of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oInvoiceHistoryMenuItem is a cCJMenuItem
+                        Set psCaption to "Invoice History"
+                        Set psTooltip to "Invoice History"
+                        
+                        Function IsVisible Returns Boolean 
+                            Function_Return (giUserRights GE 70) // Administration 70
+                        End_Function
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oInvoiceHistory of hoClient
+                        End_Procedure
+                    End_Object
+
+                End_Object
+
+                Object oSystemMaintenanceMenuItem is a cCJMenuItem
+                    Set pbActiveUpdate to True
+                    Set psCaption to "System Maintenance"
+                    Set psTooltip to "System Maintenance"
+                    Set peControlType to xtpControlPopup
+                    
+                    Function IsVisible Returns Boolean 
+                        Function_Return (giUserRights GE 70) // Administration 70
+                    End_Function
+
+                    Object oWebsiteUserMaintenanceMenuItem is a cCJMenuItem
+                        Set psCaption to "User / Login Entry/Edit"
+                        Set psTooltip to "User / Login Maintenance"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oUser of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oQuickBooksMenuItem is a cCJMenuItem
+                        Set psCaption to "QuickBooks"
+                        Set psTooltip to "QuickBooks"
+                        Set peControlType to xtpControlPopup
+
+                        Object oSalesTaxMenuItem is a cCJMenuItem
+                            Set psCaption to "SalesTax (QB)"
+                            Set psTooltip to "SalesTax"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oSalesTax of hoClient
+                            End_Procedure
+                        End_Object
+
+                        Object oTermsMenuItem is a cCJMenuItem
+                            Set psCaption to "Terms (QB)"
+                            Set psTooltip to "Terms"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oTerms of hoClient
+                            End_Procedure
+                        End_Object
+                    End_Object
+
+                    Object oSystemMenuItem is a cCJMenuItem
+                        Set psCaption to "System Settings"
+                        Set psTooltip to "System Settings"
+                        Set peControlType to xtpControlPopup
+
+                        Object oMasterOperationEntryEditMenuItem is a cCJMenuItem
+                            Set psCaption to "Master Operations"
+                            Set psTooltip to "Master Operations"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oMastOps of hoClient
+                            End_Procedure
+                        End_Object
+
+                        Object oOptionsMenuItem is a cCJMenuItem
+                            Set psCaption to "Work Type / Divisions"
+                            Set psTooltip to "Work Type / Divisions"
+                            
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oWorkTypeDivisions of hoClient
+                            End_Procedure
+                        End_Object
+
+                        Object oDivisionMgrMenuItem is a cCJMenuItem
+                            Set psCaption to "Division Manager"
+                            Set psTooltip to "Division Manager"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oDivisionMgr of hoClient
+                            End_Procedure
+                        End_Object
+                    End_Object
+
+                    Object oWeatherEntryMenuItem is a cCJMenuItem
+                        Set psCaption to "Weather Entry"
+                        Set psTooltip to "WeatherEntry"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oWeatherEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oSalesRepresentativeEntryEditMenuItem is a cCJMenuItem
+                        Set psCaption to "Sales Representative Entry/Edit"
+                        Set psTooltip to "Sales Representative Entry/Edit"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oSalesEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oCallCenterNotesMenuItem is a cCJMenuItem
+                        Set psCaption to "Call Center Notes"
+                        Set psTooltip to "CallCenterNotes"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oCallCenterNotes of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oTransactionUtilityMenuItem is a cCJMenuItem
+                        Set psCaption to "Transaction Utility"
+                        Set psTooltip to "Transaction Utility"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oTransactionUtility of hoClient
+                        End_Procedure
+                    End_Object
+
+//                    Object ooInvoiceCorrection2MenuItem is a cCJMenuItem
+//                        Set psCaption to "Posted Invoice Correction"
+//                        Set psTooltip to "oInvoiceCorrection2"
+//                    
+//                        Procedure OnExecute Variant vCommandBarControl
+//                            Handle hoClient
+//                            Get Client_Id to hoClient
+//                            Send Activate_oInvoiceCorrection2 of hoClient
+//                        End_Procedure
+//                    End_Object
+
+                    Object oOrganizationUtilityMenuItem is a cCJMenuItem
+                        Set psCaption to "Organization Utility"
+                        Set psTooltip to "Organization Utility"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oCustomerUtility of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oLocationUtilityMenuItem is a cCJMenuItem
+                        Set psCaption to "Location Utility"
+                        Set psTooltip to "Location Utility"
+                    
+//                        Procedure OnExecute Variant vCommandBarControl
+//                            Handle hoClient
+//                            Get Client_Id to hoClient
+//                            Send Activate_oLocationUtility of hoClient
+//                        End_Procedure
+                    End_Object
+
+                    Object oReassignCustomerUtilityMenuItem is a cCJMenuItem
+                        Set psCaption to "Reassign Customer Utility"
+                        Set psTooltip to "Reassign Customer Utility"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oReassignCustomer of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oContactUtilityMenuItem is a cCJMenuItem
+                        Set psCaption to "Contact Utility"
+                        Set psTooltip to "Contact Utility"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oContactUtility of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oAreaStandardsMenuItem1 is a cCJMenuItem
+                        Set psCaption to "Area Information Entry/Edit"
+                        Set psTooltip to "Area Standards"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oAreas of hoClient
+                        End_Procedure
+                    End_Object
+
+//                    Object ooBudgetSalesEntryMenuItem1 is a cCJMenuItem
+//                        Set psCaption to "Sales Budget Entry"
+//                        Set psTooltip to "oBudgetSalesEntry"
+//                    
+//                        Procedure OnExecute Variant vCommandBarControl
+//                            Handle hoClient
+//                            Get Client_Id to hoClient
+//                            Send Activate_oBudgetSalesEntry of hoClient
+//                        End_Procedure
+//                    End_Object
+
+                    Object ooSnowControlSheetMenuItem is a cCJMenuItem
+                        Set psCaption to "Snow Control Sheet"
+                        Set psTooltip to "Snow Control Sheet - Weather"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oSnowControlSheet of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oProjectsMenuItem is a cCJMenuItem
+                        Set psCaption to "Projects"
+                        Set psTooltip to "Projects"
+                        
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oProject of hoClient
+                        End_Procedure
+                        
+                    End_Object
+
+//                    Object ooPMInvoiceMenuItem is a cCJMenuItem
+//                        Set psCaption to "In Development"
+//                        Set psTooltip to "oPM_Invoice"
+//                    
+//                        Procedure OnExecute Variant vCommandBarControl
+//                            Handle hoClient
+//                            Get Client_Id to hoClient
+//                            Send Activate_oPM_Invoice of hoClient
+//                        End_Procedure
+//                    End_Object
+   
+                End_Object //oSystemMaintenance
+
+                Object oFinancialMenuItem is a cCJMenuItem
+                    Set psCaption to "Financial"
+                    Set psTooltip to "Financial"
+                    Set peControlType to xtpControlPopup
+                    
+                    Function IsVisible Returns Boolean 
+                        Function_Return (giUserRights GE 70) // Administration 70
+                    End_Function
+
+                    Object oVendorInvoiceMenuItem is a cCJMenuItem
+                        Set psCaption to "Vendor Invoice"
+                        Set psTooltip to "VendorInvoice"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oVendorInvoice of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oCustomerContractsMenuItem is a cCJMenuItem
+                        Set psCaption to "CustomerContracts"
+                        Set psTooltip to "CustomerContracts"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oCustomerContracts of hoClient
+                        End_Procedure
+                    End_Object
+                End_Object
+
+//                Object oSearchEngineMenuItem is a cCJMenuItem
+//                    Set psCaption to "SearchEngine"
+//                    Set psTooltip to "SearchEngine"
+//                
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_oSearchEngine of hoClient
+//                    End_Procedure
+//                End_Object
+//
+
+//                Object oEstimateMenuItem is a cCJMenuItem
+//                    Set psCaption to "Estimate"
+//                    Set psTooltip to "Estimate"
+//                
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_oEstimate of hoClient
+//                    End_Procedure
+//                End_Object
+
+//                Object ooOdersManagementMenuItem is a cCJMenuItem
+//                    Set psCaption to "oOdersManagement"
+//                    Set psTooltip to "oOdersManagement"
+//                
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_oOdersManagement of hoClient
+//                    End_Procedure
+//                End_Object
+
+//                Object ooProspectEntryMenuItem is a cCJMenuItem
+//                    Set psCaption to "oProspectEntry"
+//                    Set psTooltip to "oProspectEntry"
+//                
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_oProspectEntry of hoClient
+//                    End_Procedure
+//                End_Object
+
+                
+
+            End_Object //viewMenu
+            
+            // SYSTEM ADMIN - Tools
+            
+            Object oViewMenu is a cCJMenuItem
+                Set pbActiveUpdate to True
+                Set peControlType to xtpControlPopup
+                Set psCaption to "System Admin"
+                Set psToolTip to "System Admin Only"
+                Set psDescription to "System Admin - Tools"
+                
+                Function IsVisible Returns Boolean 
+                    Function_Return (giUserRights GE 90) // System Admin Only
+                End_Function
+
+                Object oCrystalReportsMenuItem1 is a cCJMenuItem
+                    Set psCaption to "Crystal Reports Entry/Edit"
+                    Set psTooltip to "Crystal Reports"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oCrystal of hoClient
+                    End_Procedure
+                End_Object
+
+                Object ooOpersSequenceUtilityMenuItem1 is a cCJMenuItem
+                    Set psCaption to "Opers Sequence Utility"
+                    Set psTooltip to "oOpersSequenceUtility"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oOpersSequenceUtility of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oRequestTypeEntryMenuItem is a cCJMenuItem
+                    Set psCaption to "RequestTypeEntry"
+                    Set psTooltip to "RequestTypeEntry"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oRequestTypeEntry of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oSystemConfigurationMenuItem is a cCJMenuItem
+                    Set psCaption to "System Configuration Editor"
+                    Set psTooltip to "System Configuration"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oSystem of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oEquipmentMastOpRelationUtilityMenuItem is a cCJMenuItem
+                    Set psCaption to "Equipment/MastOp Relation Utility"
+                    Set psTooltip to "Equipment/MastOp Relation Utility"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oEquipMastopUtility of hoClient
+                    End_Procedure
+                End_Object
+
+                Object ooOpersMastOpUtilityMenuItem is a cCJMenuItem
+                    Set psCaption to "Opers MastOp Utility"
+                    Set psTooltip to "Opers MastOp Utility"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oOpersMastOpUtility of hoClient
+                    End_Procedure
+                End_Object
+                
+                Object ooOpersMastOpUtilityMenuItem is a cCJMenuItem
+                    Set psCaption to "Opers Tools"
+                    Set psTooltip to "Opers Tools"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oOpersTools of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oMassupdateproceduresMenuItem is a cCJMenuItem
+                    Set psCaption to "Mass update procedures"
+                    Set psTooltip to "Mass update procedures"
+                    
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oMassUpdateProcedures of hoClient
+                    End_Procedure
+                    
+                End_Object
+
+                Object oUserRightsMenuItem is a cCJMenuItem
+                    Set psCaption to "UserRights"
+                    Set psTooltip to "UserRights"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oUserRights of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oJobFeeMassDistributerMenuItem is a cCJMenuItem
+                    Set psCaption to "JobFeeMassDistributer"
+                    Set psTooltip to "JobFeeMassDistributer"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oJobFeeMassDistributer of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oWebAppMenuItem is a cCJMenuItem
+                    Set psCaption to "WebApp"
+                    Set psTooltip to "WebApp"
+                    Set peControlType to xtpControlPopup
+
+                    Object oWebAppUserMenuItem is a cCJMenuItem
+                        Set psCaption to "User Maintenance"
+                        Set psTooltip to "WebAppUser Maintenance"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oWebAppUser of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oWebAppUserRightsEntryMenuItem is a cCJMenuItem
+                        Set psCaption to "User Rights"
+                        Set psTooltip to "WebAppUserRightsEntry"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oWebAppUserRightsEntry of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oViewAccessRightsMenuItem is a cCJMenuItem
+                        Set psCaption to "View Access Rights"
+                        Set psTooltip to "View Access Rights"
+
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oViewAccess of hoClient
+                        End_Procedure
+                        
+                        
+                    End_Object
+                End_Object
+
+                Object oUtilitiesMenuItem is a cCJMenuItem
+                    Set psCaption to "Utilities"
+                    Set psTooltip to "Utilities"
+      
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oUtilities of hoClient
+                    End_Procedure
+                    
+                End_Object
+
+                Object oAPFormPopMenuItem is a cCJMenuItem
+                    Set psCaption to "APForm (Modal Dialog)"
+                    Set psTooltip to "APForm (Modal Dialog)"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient   
+                        Boolean bSuccess                               
+                        Get Client_Id to hoClient                        
+                        Register_Object oAPForm
+                        //Send Popup_Modal of (oAPForm(hoClient))
+                        Get PromptAPForm of oAPForm 6140 to bSuccess
+                    End_Procedure
+                End_Object
+
+                Object oOpenOrdersMenuItem is a cCJMenuItem
+                    Set psCaption to "Open Orders (NEW)"
+                    Set psTooltip to "Open Orders (NEW)"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oOpenOrders of hoClient
+                    End_Procedure
+                End_Object
+                
+                Object oDasboardMenuItem is a cCJMenuItem
+                    Set psCaption to "Dashboard (NEW)"
+                    Set psTooltip to "Personalized"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oDashboard of hoClient
+                    End_Procedure
+                End_Object                
+
+                Object oFormstackSignMenuItem is a cCJMenuItem
+                    Set psCaption to "FormstackSign"
+                    Set psTooltip to "FormstackSign"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oFormstackSign of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oRESTTesterMenuItem is a cCJMenuItem
+                    Set psCaption to "REST Tester"
+                    Set psTooltip to "REST Tester"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oRESTTest of hoClient
+                    End_Procedure
+                End_Object
+                                
+            End_Object
+            
+            Object oReportMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup
+                Set psCaption to "&Reports"
+                Set psToolTip to "Reports"
+                Set psDescription to "Available Reports"
+
+//                Object ooOpenTransactionReportMenuItem is a cCJMenuItem
+//                    Set psCaption to "Open Transaction Report"
+//                    Set psTooltip to "Open Transaction Report"
+//                
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_oOpenTransactionReport of hoClient
+//                    End_Procedure
+//                End_Object
+
+                Object oCrystalReportsMenuItem is a cCJMenuItem
+                    Set psCaption to "Crystal Report Launcher"
+                    Set psTooltip to "Crystal Reports"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oCrystalReportLauncher of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oTransactionsMenuItem1 is a cCJMenuItem
+                    Set psCaption to "Transactions"
+                    Set psTooltip to "Transactions"
+                    Set peControlType to xtpControlPopup
+
+                    Object oTransactionsByJobNumberMenuItem is a cCJMenuItem
+                        Set psCaption to "By Job Number"
+                        Set psTooltip to "Requires Job Number and Date Range - Grouped By Day"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oTransactionsByJobNumberReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oTransactionsByEmployeeMenuItem is a cCJMenuItem
+                        Set psCaption to "By Employee"
+                        Set psTooltip to "Requires Job Number and Date Range - Grouped By Day"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oTransactionsByEmployeeReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oTransactionsByAreaMenuItem is a cCJMenuItem
+                        Set psCaption to "By Area"
+                        Set psTooltip to "Requires Area Number and Date Range - Grouped by Location"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oTransactionsByAreaReportView of hoClient
+                        End_Procedure
+                    End_Object
+                End_Object
+
+                Object oOrderMenuItem is a cCJMenuItem
+                    Set psCaption to "Order"
+                    Set psTooltip to "Order"
+                    Set peControlType to xtpControlPopup
+
+                    Object oJobSheetMenuItem is a cCJMenuItem
+                        Set psCaption to "JobSheet"
+                        Set psTooltip to "JobSheet"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oJobSheetReportView of hoClient
+                        End_Procedure
+                        
+                    End_Object
+
+                    Object oOrderInvoicePreviewMenuItem is a cCJMenuItem
+                        Set psCaption to "InvoicePreview"
+                        Set psTooltip to "OrderInvoicePreview"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oOrderInvoicePreviewReportView of hoClient
+                        End_Procedure
+                    End_Object
+                    
+                End_Object
+
+                Object oSubcontractorMenuItem is a cCJMenuItem
+                    Set psCaption to "Contractor"
+                    Set psTooltip to "Subcontractor"
+                    Set peControlType to xtpControlPopup
+
+                    Object oEmployeeListMenuItem is a cCJMenuItem
+                        Set psCaption to "Employee List"
+                        Set psTooltip to "EmployeeList"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oEmployeeListReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oSubcontractorAgreementMenuItem is a cCJMenuItem
+                        Set psCaption to "SubcontractorAgreement"
+                        Set psTooltip to "SubcontractorAgreement"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oSubcontractorAgreementReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oUnInvoicedTransactionsV2MenuItem is a cCJMenuItem
+                        Set psCaption to "Un-Invoiced Transactions"
+                        Set psTooltip to "UnInvoiced Transactions"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oUnInvoicedTransactionsV2ReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oVendorBillingInstructionsMenuItem is a cCJMenuItem
+                        Set psCaption to "Billing Instructions - Contractor Portal"
+                        Set psTooltip to "Billing Instructions - Contractor Portal"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oVendor_BillingInstructionsReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oVendorTempusFieldInstructionsMenuItem is a cCJMenuItem
+                        Set psCaption to "Tempus Field - App Instructions"
+                        Set psTooltip to "Tempus Field - App Instructions"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oVendor_TempusFieldInstructionsReportView of hoClient
+                        End_Procedure
+                    End_Object
+                End_Object
+
+                Object oCustomerMenuItem is a cCJMenuItem
+                    Set psCaption to "Customers"
+                    Set psTooltip to "Customers"
+                    Set peControlType to xtpControlPopup
+
+                    Object oAllCustomerMenuItem is a cCJMenuItem
+                        Set psCaption to "All Customers"
+                        Set psTooltip to "All Customers"
+                    End_Object
+
+                    Object oPropertyManagerMenuItem is a cCJMenuItem
+                        Set psCaption to "Property Manager"
+                        Set psTooltip to "Property Manager"
+                        Set peControlType to xtpControlPopup
+
+                        Object oPropertyManagerServiceContactMenuItem is a cCJMenuItem
+                            Set psCaption to "Service Contact"
+                            Set psTooltip to "Property Manager Service Contact"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oPropertyManagerServiceContactReportView of hoClient
+                            End_Procedure
+                        End_Object
+
+                        Object oPropertyManagerPhoneInstructionsAndroidMenuItem is a cCJMenuItem
+                            Set psCaption to "Android App Instructions"
+                            Set psTooltip to "iPhone App Instructions"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oPropertyManagerPhoneInstructions_AndroidReportView of hoClient
+                            End_Procedure
+                        End_Object
+
+                        Object oPropertyManagerPhoneInstructionsiPhoneMenuItem is a cCJMenuItem
+                            Set psCaption to "iPhone App Instructions"
+                            Set psTooltip to "PropertyManager-PhoneInstructions_iPhone"
+                        
+                            Procedure OnExecute Variant vCommandBarControl
+                                Handle hoClient
+                                Get Client_Id to hoClient
+                                Send Activate_oPropertyManagerPhoneInstructions_iPhoneReportView of hoClient
+                            End_Procedure
+                        End_Object
+                    End_Object
+                End_Object
+
+                Object oInvoicesMenuItem is a cCJMenuItem
+                    Set psCaption to "Invoices"
+                    Set psTooltip to "Invoices"
+                    Set peControlType to xtpControlPopup
+
+                    Object oAPFormMenuItem is a cCJMenuItem
+                        Set psCaption to "APForm"
+                        Set psTooltip to "APForm"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oAPFormReportView of hoClient
+                        End_Procedure
+                    End_Object
+
+                    Object oQBInvoiceRecapReportMenuItem is a cCJMenuItem
+                        Set psCaption to "QB Invoice Recap"
+                        Set psTooltip to "QBInvoiceRecapReport"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oQBInvoiceRecapReportReportView of hoClient
+                        End_Procedure
+                    End_Object
+                End_Object
+
+                Object oEstimateMenuItem is a cCJMenuItem
+                    Set psCaption to "Estimate"
+                    Set psTooltip to "Estimate"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oEstimateReportView of hoClient
+                    End_Procedure
+                End_Object
+
+                Object oSnowbooksMenuItem is a cCJMenuItem
+                    Set psCaption to "Snowbooks"
+                    Set psTooltip to "Snowbooks"
+                    Set peControlType to xtpControlPopup
+
+                    Object oSnowbooksLocationMenuItem is a cCJMenuItem
+                        Set psCaption to "By Job#"
+                        Set psTooltip to "By Job#"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oSnowbooksLocationOrderReportView of hoClient
+                        End_Procedure
+                    End_Object
+                    
+                    Object oSnowbooksLocationMenuItem is a cCJMenuItem
+                        Set psCaption to "By Location#"
+                        Set psTooltip to "By Location#"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oSnowbooksLocationReportView of hoClient
+                        End_Procedure
+                    End_Object
+                    
+                    Object oAreaSnowbooksPrintMenuItem is a cCJMenuItem
+                        Set psCaption to "By Area"
+                        Set psTooltip to "By Area"
+                    
+                        Procedure OnExecute Variant vCommandBarControl
+                            Handle hoClient
+                            Get Client_Id to hoClient
+                            Send Activate_oAreaSnowbooksPrintReportView of hoClient
+                        End_Procedure
+                    End_Object
+                End_Object
+
+                Object oEquipmentListMenuItem is a cCJMenuItem
+                    Set psCaption to "EquipmentList"
+                    Set psTooltip to "EquipmentList"
+                
+                    Procedure OnExecute Variant vCommandBarControl
+                        Handle hoClient
+                        Get Client_Id to hoClient
+                        Send Activate_oEquipmentListReportView of hoClient
+                    End_Procedure
+                End_Object
+
+//                Object oPrintEquipmentMenuItem is a cCJMenuItem
+//                    Set psCaption to "Print Equipment"
+//                    Set psTooltip to "Print Equipment"
+//                    
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_PrintEquipment of hoClient
+//                    End_Procedure
+//                End_Object
+//
+//                Object oPrintEmployeesMenuItem is a cCJMenuItem
+//                    Set psCaption to "Print Employees"
+//                    Set psTooltip to "Print Employees"
+//                                        
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_PrintEmployees of hoClient
+//                    End_Procedure
+//                End_Object
+                
+//                Object oInvoicePostingMenuItem is a cCJMenuItem
+//                    Set psCaption to "Invoice Posting"
+//                    Set psTooltip to "Invoice Posting"
+//                
+//                    Procedure OnExecute Variant vCommandBarControl
+//                        Handle hoClient
+//                        Get Client_Id to hoClient
+//                        Send Activate_oInvoicePosting of hoClient
+//                    End_Procedure
+//                End_Object
+        
+        
+        End_Object
+               
+        
+
+            Object oNavigateMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup      
+                Set psCaption to "&Navigate"    
+                Set psTooltip to "Navigate"    
+                Set psDescription to "Move to different areas of the application"
+
+                Object oNextAreaMenu is a cCJNextAreaMenu
+                End_Object
+
+                Object oPriorAreaMenu is a cCJPriorAreaMenu
+                End_Object
+
+                Object oNextViewMenu is a cCJNextViewMenu
+                End_Object
+
+                Object oPriorViewMenu is a cCJPriorViewMenu
+                End_Object
+
+                Object oPromptMenu is a cCJPromptMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oZoomMenu is a cCJZoomMenuItem
+                End_Object
+
+            End_Object
+
+            Object oWindowMenu is a cCJMDIWindowsMenuItem
+                Set peControlType to xtpControlPopup
+                Set psCaption to "&Window"
+                Set psToolTip to "Window"
+                Set psDescription to "Display Current Views and set other display options."    
+
+                // These are the static windows items. More will be created in onInitPopup 
+                Object oDisplayOptionsMenu is a cCJMenuItem
+                    Set peControlType to xtpControlPopup          
+                    Set psCaption to "&Display Options"
+                    Set psToolTip to "Display Options"
+                    Set psDescription to "Set display options"
+
+                    Object oStatusbarMenu is a cCJStatusbarMenuItem
+                    End_Object
+
+                    Object oAutoArrangeIconsMenu is a cCJAutoArrangeIconsMenuItem
+                    End_Object
+
+                    Object oRestoreMenusMenu is a cCJRestoreMenusMenuItem
+                        Set pbControlBeginGroup to True
+                    End_Object
+
+                End_Object
+
+                Object oCascadeMenu is a cCJCascadeMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oHorizTile is a cCJTileHorizontally
+                End_Object
+
+                Object oVertTile is a cCJTileVertically
+                End_Object
+
+                Object oMinimizeMenuItem is a cCJMinimizeWindowsMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+                Object oRestoreMenuItem is a cCJRestoreWindowsMenuItem
+                End_Object
+
+                Object oArrangeIconsMenuItem is a cCJAutoArrangeIconsMenuItem
+                    Set pbControlBeginGroup to True
+                End_Object
+
+            End_Object
+
+            Object oHelpMenu is a cCJMenuItem
+                Set peControlType to xtpControlPopup    
+                Set psCaption to "&Help"
+                Set psDescription to "Access Information for learning and using this DataFlex application."
+                Set psToolTip to "Help"
+
+                Object oHelpMenuItem is a cCJHelpMenuItem 
+                End_Object
+
+                Object oAboutMenuItem is a cCJAboutMenuItem
+                End_Object
+
+            End_Object
+
+
+            Object oLogoutMenuItem is a cCJMenuItem
+                Set psCaption to "Logout"
+                Set psTooltip to "Logout"
+                
+                Procedure OnExecute Variant vCommandBarControl
+                    Send DoProgramLogout of (oClientArea(oMain))
+                End_Procedure
+            End_Object
+
+        End_Object
+
+        Object oFindToolBar is a cCJToolbar
+            Set psTitle to "Finding Toolbar"
+
+            Object oFindFirstTool is a cCJFindFirstMenuItem
+            End_Object
+
+            Object oFindPreviousTool is a cCJFindPreviousMenuItem
+            End_Object
+
+            Object oFindMenuTool is a cCJFindMenuItem
+            End_Object
+
+            Object oFindNextTool is a cCJFindNextMenuItem
+            End_Object
+
+            Object oFindLastTool is a cCJFindLastMenuItem
+            End_Object
+
+            Object oPromptToolItem is a cCJPromptMenuItem
+                Set pbControlBeginGroup to True
+            End_Object
+
+        End_Object
+
+        Object oFileToolBar is a cCJToolbar
+            Set psTitle to "Data Entry Toolbar"
+
+            Object oClearToolItem is a cCJClearMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+            End_Object
+
+            Object oClearAllToolItem2 is a cCJClearAllMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+            End_Object
+
+            Object oSaveToolItem is a cCJSaveMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+                Set pbControlBeginGroup to True
+            End_Object
+
+            Object oDeleteToolItem is a cCJDeleteMenuItem
+                Set peControlStyle to xtpButtonIconAndCaption
+            End_Object
+
+        End_Object
+
+        Object oEditToolBar is a cCJToolbar
+            Set psTitle to "Edit Toolbar"
+
+            Object oCutToolbarItem is a cCJCutMenuItem
+            End_Object
+
+            Object oCopyToolbarItem is a cCJCopyMenuItem
+            End_Object
+
+            Object oPasteToolbarItem is a cCJPasteMenuItem
+            End_Object
+
+            Object oDeleteEditToolbarItem is a cCJDeleteEditMenuItem
+                Set pbControlBeginGroup to True
+            End_Object
+
+        End_Object
+
+        Object oStatusBar is a cCJStatusBar
+
+            Object oStatusPane1 is a cCJStatusBarPane
+                Set piID to sbpIDIdlePane
+                Set pbStyleStretch to True
+            End_Object
+
+            Object oStatusPane2 is a cCJStatusBarPane
+                Set phoViewPane to Self
+                Set pbStyleStretch to True
+            End_Object
+
+        End_Object
+
+    End_Object
+    
+    
+    // 
+    //-------------------------------------------------->
+    // REMOTE CALL PROCEDURE FROM TEMPUS TO ESTIMATING
+    //-------------------------------------------------->
+
+    Object oRPCClient is a cRPCClient
+        Set psServerName to "TempusEstimating"               // Name of the VDF programm which is the server.
+
+        RPC_External_Procedure DoCallFromClient String sStringData String sViewName
+    
+    End_Object
+
+
+    //-------------------------------------------------->
+    // REMOTE CALL PROCEDURE RECEIVE FROM TEMPUS
+    //-------------------------------------------------->
+    Object oRPCServer is a cRPCServer
+        Set ConnectName to "Tempus"        // Must be the same as the psServerName in the RPCClient
+
+        RPC_Procedure DoCallFromClient String sStringData String sViewName
+            Handle hoClient
+            Get Client_Id to hoClient
+
+            Send doCommunicateWithServerView to hoClient sStringData sViewName
+
+        RPC_End_Procedure
+
+    End_Object
+
+
+
+    Object oClientArea is a cGlblClientArea
+        Use TempusLogin.dg        
+        Use MonthCalendarPrompt.dg
+        Use cWSTransactionService.pkg
+        Use Rgb_Custom.pkg
+        Use PrintQuotes.rv
+        //Use Crews.vw // Removed 03/12/2020 - hasn't been used in 10+ years - BEN
+        Use OperationsProcess.bp
+        //Use MSWordMailMerge.bp // Removed 03/12/2020 - hasn't been used in 10+ years - BEN
+        Use CustomerUtility.vw
+        Use OrderProcess.bp
+        Use Project.vw
+        Use Megellan.vw
+        Use ContactWebUserProcess.bp
+        //Use LocationUtility.vw // Removed 11/17/2021 - hasn't bee used in many years - BEN
+        Use ContactUtility.vw
+        Use JobCost.vw
+        Use InvoicePosting.rv
+        Use EquipmentUtility.vw
+        Use TransactionUtility.vw
+        Use MenuButtons.vw
+        Use Dd_debug.dg
+        Use StdAbout.pkg
+        Use DataAttr.pkg
+        Use EmployeeEntry.vw
+        Use EmployerEntry.vw
+        Use CustomerEntry.vw
+        Use LocationEntry.vw
+        Use ContactEntry.vw
+        Use SalesEntry.vw
+        Use OperationsEntry.vw
+        Use OrderEntry.vw
+        Use TransactionEntry.vw
+        Use MastOps.vw
+        Use InvoiceEditor.vw
+        Use InvoiceCreationProcess.bp
+        //Use Weather.vw // Removed 03/16/2020 - hasn't been used in many years - BEN
+        Use Areas.vw
+        Use CollectTransactionsProcess.bp
+        Use System.vw
+        Use CustomerInvoice.rv
+        Use OpersUpdateProcess.bp
+        Use InvoiceHistory.vw
+        Use CrystalReportLauncher.rv
+        Use Crystal.vw
+        Use User.vw
+        Use CollectLocationNotesProcess.bp
+        Use QuoteEntry.vw
+        //Use Maillist.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use CollectAreaNotesProcess.bp
+        //Use EmployeeTime.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use ReassignCustomer.vw
+        //Use Divisions.vw  // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use InvoiceFinalEdit.vw
+        //Use ReferenceEntry.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use ReferencePick.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use ReferenceLists.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use ListReferences.rv // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use PendingQuoteReminder.bp // Removed 03/12/2020 - hasn't been developed yet - BEN
+        Use LocationPricing.rv
+        Use Snowbook.vw
+        //Use InvoiceCorrect.vw // Removed 03/12/2020 - USE InvoiceFinalEdit.vw - BEN
+        //Use InvoiceCorrection2.vw // Removed 03/12/2020 - USE InvoiceFinalEdit.vw - BEN
+        Use ContactEdit.vw
+        //Use PrintPM_Invoice.rv // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use QuoteCloseEdit.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use InvoiceReview.vw
+        Use MastOpsSeq.vw
+        Use OrdersOpen.vw
+        Use PrintJobSheet.rv
+        Use POInpusModalDialog.dg
+        //Use SnowProposalEntry.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use SnowSeasonal.rv // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use SnowTM.rv // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use SnowSpec.rv // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use SnowTMNoWalks.rv // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use ProspectEntry.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use EquipmentStatusUtility.vw
+        //Use BudgetSalesEntry.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use RequestTypeEntry.vw
+        Use EquipMastopUtility.vw
+        Use OpersTools.vw
+        Use OpersMastOpUtility.vw
+        Use OpersSequenceUtility.vw
+        Use SnowControlSheet.vw
+        Use TransactionCostCalculator.bp
+        Use SalesTax.vw
+        Use MassUpdateProcedures.vw
+        Use Utilities.vw
+        Use CreditMemo.vw
+        //Use MarketGroup.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        //Use InsuranceClassification.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use WorkType.vw
+        Use PrintCostSheet.rv
+        Use EmployerContract.vw
+        Use SubcontractorContract.rv
+        Use PrintEmployees.rv
+        Use PrintEquipment.rv
+        Use OpenOrders.vw
+        Use OpersProcess.bp
+        Use QuoteToEstimate.bp
+        Use UserInputDialog.dg
+        Use UserSelectionDialog.dg
+        //Use APForm.dg
+        Use PrintOrderDetail.rv
+        Use PrintProjectCostSheet.rv
+        Use UserRights.vw
+        Use VendorInvoice.vw
+        Use VendInvoiceReport.rv
+        Use WebAppUser.vw
+        Use UserMultiSelectionDialog.dg
+        Use VoidVendorInvoice.bp
+        Use CallCenterNotes.vw
+        Use DamageReport_SingleReport.rv
+        Use UnInvoicedTransactionsV2Report.rv
+        Use Dashboard.vw // Removed 03/12/2020 - hasn't been used in many years - BEN
+        Use TransactionsByJobNumberReport.rv
+        Use JobFeeMassDistributer.vw
+        Use Transactions.vw
+        Use JobSheetReport.rv
+        Use TransactionJobCostMove.bp
+        Use ReportSelection.vw
+        Use TransactionsByEmployeeReport.rv
+        Use TransactionsByAreaReport.rv
+        Use OrderInvoicePreviewReport.rv
+        Use WebAppUserRightsEntry.vw
+        Use PropertyManagerServiceContactReport.rv
+        Use PropertyManagerPhoneInstructions_AndroidReport.rv
+        Use PropertyManagerPhoneInstructions_iPhoneReport.rv
+        Use Terms.vw
+        Use QBInvoiceRecapReportReport.rv
+        Use EstimateReport.rv
+        Use SnowbooksLocationReport.rv
+        Use AreaSnowbooksPrintReport.rv
+        Use Vendor_BillingInstructionsReport.rv
+        Use Vendor_TempusFieldInstructionsReport.rv
+        Use ViewAccess.vw
+        Use WeatherEntry.vw
+        Use WeatherAddEdit.dg
+        Use DivisionMgr.vw
+        Use OrderEmailNotification.bp
+        Use FreeMultiSelectionDialog.dg
+        Use SubcontractorAgreementReport.rv
+        Use CustomEmailNotification.bp
+        Use EmailSend.dg
+        Use APForm.vw
+        Use APFormReport.rv
+        Use EmployeeListReport.rv
+        Use EquipmentListReport.rv
+        Use ContractDetails.dg
+        Use CustomerContracts.vw
+        Use FormstackSign.vw
+        Use RESTTest.vw
+        
+        //Use SearchEngine.vw
+        // BELOW THIS LINE ARE ALL ITEMS FROM TEMPUS ESTIMATING
+        // Tempus Estimating Implementation
+//        Use TempusEstimatingPrecompile.pkg
+//        Use StdAbout.pkg
+//        Use PrintJobSpecs.rv
+//        Use Estimate.vw
+//        Use PrintEstimate.rv
+//        Use CustomerEntry.vw
+//        Use ContactEntry.vw
+//        Use LocationEntry.vw
+//        Use Snowbook.vw
+//        Use EstimateReport.rv
+//        Use PropertyManagerPhoneInstructions_AndroidReport.rv
+//        Use PropertyManagerPhoneInstructions_iPhoneReport.rv
+//        Use PropertyManagerServiceContactReport.rv
+//        Use Estimate_DetailsReport.rv
+        // ABOVE THIS LINE ARE ALL ITEMS FROM TEMPUS ESTIMATING
+
+        
+        Procedure doCommunicateWithServerView String sMsg String sViewName
+            
+            // This can be any method you want
+            Case Begin
+                Case (sViewName = "oQuoteEntry")
+                Send Activate_oQuoteEntry
+                Send doReceiveMessage to oQuoteEntry sMsg
+                Case Break
+                Case (sViewName = "oOrderEntry")
+                Send Activate_oOrderEntry
+                Send doReceiveMessage to oOrderEntry sMsg
+                Case Break
+                Case Else
+                Send Info_Box "This View is not defined"
+            Case End
+        End_Procedure
+
+        Object oWSTransactionService is a cWSTransactionService
+            //
+            // Interface:
+            //
+            // Function wsGetNewTransactions Returns tWStNewTransaction[]
+            // Function wsUpdateCollectedTransactions tWStCollectedTransaction[] lltTransactions Returns integer
+            // Function wsGetNewLocationNotes Returns tWStLocnotes[]
+            // Function wsUpdateCollectedLocationNotes tWStLocnotes[] lltNotes Returns integer
+            // Function wsGetNewAreaNotes Returns tWStAreanote[]
+            // Function wsUpdateCollectedAreaNotes tWStAreanote[] lltNotes Returns integer
+            // Function wsUpdateMastOps tWStMastOps[] lltMastOpsUpdate Returns tWStMastOps[]
+            // Function wsUpdateAreas tWStAreas[] lltAreasUpdate Returns tWStAreas[]
+            // Function wsUpdateCustomer tWStCustomer[] lltCustomerUpdate Returns tWStCustomer[]
+            // Function wsUpdateLocation tWStLocation[] lltLocationUpdate Returns tWStLocation[]
+            // Function wsUpdateOpers tWStOpers[] lltOpersUpdate Returns tWStOpers[]
+            // Function wsUpdateOrder tWStOrder[] lltOrderUpdate Returns tWStOrder[]
+            // Function wsUpdateInvhdr tWStInvhdr[] lltInvhdrUpdate Returns tWStInvhdr[]
+            // Function wsUpdateEmployer tWStEmployer[] lltEmployerUpdate Returns tWStEmployer[]
+            // Function wsUpdateEmployee tWStEmployee[] lltEmployeeUpdate Returns tWStEmployee[]
+            // Function wsUpdateEquipmnt tWStEquipmnt[] lltEquipmntUpdate Returns tWStEquipmnt[]
+            // Function wsUpdateUser tWStUser[] lltUserUpdate Returns tWStUser[]
+            // Function wsUpdateReqtypes tWStReqtypes[] lltUpdate Returns tWStReqtypes[]
+            // Function wsGetOpenTransactions Returns tWStNewTransaction[]
+            // Procedure wsLogEvent integer lliEventType string lllpszEvent
+            //
+        
+            // phoSoapClientHelper
+            //     Setting this property will pop up a view that provides information
+            //     about the Soap (xml) data transfer. This can be useful in debugging.
+            //     If you use this you must make sure you USE the test view at the top
+            //     of your program/view by adding:   Use WebClientHelper.vw // oClientWSHelper
+            //Set phoSoapClientHelper to oClientWSHelper
+        End_Object
+        
+        Procedure DoProgramLogin
+            Boolean bValid
+            Get IsValidLogin of oLoginDialog to bValid
+            If (not(bValid)) Begin
+                Send Exit_Application
+            End
+            If (bValid) Begin
+                //Send Activate_oDashboard
+            End
+        End_Procedure  
+        
+        Procedure DoProgramLogout
+            Runprogram background "Tempus.exe"
+            Send Exit_Application
+        End_Procedure
+
+        Procedure Activate_About
+            Send DoAbout "" "" "" "" ""
+        End_Procedure
+
+        Procedure Activating
+            Forward Send Activating            
+        End_Procedure
+
+//        Procedure DoToggleDebugMode
+//            Boolean bDebug
+//            String  sTempDir
+//            //
+//            Get pbDebug of ghoApplication to bDebug
+//            Set pbDebug of ghoApplication to (not(bDebug))
+////            Send DoConfigureDebugButton of oToolBar (not(bDebug))
+//            //
+//            If (bDebug) Procedure_Return
+//            //
+////*dw*
+////            Get IsTempDirectory          to sTempDir
+////            Set psTempDir of oCalcEngine to sTempDir
+//            If (sTempDir = "") Begin
+//                Send Info_Box "TEMP Directory not configured on this workstation."
+//            End
+//        End_Procedure
+//        
+//        Set pbCalcEngine to True
+//        Send DoLoadStandards of oCalcEngine
+
+        On_Key Key_Ctrl+Key_F Send Activate_oMegellan
+    End_Object
+
+    External_Function GetACPex "GetACP" kernel32.dll Returns Integer
+    Procedure CheckCodePage 
+        Integer iPage 
+        Move (GetACPex()) to iPage
+        If (iPage = 65001) Begin 
+            Send UserError "Not Compatible with this version of windows \nhttps://support.dataaccess.com/Forums/showthread.php?64797-Recent-Microsoft-Changes-to-Windows-10-May-Impact-Functionality-and-or-Data-Integrity"
+            Send vShellExecute "OPEN" "https://support.dataaccess.com/Forums/showthread.php?64797-Recent-Microsoft-Changes-to-Windows-10-May-Impact-Functionality-and-or-Data-Integrity" "" "" 
+            Abort 
+        End
+    End_Procedure
+
+    Procedure OnActivateApp
+        Send CheckCodePage
+//        If (giCompanyIdno>0) Begin
+//            Set Label of oMain to ("Tempus [" * gsCompanyName * "(" + (String(giCompanyIdno)) + ")" * "-" *  gsUserFullName * "]")
+//        End
+//        Else If (gsUserFullName) Begin
+//            Set Label of oMain to ("Tempus [" * Trim(System.CompanyName) * "-" *  gsUserFullName * "]")
+//        End
+//        Else Begin
+//            Set Label to ("Tempus [" * Trim(System.CompanyName) * "]")   
+//        End
+    End_Procedure
+    
+//    Procedure FilterData Handle hTable String sTableName
+//        String sFilter
+//        Move (sTableName + ".RecordOwner LIKE" * String(giCompanyIdno)) to sFilter
+//        Set_Attribute DF_FILE_SQL_FILTER_ACTIVE of hTable to True
+//        Set_Attribute DF_FILE_SQL_FILTER of hTable to sFilter
+//    End_Procedure
+    
+End_Object
+
+//Set View_Mode of (oMain(Self)) to Viewmode_Zoom
+Send DoProgramLogin of (oClientArea(oMain))
+
+Start_UI

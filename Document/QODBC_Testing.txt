@@ -1,0 +1,28 @@
+INSERT INTO InvoiceLine (CustomerRefListID, ClassRefListID, InvoiceLineItemRefListID, InvoiceLineDesc, InvoiceLineRate, InvoiceLineAmount, InvoiceLineSalesTaxCodeRefListID, FQSaveToCache) VALUES ('7B00000-1158612389', '', '8000033A-1228324959', 'Snow removal', 1.000, 1180, '20000-1046219236', 1)
+INSERT INTO Invoice (ARAccountRefListID, TxnDate, RefNumber, BillAddressAddr1, BillAddressAddr2, BillAddressAddr3, BillAddressCity, BillAddressState, BillAddressPostalCode, PONumber, IsPending, TermsRefListID, IsToBePrinted) VALUES ('3E0000-951967379', {d'2010-02-02'}, '107870', '', '1698 Vierling Drive', '', 'Shakopee', 'MN', '55379', '', 0, '20000-951965624', 0)
+
+F:\InterstateCompanies\Update\QodbcTesting.exe
+General error. 00000 (10053)--[QODBC] Error: 3000 - The given object ID "" in the field "list id" is invalid.  Connection handle = 51, Statement handle = 52
+
+Error: 12289
+Error Source = ODBC_DRV.ESQL.SQLExecDirect
+
+MSG_SQLEXECDIRECT (9572) - OSQLSTATEMENT (52) - at address 57629
+GET_DOEXECUTESQLSTATEMENT (9609) - DESKTOP (2) - at address 58379
+MSG_DOQODBCTEST (9616) - DESKTOP (2) - at address 58568
+[start] - at address 58580
+
+
+INSERT INTO InvoiceLine (CustomerRefListID, InvoiceLineItemRefListID, InvoiceLineDesc, InvoiceLineRate, InvoiceLineAmount, InvoiceLineSalesTaxCodeRefListID, FQSaveToCache) VALUES ('7B00000-1158612389', '8000033A-1228324959', 'Snow removal', 1.000, 1180, '20000-1046219236', 1)
+INSERT INTO Invoice (ARAccountRefListID, TxnDate, RefNumber, BillAddressAddr1, BillAddressAddr2, BillAddressAddr3, BillAddressCity, BillAddressState, BillAddressPostalCode, PONumber, IsPending, TermsRefListID, IsToBePrinted) VALUES ('3E0000-951967379', {d'2010-02-02'}, '107870', '', '1698 Vierling Drive', '', 'Shakopee', 'MN', '55379', '', 0, '20000-951965624', 0)
+
+F:\InterstateCompanies\Update\QodbcTesting.exe
+General error. 00000 (10053)--[QODBC] Error: 3171 - An attempt was made to modify a Invoice with a date that is on or before the closing date of the company.  If you are sure you really want to do this, please ask a user with Admin privileges to remove the password for editing transactions on or be Connection handle = 51, Statement handle = 52
+
+Error: 12289
+Error Source = ODBC_DRV.ESQL.SQLExecDirect
+
+MSG_SQLEXECDIRECT (9572) - OSQLSTATEMENT (52) - at address 57629
+GET_DOEXECUTESQLSTATEMENT (9609) - DESKTOP (2) - at address 58379
+MSG_DOQODBCTEST (9616) - DESKTOP (2) - at address 58566
+[start] - at address 58578

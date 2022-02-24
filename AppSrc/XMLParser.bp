@@ -1,0 +1,23 @@
+Use Batchdd.pkg
+
+Object oXMLParser is a BusinessProcess
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Property String psXMLData
+
+    Procedure KickStartXmlParser String sXMLData
+        Set psXMLData to sXMLData
+        Send DoProcess of oXMLParser
+    End_Procedure
+
+
+End_Object
+

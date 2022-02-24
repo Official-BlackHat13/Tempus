@@ -1,0 +1,33 @@
+Use GlobalAllEnt.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Trans
+Open Employee
+
+Procedure DoFixTransactions
+    Boolean bCancel
+    //
+    Get Confirm "Populate EmployerIdno?" to bCancel
+    If bCancel Procedure_Return
+    //
+    Clear Trans
+    Find ge Trans.Recnum
+    While (Found)
+        Relate Trans
+        Reread
+        Move Employee.EmployerIdno to Trans.EmployerIdno
+        SaveRecord Trans
+        Unlock
+        Find gt Trans.Recnum
+    Loop
+End_Procedure
+
+Send DoFixTransactions
+

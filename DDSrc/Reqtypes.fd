@@ -1,0 +1,5 @@
+#REPLACE FILE37 Reqtypes
+#REPLACE Reqtypes.Recnum |FN37,0
+#REPLACE Reqtypes.ReqtypesCode |FS37,1
+#REPLACE Reqtypes.Description |FS37,2
+#REPLACE Reqtypes.ChangedFlag |FN37,3

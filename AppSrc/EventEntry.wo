@@ -1,0 +1,37 @@
+// EventEntry.wo
+// EventEntry
+Use cWebBusinessProcess.pkg
+
+Use Areas.DD
+Use Weather.DD
+
+Object oEventEntry Is A cWebBusinessProcess
+    Set psDescription To "EventEntry"
+    Set pbClearAfterSave To False
+
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oWeather_DD Is A Weather_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oAreas_DD
+    End_Object // oWeather_DD
+
+    Set Main_DD To oWeather_DD
+
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew To True
+    Set pbAllowSaveEdit to False
+    Set pbAllowDelete to False
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+    Set pbAllowDDUpdate To True
+
+End_Object // oEventEntry

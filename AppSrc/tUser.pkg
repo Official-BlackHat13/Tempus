@@ -1,0 +1,15 @@
+// tUser.pkg
+// used to update remote server data
+
+Struct tUser
+    Integer iRecId
+    Integer iUserId
+    String  sLoginName
+    String  sPassword
+    String  sFirstName
+    String  sLastName
+    String  sState
+    String  sEditRights
+    Integer iChangedFlag
+    Integer iCustContactId
+End_Struct

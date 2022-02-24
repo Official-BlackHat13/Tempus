@@ -1,0 +1,330 @@
+Use cCJGrid.pkg
+Use cCJGridColumn.pkg
+Use cGroupedGridSortHandler.pkg
+Use cGroupedGridDataSource.pkg
+
+Class cCJGroupedGrid is a cCJGrid
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        {DesignTime=False}
+        Property Handle phoReportColumnOrder        (Create(Self,RefClass(cCJReportColumnOrder))) 
+        {DesignTime=False}
+        Property Handle phoReportGroupRow           (Create(Self,RefClass(cCJReportGroupRow)))
+            
+        {Visibility=Private}
+        Property Handle  Private_phoGroupColumn
+        {Visibility=Private}
+        Property Boolean Private_pbShowPreviewText  False
+        {Visibility=Public}
+        Property Boolean pbReverseGroupOrdering     False
+        {Visibility=Public}
+        Property Boolean pbShowGroupCounts          True 
+                  
+        // Settings...
+        Set pbVirtualMode to False
+        Set pbFocusSubItems to True
+        Set pbDrawGridForEmptySpace to False
+        Set pbShadeSortColumn to True
+        Set pbHeaderReorders to True
+        Set pbHeaderTogglesDirection to True
+        Set pbHeaderSelectsColumn to True
+        Set peHorizontalGridStyle to xtpGridNoLines
+        Set piFocusCellBackColor to clNone
+        Set piFocusCellForeColor to clNone
+        Set piFocusCellRectangleColor to clBlack
+        Set pbUseFocusCellRectangle to False
+        Set pbSelectionEnable to True 
+        Set pbHideSelection to True
+        Set pbShowRowFocus to True 
+        Set pbReadOnly to True
+    End_Procedure
+    
+    {MethodType=Property InitialValue=False}
+    Procedure Set pbShowPreviewText Boolean bShow
+        Set Private_pbShowPreviewText to bShow
+        If (IsComObjectCreated(Self)) Begin
+            Set ComPreviewMode to bShow
+        End
+    End_Procedure
+    
+    Function pbShowPreviewText Returns Boolean
+        Boolean bShow
+        
+        If (IsComObjectCreated(Self)) Begin
+            Get ComPreviewMode to bShow
+            Set Private_pbShowPreviewText to bShow
+        End
+        Else Begin
+            Get Private_pbShowPreviewText to bShow
+        End
+        Function_Return bShow
+    End_Function
+    
+    Procedure OnCreateGridControl
+        Forward Send OnCreateGridControl
+        Set pbShowPreviewText to (Private_pbShowPreviewText(Self))
+    End_Procedure
+
+    Function CreateDataSource Returns Handle
+        Handle hoDataSource
+        Get Create (RefClass(cCJGroupedGridDataSource)) to hoDataSource
+        Function_Return hoDataSource
+    End_Function
+    
+    // If set to a Column Object id the Grid will group by this column
+    Procedure Set phoGroupColumn Handle hoColumn
+        Set Private_phoGroupColumn to hoColumn
+        Set pbVisible of hoColumn to False
+        Set pbShowInFieldChooser of hoColumn to False
+    End_Procedure
+    
+    Function phoGroupColumn Returns Handle
+        Function_Return (Private_phoGroupColumn(Self))
+    End_Function
+    
+    Procedure OnComBeforeDrawRow Variant llRow Variant llItem Variant llMetrics
+        Handle hoReportRow hoDataSource 
+        Handle hoGroupRow hoColumn hoItem hoRecord
+        Integer iRow iIndex
+        String  sCaption sType sCount sPreviewText
+        Boolean bGroupRow bShowCount bShowPreviewText
+        Variant vRecord
+        tDataSourceRow RowData
+        tDataSourceRow[] TheData
+
+        Get phoReportRow to hoReportRow    
+        Set pvComObject of hoReportRow to llRow
+        Get ComIndex of hoReportRow to iRow
+                        
+        If (not(IsNullComObject(llItem))) Begin                
+            Get phoReportRecordItem to hoItem
+            Set pvComObject of hoItem to llItem
+            Get ComIndex of hoItem to iIndex
+            // if preview text then the index will be -1 and this will cause problems if we forward the message 
+            If (iIndex>=0) Begin
+                Forward Send OnComBeforeDrawRow llRow llItem llMetrics
+            End
+            
+            Get pbShowPreviewText to bShowPreviewText
+            If bShowPreviewText Begin
+                Get ComRecord of hoReportRow to vRecord
+                Get phoReportRecord to hoRecord
+                Set pvComObject of hoRecord to vRecord
+                Get phoDataSource to hoDataSource
+                Get RowTagValue of hoDataSource iRow (&sType) to sPreviewText
+                If (sType='R') Begin
+                    Set ComPreviewText of hoRecord to sPreviewText
+                End
+            End        
+        End
+        Else Begin
+            Get phoGroupColumn to hoColumn
+            If (hoColumn>0) Begin
+                Get ComGroupRow of hoReportRow to bGroupRow
+                If bGroupRow Begin
+                    Get phoReportGroupRow to hoGroupRow 
+                    Set pvComObject of hoGroupRow to llRow  
+                    Get phoDataSource to hoDataSource
+                    Get DataSource of hoDataSource to TheData
+                    Move TheData[iRow] to RowData
+                    Move RowData.sValue[piColumnId(hoColumn)] to sCaption
+                    Send OnSetGroupCaption (&sCaption)
+                    Get pbShowGroupCounts to bShowCount
+                    If bShowCount Begin
+                        Get RowTagValue of hoDataSource iRow (&sType) to sCount
+                        Move (SFormat("%1 (%2)",sCaption,sCount)) to sCaption    
+                    End
+                    Set ComGroupCaption of hoGroupRow to sCaption
+                End  
+            End
+        End
+    End_Procedure
+
+    // Send tooltip event to the appropriate column object.
+    Procedure OnComGetToolTipInfo Variant lltoolTipInfo
+        Variant vRow vItem vColumn
+        Handle hoTooltipInfo hoColumnObject hoRow hoItem
+        String sText sValue
+        Integer iRow iItemIndex
+                
+        // read the tooltip properties....
+        Get phoReportToolTipInfo to hoTooltipInfo
+        Set pvComObject of hoTooltipInfo to lltoolTipInfo
+        Get ComItem of hoTooltipInfo to vItem
+        Get ComRow  of hoTooltipInfo to vRow
+        Get ComText of hoTooltipInfo to sText
+
+        // Find the row number....
+        Get phoReportRow to hoRow
+        If (IsComObject(vRow)) Begin
+            Set pvComObject of hoRow to vRow
+            Get ComIndex of hoRow to iRow
+        End
+        
+        // find the item's column object....
+        Move -1 to iItemIndex
+        Get phoReportRecordItem to hoItem 
+        If (IsComObject(vItem)) Begin
+            Set pvComObject of hoItem to vItem
+            Get ComIndex of hoItem to iItemIndex 
+            If (iItemIndex>=0) Begin
+                Get ColumnObject iItemIndex to hoColumnObject
+                Get RowValue of hoColumnObject iRow to sValue
+            End
+        End
+        
+        // send the custom tooltip event....
+        If (hoColumnObject <> 0) Begin
+            Get OnGetTooltip of hoColumnObject iRow sValue sText to sText
+            Set ComText of hoTooltipInfo to sText   // apply the tooltip
+        End
+    End_Procedure  // OnComGetToolTipInfo
+    
+    Procedure ResetGrid
+        Forward Send ResetGrid
+        Send ComSetCustomDraw xtpCustomBeforeDrawRow
+    End_Procedure
+    
+    {MethodType=Event}
+    Procedure OnSetGroupCaption String ByRef sCaption
+    End_Procedure
+
+    {MethodType=Event}
+    Procedure OnPreLoadData
+    End_Procedure
+
+    {MethodType=Event}
+    Procedure OnPostLoadData
+    End_Procedure
+    
+    Procedure DoLoadData
+        Handle   hoDataSource hoRecords hoRecord hoItem hoCol 
+        Integer  iRow iRows iCol iCols iId 
+        String   sValue
+        String[] saGroupValues
+        Boolean  bIsCheckBox bAddRow
+        Handle[] hoColumnObjects
+        Variant  vRecord vItem
+        
+        Get phoDataSource to hoDataSource
+        Get RowCount of hoDataSource to iRows
+        Decrement iRows
+        Get phoColumnObjects to hoColumnObjects
+        Move (SizeOfArray(hoColumnObjects)-1) to iCols
+        
+        Get phoReportRecordItem to hoItem
+        Get phoReportRecord     to hoRecord
+        Get phoReportRecords    to hoRecords
+        Set pvComObject of hoRecords to (ComRecords(Self))
+
+        For iRow from 0 to iRows
+            If (not(IsGroupRow(hoDataSource,iRow))) Begin
+                Get ComAdd of hoRecords to vRecord
+                Set pvComObject of hoRecord to vRecord
+                
+                For iCol from 0 to iCols           
+                    Move hoColumnObjects[iCol] to hoCol
+                    Get pbCheckbox of hoCol to bIsCheckBox
+                    Get piColumnId of hoCol to iId
+                    Get DataForCell of hoDataSource iRow iId to sValue
+                    
+                    If (bIsCheckBox) Begin
+                        Get ComAddItem of hoRecord '' to vItem
+                        Set pvComObject of hoItem to vItem
+                        Set ComChecked of hoItem to (sValue=psCheckboxTrue(hoCol))             
+                    End
+                    Else Begin
+                        Get ComAddItem of hoRecord sValue to vItem
+                        Set pvComObject of hoItem to vItem
+                    End
+                Loop    
+            End
+        Loop
+    End_Procedure
+    
+    {MethodType=Method Visibility=Private}
+    Procedure DoSetColumnGrouping
+        Handle hoGroupColumn hoOrder hoColumns hoColumn
+        Variant vOrder vColumns vColumn
+        Integer iColumnId
+        Boolean bReverseGroupOrdering
+
+        Get phoReportColumnOrder to hoOrder
+        Get phoReportColumns     to hoColumns
+        Get phoReportColumn      to hoColumn
+        
+        Get ComGroupsOrder to vOrder
+        Set pvComObject of hoOrder to vOrder
+        Send ComDeleteAll of hoOrder
+        
+        Get phoGroupColumn to hoGroupColumn
+        If (hoGroupColumn>0) Begin
+            Get piColumnId of hoGroupColumn to iColumnId
+            
+            Get ComColumns to vColumns
+            Set pvComObject of hoColumns to vColumns
+            Get ComFind of hoColumns iColumnId to vColumn
+            Send ComAdd of hoOrder vColumn 
+            
+            Get pbReverseGroupOrdering to bReverseGroupOrdering
+            If bReverseGroupOrdering Begin
+                Set pvComObject of hoColumn to vColumn
+                Set ComSortAscending of hoColumn to False             
+            End
+        End 
+    End_Procedure
+    
+    Procedure ResetVirtualMode Integer iCount
+        Send OnPreLoadData
+        Send DoLoadData
+        Send OnPostLoadData
+        Send DoSetColumnGrouping   
+        Send ComPopulate
+        Set piLastTopRowIndex     to -1
+        Set piLastVisibleRowCount to -1
+    End_Procedure
+    
+    Procedure OnComRowExpanded Variant llRow
+        Handle hoRow
+        Boolean bIsGroupRow bIsExpanded
+        
+        Get phoReportRow to hoRow
+        Set pvComObject of hoRow to llRow
+        Move (IsNullComObject(ComRecord(hoRow))) to bIsGroupRow
+        Get ComExpanded of hoRow to bIsExpanded
+        Send OnRowExpanded hoRow bIsGroupRow bIsExpanded
+    End_Procedure
+
+    {MethodType=Event}
+    Procedure OnRowExpanded Handle hoRow Boolean bIsGroupRow Boolean bIsExpanded
+        Integer iRow
+        Handle  hoDataSource
+        
+        Get phoDataSource to hoDataSource
+        Get ComIndex of hoRow to iRow
+        Send ExpandRow of hoDataSource iRow bIsExpanded
+    End_Procedure
+    
+    Procedure OnComRowDblClick Variant llRow Variant llItem
+        Handle hoReportRow hoReportItem
+        Integer iRow iCol
+        
+        Forward Send OnComRowRClick llRow llItem
+        
+        Get phoReportRow to hoReportRow
+        Set pvComObject of hoReportRow to llRow
+        Get ComIndex of hoReportRow to iRow
+        
+        If (not(IsNullComObject(llItem))) Begin
+            Get phoReportRecordItem to hoReportItem
+            Set pvComObject of hoReportItem to llItem
+            Get ComIndex of hoReportItem to iCol
+        End
+        Else Begin
+            Move -1 to iCol
+        End
+        Send OnRowDoubleClick iRow iCol
+    End_Procedure
+End_Class

@@ -1,0 +1,13 @@
+#REPLACE FILE70 CreditDtl
+#REPLACE CreditDtl.Recnum |FN70,0
+#REPLACE CreditDtl.DetailIdno |FN70,1
+#REPLACE CreditDtl.CreditIdno |FN70,2
+#REPLACE CreditDtl.Sequence |FN70,3
+#REPLACE CreditDtl.MastOpsIdno |FN70,4
+#REPLACE CreditDtl.OpersIdno |FN70,5
+#REPLACE CreditDtl.Description |FS70,6
+#REPLACE CreditDtl.Quantity |FN70,7
+#REPLACE CreditDtl.Price |FN70,8
+#REPLACE CreditDtl.Total |FN70,9
+#REPLACE CreditDtl.TaxRate |FN70,10
+#REPLACE CreditDtl.TaxAmount |FN70,11

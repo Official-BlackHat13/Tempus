@@ -1,0 +1,40 @@
+Use cGlblDataDictionary.pkg
+
+Open VendInvHdr
+Open VendInvDtl
+Open Employer
+Open System
+
+Class cVendInvHdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to VendInvHdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Employer.File_Number
+
+        Set Add_Client_File to VendInvDtl.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field VendInvHdr.VendInvHdrIdno to File_Field System.LastVenInvHdrIdno
+
+        Set Field_Mask_Type Field VendInvHdr.SubTotal to Mask_Currency_Window
+        Set Field_Mask Field VendInvHdr.SubTotal to "$ *0.00"
+
+        Set Field_Mask_Type Field VendInvHdr.TaxTotal to Mask_Currency_Window
+        Set Field_Mask Field VendInvHdr.TaxTotal to "$ *0.00"
+
+        Set Field_Mask_Type Field VendInvHdr.TotalAmount to Mask_Currency_Window
+        Set Field_Mask Field VendInvHdr.TotalAmount to "$ *0.00"
+
+    End_Procedure
+
+End_Class

@@ -1,0 +1,162 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use Employer.DD
+Use Employee.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Object oTransactionUpdate is a BusinessProcess
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oEmployee_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+    
+    Struct tStats
+        Integer iTransCount
+        Integer iTransChangedCount
+        Integer iErrCount
+    End_Struct
+    
+    Function UpdateTransRates Integer iEmployerIdno Integer iEmployeeIdno Integer iEquipIdno Date dStartDate Date dStopDate tStats ByRef tUpdateStats Returns Boolean
+        //
+        Boolean bErr
+        Handle hoDD
+        //
+        Move oTrans_DD to hoDD
+        Send Clear of hoDD
+        Case Begin
+            Case (iEmployerIdno<>0)
+                Move iEmployerIdno to Trans.EmployerIdno
+                Move dStartDate to Trans.StartDate
+                Send Find of hoDD GE 10
+                While ((Found) and Trans.EmployerIdno=iEmployerIdno and Trans.StartDate>=dStartDate and Trans.StartDate<=dStopDate)
+                    Increment tUpdateStats.iTransCount
+                    Get Request_Validate of hoDD to bErr
+                    If (not(bErr)) Begin
+                        Increment tUpdateStats.iTransChangedCount
+                        Send Request_Save of hoDD
+                        Move (Err) to bErr
+                    End
+                    If (bErr) Begin
+                        Increment tUpdateStats.iErrCount
+                    End
+                    Send Find of hoDD GT 10
+                Loop
+                Case Break
+            Case (iEmployeeIdno<>0)
+                Move iEmployeeIdno to Trans.EmployeeIdno
+                Move dStartDate to Trans.StartDate
+                Send Find of hoDD GE 3
+                While ((Found) and Trans.EmployeeIdno=iEmployeeIdno and Trans.StartDate>=dStartDate and Trans.StartDate<=dStopDate)
+                    Increment tUpdateStats.iTransCount
+                    Get Request_Validate of hoDD to bErr
+                    If (not(bErr)) Begin
+                        Increment tUpdateStats.iTransChangedCount
+                        Send Request_Save of hoDD
+                        Move (Err) to bErr
+                    End
+                    If (bErr) Begin
+                        Increment tUpdateStats.iErrCount
+                    End
+                    Send Find of hoDD GT 3
+                Loop
+                Case Break
+            Case (iEquipIdno<>0) Begin
+                Move iEquipIdno to Trans.EquipIdno
+                Move dStartDate to Trans.StartDate
+                Send Find of hoDD GE 13
+                While ((Found) and Trans.EquipIdno=iEquipIdno and Trans.StartDate>=dStartDate and Trans.StartDate<=dStopDate)
+                    Increment tUpdateStats.iTransCount
+                    Get Request_Validate of hoDD to bErr
+                    If (not(bErr)) Begin
+                        Increment tUpdateStats.iTransChangedCount
+                        Send Request_Save of hoDD
+                        Move (Err) to bErr
+                    End
+                    If (bErr) Begin
+                        Increment tUpdateStats.iErrCount
+                    End
+                    Send Find of hoDD GT 13
+                Loop
+                Case Break
+            End
+        Case End
+        Function_Return (tUpdateStats.iErrCount=0)
+    End_Function
+
+End_Object
+

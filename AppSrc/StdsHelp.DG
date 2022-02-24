@@ -1,0 +1,245 @@
+// StdsHelp.DG
+
+Use DFAllEnt.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblForm.pkg
+Use cGlblEdit.pkg
+Use cGlblButton.pkg
+
+Object oStdsHelpDialog is a dbModalPanel
+
+    Property Integer piCC 0
+    Property Integer piOpcode 0
+    Property String psCCName ""
+    Property String psOpName ""
+    Property Boolean pbDisableRadioNotify 0
+    
+    Set Label to "Standards Help Maintenance"
+    Set Size to 225 283
+    Set Location to 10 10
+    Set Locate_Mode to Center_on_Panel
+    Set piMinSize to 225 283
+
+    Object oBox is a Container3d
+        Set Size to 196 272
+        Set Location to 4 5
+        Set Border_Style to Border_StaticEdge
+        Object oFileRadioGroup is a cGlblRadioGroup
+            Set Size to 26 260
+            Set Location to 2 5
+            Object CCFileRadio is a Radio
+                Set Label to "Cost Center Help"
+                Set Size to 10 70
+                Set Location to 10 45
+            End_Object    // CCFileRadio
+
+            Object OpFileRadio is a Radio
+                Set Label to "Operation Std. Help"
+                Set Size to 10 79
+                Set Location to 10 135
+            End_Object    // OpFileRadio
+
+            Procedure Notify_Select_State integer iToItem integer iFromItem
+                //boolean bDisableRadioNotify
+                //get pbDisableRadioNotify to bDisableRadioNotify
+                //if bDisableRadioNotify begin
+                //    set pbDisableRadioNotify to False
+                //    Procedure_Return
+                //end
+                //set pbDisableRadioNotify to True
+                Send doSetFileName iToItem
+                //for augmentation
+            End_Procedure
+            
+            // If you set Current_radio you must set this after the
+            // radio objects have been created AND after Notify_select_State has been
+            // created. i.e. Set in bottom-code at end!!
+            //Set Current_Radio to 0
+        End_Object    // oFileRadioGroup
+
+        Object oFileNameForm is a cGlblForm
+            Set Label to "File Name"
+            Set Size to 13 260
+            Set Location to 39 5
+            Set Label_Col_Offset to 0
+            Set Label_Justification_Mode to jMode_Top
+            Set Enabled_State to False
+
+            //Procedure OnChange
+            //    String sValue
+            //    Get value to sValue
+            //
+            //End_Procedure  // OnChange
+        End_Object    // oFileNameForm
+
+        Object oEdit1 is a cGlblEdit
+            Set Size to 135 260
+            Set Location to 55 5
+
+            //Procedure OnChange
+                //Forward send OnChange
+                //Set Changed_State to True
+            //End_Procedure
+        End_Object    // oEdit1
+
+        Procedure doSetFileName integer iFile
+            integer iCC iOpcode
+            string sCCName sOpName
+            string sCCFileName sOpcodeFileName sDirectory sFileName
+            get piCC to iCC
+            get piOpcode to iOpcode
+            get psCCName to sCCName
+            get psOpName to sOpName
+            //I can't get this changed warning to work, its a catch 22 because
+            //when the user clicks the radio button the notify_select_state is sent
+            //and then when I send doSetFileRadio, the notify message is sent again
+            //boolean bChanged bCancel //bCCFileExists bOpcodeFileExists
+            //get the directory from the Workspace
+            //get changed_state of oEdit1 to bChanged
+            //if (bChanged) begin
+            //    get Confirm "Abandon edits made to current help text?" to bCancel
+            //    if (bCancel) begin
+            //        if (iFile=0) move 1 to iFile
+            //        else move 0 to iFile
+            //        send doSetFileRadio iFile
+            //        procedure_return
+            //    end
+            //    set Changed_State of oEdit1 to False
+            //    send doSetFileRadio iFile
+            //end
+//*dw*
+//            get psCompanyPath of ghoApplication to sDirectory
+            move (trim(sDirectory)+"\") to sDirectory
+            move (sDirectory + "ESH" - string(iCC) + ".TXT")    to sCCFilename
+            move (sDirectory + "ESH" - string(iOpcode) + ".TXT") to sOpcodeFilename
+            if (iFile=0) set value of oFileNameForm to sCCFileName
+            else set value of oFileNameForm to sOpcodeFileName
+            get value of oFileNameForm to sFileName
+            send delete_data to oEdit1
+            // the debugger shows that the file_exist command fails and is unreliable
+            //file_exist sCCFileName bCCFileExists
+            //file_exist sOpcodeFileName bOpcodeFileExists
+            set file_name of oEdit1 to sFilename
+            direct_input sFileName
+            if (not(SeqEof)) send read to oEdit1
+            else begin
+                if (ifile=0) send append_text to oEdit1 ("Cost Center" * string(iCC) + ":" * sCCName)
+                else send append_text to oEdit1 ("Estimating Standard" * string(iOpcode) + ":" * sOpName)
+                send append_text to oEdit1 ( character(13) + character(10) ;
+                     + "==================================================" ;
+                     +  character(13) + character(10) +  character(13) + character(10) )
+                //set changed_state of oEdit1 to True //adding above text is not setting it!!!
+                // that's good that it doesn't so my radio selections can test for user input changes
+                send end_of_data to oEdit1 //this isn't working either (???)
+            end
+        End_Procedure
+        
+        Procedure doWriteText
+            integer iSize
+            string sFilename sFileText
+            boolean bChanged
+            get changed_state of oEdit1 to bChanged
+            get file_name of oEdit1 to sFilename
+            if bChanged send write to oEdit1
+            //check size of file, if text was cleared, delete the file
+            //there is no command or fucntion in DF for getting the size of
+            //the contents of the edit object
+            Direct_Input sFilename
+            Readln sFileText
+            Close_Input
+            Move (trim(sFileText)) to sFileText
+            Move (Length(sFileText)) to iSize
+            If (iSize<2) EraseFile sFilename
+        End_Procedure
+        
+        Procedure doClearText
+            send delete_data to oEdit1
+            send append_text to oEdit1 " "
+            set changed_state of oEdit1 to True //delete_data is not setting it!!!
+        End_Procedure
+        
+        Procedure doSetFileRadio integer iFile
+            set Current_Radio of oFileRadioGroup to iFile
+        End_Procedure
+        
+        Procedure doResetChangedState
+            set changed_state of oEdit1 to False
+        End_Procedure
+
+    End_Object    // oBox
+
+    Object oDeleteButton is a cGlblButton
+
+        //AB-StoreTopStart
+        //on_key kCancel send Request_Cancel
+        //AB-StoreTopEnd
+
+        Set Label to "&Delete Text"
+        Set Size to 15 50
+        Set Location to 205 104
+
+        //AB-StoreStart
+        Procedure OnClick
+              Send doClearText to oBox
+        End_Procedure // OnClick
+        //AB-StoreEnd
+
+    End_Object    // oDeleteButton
+
+    Object oSaveButton is a Button
+
+        //AB-StoreTopStart
+        //on_key kCancel send Request_Cancel
+        //AB-StoreTopEnd
+
+        Set Label to "&Save"
+        Set Size to 15 50
+        Set Location to 205 162
+
+        //AB-StoreStart
+        procedure OnClick
+           Send doSaveText
+        end_procedure
+        
+        procedure doSaveText
+           Send doWriteText to oBox
+           //Send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oSaveButton
+
+    Object oCancelButton is a Button
+        Set Label to "&Close/Cancel"
+        Set Size to 15 50
+        Set Location to 205 220
+
+        //AB-StoreStart
+        procedure OnClick
+            send doResetChangedState to oBox
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oCancelButton
+
+    Procedure doEditStdsHelp integer iCC integer iOpcode string sCCName string sOpName
+        set piCC to iCC
+        set piOpcode to iOpcode
+        set psCCName to sCCName
+        set psOpName to sOpName
+        send doSetFileRadio of oBox 0
+        send doSetFileName of oBox 0
+        send popup_modal
+    End_Procedure
+    
+    on_key kSave_record   send Keyaction of oSaveButton
+    on_key kDelete_record send Keyaction of oDeleteButton
+    On_Key kClear         Send Keyaction of oDeleteButton
+    On_Key kCancel        Send Keyaction of oCancelButton
+    On_Key Key_Alt+Key_D  Send Keyaction of oDeleteButton
+    On_Key Key_Alt+Key_S  Send Keyaction of oSaveButton
+    On_Key Key_Alt+Key_C  Send Keyaction of oCancelButton
+
+End_Object    // oStdsHelpDialog
+

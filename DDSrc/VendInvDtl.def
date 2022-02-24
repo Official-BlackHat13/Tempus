@@ -1,0 +1,49 @@
+-----------------------------------------------------------------------------
+  DATE: 12/14/2016      TIME: 04:07                                  PAGE:  1
+  FILE DEFINITION FOR FILE: VendInvDtl (# 76)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:VendInvDtl
+  USER DISPLAY NAME         : VendInvDtl
+  DATAFLEX FILE NAME        : VendInvDtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16567     ( USED: 16567 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 6013 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  VendInvDtlIdno   NUM   10.0     1  1   
+  2  VendInvHdrIdno   NUM   10.0    12  2   VendInvHdr.FIELD_1 (75,1)
+  3  TransReference   NUM   10.0    23      
+  4  JobNumber        NUM   10.0    34      
+  5  Sequence         NUM    4.2    45      
+  6  StartDate        DAT     10    53      
+  7  StartTme         ASC     10    69      
+  8  StopDate         DAT     10    79      
+  9  StopTime         ASC     10    95      
+ 10  ElapsedMinutes   NUM   10.0   105      
+ 11  ElapsedHours     NUM    6.2   116      
+ 12  Description      TEX    512   126      
+ 13  Quantity         NUM    6.2 16509      
+ 14  Rate             NUM    6.2 16519      
+ 15  TaxRate          NUM    2.4 16529      
+ 16  TaxAmount        NUM    4.4 16537      
+ 17  Total            NUM    6.2 16547      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    VendInvDtlIdno  NO  NO       0      0       1     ON-LINE
+
+  2    VendInvHdrIdno  NO  NO       0      0       2     ON-LINE
+       VendInvDtlIdno  NO  NO 
+

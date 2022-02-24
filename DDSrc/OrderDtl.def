@@ -1,0 +1,58 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: OrderDtl (# 60)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:OrderDtl
+  USER DISPLAY NAME         : OrderDtl
+  DATAFLEX FILE NAME        : OrderDtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 33017     ( USED: 33017 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 198 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  OrderDtlIdno     NUM   10.0     1  1   
+  2  JobNumber        NUM   10.0    12  2   Order.FIELD_3 (8,3)
+  3  MastOpsIdno      NUM   10.0    23      MastOps.FIELD_1 (11,1)
+  4  OpersIdno        NUM   10.0    34      
+  5  Sequence         NUM    4.2    45  3   
+  6  Quantity         NUM    6.2    53      
+  7  Price            NUM    8.2    63      
+  8  TaxRate          NUM    2.4    75      
+  9  TaxAmount        NUM    4.4    83      
+ 10  Amount           NUM   10.4    93      
+ 11  InvoiceDescription  TEX    512   109      
+ 12  Instructions     TEX    512 16492      
+ 13  CreatedOn        DAT     10 32875      
+ 14  LastModifyedOn   DAT     10 32898      
+ 15  RecordOwner      NUM   10.0 32921      
+ 16  EsItemIdno       NUM   10.0 32932      
+ 17  Sqft             NUM    8.2 32943      
+ 18  Lnft             NUM    8.2 32955      
+ 19  MatQuantity      NUM    6.2 32967      
+ 20  TotalManHours    NUM    6.2 32977      
+ 21  OSCost           NUM    6.2 32987      
+ 22  MatCost          NUM    6.2 32997      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    OrderDtlIdno    NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       2     ON-LINE
+       OrderDtlIdno    NO  NO 
+
+  3    JobNumber       NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       OrderDtlIdno    NO  NO 
+

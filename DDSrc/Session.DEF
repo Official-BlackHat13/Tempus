@@ -1,0 +1,44 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Session (# 210)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Session
+  USER DISPLAY NAME         : Session
+  DATAFLEX FILE NAME        : Session
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 193       ( USED: 193 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 94 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  SessionId        NUM   10.0     1  1   
+  2  SessionKey       ASC     64    12  2   
+  3  CreateDate       DAT     10    76  3   
+  4  CreateTime       ASC      8    99  3   
+  5  LastAccessDate   DAT     10   107      
+  6  LastAccessTime   ASC      8   130      
+  7  RemoteAddress    ASC     23   138      
+  8  UserId           NUM   10.0   161      
+  9  UseCount         NUM   10.0   172      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    SessionId       NO  NO       0      0       1     ON-LINE
+
+  2    SessionKey      NO  NO       0      0       1     ON-LINE
+
+  3    CreateDate      NO  NO       0      0       3     ON-LINE
+       CreateTime      NO  NO 
+       SessionId       NO  NO 
+

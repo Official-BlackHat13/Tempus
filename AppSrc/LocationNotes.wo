@@ -1,0 +1,87 @@
+// LocationNotes.wo
+// Location Notes
+Use cAjaxWebBusinessProcess.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use cLocnotesDataDictionary.dd
+Use cReqtypesDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Object oLocationNotes Is A cAjaxWebBusinessProcess
+
+    Set psDescription to "Location Notes"
+    Set pbClearAfterSave to False
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+    End_Object // oLocation_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Set DDO_Server To oLocation_DD
+
+        Procedure OnConstrain
+            Forward Send OnConstrain
+            //
+            Constrain Order.WorkType     eq "S"
+            Constrain Order.Status       eq "O"
+        End_Procedure
+    End_Object // oOrder_DD
+
+    Object oReqtypes_DD is a cReqtypesDataDictionary
+    End_Object
+
+    Object oLocnotes_DD is a cLocnotesDataDictionary
+        Set DDO_Server to oReqtypes_DD
+        Set DDO_Server to oOrder_DD
+        Set No_Delete_State to True
+        Send DefineAllExtendedFields
+
+        Function Request_Validate Returns Integer
+            Integer iRetval
+            //
+            Send Request_Find FIRST_RECORD Reqtypes.File_Number 1
+            //
+            Forward Get Request_Validate to iRetval
+            //
+            Function_Return iRetval
+        End_Function
+    End_Object // oLocnotes_DD
+
+    Set Main_DD to oLocnotes_DD
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew To True
+    Set pbAllowSaveEdit To True
+    Set pbAllowDelete To True
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+
+    Procedure OnAjaxRequestStart TAjaxRequestData ByRef tRequestData
+        Integer iUserId
+        //
+        Forward Send OnAjaxRequestStart (&tRequestData)
+        //
+        Get GetAjaxRequestUserData "sUserId" to iUserId
+        Set piUserId of oLocnotes_DD         to iUserId
+    End_Procedure   
+
+End_Object // oLocationNotes

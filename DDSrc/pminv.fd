@@ -1,0 +1,10 @@
+#REPLACE FILE41 pminv
+#REPLACE pminv.Recnum |FN41,0
+#REPLACE pminv.Estimate_Hdr_ID |FN41,1
+#REPLACE pminv.JobNumber |FN41,2
+#REPLACE pminv.SellAmt |FN41,3
+#REPLACE pminv.Value_1 |FN41,4
+#REPLACE pminv.Value_2 |FN41,5
+#REPLACE pminv.Value_3 |FN41,6
+#REPLACE pminv.Value_4 |FN41,7
+#REPLACE pminv.Instruction |FS41,8

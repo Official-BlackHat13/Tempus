@@ -1,0 +1,86 @@
+Use cGlblDataDictionary.pkg
+
+Open oBudgetSales
+Open BudgetHdr
+Open System
+Open SalesRep
+
+Class coBudgetSalesGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to oBudgetSales.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to BudgetHdr.File_Number
+        Set Add_Server_File to SalesRep.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field oBudgetSales.Budget_Idno to File_Field System.LastQuota_Dtl
+
+        Set Field_Mask_Type Field oBudgetSales.Snow_Amt to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Melt_Amt to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Pave_Amt to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Concrete_Amt to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Excavation_Amt to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Sweep_Amp to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Mark_Amt to Mask_Currency_Window
+
+        Set Field_Mask_Type Field oBudgetSales.Other_Amt to Mask_Currency_Window
+
+    End_Procedure
+    
+    Procedure Update
+        Forward Send Update
+        Move (oBudgetSales.Snow_Amt + BudgetHdr.Snow_TTL) to BudgetHdr.Snow_TTL
+        Move (oBudgetSales.Snow_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+         Move (oBudgetSales.Melt_Amt + BudgetHdr.Melt_TTL) to BudgetHdr.Melt_TTL
+         Move (oBudgetSales.Melt_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+          Move (oBudgetSales.Pave_Amt + BudgetHdr.Pave_TTL) to BudgetHdr.Pave_TTL
+          Move (oBudgetSales.Pave_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+           Move (oBudgetSales.Concrete_Amt + BudgetHdr.Concrete_TTL) to BudgetHdr.Concrete_TTL
+           Move (oBudgetSales.Concrete_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+            Move (oBudgetSales.Excavation_Amt + BudgetHdr.Excavation_TTL) to BudgetHdr.Excavation_TTL
+            Move (oBudgetSales.Excavation_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+             Move (oBudgetSales.Sweep_Amp + BudgetHdr.Sweep_TTL) to BudgetHdr.Sweep_TTL
+             Move (oBudgetSales.Sweep_Amp + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+              Move (oBudgetSales.Mark_Amt + BudgetHdr.Mark_TTL)to BudgetHdr.Mark_TTL
+              Move (oBudgetSales.Mark_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+               Move (oBudgetSales.Other_Amt + BudgetHdr.Other_TTL) to BudgetHdr.Other_TTL
+               Move (oBudgetSales.Other_Amt + BudgetHdr.Grand_TTL)  to BudgetHdr.Grand_TTL
+         End_Procedure
+    
+   
+    
+    Procedure Backout
+        Forward Send Backout
+        Move (BudgetHdr.Snow_TTL - oBudgetSales.Snow_Amt) to BudgetHdr.Snow_TTL
+        Move (BudgetHdr.Grand_TTL - oBudgetSales.Snow_Amt) to BudgetHdr.Grand_TTL
+         Move (BudgetHdr.Melt_TTL - oBudgetSales.Melt_Amt) to BudgetHdr.Melt_TTL
+         Move (BudgetHdr.Grand_TTL - oBudgetSales.Melt_Amt) to BudgetHdr.Grand_TTL
+          Move (BudgetHdr.Pave_TTL - oBudgetSales.Pave_Amt) to BudgetHdr.Pave_TTL
+          Move (BudgetHdr.Grand_TTL - oBudgetSales.Pave_Amt) to BudgetHdr.Grand_TTL
+           Move (BudgetHdr.Concrete_TTL - oBudgetSales.Concrete_Amt) to BudgetHdr.Concrete_TTL
+           Move (BudgetHdr.Grand_TTL - oBudgetSales.Concrete_Amt) to BudgetHdr.Grand_TTL
+            Move (BudgetHdr.Excavation_TTL - oBudgetSales.Excavation_Amt) to BudgetHdr.Excavation_TTL
+            Move (BudgetHdr.Grand_TTL - oBudgetSales.Excavation_Amt) to BudgetHdr.Grand_TTL
+             Move (BudgetHdr.Sweep_TTL - oBudgetSales.Sweep_Amp) to BudgetHdr.Sweep_TTL
+             Move (BudgetHdr.Grand_TTL - oBudgetSales.Sweep_Amp) to BudgetHdr.Grand_TTL
+              Move (BudgetHdr.Mark_TTL - oBudgetSales.Mark_Amt) to BudgetHdr.Mark_TTL
+              Move (BudgetHdr.Grand_TTL - oBudgetSales.Mark_Amt) to BudgetHdr.Grand_TTL
+               Move (BudgetHdr.Other_TTL - oBudgetSales.Other_Amt) to BudgetHdr.Other_TTL
+               Move (BudgetHdr.Grand_TTL - oBudgetSales.Other_Amt) to BudgetHdr.Grand_TTL
+       End_Procedure
+
+End_Class

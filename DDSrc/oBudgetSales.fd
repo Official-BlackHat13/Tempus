@@ -1,0 +1,14 @@
+#REPLACE FILE66 oBudgetSales
+#REPLACE oBudgetSales.Recnum |FN66,0
+#REPLACE oBudgetSales.Budget_Hdr_Idno |FN66,1
+#REPLACE oBudgetSales.Budget_Idno |FN66,2
+#REPLACE oBudgetSales.Budget_Yr |FD66,3
+#REPLACE oBudgetSales.Rep_Idno |FN66,4
+#REPLACE oBudgetSales.Snow_Amt |FN66,5
+#REPLACE oBudgetSales.Melt_Amt |FN66,6
+#REPLACE oBudgetSales.Pave_Amt |FN66,7
+#REPLACE oBudgetSales.Concrete_Amt |FN66,8
+#REPLACE oBudgetSales.Excavation_Amt |FN66,9
+#REPLACE oBudgetSales.Sweep_Amp |FN66,10
+#REPLACE oBudgetSales.Mark_Amt |FN66,11
+#REPLACE oBudgetSales.Other_Amt |FN66,12

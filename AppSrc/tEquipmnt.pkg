@@ -1,0 +1,16 @@
+// tEquipmnt.pkg
+
+Struct tEquipmnt
+    Integer iRecId
+    Integer iEquipIdno
+    String  sEquipId
+    String  sDescription
+    Integer iMastOpsIdno
+    Integer iEmployerIdno
+    Number  nRate
+    Number  nUsed
+    Integer iChangedFlag
+    String  sStatus
+    Integer iCEPM_EquipIdno
+    String  sAttachmentCategory
+End_Struct

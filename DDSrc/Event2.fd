@@ -1,0 +1,7 @@
+#REPLACE FILE92 Event2
+#REPLACE Event2.Recnum |FN92,0
+#REPLACE Event2.EventIdno |FN92,1
+#REPLACE Event2.StartDate |FM92,2
+#REPLACE Event2.StopDate |FM92,3
+#REPLACE Event2.Planner |FS92,4
+#REPLACE Event2.EnteredDate |FM92,5

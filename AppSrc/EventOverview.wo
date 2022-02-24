@@ -1,0 +1,217 @@
+// EventOverview.wo
+// EventOverview
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Areas.DD
+Use Weather.DD
+
+Object oEventOverview Is A cWebBusinessProcess
+    Set psDescription To "EventOverview"
+
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+        Property String psStartManager
+        Property String psStopManager
+
+        Procedure OnConstrain 
+            String sStart sStop
+
+            Get psStartManager To sStart
+            Get psStopManager To sStop
+
+            If (sStart <> "" And sStop <> "") Begin
+                Constrain Areas.Manager Between sStart And sStop
+            End
+            Else Begin
+                If (sStart <> "") Begin
+                    Constrain Areas.Manager Ge sStart
+                End
+                Else Begin
+                    If (sStop <> "") Begin
+                        Constrain Areas.Manager Le sStop
+                    End
+                End
+            End
+        End_Procedure // OnConstrain
+    End_Object // oAreas_DD
+
+    Object oWeather_DD Is A Weather_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oAreas_DD
+        Property Number pnStartAreaNumber
+        Property Number pnStopAreaNumber
+        Property Date pdStartEventDate
+        Property Date pdStopEventDate
+
+        Procedure OnConstrain 
+            Number nStart nStop
+            Date dStart dStop
+
+            Get pnStartAreaNumber To nStart
+            Get pnStopAreaNumber To nStop
+
+            If (nStart <> 0 And nStop <> 0) Begin
+                Constrain Weather.AreaNumber Between nStart And nStop
+            End
+            Else Begin
+                If (nStart <> 0) Begin
+                    Constrain Weather.AreaNumber Ge nStart
+                End
+                Else Begin
+                    If (nStop <> 0) Begin
+                        Constrain Weather.AreaNumber Le nStop
+                    End
+                End
+            End
+
+            Get pdStartEventDate To dStart
+            Get pdStopEventDate To dStop
+
+            If (dStart <> 0 And dStop <> 0) Begin
+                Constrain Weather.EventDate Between dStart And dStop
+            End
+            Else Begin
+                If (dStart <> 0) Begin
+                    Constrain Weather.EventDate Ge dStart
+                End
+                Else Begin
+                    If (dStop <> 0) Begin
+                        Constrain Weather.EventDate Le dStop
+                    End
+                End
+            End
+        End_Procedure // OnConstrain
+    End_Object // oWeather_DD
+
+    Set Main_DD To oWeather_DD
+
+
+    Object oReport Is A cWebReport
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCellHeader 'WeatherId' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'AreaNumber' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'EventDate' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'EventTime' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'WindVelocity' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'WindDirection' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'AirTemperature' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'GndTemperature' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'SnowInches' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Description' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Manager' 'class="Header" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText
+            String sWeatherWeatherId
+            String sAreasAreaNumber
+            String sWeatherEventDate
+            String sWeatherEventTime
+            String sWeatherWindVelocity
+            String sWeatherWindDirection
+            String sWeatherAirTemperature
+            String sWeatherGndTemperature
+            String sWeatherSnowInches
+            String sWeatherDescription
+            String sAreasManager
+
+            Get ddValueEncode "Weather.WeatherId" To sWeatherWeatherId
+            Get ddValueEncode "Areas.AreaNumber" To sAreasAreaNumber
+            Get ddValueEncode "Weather.EventDate" To sWeatherEventDate
+            Get ddValueEncode "Weather.EventTime" To sWeatherEventTime
+            Get ddValueEncode "Weather.WindVelocity" To sWeatherWindVelocity
+            Get ddValueEncode "Weather.WindDirection" To sWeatherWindDirection
+            Get ddValueEncode "Weather.AirTemperature" To sWeatherAirTemperature
+            Get ddValueEncode "Weather.GndTemperature" To sWeatherGndTemperature
+            Get ddValueEncode "Weather.SnowInches" To sWeatherSnowInches
+            Get ddValueEncode "Weather.Description" To sWeatherDescription
+            Get ddValueEncode "Areas.Manager" To sAreasManager
+
+            Send WriteHtmlRowBegin
+                Get AddRowIdLink (FormatNumber (sWeatherWeatherId,0)) To sText
+                Send WriteHtmlCell sText 'class="Data" align="right"'
+                Send WriteHtmlCell (FormatNumber (sAreasAreaNumber,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell sWeatherEventDate 'class="Data" align="left"'
+                Send WriteHtmlCell sWeatherEventTime 'class="Data" align="left"'
+                Send WriteHtmlCell (FormatNumber (sWeatherWindVelocity,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell sWeatherWindDirection 'class="Data" align="left"'
+                Send WriteHtmlCell (FormatNumber (sWeatherAirTemperature,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell (FormatNumber (sWeatherGndTemperature,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell (FormatNumber (sWeatherSnowInches,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell sWeatherDescription 'class="Data" align="left"'
+                Send WriteHtmlCell sAreasManager 'class="Data" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunEventOverview Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunEventOverview
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetWeather_AreaNumber String sStart String sStop
+        Set pnStartAreaNumber of oWeather_DD To sStart
+        Set pnStopAreaNumber  of oWeather_DD To sStop
+    End_Procedure // SetWeather_AreaNumber
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetWeather_EventDate String sStart String sStop
+        Set pdStartEventDate of oWeather_DD To sStart
+        Set pdStopEventDate  of oWeather_DD To sStop
+    End_Procedure // SetWeather_EventDate
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetAreas_Manager String sStart String sStop
+        Set psStartManager of oAreas_DD To (Uppercase (sStart))
+        Set psStopManager  of oAreas_DD To (Uppercase (sStop))
+    End_Procedure // SetAreas_Manager
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunEventOverview Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunEventOverview of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunEventOverview
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oEventOverview

@@ -1,0 +1,21 @@
+// tLocation.pkg
+// used to update remote server data
+
+Struct tLocation
+    Integer iRecId
+    Integer iCustIdno
+    Integer iLocIdno
+    Integer iLocNbr
+    String  sName
+    String  sAddress1
+    String  sAddress2
+    String  sCity
+    String  sState
+    String  sZip
+    String  sStatus
+    Integer iArea
+    Integer iInvLoc
+    Integer iChangedFlag
+    Integer iContactIdno
+    Integer iPropmgrIdno
+End_Struct

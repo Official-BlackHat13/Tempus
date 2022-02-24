@@ -1,0 +1,26 @@
+// dbTagForm is used by Esstds.vw
+
+class dbTagForm is a dbForm
+    procedure Construct_Object
+        forward send Construct_Object
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Size to 13 186
+        on_key KEY_ALT+KEY_INSERT send InsertTagRow
+        on_key KEY_ALT+KEY_DELETE send DeleteTagRow
+        on_key KEY_UP_ARROW   send PreviousTagRow
+        on_key KEY_DOWN_ARROW send NextTagRow
+    end_procedure
+    procedure InsertTagRow
+        // overridden at the object level
+    end_procedure // InsertTagRow
+    procedure DeleteTagRow
+        // overridden at the object level
+    end_procedure // DeleteTagRow
+    procedure PreviousTagRow
+        // overridden at the object level
+    end_procedure // PreviousTagRow
+    procedure NextTagRow
+        // overridden at the object level
+    end_procedure // NextTagRow
+end_class

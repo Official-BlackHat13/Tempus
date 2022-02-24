@@ -1,0 +1,7 @@
+#REPLACE FILE65 PropTM
+#REPLACE PropTM.Recnum |FN65,0
+#REPLACE PropTM.TMList_Idno |FN65,1
+#REPLACE PropTM.PropT_M_Idno |FN65,2
+#REPLACE PropTM.ServiceDesc |FS65,3
+#REPLACE PropTM.ServicePrice |FN65,4
+#REPLACE PropTM.Catagory |FS65,5

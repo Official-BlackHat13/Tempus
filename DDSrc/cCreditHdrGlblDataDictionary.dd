@@ -1,0 +1,58 @@
+Use cGlblDataDictionary.pkg
+
+Open CreditHdr
+Open CreditDtl
+Open Invhdr
+Open System
+
+Register_Object CreditHdr_sl
+
+Class cCreditHdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to CreditHdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Invhdr.File_Number
+
+        Set Add_Client_File to CreditDtl.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field CreditHdr.CreditIdno to File_Field System.LastCreditHdrIdno
+        Set Field_Prompt_Object Field CreditHdr.CreditIdno to CreditHdr_sl
+        Set Field_Option Field CreditHdr.CreditIdno DD_AUTOFIND to True
+        Set Key_Field_State Field CreditHdr.CreditIdno to True
+        
+        Set Auto_Clear_DEO_State to False
+
+    End_Procedure
+
+    Procedure Field_Defaults
+        Date dToday
+        Sysdate dToday
+        
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field CreditHdr.CreditDate to dToday
+        Set Field_Changed_Value Field CreditHdr.CreatedDate to dToday
+    End_Procedure
+    
+    Procedure Update
+        
+        Move Location.CustomerIdno      to CreditHdr.CustomerIdno
+        Move Location.LocationIdno      to CreditHdr.LocationIdno
+        Move Order.JobNumber            to CreditHdr.JobNumber
+        Move Invhdr.QBInvoiceNumber     to CreditHdr.QBInvoiceNumber
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use CreditHdr.sl
+#ENDIF

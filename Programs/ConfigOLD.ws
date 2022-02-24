@@ -1,0 +1,16 @@
+[Workspace]
+Home=..\
+AppSrcPath=.\AppSrc
+AppHTMLPath=.\AppHtml
+BitmapPath=.\Bitmaps
+IdeSrcPath=.\IdeSrc
+DataPath=.\Data
+DDSrcPath=.\DdSrc
+HelpPath=.\Help
+ProgramPath=.\Programs
+FileList=.\Data\Filelist.cfg
+Description=Tempus
+[WebServices]
+ServiceLocation=http://209.98.121.241/IC_TEST/TransactionService.wso
+WSDLLocation=http://209.98.121.241/IC_TEST/TransactionService.wso?WSDL
+WebsiteRoot=http://209.98.121.241/IC_TEST

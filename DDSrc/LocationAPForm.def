@@ -1,0 +1,60 @@
+-----------------------------------------------------------------------------
+  DATE: 01/07/2021      TIME: 08:52                                  PAGE:  1
+  FILE DEFINITION FOR FILE: LocationAPForm (# 86)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:LocationAPForm
+  USER DISPLAY NAME         : LocationAPForm
+  DATAFLEX FILE NAME        : LocationAPForm
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 17152     ( USED: 17152 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 10 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-149\SQLEXPRESS;Trusted_Connection=yes;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LocationAPIdno   NUM    8.0     1  1   
+  2  LocationIdno     NUM    8.0    12  2   Location.FIELD_2 (3,2)
+  3  BCFullName       ASC     50    23      
+  4  BCCellPhone      ASC     14    73      
+  5  BCOfficePhone    ASC     14    87      
+  6  BCOtherPhone     ASC     14   101      
+  7  BCEmail          ASC    100   115      
+  8  BillingName      ASC     50   215      
+  9  BillingAttn      ASC     50   265      
+ 10  BillingAddress1  ASC     50   315      
+ 11  BillingAddress2  ASC     50   365      
+ 12  BillingCity      ASC     50   415      
+ 13  BillingState     ASC      2   465      
+ 14  BillingZip       ASC     10   467      
+ 15  BillingTerms     ASC     25   477      
+ 16  SendMailFlag     NUM    2.0   502      
+ 17  SendEmailFlag    NUM    2.0   508      
+ 18  ThirdPartyFlag   NUM    2.0   514      
+ 19  ThirdPartyServiceName  ASC     50   520      
+ 20  ThirdPartyInstructions  TEX   2048   570      
+ 21  ThirdPartyContactName  ASC     50 16953      
+ 22  ThirdPartyContactEmail  ASC    100 17003      
+ 23  ThirdPartyPhone  ASC     14 17103      
+ 24  ChangedFlag      NUM    2.0 17117  3   
+ 25  ChangedDate      DTM     23 17123      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LocationAPIdno  NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       LocationAPIdno  NO  NO 
+
+  3    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       LocationAPIdno  NO  NO 
+

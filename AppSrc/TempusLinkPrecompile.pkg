@@ -1,0 +1,13 @@
+// TempusLinkPrecompile.pkg 
+//
+// 15.0.93.1   - 09/25/09 - Initial Compile
+// 15.1.102.1  - 05/26/10 - Initial VDF version Compile
+
+
+Use GlobalAllEnt.pkg
+//Use cTempusClientArea.pkg
+Use cCJStandardCommandBarSystem.pkg
+Use oEditContextMenu.pkg
+Use oDEOEditContextMenu.pkg
+Use cCJCommandBarSystem.pkg
+Use Regserver.pkg

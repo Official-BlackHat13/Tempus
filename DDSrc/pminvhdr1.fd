@@ -1,0 +1,17 @@
+#REPLACE FILE112 pminvhdr1
+#REPLACE pminvhdr1.Recnum |FN112,0
+#REPLACE pminvhdr1.InvoiceNumber |FN112,1
+#REPLACE pminvhdr1.JobNumber |FN112,2
+#REPLACE pminvhdr1.QuoteHdrID |FN112,3
+#REPLACE pminvhdr1.CustomerIdno |FN112,4
+#REPLACE pminvhdr1.ContactIdno |FN112,5
+#REPLACE pminvhdr1.LocationIdno |FN112,6
+#REPLACE pminvhdr1.SlsRepIdno |FN112,7
+#REPLACE pminvhdr1.QuoteDate |FM112,8
+#REPLACE pminvhdr1.OrderDate |FM112,9
+#REPLACE pminvhdr1.QuoteMemo |FS112,10
+#REPLACE pminvhdr1.Amount |FN112,11
+#REPLACE pminvhdr1.InvoiceDate |FM112,12
+#REPLACE pminvhdr1.NextLineNo |FN112,13
+#REPLACE pminvhdr1.LineCount |FN112,14
+#REPLACE pminvhdr1.PO |FS112,15

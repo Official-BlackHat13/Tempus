@@ -1,0 +1,12 @@
+#REPLACE FILE46 Ref_Dtl
+#REPLACE Ref_Dtl.Recnum |FN46,0
+#REPLACE Ref_Dtl.Ref_Hdr_Idno |FN46,1
+#REPLACE Ref_Dtl.ReferenceIdno |FN46,2
+#REPLACE Ref_Dtl.Company |FS46,3
+#REPLACE Ref_Dtl.Name |FS46,4
+#REPLACE Ref_Dtl.Title |FS46,5
+#REPLACE Ref_Dtl.Phone |FS46,6
+#REPLACE Ref_Dtl.Email |FS46,7
+#REPLACE Ref_Dtl.Print |FS46,8
+#REPLACE Ref_Dtl.HighLight |FS46,9
+#REPLACE Ref_Dtl.Ref_Dtl_idno |FN46,10

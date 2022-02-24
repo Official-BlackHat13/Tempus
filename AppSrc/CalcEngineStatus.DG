@@ -1,0 +1,605 @@
+//AB/ Project Calc Engine Status
+//AB/ Object prj is a Dialog_Project
+//AB/     Set ProjectName to "Calc Engine Status"
+//AB/     Set ProjectFileName to "CalcEngineStatus.DG"
+//AB/     Set GenerateFileName to "NONAME2"
+
+// Project Object Structure
+//   oCalcStatus is a dbModalPanel
+//     Jcdept_DD is a DataDictionary
+//     Jccntr_DD is a DataDictionary
+//     Jcoper_DD is a DataDictionary
+//     oStatusImageList is a cGlblImageList
+//     oStatusArray is a cGlblArray
+//     oItemTreeView is a cGlblTreeView
+//     oOK_bn is a Button
+//     oCancel_bn is a Button
+//     Jcoper_Var1_Tag is a cGlblDbForm
+//     Jcoper_Var2_Tag is a cGlblDbForm
+//     Jcoper_Var3_Tag is a cGlblDbForm
+//     Jcoper_Var4_Tag is a cGlblDbForm
+//     Jcoper_Var5_Tag is a cGlblDbForm
+//     Jcoper_Var6_Tag is a cGlblDbForm
+//     Jcoper_Var7_Tag is a cGlblDbForm
+//     Jcoper_Var8_Tag is a cGlblDbForm
+//     Jcoper_Var9_Tag is a cGlblDbForm
+//     oVar1Form is a cGlblDbForm
+//     oVar2Form is a cGlblDbForm
+//     oVar3Form is a cGlblDbForm
+//     oVar4Form is a cGlblDbForm
+//     oVar5Form is a cGlblDbForm
+//     oVar6Form is a cGlblDbForm
+//     oVar7Form is a cGlblDbForm
+//     oVar8Form is a cGlblDbForm
+//     oVar9Form is a cGlblDbForm
+//     Jcoper_Calc_Units_Desc is a cGlblDbForm
+//     Jcoper_Table_Std_Desc is a cGlblDbForm
+//     Jcoper_Calc_Std_Desc is a cGlblDbForm
+//     oCalcUnitsForm is a cGlblDbForm
+//     oTableUnitsForm is a cGlblDbForm
+//     oProdUnitsForm is a cGlblDbForm
+
+// Register all objects
+Register_Object Jccntr_DD
+Register_Object Jcdept_DD
+Register_Object Jcoper_Calc_Std_Desc
+Register_Object Jcoper_Calc_Units_Desc
+Register_Object Jcoper_DD
+Register_Object Jcoper_Table_Std_Desc
+Register_Object Jcoper_Var1_Tag
+Register_Object Jcoper_Var2_Tag
+Register_Object Jcoper_Var3_Tag
+Register_Object Jcoper_Var4_Tag
+Register_Object Jcoper_Var5_Tag
+Register_Object Jcoper_Var6_Tag
+Register_Object Jcoper_Var7_Tag
+Register_Object Jcoper_Var8_Tag
+Register_Object Jcoper_Var9_Tag
+Register_Object oCalcStatus
+Register_Object oCalcUnitsForm
+Register_Object oCancel_bn
+Register_Object oItemTreeView
+Register_Object oOK_bn
+Register_Object oProdUnitsForm
+Register_Object oStatusArray
+Register_Object oStatusImageList
+Register_Object oTableUnitsForm
+Register_Object oVar1Form
+Register_Object oVar2Form
+Register_Object oVar3Form
+Register_Object oVar4Form
+Register_Object oVar5Form
+Register_Object oVar6Form
+Register_Object oVar7Form
+Register_Object oVar8Form
+Register_Object oVar9Form
+
+
+Use DFAllEnt.pkg
+Use cGlblImageList.pkg
+Use cGlblArray.pkg
+Use cGlblTreeView.pkg
+Use cGlblDbForm.pkg
+
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+
+Object oCalcStatus is a dbModalPanel
+
+    //AB-StoreTopStart
+    property integer piOpcode 0
+    property handle  phStatus 0
+    property handle  phKey    0
+    property handle  phData   0
+
+    set Locate_Mode to CENTER_ON_PANEL
+    //AB-StoreTopEnd
+
+    Set Label to "Calc Engine Status"
+    Set Size to 239 518
+    Set Location to 20 22
+
+    //AB-DDOStart
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(self))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+
+        Property Number pnVar1
+        Property Number pnVar2
+        Property Number pnVar3
+        Property Number pnVar4
+        Property Number pnVar5
+        Property Number pnVar6
+        Property Number pnVar7
+        Property Number pnVar8
+        Property Number pnVar9
+        Property Number pnCalcUnits
+        Property Number pnTableUnits
+        Property Number pnProdUnits
+
+        Set DDO_Server to (Jccntr_DD(self))
+    End_Object    // Jcoper_DD
+
+    Set Main_DD to (Jcoper_DD(self))
+    Set Server to (Jcoper_DD(self))
+
+    //AB-DDOEnd
+
+    Object oStatusImageList is a cGlblImageList
+        Set Location to 62 24
+
+        //AB-StoreStart
+        Procedure OnCreate
+            integer iIndex
+            //
+            get AddImage "ClYellow.bmp" to iIndex
+            get AddImage "OpYellow.bmp" to iIndex
+            get AddImage "SchedJob.bmp" to iIndex
+            //If (iIndex = -1) Begin
+            //    Send Stop_Box "Image ClosFold.bmp could not be loaded"
+            //End
+            get AddImage "Inactive.bmp" to iIndex
+            // Add images here...
+            // Get AddTransparentImage sImage iTransparentColor To iIndex
+            // or
+            // Get AddImage sImage To iIndex
+        End_Procedure
+        //AB-StoreEnd
+
+    End_Object    // oStatusImageList
+
+    Object oStatusArray is a cGlblArray
+        Set Location to 62 51
+    End_Object    // oStatusArray
+
+    Object oItemTreeView is a cGlblTreeView
+
+        //AB-StoreTopStart
+        property handle phRoot 0
+
+        set ImageListObject to (oStatusImageList(self))
+        //AB-StoreTopEnd
+
+        Set Size to 213 295
+        Set Location to 20 5
+
+        //AB-StoreStart
+        procedure OnCreateTree
+            integer iRow iCount iItem iOpcode iLevel iImage iPos
+            handle  hArray hStatus hKey hRoot hOpcode hParent
+            string  sSymbol sCalcFlags sDescription sVarTag
+            //
+            get phStatus to hStatus
+            get phKey    to hKey
+            //
+            get AddTreeItem "Opcodes" 0 0 0 1 to hRoot
+            // store this handle
+            set phRoot to hRoot
+            //
+            move oStatusArray to hArray
+            //
+            get Row_Count of hStatus to iCount
+            decrement iCount
+            //
+            for iRow from 0 to iCount
+                get piLinkOpcode of hStatus iRow to iOpcode
+                get piLinkLevel  of hStatus iRow to iLevel
+                get psLinkSymbol of hStatus iRow to sSymbol
+                //
+                clear Jcoper
+                move iOpcode to Jcoper.Opcode
+                find EQ Jcoper.Opcode
+                //
+                move Jcoper.Calc_flags                               to sCalcFlags
+                move 2                                               to iImage
+                if "D" in sCalcFlags if not "O" in sCalcFlags move 3 to iImage
+                //
+                if (iLevel = 0) move hRoot                       to hParent
+                else get Array_Value of hArray item (iLevel - 1) to hParent
+                //
+                move (string(iOpcode) * trim(Jcoper.Name) * "Sym:") to sDescription
+                //
+                if      (sSymbol = " ") ;
+                    move (sDescription * trim(Jcoper.Calc_std_desc))   to sDescription
+
+                else if (sSymbol = "0") ;
+                    move (sDescription * trim(Jcoper.Calc_units_desc)) to sDescription
+                else if (sSymbol = "T") ;
+                    move (sDescription * trim(Jcoper.Table_std_desc))  to sDescription
+                else begin
+                    move (pos(sSymbol,"123456789")) to iPos
+                    if (iPos) begin
+                        get_field_value Jcoper.File_number (90 + iPos)            to sVarTag
+                        move (sDescription * trim(sSymbol) + "-" + trim(sVarTag)) to sDescription
+                    end
+                end
+                //
+                get AddTreeItem  sDescription hParent iOpcode iImage iImage to hOpcode
+                set Array_Value of hArray item iLevel                       to hOpcode
+            loop
+        end_procedure  // OnCreateTree
+
+        // When the user clicks on an item in the treeview (or moves down/up with arrow
+        // keys) this event will fire.
+        procedure OnItemChanged handle hItem handle hItemOld
+            integer hDD iKeyIndex iDataIndex iOpcode
+            handle  hRoot hKey hData
+            number  nValue
+            //
+            get Server to hDD
+            send Request_Clear
+            //
+            get phRoot to hRoot
+            if (hItem = hRoot) begin
+                procedure_return
+            end
+            //
+            get phKey  to hKey
+            get phData to hData
+            //
+            get ItemData hItem                              to iOpcode
+            get ExistingStorageLevel of oCalcEngine iOpcode to iKeyIndex
+            move (iKeyIndex * 32)                           to iDataIndex
+            //
+            get Number_Value of hData ( 1 + iDataIndex) to nValue
+            set pnVar1       of hDD                     to nValue
+            get Number_Value of hData ( 2 + iDataIndex) to nValue
+            set pnVar2       of hDD                     to nValue
+            get Number_Value of hData ( 3 + iDataIndex) to nValue
+            set pnVar3       of hDD                     to nValue
+            get Number_Value of hData ( 4 + iDataIndex) to nValue
+            set pnVar4       of hDD                     to nValue
+            get Number_Value of hData ( 5 + iDataIndex) to nValue
+            set pnVar5       of hDD                     to nValue
+            get Number_Value of hData ( 6 + iDataIndex) to nValue
+            set pnVar6       of hDD                     to nValue
+            get Number_Value of hData ( 7 + iDataIndex) to nValue
+            set pnVar7       of hDD                     to nValue
+            get Number_Value of hData ( 8 + iDataIndex) to nValue
+            set pnVar8       of hDD                     to nValue
+            get Number_Value of hData ( 9 + iDataIndex) to nValue
+            set pnVar9       of hDD                     to nValue
+            get Number_Value of hData (10 + iDataIndex) to nValue
+            set pnCalcUnits  of hDD                     to nValue
+            get Number_Value of hData (13 + iDataIndex) to nValue
+            set pnTableUnits of hDD                     to nValue
+            get Number_Value of hData (16 + iDataIndex) to nValue
+            set pnProdUnits  of hDD                     to nValue
+            //
+            move iOpcode to Jcoper.Opcode
+            send Find of hDD EQ 2
+        end_procedure // OnItemChanged
+        //AB-StoreEnd
+
+    End_Object    // oItemTreeView
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Default_State to TRUE
+        Set Size to 14 51
+        Set Location to 220 305
+
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oOK_bn
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Location to 220 360
+
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oCancel_bn
+
+    Object Jcoper_Var1_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var1_tag
+        Set Size to 13 148
+        Set Location to 20 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var1_Tag
+
+    Object Jcoper_Var2_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var2_tag
+        Set Size to 13 148
+        Set Location to 35 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var2_Tag
+
+    Object Jcoper_Var3_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var3_tag
+        Set Size to 13 148
+        Set Location to 50 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var3_Tag
+
+    Object Jcoper_Var4_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var4_tag
+        Set Size to 13 148
+        Set Location to 65 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var4_Tag
+
+    Object Jcoper_Var5_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var5_tag
+        Set Size to 13 148
+        Set Location to 80 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var5_Tag
+
+    Object Jcoper_Var6_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var6_tag
+        Set Size to 13 148
+        Set Location to 95 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var6_Tag
+
+    Object Jcoper_Var7_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var7_tag
+        Set Size to 13 148
+        Set Location to 110 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var7_Tag
+
+    Object Jcoper_Var8_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var8_tag
+        Set Size to 13 148
+        Set Location to 125 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var8_Tag
+
+    Object Jcoper_Var9_Tag is a cGlblDbForm
+        Entry_Item Jcoper.Var9_tag
+        Set Size to 13 148
+        Set Location to 140 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Var9_Tag
+
+    Object oVar1Form is a cGlblDbForm
+        Entry_Item (pnVar1(Server(self)))
+        Set Size to 13 58
+        Set Location to 20 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar1Form
+
+    Object oVar2Form is a cGlblDbForm
+        Entry_Item (pnVar2(Server(self)))
+        Set Size to 13 58
+        Set Location to 35 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar2Form
+
+    Object oVar3Form is a cGlblDbForm
+        Entry_Item (pnVar3(Server(self)))
+        Set Size to 13 58
+        Set Location to 50 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar3Form
+
+    Object oVar4Form is a cGlblDbForm
+        Entry_Item (pnVar4(Server(self)))
+        Set Size to 13 58
+        Set Location to 65 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar4Form
+
+    Object oVar5Form is a cGlblDbForm
+        Entry_Item (pnVar5(Server(self)))
+        Set Size to 13 58
+        Set Location to 80 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar5Form
+
+    Object oVar6Form is a cGlblDbForm
+        Entry_Item (pnVar6(Server(self)))
+        Set Size to 13 58
+        Set Location to 95 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar6Form
+
+    Object oVar7Form is a cGlblDbForm
+        Entry_Item (pnVar7(Server(self)))
+        Set Size to 13 58
+        Set Location to 110 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar7Form
+
+    Object oVar8Form is a cGlblDbForm
+        Entry_Item (pnVar8(Server(self)))
+        Set Size to 13 58
+        Set Location to 125 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar8Form
+
+    Object oVar9Form is a cGlblDbForm
+        Entry_Item (pnVar9(Server(self)))
+        Set Size to 13 58
+        Set Location to 140 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oVar9Form
+
+    Object Jcoper_Calc_Units_Desc is a cGlblDbForm
+        Entry_Item Jcoper.Calc_units_desc
+        Set Size to 13 148
+        Set Location to 170 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Calc_Units_Desc
+
+    Object Jcoper_Table_Std_Desc is a cGlblDbForm
+        Entry_Item Jcoper.Table_std_desc
+        Set Size to 13 148
+        Set Location to 185 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Table_Std_Desc
+
+    Object Jcoper_Calc_Std_Desc is a cGlblDbForm
+        Entry_Item Jcoper.Calc_std_desc
+        Set Size to 13 148
+        Set Location to 200 305
+        Set Form_Border Item 0 to Border_None
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_Calc_Std_Desc
+
+    Object oCalcUnitsForm is a cGlblDbForm
+        Entry_Item (pnCalcUnits(Server(self)))
+        Set Size to 13 58
+        Set Location to 170 456
+        Set Numeric_Mask item 0 to 8 4 "*,"
+    End_Object    // oCalcUnitsForm
+
+    Object oTableUnitsForm is a cGlblDbForm
+        Entry_Item (pnTableUnits(Server(self)))
+        Set Size to 13 58
+        Set Location to 185 456
+        Set Numeric_Mask item 0 to 8 4 "*,"
+    End_Object    // oTableUnitsForm
+
+    Object oProdUnitsForm is a cGlblDbForm
+        Entry_Item (pnProdUnits(Server(self)))
+        Set Size to 13 58
+        Set Location to 200 456
+
+        //AB-StoreStart
+        set Numeric_Mask item 0 to 8 4 "*,"
+        //AB-StoreEnd
+
+    End_Object    // oProdUnitsForm
+
+
+    //AB-StoreStart
+    function IsReturnOpcode handle hStatus handle hKey handle hData returns integer
+        integer iRecnum
+        //
+        set piOpcode to 0
+        set phStatus to hStatus
+        set phKey    to hKey
+        set phData   to hData
+        // place marker
+        move Jcoper.Recnum to iRecnum
+        send Clear of Jcoper_DD
+        send Popup //_Modal
+        //
+        if (iRecnum AND Jcoper.Recnum <> iRecnum) begin
+            clear Jcoper
+            move iRecnum to Jcoper.Recnum
+            find EQ Jcoper.Recnum
+        end
+        //
+        function_return (piOpcode(self))
+    end_function
+    //AB-StoreEnd
+
+End_Object    // oCalcStatus
+
+//AB/ End_Object    // prj
+

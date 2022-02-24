@@ -1,0 +1,54 @@
+Use cGlblDataDictionary.pkg
+
+Open Lotacces
+Open Parklots
+Open System
+
+Object Lotacces_AccessoryType is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "C" "Crosswalk"
+        Send Add_Table_Value "I" "Island"
+    End_Procedure
+End_Object
+
+Class cLotaccesDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Lotacces.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Parklots.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Lotacces.LotAccessoryId to File_Field System.LotAccessoryId
+
+        Set Field_Value_Table Field Lotacces.AccessoryType to Lotacces_AccessoryType
+        Set Field_Option Field Lotacces.AccessoryType DD_CAPSLOCK to True
+
+    End_Procedure
+
+    Procedure Backout
+        If      (Lotacces.AccessoryType = "C") Begin
+            Subtract 1 from Parklots.Crosswalks
+        End
+        Else If (Lotacces.AccessoryType = "I") Begin
+            Subtract 1 from Parklots.Islands
+        End
+    End_Procedure
+
+    Procedure Update
+        If      (Lotacces.AccessoryType = "C") Begin
+            Add 1 to Parklots.Crosswalks
+        End
+        Else If (Lotacces.AccessoryType = "I") Begin
+            Add 1 to Parklots.Islands
+        End
+    End_Procedure
+End_Class

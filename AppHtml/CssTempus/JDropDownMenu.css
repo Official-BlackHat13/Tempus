@@ -1,0 +1,130 @@
+
+
+
+/*--------------------------
+    MAIN MENU STYLE
+---------------------------*/
+
+.ul {
+    font-size: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    z-index: 600;
+    }
+
+#nav ul {
+    font-size: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    z-index: 600;
+    }
+
+#nav a {
+    font-weight: bold;
+    color: #cee3ef;
+    text-decoration: none;
+    z-index: 600;
+    }
+
+#nav li a:hover{
+    color: #53A6CC;
+    z-index: 600;
+    }
+
+#nav li{
+    padding: 5px;
+    text-align: left;
+    z-index: 600;
+    }
+
+#nav li li a {
+    display: block;
+    font-size: 11px;
+    font-weight: normal;
+    color: #466381;
+    padding-left: 12px;
+    z-index: 600;
+    }
+
+#nav li li a:hover {
+    text-decoration: underline;
+    color: #466381;
+    z-index: 600;
+    }
+
+#nav li  {
+    float: left;
+    position: relative;
+    width: 10em;
+    cursor: default;
+    background-color: #466381;
+    border-left: 1px solid #466381;
+    border-right: 1px solid #466381;
+    border-width: 1px 0;
+    z-index: 600;
+    }
+
+#nav li.firstli {
+    border-left-width: 1em;
+    width: 0px;
+    margin: 0;
+    z-index: 600;
+    }
+
+#nav li.lastli {
+    border-right-width: 1em;
+    width: 0px;
+    margin: 0;
+    z-index: 600;
+    }
+
+#nav li.middleli{
+    width: 10%;
+    z-index: 600;
+    }
+
+
+#nav li ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    font-weight: normal;
+    background:  url(../Images/MenuBar/UlBg.gif) bottom left no-repeat;
+    padding: 0.5em 0 1em 0;
+    border-right: solid 1px #53A6CC;
+    z-index: 600;
+    }
+
+#nav li li {
+    display: block;
+    float: none;
+    background-color: transparent;
+    border: 0;
+    z-index: 600;
+    }
+
+#nav .NA {
+    display: block;
+    font-size: 11px;
+    font-weight: normal;
+    color: #466381;
+    padding-left: 18px;
+    color: #ccc;
+    text-decoration: line-through;
+    z-index: 600;
+    }
+
+#nav li:hover ul, li.over ul {
+    display: block;
+    z-index: 600;
+    }
+
+#nav .over ul{
+    display: block;
+    z-index: 600;
+}

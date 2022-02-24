@@ -1,0 +1,347 @@
+//Use cWindows.pkg
+Use cGlblReportView.pkg
+Use File_Dlg.Pkg
+Use Windows.pkg
+Use cGlblForm.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblRadio.pkg
+Use cTextEdit.pkg
+Use cGlblButton.pkg
+Use cDRReport.pkg
+Use DRModalPreview.dg
+Use DRStatuspanel.dg
+
+ACTIVATE_VIEW Activate_oTransactionsByJobNumberReportView FOR oTransactionsByJobNumberReportView
+
+Object oTransactionsByJobNumberReportView Is A cGlblReportView
+    Set Label to "Transactions By Job Number"
+    Set Border_Style to Border_Thick
+
+    Property Integer piJobNumber
+    Property Date pdStartDate
+    Property Date pdStopDate
+    Property String  psFilePath
+    Property String  psFileName
+
+    Object oReport is a cDRReport
+        Set pePreviewStyle to C_DRPREVIEW_MODAL
+        Set phoPreviewContainer to oDRModalPreview
+        Set pbShowStatusPanel to False
+        Set phoStatusPanel to oDRStatusPanel
+
+        Procedure OnProgressRecordsRead Integer iRecords
+            Handle hoStatusPanel
+            Boolean bShowStatusPanel
+
+            Forward Send OnProgressRecordsRead iRecords
+
+            Get pbShowStatusPanel to bShowStatusPanel
+            Get phoStatusPanel to hoStatusPanel
+            If (bShowStatusPanel and hoStatusPanel <> 0) Begin
+                Send SetStatusText of hoStatusPanel (SFormat ("Records read: %1", iRecords))
+            End
+        End_Procedure
+
+        Procedure OnProgressFormatPage Integer iPage Integer iTotalPages
+            Handle hoStatusPanel
+            Boolean bShowStatusPanel
+
+            Forward Send OnProgressFormatPage iPage iTotalPages
+
+            Get pbShowStatusPanel to bShowStatusPanel
+            Get phoStatusPanel to hoStatusPanel
+            If (bShowStatusPanel and hoStatusPanel <> 0) Begin
+                If (iTotalPages <> -1) Begin
+                    Send SetStatusText of hoStatusPanel (SFormat ("Formatting page %1 of %2 pages", iPage, iTotalPages))
+                End
+                Else Begin
+                    Send SetStatusText of hoStatusPanel (SFormat ("Formatting page %1", iPage))
+                End
+            End
+        End_Procedure
+
+        Set psReportName to "Transactions By Job Number.dr"
+
+        Procedure OnInitializeReport
+            String sReportId
+            Integer eOutputDeviceMode
+
+            Forward Send OnInitializeReport
+
+            // Convert from the ReportView Output_Device_Mode to peOutputDestination
+            Get Output_Device_Mode to eOutputDeviceMode
+            Set peOutputDestination to eOutputDeviceMode
+            Set psFilePath to (psHome(phoWorkspace(ghoApplication))+'Reports\Cache\')
+            Set psFileName to ((RandomHexUUID())+".pdf")
+            Set psExportFileName to (psFilePath(Self)+psFileName(Self))
+            Set peExportType to C_drPDF
+
+            Get psReportId to sReportId
+
+            Send ChangeODBCDataSource sReportId
+            Send SetFunctions
+            Send SetFilters
+            Send SetSortFields
+            Send SetParameters
+        End_Procedure
+
+        Procedure SetFunctions
+            String sFunctionBody sReportId sSubReportId
+
+            Get psReportId to sReportId
+
+            Get psFunction sReportId "Hours" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Hours"
+            Set psFunction sReportId "Hours" to sFunctionBody
+
+            Get psFunction sReportId "Bulk" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Bulk"
+            Set psFunction sReportId "Bulk" to sFunctionBody
+
+            Get psFunction sReportId "Bag" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Bag"
+            Set psFunction sReportId "Bag" to sFunctionBody
+
+            Get psFunction sReportId "Gallons" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Gallons"
+            Set psFunction sReportId "Gallons" to sFunctionBody
+
+            Get psFunction sReportId "Location" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Location"
+            Set psFunction sReportId "Location" to sFunctionBody
+
+            Get psFunction sReportId "Employee" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Employee"
+            Set psFunction sReportId "Employee" to sFunctionBody
+
+            Get psFunction sReportId "DateRange" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "DateRange"
+            Set psFunction sReportId "DateRange" to sFunctionBody
+
+            Get psFunction sReportId "Function8" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "Function8"
+            Set psFunction sReportId "Function8" to sFunctionBody
+        End_Procedure
+
+
+        // Activate the code inside this method if you want to change the database connection
+        Procedure ChangeODBCDataSource String sReportId
+            String sConnectionString sDSN sSubReportId
+            Integer iSubReports iSubReport
+
+            Get psDatabaseConnection sReportId to sConnectionString
+            Get psDatabaseName sReportId to sDSN
+            // ToDo: Change the contents of sDSN and/or sConnectionString
+            Set psDatabaseConnection sReportId to sConnectionString
+            Set psDatabaseName sReportId to sDSN
+
+            Get SubReportCount sReportId to iSubReports
+            Decrement iSubReports
+            For iSubReport from 0 to iSubReports
+                Get SubReportId sReportId iSubReport to sSubReportId
+                Send ChangeODBCDataSource sSubReportId
+            Loop
+        End_Procedure
+
+
+        // In this routine we find the code that sets the parameter values. The values
+        // for the parameters can be retrieved from an input control or from own coding.
+        Procedure SetParameters
+            String sReportId
+            Integer iParameter
+            String sJobNumber
+            String sStartDate
+            String sStopDate
+
+            Get Value of oJobNumberParameterForm to sJobNumber
+            Get psReportId to sReportId
+            Get ParameterIdByName sReportId "JobNumber" to iParameter
+            // Overwrite if JumpStart was used
+            If (piJobNumber(Self)<>0) Begin
+                Get piJobNumber to sJobNumber
+            End
+            Set psParameterValue sReportId iParameter to sJobNumber
+
+            Get Value of oStartDateParameterForm to sStartDate
+            Get DateToString sStartDate to sStartDate
+            Get psReportId to sReportId
+            Get ParameterIdByName sReportId "StartDate" to iParameter
+            // Overwrite if JumpStart was used
+            If (pdStartDate(Self)<>0) Begin
+                Get pdStartDate to sStartDate
+            End
+            Set psParameterValue sReportId iParameter to sStartDate
+
+            Get Value of oStopDateParameterForm to sStopDate
+            Get DateToString sStopDate to sStopDate
+            Get psReportId to sReportId
+            Get ParameterIdByName sReportId "StopDate" to iParameter
+            // Overwrite if JumpStart was used
+            If (pdStopDate(Self)<>0) Begin
+                Get pdStopDate to sStopDate
+            End
+            Set psParameterValue sReportId iParameter to sStopDate
+        End_Procedure
+
+        Procedure SetFilters
+            String sReportId
+            // You can use the method AddFilter to add a filter or set the filter via psFilterFunction
+
+            Get psReportId to sReportId
+        End_Procedure
+
+        Procedure SetSortFields
+            // The wizard did not detect any sort fields. If you later add sort fields to the report
+            // and want to alter them via this method you probably want to remove the existing sort fields first
+//            String sReportId
+//            Get psReportId to sReportId
+        End_Procedure
+    End_Object
+
+    Object oParametersGroup Is A cGlblGroup
+        Set Label to "Parameters"
+        Set Location to 5 5
+
+        Object oJobNumberParameterForm Is A cGlblForm
+            Set Size to 13 75
+            Set Location to 10 66
+            Set Label_Justification_Mode to jMode_Left
+            Set Label_Col_Offset to 60
+            Set Label to "Select JobNumber"
+            Set Status_Help to 'Parameter Field "Select JobNumber" Value'
+            Set Form_Margin to 8
+            Set Form_Datatype to Ascii_Window
+            Set Prompt_Button_Mode to PB_PromptOn
+            Set Prompt_Object to Order_sl
+
+            Procedure Prompt_Callback Handle hoPrompt
+//                Forward Send Prompt_Callback hoPrompt
+                //Set peUpdateMode of hoPrompt to umPromptNonInvoking
+                //Set piUpdateColumn of hoPrompt to 1
+            End_Procedure
+        End_Object
+
+
+        Object oStartDateParameterForm is a Form
+            Set Size to 13 76
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Left
+            Set Label_Col_Offset to 60
+            Set Label to "Select StartDate"
+            Set Status_Help to 'Parameter Field "Select StartDate" Value'
+            Set Form_Datatype to Mask_Date_Window
+            Set Prompt_Button_Mode to PB_PromptOn
+            Set Prompt_Object to oMonthCalendarPrompt
+        End_Object
+
+        Object oStopDateParameterForm is a Form
+            Set Size to 13 76
+            Set Location to 40 66
+            Set Label_Justification_Mode to jMode_Left
+            Set Label_Col_Offset to 60
+            Set Label to "Select StopDate"
+            Set Status_Help to 'Parameter Field "Select StopDate" Value'
+            Set Form_Datatype to Mask_Date_Window
+            Set Prompt_Button_Mode to PB_PromptOn
+            Set Prompt_Object to oMonthCalendarPrompt
+        End_Object
+        Set Size to 61 147
+    End_Object
+
+    Object oDestinationGroup Is A cGlblRadioGroup
+        Set Label to "Output destination"
+        Set Location to 71 5
+        Set Size to 46 77
+        Set peAnchors to anBottomLeft
+
+        Object oScreenRadio Is A cGlblRadio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object
+
+        Object oPrinterRadio Is A cGlblRadio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object
+
+        Object oExportRadio Is A cGlblRadio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file (PDF, CSV, Image, HTML, Excel, RTF)"
+        End_Object
+
+        Procedure Notify_Select_State Integer iNewItem Integer iOldItem
+            Forward Send Notify_Select_State iNewItem iOldItem
+
+            Case Begin
+                Case (iNewItem = 0)
+                    Set Output_Device_Mode to PRINT_TO_WINDOW
+                    Case Break
+                Case (iNewItem = 1)
+                    Set Output_Device_Mode to PRINT_TO_PRINTER
+                    Case Break
+                Case (iNewItem = 2)
+                    Set Output_Device_Mode to PRINT_TO_FILE
+                    Case Break
+            Case End
+        End_Procedure
+    End_Object
+
+    Object oPrintButton Is A cGlblButton
+        Set Label to "&Print"
+        Set Status_Help to "Print the report"
+        Set Size to 14 50
+        Set Location to 122 47
+        Set Default_State to True
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send RunReport Of oReport
+        End_Procedure
+    End_Object
+
+    Object oCancelButton Is A cGlblButton
+        Set Label to "&Cancel"
+        Set Size to 14 50
+        Set Location to 122 102
+        Set Status_Help to "Cancel this Panel"
+        Set peAnchors to anBottomRight
+
+        // This procedure closes the report view.
+        Procedure OnClick
+            Send Request_Cancel
+        End_Procedure
+    End_Object
+
+    On_Key Key_Alt+Key_C Send KeyAction of oCancelButton
+    On_Key Key_Alt+Key_P Send KeyAction of oPrintButton
+
+    Set Location to 6 6
+    Set Size to 139 157
+    Set piMinSize to 139 157
+        
+    Procedure DoJumpStartReport Integer iJobNumber Date dStartDate Date dStopDate Boolean bOpen
+        String sFilePath sExportFileName
+        Set piJobNumber to iJobNumber
+        Set pdStartDate to dStartDate
+        Set pdStopDate to dStopDate
+        Set Output_Device_Mode to PRINT_TO_FILE
+        Send RunReport of oReport
+        Set piJobNumber to 0
+        Set pdStartDate to ''
+        Set pdStopDate to ''
+        Get psFilePath to sFilePath
+        Get psFileName to sExportFileName
+        // Open?
+        If (bOpen) Begin
+            //Get psExportFileName of oReport to sExportFileName
+            Runprogram Shell Background (sFilePath+sExportFileName)
+        End
+    End_Procedure
+    
+End_Object

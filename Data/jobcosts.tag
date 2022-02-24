@@ -1,0 +1,9 @@
+JobcostsId
+JobNumber
+WorkDate
+CostType
+MastOpsIdno
+Quantity
+UnitCost
+TotalCost
+Notes

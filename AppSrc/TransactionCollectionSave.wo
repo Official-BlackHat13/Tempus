@@ -1,0 +1,282 @@
+Use cWebService.pkg
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+
+Use DataAttr.pkg
+Use tNewTransaction.pkg
+Use tCollectedTransaction.pkg
+Use tMastops.pkg
+Use tAreas.pkg
+Use tCustomer.pkg
+Use tLocation.pkg
+
+
+Object oTransactionCollection is a cWebService
+
+    Object oMastops_DD is a Mastops_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oEmployee_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+    
+    // psDocumentation provides high level documentation of your web service. 
+    // Clients using this service will see and use this documentation. 
+    Set psDocumentation to "Transaction Collection and Table Mainenance"
+    Set pbAllErrorsToEventLog to True
+
+    { Published = True  }
+    { Description = ""  }
+    Function GetNewTransactions Returns tNewTransaction[]
+        tNewTransaction[] tTransactions
+        //
+        Integer iItem
+        //
+        Clear Trans
+        Find ge Trans by Index.5
+        While ((Found) and Trans.InvoicedFlag = 0)
+            If (Trans.StopTime <> "" or Trans.Quantity <> 0) Begin
+                Move Trans.TransIdno    to tTransactions[iItem].iTransIdno
+                Move Trans.JobNumber    to tTransactions[iItem].iJobNumber
+                Move Trans.EmployeeIdno to tTransactions[iItem].iEmployeeIdno
+                Move Trans.OpersIdno    to tTransactions[iItem].iOpersIdno
+                Move Trans.StartTime    to tTransactions[iItem].sStartTime
+                Move Trans.StartDate    to tTransactions[iItem].dStartDate
+                Move Trans.StartHr      to tTransactions[iItem].iStartHr
+                Move Trans.StartMin     to tTransactions[iItem].iStartMin
+                Move Trans.StopTime     to tTransactions[iItem].sStopTime
+                Move Trans.StopDate     to tTransactions[iItem].dStopDate
+                Move Trans.StopHr       to tTransactions[iItem].iStopHr
+                Move Trans.StopMin      to tTransactions[iItem].iStopMin
+                Move Trans.Quantity     to tTransactions[iItem].iQuantity
+                Move Trans.EquipmentID  to tTransactions[iItem].sEquipmentID
+                Increment iItem
+            End
+            Find gt Trans by Index.5
+        Loop
+        Function_Return tTransactions
+    End_Function // GetNewTransactions Returns tNewTransaction[]
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateCollectedTransactions tCollectedTransaction[] tTransactions Returns Integer
+        Boolean bFail
+        Integer hoDD iItems iItem iCount
+        //
+        Get Main_DD                       to hoDD
+        Move (SizeOfArray(tTransactions)) to iItems
+        For iItem from 0 to (iItems - 1)
+            Send Clear of hoDD
+            Move tTransactions[iItem].iTransIdno to Trans.TransIdno
+            Send Find  of hoDD EQ 1
+            If (Found) Begin
+                Set Field_Changed_Value of hoDD Field Trans.InvoicedFlag   to 1
+                Set Field_Changed_Value of hoDD Field Trans.TransReference to tTransactions[iItem].iTransReference
+                Get Request_Validate    of hoDD                            to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of hoDD
+                    Increment iCount
+                End
+            End
+        Loop
+        Function_Return iCount
+    End_Function
+
+    // the following functions keep the remote parent tables of the transaction up-to-date
+
+    { Published = True  }
+    { Description = "Update Master Operations Table"  }
+    Function UpdateMastOps tMastOps[] tMastOpsUpdate Returns tMastOps[]
+        Integer iItems iItem
+        //
+        Move (SizeOfArray(tMastOpsUpdate))                               to iItems
+        Decrement                                                           iItems
+//        Move oMastops_DD                                                 to hoDD
+//        Get Auto_Increment_Source_File of hoDD                           to iFile
+//        Set Auto_Increment_Source_File of hoDD                           to 0
+//        Set Key_Field_State            of hoDD Field Mastops.Mastopsidno to False
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of MastOps.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number  to DF_Filemode_Default
+        For iItem from 0 to iItems
+            Clear MastOps
+            Move tMastOpsUpdate[iItem].iIdno to MastOps.MastOpsIdno
+            Find eq MastOps.MastOpsIdno
+            Move False to Err
+            Reread
+            Move tMastOpsUpdate[iItem].sName          to MastOps.Name
+            Move tMastOpsUpdate[iItem].nSellRate      to MastOps.SellRate
+            Move tMastOpsUpdate[iItem].nCostRate      to MastOps.CostRate
+            Move tMastOpsUpdate[iItem].sCostType      to MastOps.CostType
+            Move tMastOpsUpdate[iItem].sCalcBasis     to MastOps.CalcBasis
+            Move tMastOpsUpdate[iItem].sActivityType  to MastOps.ActivityType
+            Move tMastOpsUpdate[iItem].nStandardHours to MastOps.StandardHours
+            Move tMastOpsUpdate[iItem].sStatus        to MastOps.Status
+            Move tMastOpsUpdate[iItem].nSequence      to MastOps.DisplaySequence
+            SaveRecord MastOps
+            Unlock
+            If (not(Err)) Begin
+                // show as updated
+                Move 0 to tMastOpsUpdate[iItem].iChangedFlag
+            End
+            If (MastOps.MastOpsIdno > System.LastMastOps) Begin
+                Reread
+                Move MastOps.MastOpsIdno to System.LastMastOps
+                SaveRecord System
+                Unlock
+            End
+//            Send Clear of hoDD
+//            Move tMastOpsUpdate[iItem].iIdno to MastOps.MastOpsIdno
+//            Send Find  of hoDD EQ 1
+//            Set Field_Changed_Value of hoDD Field MastOps.MastOpsIdno     to tMastOpsUpdate[iItem].iIdno
+//            Set Field_Changed_Value of hoDD Field MastOps.Name            to tMastOpsUpdate[iItem].sName
+//            Set Field_Changed_Value of hoDD Field MastOps.SellRate        to tMastOpsUpdate[iItem].nSellRate
+//            Set Field_Changed_Value of hoDD Field MastOps.CostRate        to tMastOpsUpdate[iItem].nCostRate
+//            Set Field_Changed_Value of hoDD Field MastOps.CostType        to tMastOpsUpdate[iItem].sCostType
+//            Set Field_Changed_Value of hoDD Field MastOps.CalcBasis       to tMastOpsUpdate[iItem].sCalcBasis
+//            Set Field_Changed_Value of hoDD Field MastOps.ActivityType    to tMastOpsUpdate[iItem].sActivityType
+//            Set Field_Changed_Value of hoDD Field MastOps.StandardHours   to tMastOpsUpdate[iItem].nStandardHours
+//            Set Field_Changed_Value of hoDD Field MastOps.Status          to tMastOpsUpdate[iItem].sStatus
+//            Set Field_Changed_Value of hoDD Field MastOps.DisplaySequence to tMastOpsUpdate[iItem].nSequence
+//            Get Request_Validate    of hoDD                               to bFail
+//            If (not(bFail)) Begin
+//                Send Request_Save   of hoDD
+//                If (Changed_State(hoDD)) Break
+//                // show as updated
+//                Move 0 to tMastOpsUpdate[iItem].iChangedFlag
+//            End
+        Loop
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+//        Set Auto_Increment_Source_File of hoDD                           to iFile
+//        Set Key_Field_State            of hoDD Field Mastops.Mastopsidno to True
+        //
+        Function_Return tMastOpsUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = "Update Areas Table"  }
+    Function UpdateAreas tAreas[] tAreasUpdate Returns tAreas[]
+        Boolean bFail
+        Integer hoDD iItems iItem
+        //
+        Move (SizeOfArray(tAreasUpdate)) to iItems
+        Decrement                           iItems
+        Move oAreas_DD                   to hoDD
+        //
+        For iItem from 0 to iItems
+            Send Clear of hoDD
+            Move tAreasUpdate[iItem].iNumber to Areas.AreaNumber
+            Send Find  of hoDD EQ 1
+            Set Field_Changed_Value of hoDD Field Areas.Name    to tAreasUpdate[iItem].sName
+            Set Field_Changed_Value of hoDD Field Areas.Manager to tAreasUpdate[iItem].sManager
+            Get Request_Validate    of hoDD                     to bFail
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+                If (Changed_State(hoDD)) Break
+                // show as updated
+                Move 0 to tAreasUpdate[iItem].iChangedFlag
+            End
+        Loop
+        Function_Return tAreasUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = "Update Customer Table"  }
+    Function UpdateCustomer tCustomer[] tCustomerUpdate Returns tCustomer
+        Boolean bFail
+        Integer hoDD iItems iItem
+        //
+        Move (SizeOfArray(tCustomerUpdate)) to iItems
+        Decrement                              iItems
+        Move oCustomer_DD                   to hoDD
+        //
+        For iItem from 0 to iItems
+            Send Clear of hoDD
+            Move tCustomerUpdate[iItem].iIdno to Customer.CustomerIdno
+            Send Find  of hoDD EQ 1
+            Set Field_Changed_Value of hoDD Field Customer.Name     to tCustomerUpdate[iItem].sName
+            Set Field_Changed_Value of hoDD Field Customer.Address1 to tCustomerUpdate[iItem].sAddress1
+            Set Field_Changed_Value of hoDD Field Customer.Address2 to tCustomerUpdate[iItem].sAddress2
+            Set Field_Changed_Value of hoDD Field Customer.City     to tCustomerUpdate[iItem].sCity
+            Set Field_Changed_Value of hoDD Field Customer.State    to tCustomerUpdate[iItem].sState
+            Set Field_Changed_Value of hoDD Field Customer.Zip      to tCustomerUpdate[iItem].sZip
+            Set Field_Changed_Value of hoDD Field Customer.Status   to tCustomerUpdate[iItem].sStatus
+            Get Request_Validate    of hoDD                         to bFail
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+                If (Changed_State(hoDD)) Break
+                // show as updated
+                Move 0 to tCustomerUpdate[iItem].iChangedFlag
+            End
+        Loop
+        Function_Return tCustomerUpdate
+    End_Function
+
+    Function UpdateLocation tLocation[] tLocationUpdate Returns tLocation[]
+        Boolean bFail
+        Integer hoDD iItems iItem
+        //
+        Move (SizeOfArray(tLocationUpdate)) to iItems
+        Decrement                              iItems
+        Move oLocation_DD                   to hoDD
+        //
+        For iItem from 0 to iItems
+            Send Clear of hoDD
+            Move tLocationUpdate[iItem].iLocIdno to Location.LocationIdno
+            Send Find  of hoDD EQ 1
+            If (not(Found)) Begin
+                Move tLocationUpdate[iItem].iCustIdno to Customer.CustomerIdno
+                Send Request_Find of hoDD EQ Customer.File_Number 1
+                If (not(Found)) Break
+                Move tLocationUpdate[iItem].iArea     to Areas.AreaNumber
+                Send Request_Find of hoDD EQ Areas.File_Number 1
+            End
+            If (HasRecord(oCustomer_DD) and HasRecord(oAreas_DD)) Begin
+                Set Field_Changed_Value of hoDD Field Location.LocationNbr
+            End
+        Loop
+    End_Function
+    
+End_Object
+
+

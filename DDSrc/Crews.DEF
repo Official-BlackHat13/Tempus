@@ -1,0 +1,41 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Crews (# 32)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CREWS
+  USER DISPLAY NAME         : Crews
+  DATAFLEX FILE NAME        : Crews
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 108       ( USED: 108 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 1 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CrewId           NUM   10.0     1  1   
+  2  CrewDate         DAT     10    12  2   
+  3  CrewChiefId      NUM   10.0    35  3   
+  4  Description      ASC     40    46      
+  5  CrewCount        NUM    5.0    86      
+  6  ChiefCount       NUM    5.0    92      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CrewId          NO  NO       0      0       1     ON-LINE
+
+  2    CrewDate        NO  NO       0      0       2     ON-LINE
+       CrewId          NO  NO 
+
+  3    CrewChiefId     NO  NO       0      0       2     ON-LINE
+       CrewDate        NO  NO 
+

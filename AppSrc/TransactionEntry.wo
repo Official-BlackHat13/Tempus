@@ -1,0 +1,1329 @@
+//Use cWebService.pkg
+Use cWebBusinessProcess.pkg
+Use cHttpTransfer.pkg
+Use Dates.nui
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use SalesRep.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Use TransAttachment.bp
+
+Open Weblog
+
+Object oTransactionEntry is a cWebBusinessProcess
+
+    // this property is True when creating a new Equipment transaction
+    // it is False when ending an employee shift
+    Property Boolean pbSaveActiveTransaction
+    Property Boolean pbMaterialTransaction
+    Property Integer piEquipIdno
+    Property String  psEquipmentID
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oEmployee_DD
+        Set pbAutoAttendant to True
+
+        Procedure Creating
+            Integer iEquipIdno
+            String  sEquipmentID
+            //
+            Forward Send Creating
+            //
+            Get piEquipIdno   to iEquipIdno
+            Get psEquipmentID to sEquipmentID
+            Move iEquipIdno   to Trans.EquipIdno
+            Move sEquipmentID to Trans.EquipmentID
+        End_Procedure
+
+        Procedure Update
+            Forward Send Update
+            //
+            If (not(pbMaterialTransaction(Self))) Begin
+                If (pbSaveActiveTransaction(Self)) Begin
+                    Move Trans.TransIdno to Employee.ActiveTrans
+                End
+                Else Begin
+                    Move 0               to Employee.ActiveTrans
+                End
+            End
+        End_Procedure
+    End_Object
+
+    Set Main_DD to oTrans_DD
+    Set pbReportErrors to False
+    Set pbAllErrorsToEventLog to True
+//    Set pbAllErrorsToEventLog to True
+//    Set pbAllErrorsToLocal to True
+//    Set psDescription to "Auto Attendant"
+
+    Object oHttpTransfer1 is a cHttpTransfer
+        Procedure OnDataReceived String sContentType String sData
+            // You can abort file transfer here with 'Send CancelTransfer'
+        End_Procedure
+    End_Object
+    
+    
+    { Published = True  }
+    { Description = ""  }
+    Procedure CreateCEPMTransaction String sEmplIdno String sTransType String sLoc1 String sEquipIdno String sLoc2 String sMatIdno String sMatQty String sPhone
+        String sHost sPath sData
+        Boolean bOk
+        Integer iSoF
+        
+        Move "104.238.83.84" to sHost
+        Move "CEPM/CreateTransaction.asp?" to sPath
+        Move ("p_t="+sEmplIdno+"&transtype="+sTransType+"&locid1="+sLoc1+"&equipmentid="+sEquipIdno+"&locid2="+sLoc2+"&materialid="+sMatIdno+"&materialqty="+sMatQty+"&phone="+sPhone+"") to sData
+        
+        Set psRemoteHost of oHttpTransfer1 to sHost
+        Get AddHeader of oHttpTransfer1 "Content-Type" "application/x-www-form-urlencoded" to bOk
+        Get HttpPostRequest of oHttpTransfer1 sPath sData 0 to iSoF 
+    End_Procedure
+    
+  
+    { Published = True  }
+    { Description = ""  }
+    Function IsEmployeeValid            ;
+        Integer iEmployeeIdno           ;
+        Integer iPIN                    ;
+        Integer ByRef iAltEmployeeIdno  ;
+        Boolean ByRef bActive           ;
+        String ByRef sErrorMsg          ;
+        Returns Boolean
+        
+        Clear Employee
+        
+        Integer iEmployerIdno
+        
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        If ((Found) and Employee.PIN = iPIN) Begin
+            // Found Employee with matching pin
+            If (Employee.Status = "A") Begin
+                Move Employee.EmployerIdno to iEmployerIdno
+                Clear Employer
+                Move iEmployerIdno to Employer.EmployerIdno
+                Find eq Employer.EmployerIdno
+                If ((Found) and Employer.Status = "A") Begin
+                    Move Employee.CEPM_EmployeeIdno to iAltEmployeeIdno
+                    Move (Employee.ActiveTrans) to bActive
+                    Move "Authorization Successful" to sErrorMsg
+                    Function_Return (True)
+                End
+                Else Begin
+                    Move "Employer is inactive - Report to Area Manager" to sErrorMsg
+                End    
+            End
+            Else Begin
+                Move ("Employee# "* String(iEmployeeIdno) *"  is Inactive - Report to Area Manager") to sErrorMsg
+            End
+        End
+        Else Begin
+            Move "Authorization Failed - please try again" to sErrorMsg
+        End
+    End_Function
+    
+
+//    { Published = True  }
+//    { Description = ""  }
+//    Function IsJobValid Integer iJobNumber Returns Integer
+//        Clear Order
+//        Move iJobNumber to Order.JobNumber
+//        Find eq Order.JobNumber
+//        If ((Found) and Order.JobCloseDate = 0) Begin
+//            Function_Return Order.LocationIdno
+//        End
+//    End_Function
+    
+    { Published = True  }
+    { Description = ""  }
+    Function IsJobValid                 ;
+        Integer iJobNumber              ;
+        Integer ByRef iLocIdno          ;
+        Integer ByRef iAltJobNumber     ;
+        String ByRef sErrorMsg          ;
+        Returns Boolean
+        
+        Clear Order
+        Move iJobNumber to Order.JobNumber
+        Find eq Order.JobNumber
+        If (Found) Begin
+            If (Order.Status = "O") Begin
+                Move Order.LocationIdno to iLocIdno
+                Move Order.CEPM_JobNumber to iAltJobNumber
+                Function_Return (True)    
+            End
+            Else Begin
+                Move "Job is not open - contact Area Manager" to sErrorMsg
+            End
+        End
+        Else Begin
+            Move ("Job#"*String(iJobNumber)*"does not exist - please try again") to sErrorMsg
+        End
+    End_Function
+    
+    
+//    { Published = True  }
+//    { Description = ""  }
+//    Function IsEquipmentValid Integer iLocationIdno Integer iEquipIdno Returns Integer
+//        Clear Equipmnt MastOps Opers
+//        Move iEquipIdno to Equipmnt.EquipIdno
+//        Find eq Equipmnt.EquipIdno
+//        If (Found) Begin
+//            Relate Equipmnt
+//            If (MastOps.Recnum <> 0 and (MastOps.CostType = "Labor" or MastOps.CostType = "Travel")) Begin
+//                Move iLocationIdno       to Opers.LocationIdno
+//                Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+//                Find eq Opers by Index.4
+//                If (Found) Begin
+//                    Set piEquipIdno   to Equipmnt.EquipIdno
+//                    Set psEquipmentID to Equipmnt.EquipmentID
+//                    Function_Return Opers.OpersIdno
+//                End
+//            End
+//        End
+//    End_Function
+    { Published = True  }
+    { Description = ""  }
+    Function IsAttachmentValid              ;
+        Integer iLocationIdno               ;
+        Integer iAttachIdno                 ;
+        Integer ByRef iAttachOpersIdno      ;
+        Integer ByRef iAttachMastOpsIdno    ;
+        String ByRef sErrorMsg              ;
+        Returns Boolean
+        
+        
+        Clear Equipmnt MastOps Opers
+        Move iAttachIdno to Equipmnt.EquipIdno
+        Find eq Equipmnt.EquipIdno
+        If (Found) Begin
+            If (Equipmnt.Status = "A") Begin
+                Relate Equipmnt
+                If (MastOps.Recnum <> 0 and MastOps.CostType = "Attachment") Begin
+                    Move iLocationIdno       to Opers.LocationIdno
+                    Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                    Find eq Opers by Index.4
+                    If ((Found) and Opers.Status <> "I") Begin
+                        Move Opers.MastOpsIdno to iAttachMastOpsIdno
+                        Move Opers.OpersIdno to iAttachOpersIdno
+                        Function_Return (Found)
+                    End
+                    Else Begin
+                        Move ("Equip#" * String(iAttachIdno) * "can not be used at this location - contact Area Manager") to sErrorMsg
+                    End
+                End
+                Else Begin
+                    Move ("Equip#" * String(iAttachIdno) * "is not a Attachment code") to sErrorMsg
+                End
+            End
+            Else Begin
+                Move ("Equip#" * String(iAttachIdno) * "is not Active - contact Area Manager") to sErrorMsg
+            End
+        End
+        Else Begin
+            Move ("Equip#" * String(iAttachIdno) * "was not found - try again") to sErrorMsg
+        End
+    End_Function
+    
+    { Published = True  }
+    { Description = ""  }
+    Function IsEquipmentValid           ;
+        Integer iLocationIdno           ;
+        Integer iEquipIdno              ;
+        Integer ByRef iOpersIdno        ;
+        Integer ByRef iAltEquipIdno     ;
+        String ByRef sErrorMsg          ;
+        Returns Boolean
+        
+        
+        Clear Equipmnt MastOps Opers
+        Move iEquipIdno to Equipmnt.EquipIdno
+        Find eq Equipmnt.EquipIdno
+        If (Found) Begin
+            If (Equipmnt.Status = "A") Begin
+                Relate Equipmnt
+                If (MastOps.Recnum <> 0 and (MastOps.CostType = "Labor" or MastOps.CostType = "Travel")) Begin
+                    Move iLocationIdno       to Opers.LocationIdno
+                    Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                    Find eq Opers by Index.4
+                    If ((Found) and Opers.Status <> "I") Begin
+                        Set piEquipIdno   to Equipmnt.EquipIdno
+                        Set psEquipmentID to Equipmnt.EquipmentID
+                        Move Opers.OpersIdno to iOpersIdno
+                        Move Equipmnt.CEPM_EquipIdno to iAltEquipIdno
+                        Function_Return (Found)
+                    End
+                    Else Begin
+                        Move ("Equip#" * String(iEquipIdno) * "can not be used at this location - contact Area Manager") to sErrorMsg
+                    End
+                End
+                Else Begin
+                    Move ("Equip#" * String(iEquipIdno) * "is not a Labor code") to sErrorMsg
+                End
+            End
+            Else Begin
+                Move ("Equip#" * String(iEquipIdno) * "is not Active - contact Area Manager") to sErrorMsg
+            End
+        End
+        Else Begin
+            Move ("Equip#" * String(iEquipIdno) * "was not found - try again") to sErrorMsg
+        End
+    End_Function
+    
+//    { Published = True  }
+//    { Description = ""  }
+//    Function IsMaterialValid Integer iLocationIdno Integer iMaterialIdno Returns Integer
+//        Clear Equipmnt MastOps Opers
+//        Move iMaterialIdno to Equipmnt.EquipIdno
+//        Find eq Equipmnt.EquipIdno
+//        If (Found) Begin
+//            Relate Equipmnt
+//            If (MastOps.Recnum <> 0 and MastOps.CostType = "Material") Begin
+//                Move iLocationIdno       to Opers.LocationIdno
+//                Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+//                Find eq Opers by Index.4
+//                If (Found) Begin
+//                    Set piEquipIdno   to Equipmnt.EquipIdno
+//                    Set psEquipmentID to Equipmnt.EquipmentID
+//                    Function_Return Opers.OpersIdno
+//                End
+//            End
+//        End
+//    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function IsMaterialValid;
+        Integer iLocationIdno;
+        Integer iMaterialIdno;
+        Integer ByRef iOpersIdno;
+        Integer ByRef iAltEquipIdno;
+        String ByRef sErrorMsg;
+        Returns Boolean
+        
+        Clear Equipmnt MastOps Opers
+        Move iMaterialIdno to Equipmnt.EquipIdno
+        Find eq Equipmnt.EquipIdno
+        If (Found) Begin
+            If (Equipmnt.Status = "A") Begin
+                Relate Equipmnt
+                If (MastOps.Recnum <> 0 and MastOps.CostType = "Material") Begin
+                    Move iLocationIdno       to Opers.LocationIdno
+                    Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                    Find eq Opers by Index.4
+                    If ((Found) and Opers.Status <> "I") Begin
+                        Set piEquipIdno   to Equipmnt.EquipIdno
+                        Set psEquipmentID to Equipmnt.EquipmentID
+                        Move Opers.OpersIdno to iOpersIdno
+                        Move Equipmnt.CEPM_EquipIdno to iAltEquipIdno
+                        Function_Return True
+                    End
+                    Else Begin
+                        Move ("Mat#" * String(iMaterialIdno) * "can not be used at this location - contact Area Manager") to sErrorMsg
+                    End
+                End
+                Else Begin
+                    Move ("Mat#" * String(iMaterialIdno) * "is not a Material code") to sErrorMsg
+                End
+            End
+            Else Begin
+                Move ("Mat#" * String(iMaterialIdno) * "is not Active - contact Area Manager") to sErrorMsg
+            End
+            
+        End
+        Else Begin
+            Move ("Mat#" * String(iMaterialIdno) * "was not found - try again") to sErrorMsg
+        End
+        
+    End_Function
+        
+    Function IsFormattedPhoneNumber String sCallerId Returns String
+        If (Length(sCallerId) = 10) Begin
+            String s1 s2 s3
+            //
+            Move (Mid(sCallerId,3,1))       to s1
+            Move (Mid(sCallerId,3,4))       to s2
+            Move (Mid(sCallerId,4,7))       to s3
+            Move (s1 + "-" + s2 + "-" + s3) to sCallerId
+        End
+        Function_Return sCallerId
+    End_Function
+
+    Function IsWeekEndingTransaction Integer iTransIdno Integer ByRef iNewIdno Returns Boolean
+        Boolean bFail
+        Integer hoDD iWeekDay iHr iMin iSec iEmployeeIdno iJobNumber iOpersIdno
+        String  sTime sCallerId
+        Date    dToday dStart
+        //
+        Sysdate dToday
+        Get Main_DD to hoDD
+        Send Clear of hoDD
+        Move iTransIdno to Trans.TransIdno
+        Send Find of hoDD EQ 1
+        //
+        If (Found) Begin
+            // if today, no action
+            Move Trans.StartDate to dStart
+            If (dStart = dToday) Function_Return
+            // is not Saturday, no action
+            Move (DateDayNumber(dStart)) to iWeekDay
+            If (iWeekDay <> 6) Function_Return
+            // if a Saturday transaction open on a day after
+            Move 11 to iHr
+            Move 59 to iMin
+            Move  0 to iSec
+            Get IsTimeString of hoDD iHr iMin iSec to sTime
+            Move (Left(sTime,5))                   to sTime
+            // save data needed for new transaction
+            Move Trans.EmployeeIdno to iEmployeeIdno
+            Move Trans.JobNumber    to iJobNumber
+            Move Trans.OpersIdno    to iOpersIdno
+            Move Trans.CallerId     to sCallerId
+            //
+            Set Field_Changed_Value of hoDD Field Trans.StopTime to sTime
+            Set Field_Changed_Value of hoDD Field Trans.StopDate to dStart
+            Set Field_Changed_Value of hoDD Field Trans.StopHr   to iHr
+            Set Field_Changed_Value of hoDD Field Trans.StopMin  to iMin
+            Get Request_Validate    of hoDD                      to bFail
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+            End
+            Else Begin
+                Append_Output "debug.txt"
+                Writeln "Validation error closing"
+                Close_Output
+            End
+            Send Clear              of hoDD
+            // create new transaction
+            Move (dStart + 1) to dStart
+            Move 0 to iHr
+            Move 1 to iMin
+            Move 0 to iSec
+            Get IsTimeString of hoDD iHr iMin iSec to sTime
+            Move (Left(sTime,5))                   to sTime
+            //
+            Move iEmployeeIdno to Employee.EmployeeIdno
+            Send Request_Find of hoDD EQ Employee.File_Number 1
+            If (not(Found)) Begin
+                Append_Output "debug.txt"
+                Writeln "Employee not found"
+                Close_Output
+                Function_Return
+            End
+            Move iJobNumber to Order.JobNumber
+            Send Request_Find of hoDD EQ Order.File_Number 1
+            If (not(Found)) Begin
+                Append_Output "debug.txt"
+                Writeln "Order not found"
+                Close_Output
+                Function_Return
+            End
+            Move iOpersIdno to Opers.OpersIdno
+            Send Request_Find of hoDD EQ Opers.File_Number 1
+            If (not(Found)) Begin
+                Append_Output "debug.txt"
+                Writeln "Operation not found"
+                Close_Output
+                Function_Return
+            End
+            //
+            Set Field_Changed_Value of hoDD Field Trans.StartTime to sTime
+            Set Field_Changed_Value of hoDD Field Trans.StartDate to dStart
+            Set Field_Changed_Value of hoDD Field Trans.StartHr   to iHr
+            Set Field_Changed_Value of hoDD Field Trans.StartMin  to iMin
+            Set Field_Changed_Value of hoDD Field Trans.CallerId  to sCallerId
+            Get Request_Validate    of hoDD                       to bFail
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+            End
+            Else Begin
+                Append_Output "debug.txt"
+                Writeln "Validation error creating"
+                Close_Output
+            End
+            If (HasRecord(hoDD)) Begin
+                Move Trans.TransIdno to iNewIdno
+                Function_Return True
+            End
+        End
+    End_Function
+
+    
+
+    { Published = True  }
+    { Description = ""  }
+    Function DoCreateEquipmentTransaction   ;
+        Integer iEmployeeIdno               ;
+        Integer iJobNumber                  ;
+        Integer iEquipIdno                  ;
+        String  sCallerId                   ;
+        Number  nGPS_Lat                    ;
+        Number  nGPS_Long                   ;
+        Integer iAttachIdno                 ;
+        String ByRef sErrorMessage          ;
+        Returns Boolean
+        
+        Boolean bFail bJobValid bEquipValid bEmplValid bAttachValid
+        Integer iLocationIdno iOpersIdno hoDD iHr iMin iSec iActive
+        Integer iAttachOpersIdno iAttachMastOpsIdno
+        Integer iAltEmplIdno iAltJobNumber iAltEquipIdno iPrevCEPMJob iSoF
+        String  sTime
+        Date    dToday
+        //        
+        Get IsJobValid iJobNumber (&iLocationIdno) (&iAltJobNumber) (&sErrorMessage) to bJobValid
+        If (not(bJobValid)) Begin
+            Append_Output "debug.txt"
+            Writeln "Employee" iEmployeeIdno
+            Writeln "JobNumber" iJobNumber
+            Writeln "EquipID" iEquipIdno
+            Writeln "Invalid Location ID"
+            Close_Output
+            Function_Return
+        End
+        //
+        If (iAttachIdno<>0) Begin
+            Get IsAttachmentValid of oTransactionEntry iLocationIdno iAttachIdno (&iAttachOpersIdno) (&iAttachMastOpsIdno) (&sErrorMessage) to bAttachValid
+            If (not(bAttachValid)) Begin
+                Append_Output "debug.txt"
+                Writeln "Employee" iEmployeeIdno
+                Writeln "JobNumber" iJobNumber
+                Writeln "EquipID" iEquipIdno
+                Writeln "AttachIdno" iAttachIdno
+                Writeln "bEquipFound: " bEquipValid
+                Writeln "Invalid Opers ID for Attachment"
+                Close_Output
+                Function_Return
+            End            
+        End
+
+        //
+        Get IsEquipmentValid of oTransactionEntry iLocationIdno iEquipIdno (&iOpersIdno) (&iAltEquipIdno) (&sErrorMessage) to bEquipValid
+        If (not(bEquipValid)) Begin
+            Append_Output "debug.txt"
+            Writeln "Employee" iEmployeeIdno
+            Writeln "JobNumber" iJobNumber
+            Writeln "EquipID" iEquipIdno
+            Writeln "AttachIdno" iAttachIdno
+            Writeln "bEquipFound: " bEquipValid
+            Writeln "Invalid Opers ID for Equipment"
+            Close_Output
+            Function_Return
+        End
+        //
+        Sysdate dToday iHr iMin iSec
+        // midnight's a show-stopper
+        If (not(iHr + iMin)) Begin
+            Move 1 to iMin
+        End
+        Set pbMaterialTransaction              to False
+        Set pbSaveActiveTransaction            to True
+        Get Main_DD                            to hoDD
+        Get IsTimeString of hoDD iHr iMin iSec to sTime
+        Move (Left(sTime,5))                   to sTime
+        //
+        Clear Employee
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        Move Employee.ActiveTrans to iActive
+        Move Employee.CEPM_EmployeeIdno to iAltEmplIdno
+        Send Clear of hoDD
+        // If Active, End previous transaction
+        If (iActive <> 0) Begin
+            Move iActive to Trans.TransIdno
+            Send Find of hoDD EQ 1
+            If (Found) Begin
+                //Was pev Job a CEPM Job>
+                Get Field_Current_Value of hoDD Field Trans.CEPM_JobNumber to iPrevCEPMJob
+                //
+                Get IsFormattedPhoneNumber sCallerId                        to sCallerId
+                Set Field_Changed_Value of hoDD Field Trans.StopTime        to sTime
+                Set Field_Changed_Value of hoDD Field Trans.StopDate        to dToday
+                Set Field_Changed_Value of hoDD Field Trans.StopHr          to iHr
+                Set Field_Changed_Value of hoDD Field Trans.StopMin         to iMin
+                Set Field_Changed_Value of hoDD Field Trans.CallerId_Out    to sCallerId
+                Set Field_Changed_Value of hoDD Field Trans.GPSLat_Out      to nGPS_Lat
+                Set Field_Changed_Value of hoDD Field Trans.GPSLong_Out     to nGPS_Long
+                Get Request_Validate    of hoDD                             to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of hoDD
+                End
+                Else Begin
+                    Append_Output "debug.txt"
+                    Writeln "Validation error closing"
+                    Close_Output
+                End
+                // Send CEPM EndShift
+                If (not(bFail) and iAltEmplIdno>0 and iPrevCEPMJob>0) Begin
+                    Send CreateCEPMTransaction iAltEmplIdno "3" "" "" "" "" "" sCallerId
+                End
+                Send Clear              of hoDD
+            End
+        End
+        // create new transaction
+        Move iEmployeeIdno                                      to Employee.EmployeeIdno
+        Send Request_Find       of hoDD EQ Employee.File_Number    1
+        If (not(Found)) Begin
+            Append_Output "debug.txt"
+            Writeln "Employee not found"
+            Close_Output
+            Function_Return
+        End
+        Move iJobNumber                                         to Order.JobNumber
+        Send Request_Find       of hoDD EQ Order.File_Number       1
+        If (not(Found)) Begin
+            Append_Output "debug.txt"
+            Writeln "Order not found"
+            Close_Output
+            Function_Return
+        End
+        Move iOpersIdno                                         to Opers.OpersIdno
+        Send Request_Find       of hoDD EQ Opers.File_Number       1
+        If (not(Found)) Begin
+            Append_Output "debug.txt"
+            Writeln "Operation not found"
+            Close_Output
+            Function_Return
+        End
+        //
+        Get IsFormattedPhoneNumber sCallerId                    to sCallerId
+        //
+        Set Field_Changed_Value of hoDD Field Trans.StartTime           to sTime
+        Set Field_Changed_Value of hoDD Field Trans.StartDate           to dToday
+        Set Field_Changed_Value of hoDD Field Trans.StartHr             to iHr
+        Set Field_Changed_Value of hoDD Field Trans.StartMin            to iMin
+        Set Field_Changed_Value of hoDD Field Trans.CallerId            to sCallerId
+        Set Field_Changed_Value of hoDD Field Trans.GPSLat_In           to nGPS_Lat
+        Set Field_Changed_Value of hoDD Field Trans.GPSLong_In          to nGPS_Long
+        Set Field_Changed_Value of hoDD Field Trans.AttachEquipIdno     to iAttachIdno
+        Set Field_Changed_Value of hoDD Field Trans.AttachOpersIdno     to iAttachOpersIdno
+        Set Field_Changed_Value of hoDD Field Trans.AttachMastOpsIdno   to iAttachMastOpsIdno
+        Get Request_Validate    of hoDD                                 to bFail
+        If (not(bFail)) Begin
+            Send Request_Save   of hoDD
+            Move "Transaction Successful" to sErrorMessage
+        End
+        Else Begin
+            Append_Output "debug.txt"
+            Writeln "Validation error creating"
+            Move "Transaction Failed" to sErrorMessage
+            Close_Output
+        End
+        //CEPM TRANS
+        If (not(bFail) and iAltEmplIdno>0 and iAltJobNumber>0 and iAltEquipIdno>0) Begin
+            Send CreateCEPMTransaction iAltEmplIdno "1" iAltJobNumber iAltEquipIdno "" "" "" sCallerId
+        End
+        Function_Return (Current_Record(hoDD) <> 0)
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function DoCreateMaterialTransaction    ;
+        Integer iEmployeeIdno               ;
+        Integer iJobNumber                  ;
+        Integer iEquipIdno                  ;
+        Number  nQuantity                   ;
+        String  sCallerId                   ;
+        Number  nGPS_Lat                    ;
+        Number  nGPS_Long                   ;
+        String ByRef sErrorMessage          ;
+        Returns Boolean
+        
+        
+        Boolean bFail bMatValid bJobValid
+        Integer iOpersIdno iLocationIdno hoDD iHr iMin iSec
+        Integer iAltEmplIdno iAltJobNumber iAltEquipIdno
+        String  sTime
+        Date    dToday
+        //
+        Get IsJobValid iJobNumber (&iLocationIdno) (&iAltJobNumber) (&sErrorMessage) to bJobValid
+        If (not(bJobValid)) Begin
+            Function_Return
+        End
+        //
+        Get IsMaterialValid iLocationIdno iEquipIdno (&iOpersIdno) (&iAltEquipIdno) (&sErrorMessage) to bMatValid
+        If (iOpersIdno = 0) Begin
+            Function_Return
+        End
+        //
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        If (Found) Begin
+            Move Employee.CEPM_EmployeeIdno to iAltEmplIdno
+        End
+        //
+        Get IsFormattedPhoneNumber sCallerId                    to sCallerId
+        //
+        Sysdate dToday iHr iMin iSec
+        Get Main_DD                                             to hoDD
+        Get IsTimeString of hoDD iHr iMin iSec                  to sTime
+        Move (Left(sTime,5))                                    to sTime
+        Set pbMaterialTransaction                               to True
+        Send Clear              of hoDD
+        Move iEmployeeIdno                                      to Employee.EmployeeIdno
+        Send Request_Find       of hoDD EQ Employee.File_Number    1
+        Move iJobNumber                                         to Order.JobNumber
+        Send Request_Find       of hoDD EQ Order.File_Number       1
+        Move iOpersIdno                                         to Opers.OpersIdno
+        Send Request_Find       of hoDD EQ Opers.File_Number       1
+        Set Field_Changed_Value of hoDD Field Trans.StartDate   to dToday
+        Set Field_Changed_Value of hoDD Field Trans.StartHr     to iHr
+        Set Field_Changed_Value of hoDD Field Trans.StartMin    to iMin
+        Set Field_Changed_Value of hoDD Field Trans.StartTime   to sTime
+        Set Field_Changed_Value of hoDD Field Trans.StopDate    to dToday
+        Set Field_Changed_Value of hoDD Field Trans.StopHr      to iHr
+        Set Field_Changed_Value of hoDD Field Trans.StopMin     to iMin
+        Set Field_Changed_Value of hoDD Field Trans.StopTime    to sTime
+        Set Field_Changed_Value of hoDD Field Trans.Quantity    to nQuantity
+        Set Field_Changed_Value of hoDD Field Trans.CallerId    to sCallerId
+        Set Field_Changed_Value of hoDD Field Trans.GPSLat_In   to nGPS_Lat
+        Set Field_Changed_Value of hoDD Field Trans.GPSLong_In  to nGPS_Long
+        Get Request_Validate    of hoDD                         to bFail
+        If (not(bFail)) Begin
+            Send Request_Save   of hoDD
+            Move "Transaction Successful" to sErrorMessage
+        End
+        Else Begin
+            Append_Output "debug.txt"
+            Writeln "Validation error creating"
+            Move "Transaction Failed" to sErrorMessage
+            Close_Output
+        End
+        //CEPM TRANS when all IDs are available
+        If (not(bFail) and iAltEmplIdno>0 and iAltJobNumber>0 and iAltEquipIdno>0) Begin
+            // Automated QTY conversion from lbs to tons for cepm?
+            // As Of 12/18/2015 CEPM started reporting in lbs and there is no need for this conversion. 
+            // ToDo: Delete at later point
+//            If (MastOps.CostType = "Material" and MastOps.QtyDivisor <> 0) Begin
+//                    Move (nQuantity / MastOps.QtyDivisor)                         to nQuantity
+//            End
+            Send CreateCEPMTransaction iAltEmplIdno "2" "" "" iAltJobNumber iAltEquipIdno nQuantity sCallerId
+        End
+        Function_Return (Current_Record(hoDD) <> 0)
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function DoEndEmployeeShift     ;
+        Integer iEmployeeIdno       ;
+        String sCallerId            ;
+        Number nGPS_Lat             ;
+        Number nGPS_Long            ;
+        String ByRef sErrorMessage  ;
+        Returns Boolean
+        
+        
+        Boolean bFail
+        Integer hoDD iHr iMin iSec iActive
+        Integer iAltEmplIdno iPrevCEPMJob
+        String  sTime
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        Set pbMaterialTransaction              to False
+        Set pbSaveActiveTransaction            to False
+        Get Main_DD                            to hoDD
+        Get IsTimeString of hoDD iHr iMin iSec to sTime
+        Move (Left(sTime,5))                   to sTime
+        //
+        Clear Employee
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        Move Employee.ActiveTrans to iActive
+        Move Employee.CEPM_EmployeeIdno to iAltEmplIdno
+        Send Clear of hoDD
+        If (iActive <> 0) Begin
+            Move iActive to Trans.TransIdno
+            Send Find of hoDD EQ 1
+            If (Found) Begin
+                //Was pev Job a CEPM Job>
+                Get Field_Current_Value of hoDD Field Trans.CEPM_JobNumber to iPrevCEPMJob
+                //
+                Set Field_Changed_Value of hoDD Field Trans.StopTime        to sTime
+                Set Field_Changed_Value of hoDD Field Trans.StopDate        to dToday
+                Set Field_Changed_Value of hoDD Field Trans.StopHr          to iHr
+                Set Field_Changed_Value of hoDD Field Trans.StopMin         to iMin
+                Set Field_Changed_Value of hoDD Field Trans.CallerId_Out    to sCallerId
+                Set Field_Changed_Value of hoDD Field Trans.GPSLat_Out      to nGPS_Lat
+                Set Field_Changed_Value of hoDD Field Trans.GPSLong_Out     to nGPS_Long
+                Get Request_Validate    of hoDD                             to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of hoDD
+                    Move "Transaction Successful" to sErrorMessage
+                End
+                // CEPM END SHIFT TRIGGER
+                If (not(bFail) and iAltEmplIdno>0 and iPrevCEPMJob>0) Begin
+                    Send CreateCEPMTransaction iAltEmplIdno "3" "" "" "" "" "" ""
+                End                
+            End
+            Else Begin
+                Move ("Employee" * String(iEmployeeIdno) * "was not Active") to sErrorMessage
+            End
+        End
+        Else Begin
+            Move ("Employee" * String(iEmployeeIdno) * "has no Active Transaction") to sErrorMessage
+        End
+        Function_Return (Employee.ActiveTrans = 0)
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function CreateTransaction ;
+        Integer iEmployeeIdno  ;
+        Integer iTransType     ;
+        String  sJobNumber1    ;
+        String  sEquipIdno     ;
+        String  sJobNumber2    ;
+        String  sMaterialIdno  ;
+        String  sQuantity      ;
+        String  sCallerId      ;
+        Number  nGPS_Lat       ;
+        Number  nGPS_Long      ;
+        String  sSuccess       ;
+        String  sFailure       ;
+        Returns Address
+        //
+        Boolean bOk
+        Integer iHr iMin iSec
+        Address aXml
+        String  sSurvo
+        Handle  hoXml hoAction hoApp hoParameters hoID
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        //
+        If      (iTransType = 3) Begin
+            Get DoEndEmployeeShift iEmployeeIdno sCallerId nGPS_Lat nGPS_Long to bOk
+        End
+        Else If (iTransType = 2) Begin
+            If (sJobNumber2 = "NA" or sMaterialIdno = "NA" or sQuantity = "NA") Break
+            Get DoCreateMaterialTransaction iEmployeeIdno sJobNumber2 sMaterialIdno sQuantity sCallerId nGPS_Lat nGPS_Long to bOk
+        End
+        Else If (iTransType = 1) Begin
+            If (sJobNumber1 = "NA" or sEquipIdno = "NA") Break
+            Get DoCreateEquipmentTransaction iEmployeeIdno sJobNumber1 sEquipIdno sCallerId nGPS_Lat nGPS_Long  to bOk
+        End
+        //
+        If (bOk) Begin
+            Move sSuccess to sSurvo // "5688"
+        End
+        Else Begin
+            Move sFailure to sSurvo // "5689"
+        End
+        //
+        If (iEmployeeIdno <> 0) Begin
+            Clear Weblog
+            Reread System
+            Add 1 to System.LastWeblog
+            SaveRecord System
+            Move System.LastWeblog to Weblog.WeblogIdno
+            Move dToday            to Weblog.HitDate
+            Move iHr               to Weblog.HitHr
+            Move iMin              to Weblog.HitMin
+            Move iSec              to Weblog.HitSec
+            Move bOk               to Weblog.Success
+            Move iEmployeeIdno     to Weblog.EmployeeIdno
+            Move iTransType        to Weblog.TransType
+            Move sJobNumber1       to Weblog.JobNumber1
+            Move sEquipIdno        to Weblog.EquipmentIdno
+            Move sJobNumber2       to Weblog.JobNumber2
+            Move sMaterialIdno     to Weblog.MaterialIdno
+            Move sQuantity         to Weblog.MaterialQty
+            Move sCallerId         to Weblog.CallerId
+            SaveRecord Weblog
+            Unlock
+        End
+        // send a reply
+        // create XML document / Create root node
+        Get Create U_cXMLDomDocument to hoXml
+        // Create the Root element
+        Get CreateDocumentElement of hoXml        "action"             to hoAction
+        Get AddElement            of hoAction     "app"        "survo" to hoApp
+        Get AddElement            of hoAction     "parameters" ""      to hoParameters
+        Get AddElement            of hoParameters "id"         sSurvo  to hoID
+        Send Destroy of hoID
+        Send Destroy of hoParameters
+        Send Destroy of hoApp
+        Send Destroy of hoAction
+        // return by address
+        Get paXml    of hoXml to aXml
+        Send Destroy of hoXml
+        //
+        Function_Return aXML
+    End_Function // CreateTransaction
+
+    { Published = True  }
+    { Description = ""  }
+    Function ValidateEmployee ;
+        Integer iEmployeeIdno ;
+        Integer iPIN          ;
+        String  sCallerId  ;
+        String  sSuccess      ;
+        String  sFailure      ;
+        Returns Address
+        //
+        Boolean bOk bActive
+        Integer iAltEmployeeIdno
+        Integer iHr iMin iSec
+        Address aXml
+        String  sEmplID sPIN sSurvo sPassed sMessage
+        Handle  hoXml hoAction hoApp hoParameters hoID hoPT
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        Append_Output "Hitme.txt"
+        Writeln (String(iEmployeeIdno) * String(iPIN) * String(dToday) * String(iHr) * String(iMin) * String(iSec))
+        Close_Output
+        //
+        Move iEmployeeIdno to sEmplID
+        Move iPIN          to sPIN
+        If (not(Length(sEmplID) > 8 or Length(sPIN) > 4)) Begin
+            Get IsEmployeeValid iEmployeeIdno iPIN (&iAltEmployeeIdno) (&bActive) (&sMessage) to bOk
+        End
+        If (bOk) Begin
+            Move (String(iEmployeeIdno)) to sPassed
+            Move sSuccess                to sSurvo
+        End
+        Else Begin
+            Move sFailure                to sSurvo
+        End
+        //
+        If (iEmployeeIdno <> 0) Begin
+            Clear Weblog
+            Reread System
+            Add 1 to System.LastWeblog
+            SaveRecord System
+            Move System.LastWeblog to Weblog.WeblogIdno
+            Move dToday            to Weblog.HitDate
+            Move iHr               to Weblog.HitHr
+            Move iMin              to Weblog.HitMin
+            Move iSec              to Weblog.HitSec
+            Move bOk               to Weblog.Success
+            Move iEmployeeIdno     to Weblog.EmployeeIdno
+            Move iPIN              to Weblog.PIN
+            Move sCallerId         to Weblog.CallerId
+            SaveRecord Weblog
+            Unlock
+        End
+        // send a reply
+        // create XML document / Create root node
+        Get Create U_cXMLDomDocument to hoXml
+        // Create the Root element
+        Get CreateDocumentElement of hoXml        "action"             to hoAction
+        Get AddElement            of hoAction     "app"        "survo" to hoApp
+        Get AddElement            of hoAction     "parameters" ""      to hoParameters
+        Get AddElement            of hoParameters "id"         sSurvo  to hoID
+        Get AddElement            of hoParameters "p_t"        sPassed to hoPT
+        Send Destroy of hoPT
+        Send Destroy of hoID
+        Send Destroy of hoParameters
+        Send Destroy of hoApp
+        Send Destroy of hoAction
+        // return by address
+        Get paXml    of hoXml to aXml
+        Send Destroy of hoXml
+        //
+        Function_Return aXML
+    End_Function // ValidateEmployee
+ 
+    { Published = True  }
+    { Description = ""  }
+    Function SmartValidateEmployee  ;
+        Integer iEmployeeIdno       ;
+        Integer iPIN                ;
+        String  sCallerId           ;
+        Returns Address
+        //
+        Boolean bOk bActive
+        Integer iAltEmployeeIdno
+        Integer iHr iMin iSec
+        Address aXml
+        String  sEmplID sPIN sResult sPassed sStatus sMSG
+        Handle  hoXml hoAction hoApp hoParameters hoResult hoPT hoStatus hoMSG
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        Append_Output "Hitme.txt"
+        Writeln (String(iEmployeeIdno) * String(iPIN) * String(dToday) * String(iHr) * String(iMin) * String(iSec))
+        Close_Output
+        //
+        Move iEmployeeIdno to sEmplID
+        Move iPIN          to sPIN
+        //Validate entered Employee Information
+        Get IsEmployeeValid iEmployeeIdno iPIN (&iAltEmployeeIdno) (&bActive) (&sMSG) to bOk
+        Move (String(iEmployeeIdno)) to sPassed
+        Move bActive to sStatus
+        Move bOk to sResult
+
+        If (iEmployeeIdno <> 0) Begin
+            Clear Weblog
+            Reread System
+            Add 1 to System.LastWeblog
+            SaveRecord System
+            Move System.LastWeblog to Weblog.WeblogIdno
+            Move dToday            to Weblog.HitDate
+            Move iHr               to Weblog.HitHr
+            Move iMin              to Weblog.HitMin
+            Move iSec              to Weblog.HitSec
+            Move bOk               to Weblog.Success
+            Move iEmployeeIdno     to Weblog.EmployeeIdno
+            Move iPIN              to Weblog.PIN
+            Move sCallerId         to Weblog.CallerId
+            SaveRecord Weblog
+            Unlock
+        End
+        // send a reply
+        // create XML document / Create root node
+        Get Create U_cXMLDomDocument to hoXml
+        // Create the Root element
+        Get CreateDocumentElement of hoXml        "action"              to hoAction
+        Get AddElement            of hoAction     "app"        "survo"  to hoApp
+        Get AddElement            of hoAction     "parameters" ""       to hoParameters
+        //Get AddElement            of hoParameters "id"         sResult  to hoResult //
+        Get AddElement            of hoParameters "id"         0        to hoResult
+        Get AddElement            of hoParameters "p_t"        sPassed  to hoPT
+        Get AddElement            of hoParameters "status"     sStatus  to hoStatus
+        //Get AddElement            of hoParameters "msg"        sMSG     to hoMSG //
+        Get AddElement            of hoParameters "msg"        "Old APP deactivated. Download new App at http://interstatepm.com/apps"     to hoMSG
+        Send Destroy of hoMSG
+        Send Destroy of hoStatus
+        Send Destroy of hoPT
+        Send Destroy of hoResult
+        Send Destroy of hoParameters
+        Send Destroy of hoApp
+        Send Destroy of hoAction
+        // return by address
+        Get paXml    of hoXml to aXml
+        Send Destroy of hoXml
+        //
+        Function_Return aXML
+    End_Function // SmartValidateEmployee   
+    
+    { Published = True  }
+    { Description = ""  }
+    Function SmartCreateAttachList          ;
+        Integer iEquipIdno                  ;
+        Returns Address
+        
+        Address aXml
+        
+        Integer iEmployerIdno iMastOpsIdno iAttachIdno iDim1Size iDim2Size i j
+        String sAttachLabel sAttachCat
+        String[][] sAttachmentArray
+        Handle hoXml hoAction hoApp hoAttachment hoAttachIdno hoAttachLabel
+        Boolean bHasAttachment
+                
+        
+        Clear Equipmnt
+        Move iEquipIdno to Equipmnt.EquipIdno
+        Find EQ Equipmnt by Index.1
+        If ((Found) and Equipmnt.EquipIdno = iEquipIdno) Begin
+            Move Equipmnt.OperatedBy to iEmployerIdno
+            Move Equipmnt.MastOpsIdno to MastOps.MastOpsIdno
+            Find EQ MastOps by Index.1
+            If ((Found) and Equipmnt.MastOpsIdno = MastOps.MastOpsIdno) Begin
+                Move MastOps.NeedsAttachment to sAttachCat
+                If (sAttachCat <> "NONE") Begin
+                    Get BuildAttachmentSelectionList of oTransAttachment sAttachCat iEmployerIdno (&sAttachmentArray) to bHasAttachment
+                    If (bHasAttachment) Begin
+                        // create XML document / Create root node
+                        Get Create U_cXMLDomDocument to hoXml
+                        // Create the Root element
+                        Get CreateDocumentElement of hoXml        "action"                          to hoAction
+                        Get AddElement            of hoAction     "app"         "attach_list"       to hoApp
+                        
+                        //Build Loop to read out iAttachIdno and sAttachLabel
+                        // convert to XML
+                        
+                        //<action>
+                        //  <app>attach_list</app>
+                        //  <attachment>
+                        //      <attach_idno>####</attach_idno>
+                        //      <attach_label>XXXXXX</attach_label>
+                        //  </attachment>
+                        //  <attachment>
+                        //      ...
+                        //  </attachment>   
+                        //</action>    
+                                  
+                        Move (SizeOfArray(sAttachmentArray)) to iDim1Size
+                        Move (SizeOfArray(sAttachmentArray[1])) to iDim2Size
+                        For i from 0 to (iDim1Size-1)
+                            Get AddElement            of hoAction      "attachment"  ""                     to hoAttachment
+                            
+                            Move sAttachmentArray[i][0] to iAttachIdno
+                            Get AddElement            of hoAttachment "attach_idno"  iAttachIdno           to hoAttachIdno
+                            Move sAttachmentArray[i][1] to sAttachLabel
+                            Get AddElement            of hoAttachment "attach_label" sAttachLabel          to hoAttachLabel
+                            
+                            Send Destroy of hoAttachLabel
+                            Send Destroy of hoAttachIdno
+                            Send Destroy of hoAttachment  
+                        Loop
+                        
+                        Send Destroy of hoApp
+                        Send Destroy of hoAction
+                        // return by address
+                        Get paXml    of hoXml to aXml
+                        Send Destroy of hoXml
+                    End
+                    Function_Return aXml
+                End                
+            End
+
+        End
+        
+    End_Function    
+    { Published = True  }
+    { Description = ""  }
+    Function SmartCreateTransaction     ;
+        Integer iEmployeeIdno           ;
+        Integer iTransType              ;
+        String  sJobNumber1             ;
+        String  sEquipIdno              ;
+        String  sJobNumber2             ;
+        String  sMaterialIdno           ;
+        String  sQuantity               ;
+        String  sCallerId               ;
+        Number  nGPS_Lat                ;
+        Number  nGPS_Long               ;
+        String  sAttachIdno             ;
+        Returns Address
+        //
+        Boolean bOk
+        Integer iHr iMin iSec
+        Address aXml
+        String  sResult sPassed sStatus sMSG
+        Handle  hoXml hoAction hoApp hoParameters hoResult hoPT hoStatus hoMSG
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        //
+        Case Begin
+            Case (iTransType = 3)
+                Get DoEndEmployeeShift iEmployeeIdno sCallerId nGPS_Lat nGPS_Long (&sMSG) to bOk
+                Case Break
+            Case (iTransType = 2)
+                If (sJobNumber2 = "NA" or sMaterialIdno = "NA" or sQuantity = "NA") Begin
+                    Move "Can not continue to create Material Transaction" to sMSG
+                    Case Break
+                End
+                Get DoCreateMaterialTransaction iEmployeeIdno sJobNumber2 sMaterialIdno sQuantity sCallerId nGPS_Lat nGPS_Long (&sMSG) to bOk
+                Case Break
+            Case (iTransType = 1)
+                If (sJobNumber1 = "NA" or sEquipIdno = "NA") Begin
+                    Move "Can not continue to create Labor Transaction" to sMSG
+                    Case Break
+                End
+                Get DoCreateEquipmentTransaction iEmployeeIdno sJobNumber1 sEquipIdno sCallerId nGPS_Lat nGPS_Long sAttachIdno (&sMSG)  to bOk
+                Case Break
+        Case End
+        //
+        Move (String(iEmployeeIdno)) to sPassed
+        Move bOk to sResult
+        Move 1 to sStatus
+
+        //
+        If (iEmployeeIdno <> 0) Begin
+            Clear Weblog
+            Reread System
+            Add 1 to System.LastWeblog
+            SaveRecord System
+            Move System.LastWeblog to Weblog.WeblogIdno
+            Move dToday            to Weblog.HitDate
+            Move iHr               to Weblog.HitHr
+            Move iMin              to Weblog.HitMin
+            Move iSec              to Weblog.HitSec
+            Move bOk               to Weblog.Success
+            Move iEmployeeIdno     to Weblog.EmployeeIdno
+            Move iTransType        to Weblog.TransType
+            Move sJobNumber1       to Weblog.JobNumber1
+            Move sEquipIdno        to Weblog.EquipmentIdno
+            Move sJobNumber2       to Weblog.JobNumber2
+            Move sMaterialIdno     to Weblog.MaterialIdno
+            Move sQuantity         to Weblog.MaterialQty
+            Move sCallerId         to Weblog.CallerId
+            SaveRecord Weblog
+            Unlock
+        End
+        // send a reply
+        // create XML document / Create root node
+        Get Create U_cXMLDomDocument to hoXml
+        // Create the Root element
+        Get CreateDocumentElement of hoXml        "action"             to hoAction
+        Get AddElement            of hoAction     "app"        "survo" to hoApp
+        Get AddElement            of hoAction     "parameters" ""       to hoParameters
+        Get AddElement            of hoParameters "id"         sResult  to hoResult
+        Get AddElement            of hoParameters "p_t"        sPassed  to hoPT
+        Get AddElement            of hoParameters "status"     sStatus  to hoStatus
+        Get AddElement            of hoParameters "msg"        sMSG     to hoMSG
+        Send Destroy of hoMSG
+        Send Destroy of hoStatus
+        Send Destroy of hoPT
+        Send Destroy of hoResult
+        Send Destroy of hoParameters
+        Send Destroy of hoApp
+        Send Destroy of hoAction
+        // return by address
+        Get paXml    of hoXml to aXml
+        Send Destroy of hoXml
+        //
+        Function_Return aXML
+    End_Function // SmartCreateTransaction
+    
+    { Published = True  }
+    { Description = ""  }
+    Function CreateEmployeePhoneReport ;
+        Integer iEmployeeIdno ;
+        String  sCallerId     ;
+        String  sSuccess      ;
+        String  sFailure      ;
+        Returns Address
+        //
+        Boolean bOk
+        Integer iHr iMin iSec iMaxTransCount
+        Address aXml
+        String  sEmplID sSurvo sPassed sJobNumber sEquipNumber sLocationIdno sLocationName sStartDate sStartTime sStopDate sStopTime
+        Handle  hoXml hoAction hoApp hoTransaction hoJobNumber hoEquipNumber hoLocationName hoStartDate hoStartTime hoStopDate hoStopTime
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        
+        Move iEmployeeIdno to sEmplID
+        If (sEmplID <> 0) Begin
+            Move 0 to iMaxTransCount
+            
+            // create XML document / Create root node
+            Get Create U_cXMLDomDocument to hoXml
+            // Create the Root element
+            Get CreateDocumentElement of hoXml        "action"                  to hoAction
+            Get AddElement            of hoAction     "app"         "report"    to hoApp
+            
+            
+            Open Trans
+            Clear Trans
+            Constraint_Set 1
+            Constrain Trans.EmployeeIdno matches sEmplID
+            //Constrain Trans.StartDate Between (dToday-30) and dToday
+            //Showln ("dToday: " + dToday)
+            Constrained_Find Last Trans by 3
+            While (Found and iMaxTransCount <= 29) //Runs until a max. of 10 Transactions are found
+                Move Trans.JobNumber to sJobNumber
+                Move Trans.EquipIdno to sEquipNumber
+                Move Trans.LocationIdno to sLocationIdno
+                Open Location
+                Clear Location
+                Move sLocationIdno to Location.LocationIdno
+                Find EQ Location by 1
+                If (Found) Begin
+                    Move (Rtrim(Location.Name)) to sLocationName
+                End
+                Move Trans.StartDate to sStartDate
+                Move Trans.StartTime to sStartTime
+                Move Trans.StopDate to sStopDate
+                Move Trans.StopTime to sStopTime
+                // loop filling of xmlstring for Trans - values
+                // <transaction>
+                //      <JobNumber>####</JobNumber>
+                //      <StartDate>##/##/##</StartDate>
+                //      <StartTime>##:##</StartTime>
+                //      <StopDate>##/##/##</StopDate>
+                //      <StopTime>##:##</StopTime>
+                // </transaction>
+                // <transaction>
+                //      ...
+                // </transaction>
+                Get AddElement            of hoAction      "transaction"  ""          to hoTransaction
+                Get AddElement            of hoTransaction "jobnumber"  sJobNumber           to hoJobNumber
+                Get AddElement            of hoTransaction "equipnumber" sEquipNumber        to hoEquipNumber
+                Get AddElement            of hoTransaction "locationname" sLocationName      to hoLocationName
+                Get AddElement            of hoTransaction "startdate"  sStartDate           to hoStartDate
+                Get AddElement            of hoTransaction "starttime"  (Rtrim(sStartTime))  to hoStartTime
+                Get AddElement            of hoTransaction "stopdate"   sStopDate            to hoStopDate
+                Get AddElement            of hoTransaction "stoptime"   (rTrim(sStopTime))    to hoStopTime
+                
+                Send Destroy of hoStopTime
+                Send Destroy of hoStopDate
+                Send Destroy of hoStartTime
+                Send Destroy of hoStartDate
+                Send Destroy of hoLocationName
+                Send Destroy of hoEquipNumber
+                Send Destroy of hoJobNumber
+                Send Destroy of hoTransaction
+                
+                Increment iMaxTransCount
+                Constrained_Find Next
+            Loop
+        
+   
+            Send Destroy of hoApp
+            Send Destroy of hoAction
+            // return by address
+            Get paXml    of hoXml to aXml
+            Send Destroy of hoXml
+            
+            Move True to bOk
+        End 
+        If (bOk) Begin
+            Move sSuccess                to sSurvo
+        End
+        Else Begin
+            Move sFailure                to sSurvo
+        End 
+        //
+        Function_Return aXML
+    End_Function // CreateEmployeePhoneReport
+    
+End_Object

@@ -1,0 +1,41 @@
+Use cGlblDataDictionary.pkg
+
+Open Propmgr
+Open Customer
+Open SalesRep
+Open Snowrep
+Open Contact
+Open Location
+
+Set_Attribute DF_FILE_ALIAS of Contact.File_number to DF_FILE_IS_MASTER
+Set_Attribute DF_FILE_ALIAS of Propmgr.File_number to DF_FILE_IS_ALIAS
+
+Register_Object Propmgr_sl
+
+Class cPropmgrDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Propmgr.File_Number
+
+        Set Add_Server_File to Customer.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+//        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Prompt_Object Field Propmgr.ContactIdno to Propmgr_sl
+        Set Field_Option Field Propmgr.ContactIdno DD_ZERO_SUPPRESS to True
+
+        Set pbAllowNullRelateState      to True
+        Set Validate_Foreign_File_State to False
+    End_Procedure
+
+End_Class
+
+
+#IFDEF Is$WebApp
+#ELSE
+Use Propmgr.sl
+#ENDIF

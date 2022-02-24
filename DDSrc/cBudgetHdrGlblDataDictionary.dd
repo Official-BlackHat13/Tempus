@@ -1,0 +1,60 @@
+Use cGlblDataDictionary.pkg
+
+Open BudgetHdr
+Open oBudgetSales
+Open System
+
+Object Months is a ValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Jan"
+        Send Add_Table_Value "Feb"
+        Send Add_Table_Value "Mar"
+        Send Add_Table_Value "Apr"
+        Send Add_Table_Value "May"
+        Send Add_Table_Value "Jun"
+        Send Add_Table_Value "Jly"
+        Send Add_Table_Value "Aug"
+        Send Add_Table_Value "Sep"
+        Send Add_Table_Value "Oct"
+        Send Add_Table_Value "Nov"
+        Send Add_Table_Value "Dec"
+    End_Procedure
+End_Object
+
+Class cBudgetHdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to BudgetHdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Client_File to oBudgetSales.File_Number
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+
+        Set Field_Auto_Increment Field BudgetHdr.Budget_Hdr_Idno to File_Field System.LastQuota
+
+        Set Field_Value_Table Field BudgetHdr.Budget_Mo to Months
+
+        Set Field_Mask_Type Field BudgetHdr.Snow_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Melt_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Pave_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Concrete_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Excavation_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Sweep_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Mark_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Other_TTL to Mask_Currency_Window
+
+        Set Field_Mask_Type Field BudgetHdr.Grand_TTL to Mask_Currency_Window
+
+    End_Procedure
+
+End_Class

@@ -1,0 +1,75 @@
+Use Windows.pkg
+Use dfSpnFrm.pkg
+
+Object oUserSelectionDialog is a ModalPanel
+    Set Size to 89 211
+    Set Label to "Change this 'Label' property..."
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+
+    Object oOK_Btn is a Button
+        Set Label    to "&OK"
+        Set Location to 71 102
+        Set peAnchors To anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_Btn is a Button
+        Set Label    to "&Cancel"
+        Set Location to 71 157
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oComboForm1 is a ComboForm
+        Set Size to 13 100
+        Set Location to 29 65
+    
+        //Combo_Fill_List is called when the list needs filling
+    
+        Procedure Combo_Fill_List
+            String[] sValueList
+            Integer iItemCount i
+            Move "Test Item 1" to sValueList[0]
+            Move "Test Item 2" to sValueList[1]
+            Move "Test Item 3" to sValueList[2]
+            //
+            Move (SizeOfArray(sValueList)) to iItemCount
+            // Fill the combo list with Send Combo_Add_Item
+            For i from 0 to (iItemCount-1)
+                Send Combo_Add_Item sValueList[i]
+            Loop
+        End_Procedure
+    
+        //OnChange is called on every changed character
+            
+        Procedure OnChange
+            String sValue
+            Get Value to sValue // the current selected item
+        End_Procedure
+    
+        //Notification that the list has dropped down
+    
+        //Procedure OnDropDown
+        //End_Procedure
+    
+        //Notification that the list was closed
+    
+        //Procedure OnCloseUp
+        //End_Procedure
+    
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_Btn
+
+End_Object

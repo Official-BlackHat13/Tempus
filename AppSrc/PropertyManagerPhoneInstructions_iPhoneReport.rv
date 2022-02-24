@@ -1,0 +1,153 @@
+Use Windows.pkg
+Use cGlblReportView.pkg
+Use File_Dlg.Pkg
+Use cGlblForm.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblRadio.pkg
+Use cTextEdit.pkg
+Use cGlblButton.pkg
+Use cDRReport.pkg
+Use cDRPreview.pkg
+Use DRStatuspanel.dg
+
+ACTIVATE_VIEW Activate_oPropertyManagerPhoneInstructions_iPhoneReportView FOR oPropertyManagerPhoneInstructions_iPhoneReportView
+
+Object oPropertyManagerPhoneInstructions_iPhoneReportView Is A cGlblReportView
+    Set Label to "PropertyManager-PhoneInstructions_iPhone"
+    Set Border_Style to Border_Thick
+
+    Object oReport is a cDRReport
+        Set pbShowStatusPanel to True
+        Set phoStatusPanel to oDRStatusPanel
+
+        Set psReportName to "PropertyManager-PhoneInstructions_iPhone.dr"
+
+        Procedure OnInitializeReport
+            String sReportId sPath
+            Integer eOutputDeviceMode
+
+            Forward Send OnInitializeReport
+
+            // Convert from the ReportView Output_Device_Mode to peOutputDestination
+            Get Output_Device_Mode to eOutputDeviceMode
+            Set peOutputDestination to eOutputDeviceMode
+            Get psHome of (phoWorkspace(ghoApplication)) to sPath
+            Set psExportFileName to (sPath+"Reports\Cache\CustomerPortal_iPhone_Instructions.pdf")
+            Set peExportType to C_drPDF
+
+
+            Get psReportId to sReportId
+
+            Send SetFilters
+            Send SetSortFields
+        End_Procedure
+
+        Procedure SetFilters
+            String sReportId
+            // You can use the method AddFilter to add a filter or set the filter via psFilterFunction
+
+            Get psReportId to sReportId
+        End_Procedure
+
+        Procedure SetSortFields
+            // The wizard did not detect any sort fields. If you later add sort fields to the report
+            // and want to alter them via this method you probably want to remove the existing sort fields first
+//            String sReportId
+//            Get psReportId to sReportId
+        End_Procedure
+    End_Object
+
+
+    Object oDestinationGroup Is A cGlblRadioGroup
+        Set Label to "Output destination"
+        Set Location to 5 5
+        Set Size to 46 77
+        Set peAnchors to anBottomLeft
+
+        Object oScreenRadio Is A cGlblRadio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object
+
+        Object oPrinterRadio Is A cGlblRadio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object
+
+        Object oExportRadio Is A cGlblRadio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file (PDF, CSV, Image, HTML, Excel, RTF)"
+        End_Object
+
+        Procedure Notify_Select_State Integer iNewItem Integer iOldItem
+            Forward Send Notify_Select_State iNewItem iOldItem
+
+            Case Begin
+                Case (iNewItem = 0)
+                    Set Output_Device_Mode to PRINT_TO_WINDOW
+                    Case Break
+                Case (iNewItem = 1)
+                    Set Output_Device_Mode to PRINT_TO_PRINTER
+                    Case Break
+                Case (iNewItem = 2)
+                    Set Output_Device_Mode to PRINT_TO_FILE
+                    Case Break
+            Case End
+        End_Procedure
+    End_Object
+
+    Object oPrintButton Is A cGlblButton
+        Set Label to "&Print"
+        Set Status_Help to "Print the report"
+        Set Size to 14 50
+        Set Location to 56 5
+        Set Default_State to True
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send RunReport Of oReport
+        End_Procedure
+    End_Object
+
+    Object oCancelButton Is A cGlblButton
+        Set Label to "&Cancel"
+        Set Size to 14 50
+        Set Location to 56 60
+        Set Status_Help to "Cancel this Panel"
+        Set peAnchors to anBottomRight
+
+        // This procedure closes the report view.
+        Procedure OnClick
+            Send Request_Cancel
+        End_Procedure
+    End_Object
+
+    On_Key Key_Alt+Key_C Send KeyAction of oCancelButton
+    On_Key Key_Alt+Key_P Send KeyAction of oPrintButton
+
+    Set Location to 6 6
+    Set Size to 73 115
+    Set piMinSize to 73 115
+
+//    Procedure DoJumpStartReport
+//        Set Output_Device_Mode to PRINT_TO_WINDOW
+//        Send RunReport of oReport
+//    End_Procedure
+    
+    Function DoExportReport String ByRef sExportFileName Boolean bOpen Returns Boolean
+        Set Output_Device_Mode to PRINT_TO_FILE
+        Send RunReport of oReport
+        Get psExportFileName of oReport to sExportFileName
+        // Open?
+        If (bOpen) Begin
+            Runprogram Shell Background sExportFileName
+        End
+        Function_Return (not(Err))
+    End_Function
+End_Object

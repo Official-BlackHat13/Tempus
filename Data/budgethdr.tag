@@ -1,0 +1,12 @@
+Budget_Hdr_Idno
+Budget_Yr
+Budget_Mo
+Snow_TTL
+Melt_TTL
+Pave_TTL
+Concrete_TTL
+Excavation_TTL
+Sweep_TTL
+Mark_TTL
+Other_TTL
+Grand_TTL

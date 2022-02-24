@@ -1,0 +1,4 @@
+#REPLACE FILE73 InsClass
+#REPLACE InsClass.Recnum |FN73,0
+#REPLACE InsClass.ClassCode |FS73,1
+#REPLACE InsClass.ClassDescription |FS73,2

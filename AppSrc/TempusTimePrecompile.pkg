@@ -1,0 +1,10 @@
+// TempusTimePrecompile.pkg 
+//
+// 15.0.92.1  - 06/18/09 - added About & versioning
+
+Use GlobalAllEnt.pkg
+Use cCJStandardCommandBarSystem.pkg
+Use oEditContextMenu.pkg
+Use oDEOEditContextMenu.pkg
+Use cCJCommandBarSystem.pkg
+Use Regserver.pkg

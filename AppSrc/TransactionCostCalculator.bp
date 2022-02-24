@@ -1,0 +1,182 @@
+Use Batchdd.pkg
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use Equipmnt.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Object oTransactionCostCalculator is a BusinessProcess
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEquipmnt_DD is a Equipmnt_DataDictionary
+        Set DDO_Server to oEmployer_DD
+        Set DDO_Server to oMastOps_DD
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oEmployee_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+
+
+    Function CalculateCostForDateRange Integer iJobNumber Date dStart Date dStop Number ByRef nTotalCurrentCost Number ByRef nPercentInvoiced Returns Boolean
+        Boolean bSuccess
+        // Labor, Supplies, Equipment, 
+        Number nRate
+        Number nQty
+        Integer iEquipIdno iSubTransCount iSubTransInvCount
+
+        Clear Trans
+        Move iJobNumber     to Trans.JobNumber
+        Move dStart         to Trans.StartDate
+        Find ge Trans by Index.2
+        While ((Found) and Trans.JobNumber = iJobNumber and Trans.StartDate >= dStart and Trans.StartDate <= dStop)
+            
+            Relate Trans
+            // Establish the cost rate
+            If (Employer.EmployerIdno = 101) Begin
+                Move (Trans.CurrentContractorRate + Trans.CurrAttachContrRate) to nRate
+                If (Opers.ExcludeCostFlag <> 0) Begin
+                    Move 0 to nRate
+                End
+            End
+            Else Begin
+                // Subcontractor  
+                Move (Trans.CurrentContractorRate + Trans.CurrAttachContrRate) to nRate           
+                //Subcontractor Invoicing Statistic
+                Increment iSubTransCount
+                If (Trans.VendInvoicedFlag=1) Begin
+                    Increment iSubTransInvCount
+                End
+                Move (iSubTransInvCount/iSubTransCount*100) to nPercentInvoiced
+            End
+            // Find and use correct qty
+            If (Trans.ElapsedHours > 0) Begin
+                //Move (Trans.ElapsedMinutes / 60.00)                     to nQty
+                Move (Trans.ElapsedHours)                               to nQty
+            End
+            Else Begin
+                Move Trans.Quantity                                  to nQty
+                
+                If (MastOps.CostType = "Material" and MastOps.QtyDivisor <> 0) Begin
+                    Move (nQty / MastOps.QtyDivisor)                         to nQty
+                End
+            End
+               
+
+            // Adjust for minimum Hours / Material when not Interstate
+            Move Trans.EquipIdno to Equipmnt.EquipIdno
+            Find EQ Equipmnt.EquipIdno
+            If (Employer.EmployerIdno <> 101 and Equipmnt.OperatedBy <> 101 and Equipmnt.Hr_Mat_MinFlag = 1 and nQty < 1) Begin 
+                Move 1                                           to nQty
+            End             
+            
+            //Finally Calculate the cost for All Employers
+            //On 12/18/2014 we decited to use the cost rate from Equipmnt.ContractorRate which makes it universal to use.
+            //After all transactions get updated with the CurrentContractorRate, we will use the value from Trans.CurrentContractorRate
+            
+            Add (nRate * nQty) to nTotalCurrentCost
+            //
+            Find gt Trans by Index.2
+        Loop
+        
+        //Additional JobCost
+        Open Jobcosts
+        Clear Jobcosts
+        Move iJobNumber to Jobcosts.JobNumber
+        Move dStart to Jobcosts.WorkDate
+        Find ge Jobcosts by Index.2
+        While ((Found) and Jobcosts.JobNumber = iJobNumber and Jobcosts.WorkDate >= dStart and Jobcosts.WorkDate <= dStop)
+            Add Jobcosts.TotalCost to nTotalCurrentCost
+            Find gt Jobcosts by Index.2
+        Loop
+        
+        Function_Return True
+    End_Function
+        
+    Function FindContractorRate Integer iEquipIdno Returns Number
+        Number nRate
+        
+        Clear Equipmnt
+        Move iEquipIdno to Equipmnt.EquipIdno
+        Find EQ Equipmnt by Index.1
+        If (Found) Begin
+            Move Equipmnt.ContractorRate to nRate
+        End
+        Function_Return nRate
+    End_Function
+End_Object
+

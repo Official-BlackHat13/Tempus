@@ -1,0 +1,179 @@
+// Class Name: Salesrep_DataDictionary
+// Revision  : 16
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Salesrep
+Open Snowrep
+Open System
+Open Quotehdr
+Open Contact
+Open Order
+Open Eshead
+Open ProdNote
+Open Prospect
+Open oBudgetSales
+Open PropHdr
+
+Set_Attribute DF_FILE_ALIAS of Salesrep.File_number    to DF_FILE_IS_MASTER
+Set_Attribute DF_FILE_ALIAS of Snowrep.File_number to DF_FILE_IS_ALIAS
+
+Register_Object Salesrep_Phonetype1_VT
+Register_Object Salesrep_Phonetype2_VT
+Register_Object Salesrep_Phonetype3_VT
+Register_Object Salesrep_Status_VT
+
+Object Salesrep_Phonetype1_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+End_Object   // Salesrep_Phonetype1_VT
+
+Object Salesrep_Phonetype2_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+End_Object   // Salesrep_Phonetype2_VT
+
+Object Salesrep_Phonetype3_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+End_Object   // Salesrep_Phonetype3_VT
+
+Object Salesrep_Status_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "A"  "Active"
+        Send Add_Table_Value  "I"  "Inactive"
+    End_Procedure    // Fill_List
+End_Object   // Salesrep_Status_VT
+Register_Object SALESREP_SL
+
+Register_Function Phone1Validation integer iField string sPhone Returns Integer
+
+Class Salesrep_DataDictionary is a cGlblDataDictionary
+
+    // Phone1Validation:
+    Function Phone1Validation integer iField string sPhone Returns Integer
+        Integer iRetval
+        // Insert Code Here
+        get PhoneValidation iField sPhone to iRetval
+        Function_Return iRetval
+    End_Function   // Phone1Validation
+ 
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Salesrep.File_Number
+
+        Set Add_Client_File to Order.File_Number
+        Set Add_Client_File to Quotehdr.File_Number
+        Set Add_Client_File to Eshead.File_Number
+        Set Add_Client_File to PropHdr.File_Number
+        Set Add_Client_File to Prospect.File_Number
+        Set Add_Client_File to oBudgetSales.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+//        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+//        Set Field_Auto_Increment Field Salesrep.Repidno to File_Field System.Lastsalesrep
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Salesrep.Repidno DD_AUTOFIND to True
+        Set Field_Option Field Salesrep.RepIdno DD_ZERO_SUPPRESS to True
+        Set Key_Field_State Field Salesrep.RepIdno to True
+        Set Field_Prompt_Object Field SalesRep.RepIdno to SalesRep_sl
+
+        Set Field_Prompt_Object Field Salesrep.Lastname to SalesRep_sl
+
+        Set Field_Prompt_Object Field SalesRep.FirstName to SalesRep_sl
+
+
+        Set Field_Option Field Salesrep.State DD_CAPSLOCK to True
+
+
+        Set Field_Validate_msg Field Salesrep.Phone1 To get_Phone1Validation
+
+        Set Field_Class_Name Field Salesrep.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Option Field Salesrep.Phonetype1 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Salesrep.Phonetype1 to Salesrep_Phonetype1_VT
+
+        Set Field_Validate_msg Field Salesrep.Phone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Salesrep.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Option Field Salesrep.Phonetype2 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Salesrep.Phonetype2 to Salesrep_Phonetype2_VT
+
+        Set Field_Validate_msg Field Salesrep.Phone3 To get_PhoneValidation
+
+        Set Field_Class_Name Field Salesrep.Phonetype3 To "cGlblDbComboForm"
+        Set Field_Option Field Salesrep.Phonetype3 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Salesrep.Phonetype3 to Salesrep_Phonetype3_VT
+
+
+        Set Field_Class_Name Field Salesrep.Status To "cGlblDbComboForm"
+        Set Field_Option Field Salesrep.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Salesrep.Status to Salesrep_Status_VT
+
+        Set pbAllowNullRelateState      to True
+        Set Validate_Foreign_File_State to False
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Salesrep.Phonetype1 To "O"
+        Set Field_Changed_Value   Field Salesrep.Phonetype2 To "C"
+        Set Field_Changed_Value   Field Salesrep.Phonetype3 To "H"
+        Set Field_Changed_Value   Field Salesrep.Status To "A"
+    End_Procedure    // Field_Defaults
+
+    Procedure OnConstrain
+        Forward Send OnConstrain
+
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain SalesRep.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+
+    // Update:
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1                 to SalesRep.ChangedFlag
+        End
+             
+    End_Procedure   // Update
+
+    Function IsSalesrepName Returns String
+        Function_Return (Trim(SalesRep.LastName) + "," * Trim(SalesRep.FirstName))
+    End_Function
+
+End_Class    // Salesrep_DataDictionary
+#IFDEF Is$WebApp
+#ELSE
+
+Use SALESREP.SL      // SALESREP_SL
+
+#ENDIF
+

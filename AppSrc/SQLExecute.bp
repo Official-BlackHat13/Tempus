@@ -1,0 +1,95 @@
+Use Batchdd.pkg
+Use sql.pkg
+
+Object oSQLExecute is a BusinessProcess
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Property Integer[] piPosted
+    Property Boolean   pbError
+    Property Handle    phDbc
+    Property Handle    phoMSSQLMngr
+    
+    
+    Function IsSqlDate Date dSource Returns String
+        String sYYYY sMM sDD
+        //
+        Move (mid(String(dSource),2,1)) to sMM
+        Move (mid(String(dSource),2,4)) to sDD
+        Move (mid(String(dSource),4,7)) to sYYYY
+        Function_Return (sYYYY + "-" + sMM + "-" + sDD)
+    End_Function
+    
+    Function IsDataFlexDate String sSource Returns Date
+        Date dReturnDate
+        String sYYYY sMM sDD
+        //YYYY-MM-DD
+        Move (Mid(sSource,4,1)) to sYYYY
+        Move (Mid(sSource,2,6)) to sMM
+        Move (Mid(sSource,2,9)) to sDD
+        Move (sMM +"/"+ sDD +"/"+ sYYYY) to dReturnDate
+        Function_Return dReturnDate
+    End_Function
+
+    Function ExecuteSQLQuery String sSQLQuery String ByRef sResult Returns Boolean
+        Handle hoMSSQLManager hDbc hstmt hoWorkspace hoIniFile
+        Integer iFetchResult
+        String sWorkspaceWSFile sServerName sWSDLLocation sWebsiteRoot sConnection sDriver
+        //
+        Move (phoWorkSpace(ghoApplication))                                    to hoWorkspace
+        Get psWorkspaceWSFile of hoWorkspace                                   to sWorkspaceWSFile 
+        Get Create U_cIniFile                                                  to hoIniFile
+        Set psFilename        of hoIniFile                                     to sWorkspaceWSFile 
+        Get ReadString        of hoIniFile "Workspace" "DataServerName" " "    to sServerName
+        
+        If (Length(sServerName)<=0) Begin
+            Send Stop_Box "Unable to determine ServerName from Workspace Config.ws"
+            Function_Return False
+        End
+        Move ("SERVER="+sServerName+"\SQLExpress;UID=Tempus_User;PWD=Tempu$1User") to sConnection
+        Move ("MSSQLDRV") to sDriver
+        //
+        //Send Start_Process   // does all process init
+        If (not(hDbc)) Begin        
+        	//
+        	Object oMSSQLHandler is a cSQLHandleManager
+        	    Move Self to hoMSSQLManager
+        	    Set phoMSSQLMngr to hoMSSQLManager
+        	End_Object 
+        	
+            Get SQLConnect of hoMSSQLManager sDriver sConnection to hdbc
+            If (not(hDbc)) Begin
+                Send Stop_Box "Unable to connect to data source."
+                Send End_Process     // does all close down
+                Function_Return False
+            End
+            //
+            //Send Update_Status "Connection Established"   
+        End
+        If (hDbc) Begin
+            //connection already established
+            //Send Update_Status "Using established Connection"
+            Get SQLOpen of hDbc to hstmt
+            Send SQLExecDirect of hstmt sSQLQuery
+            Repeat
+                Get SQLFetch of hstmt to iFetchResult
+                If (iFetchResult <> 0) Begin
+                    Get SQLColumnValue of hStmt 1 to sResult
+                End
+            Until (iFetchResult = 0)
+            Send SQLCLose of hStmt
+            Send SQLDisconnect of hDbc
+        End
+        
+        Function_Return True
+    End_Function
+
+End_Object
+

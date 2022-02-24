@@ -1,0 +1,43 @@
+Use GlobalAllEnt.pkg
+//Use Windows.pkg
+//Use cHtmlHelp.pkg
+//Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Order
+Open Quotehdr
+
+Procedure DoUpdateRepIdno
+    Boolean bCancel
+    Integer iCount
+    //
+    Get Confirm "Update RepIdno in Order table?" to bCancel
+    If bCancel Procedure_Return
+    //
+    Find ge Quotehdr.Recnum
+    While (Found)
+        If (Quotehdr.JobNumber <> 0) Begin
+            Clear Order
+            Move Quotehdr.JobNumber to Order.JobNumber
+            Find eq Order.JobNumber
+            If (Found) Begin
+                Reread Order
+                Move Quotehdr.RepIdno to Order.RepIdno
+                SaveRecord Order
+                Unlock
+                Increment iCount
+            End
+        End
+        Find gt Quotehdr.Recnum
+    Loop
+    Send Info_Box iCount
+End_Procedure
+
+Send DoUpdateRepIdno

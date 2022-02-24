@@ -1,0 +1,12 @@
+// TempusMaintenancePrecompile.pkg 
+//
+// 15.0.92.1  - 06/24/09 - program creation
+
+Use GlobalAllEnt.pkg
+Use cCJStandardCommandBarSystem.pkg
+Use cCJCommandBarSystem.pkg
+Use oEditContextMenu.pkg
+Use oDEOEditContextMenu.pkg
+Use Regserver.pkg
+Use cTempusClientArea.pkg
+Use cTempusDbView.pkg

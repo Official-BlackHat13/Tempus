@@ -1,0 +1,8 @@
+#REPLACE FILE32 Crews
+#REPLACE Crews.Recnum |FN32,0
+#REPLACE Crews.CrewId |FN32,1
+#REPLACE Crews.CrewDate |FD32,2
+#REPLACE Crews.CrewChiefId |FN32,3
+#REPLACE Crews.Description |FS32,4
+#REPLACE Crews.CrewCount |FN32,5
+#REPLACE Crews.ChiefCount |FN32,6

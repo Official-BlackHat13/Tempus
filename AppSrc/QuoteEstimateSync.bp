@@ -1,0 +1,270 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use Contact.DD
+Use SalesRep.DD
+Use cQuotehdrDataDictionary.dd
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use cQuotedtlDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+
+Object oQuoteEstimateSync is a BusinessProcess
+    
+    Property Integer piEsheadId
+    Property Integer piQuoteHdrId
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+    
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oQuotehdr_DD is a cQuotehdrDataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oQuotedtl_DD is a cQuotedtlDataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set Constrain_file to Quotehdr.File_number
+        Set DDO_Server to oQuotehdr_DD
+    End_Object
+
+    Set Main_DD to oQuotehdr_DD
+    Set Display_Error_State to True
+    
+    Function DoCreateQuoteFromEstimate Integer iEsheadId Integer iQuoteHdrId Returns Integer
+        Integer iNewQuoteIdno
+        //
+        Set piEsheadId          to iEsheadId
+        Set piQuotehdrId        to iQuoteHdrId
+        //
+        Send DoProcess
+        //
+        Get piQuotehdrId     to iNewQuoteIdno
+        Function_Return     iNewQuoteIdno
+    End_Function    
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        Boolean bFail bHasRecord
+        Number nQty nTaxRate nTaxAmount nEstManHours
+        Integer hoDD iEsheadIdno iQuoteHdrIdno iSeq iNewDtl iUpdatedDtl iLocationIdno iContactIdno iRepIdno
+        Date dToday
+        Sysdate dToday
+        //
+        Get piEsheadId          to iEsheadIdno
+        Get piQuotehdrId        to iQuoteHdrIdno
+        //
+        
+        Clear Esitem
+        Move iEsheadIdno to Esitem.ESTIMATE_ID
+        Find GE Esitem by Index.3
+        While ((Found) and iEsheadIdno = Esitem.ESTIMATE_ID)
+            Move 0 to nEstManHours
+            Relate Esitem
+            If ((Right(String(Esitem.OPCODE), 3)) = "040") Begin
+                Add Esitem.VAR4 to nEstManHours
+            End
+            Move Eshead.LocationIdno to iLocationIdno
+            Move Eshead.ContactIdno to iContactIdno
+            Move Eshead.RepIdno to iRepIdno
+            // Create Quote Header
+            If (iQuoteHdrIdno = 0) Begin
+                Set Main_DD             to oQuotehdr_DD
+                Move oQuotehdr_DD       to hoDD 
+                Send Clear_All of hoDD    
+                //
+                Move iLocationIdno        to Location.LocationIdno
+                Send Request_Find of hoDD EQ Location.File_Number 1
+                If (not(Found)) Begin
+                    Send Stop_Box "Location not found"
+                    Procedure_Return
+                End                
+                Move iContactIdno         to Contact.ContactIdno
+                Send Request_Find of hoDD EQ Contact.File_Number 2
+                If (not(Found)) Begin
+                    Send Stop_Box "Contact not found"
+                    Procedure_Return
+                End
+
+                Move iRepIdno             to SalesRep.RepIdno
+                Send Request_Find of hoDD EQ SalesRep.File_Number 1
+                If (not(Found)) Begin
+                    Send Stop_Box "Sales Rep not found"
+                    Procedure_Return
+                End
+                If (Found) Begin
+                    Set Field_Changed_Value of hoDD Field Quotehdr.CloseDate            to (dToday+30)
+                    Set Field_Changed_Value of hoDD Field Quotehdr.ExpirationDate       to (dToday+30)
+                    Set Field_Changed_Value of hoDD Field Quotehdr.Status               to Eshead.Status
+                    Set Field_Changed_Value of hoDD Field Quotehdr.WorkType             to Eshead.WorkType
+                    Set Field_Changed_Value of hoDD Field Quotehdr.BillingType          to Eshead.BillingType
+                    Set Field_Changed_Value of hoDD Field Quotehdr.QuoteDate            to dToday
+                    Set Field_Changed_Value of hoDD Field Quotehdr.Probability          to 40
+                    Set Field_Changed_Value of hoDD Field Quotehdr.QuoteLostMemo        to Eshead.TITLE
+                    Set Field_Changed_Value of hoDD Field Quotehdr.EstimateReference    to iEsheadIdno
+                    Set Field_Changed_Value of hoDD Field Quotehdr.LockedFlag           to 0
+                    Set Field_Changed_Value of hoDD Field Quotehdr.EstHours             to 0
+                    Set Field_Changed_Value of hoDD Field Quotehdr.JobNumber            to Eshead.OrderReference
+                    Get Request_Validate    of hoDD                                     to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Quote Header could not be created - Validation Error"
+                        Procedure_Return
+                    End
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD                
+                    End
+                    Get Field_Current_Value of hoDD Field Quotehdr.QuotehdrID to iQuoteHdrIdno
+                    Move Quotehdr.QuotehdrID                             to iQuoteHdrIdno
+                End            
+            End // Create Quote Header
+            //Update EstHours
+            Move iQuoteHdrIdno to Quotehdr.QuotehdrID
+            Find EQ Quotehdr by Index.1
+            If ((Found) and iQuoteHdrIdno = Quotehdr.QuotehdrID) Begin
+                Reread Quotehdr
+                    Add nEstManHours to Quotehdr.EstHours
+                    SaveRecord Quotehdr
+                Unlock
+            End
+            //
+            Set Main_DD to oQuotedtl_DD
+            Move oQuotedtl_DD to hoDD
+            Send Clear_All of hoDD
+            
+       
+            
+            // Check if QuoteDetail line already exists
+            // If there is one, update the record first           
+            If (Esitem.QuoteDtlReference>0) Begin
+                Move Esitem.QuoteDtlReference to Quotedtl.QuotedtlID 
+                Find GE Quotedtl by Index.1
+                If ((Found) and Esitem.QuoteDtlReference = Quotedtl.QuotedtlID) Begin
+                    //Quantity always 1
+                    Move 1 to nQty
+                    //Find Item Tax Rate if applicable
+                    If (MastOps.IsTaxable) Begin
+                        Move SalesTaxGroup.Rate                                                    to nTaxRate
+                        //Calculate Tax Amount
+                        Move (nQty*Esitem.PROD_UNITS1*nTaxRate/100)                      to nTaxAmount
+                    End
+                    Relate Quotedtl
+                    Send Request_Assign of oQuotedtl_DD
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.Sequence         to Escomp.Sequence
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.Quantity         to nQty
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.Price            to Esitem.PROD_UNITS1
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.Description      to Esitem.INSTRUCTION
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.TaxRate          to nTaxRate
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.TaxAmount        to nTaxAmount
+                    Set Field_Changed_Value of oQuotedtl_DD Field Quotedtl.EstimateItemID   to Esitem.ITEM_ID
+                    Get Request_Validate    of oQuotedtl_DD                                 to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Quote Detail was not updated"
+                        //Function_Return
+                    End
+                    Send Request_Save       of hoDD
+                    Increment iUpdatedDtl
+                End
+            End
+            // If there is non, create new
+            Else Begin
+                //If ((Right(String(Esitem.OPCODE), 3)) = "035") Begin
+                If (Jcoper.PRINT_FLAGS contains "J" or Jcoper.PRINT_FLAGS contains "L") Begin
+                    //Relate Esitem
+                    If (Jcoper.MAST_OPS_IDNO = 0) Begin
+                        Send Stop_Box ("No Connection to MastOps for" * Jcoper.NAME)
+                        Procedure_Return
+                    End
+                    // Create Quote DTL
+                    Set Main_DD to oQuotedtl_DD
+                    Move oQuotedtl_DD to hoDD
+                    Send Clear_All of hoDD
+  
+                    Move iQuoteHdrIdno to Quotehdr.QuotehdrID
+                    Send Request_Find of hoDD EQ Quotehdr.File_Number 1
+                    Move Jcoper.MAST_OPS_IDNO to MastOps.MastOpsIdno
+                    Send Request_Find of hoDD EQ MastOps.File_Number 1
+                    If (not(Found)) Begin
+                        Send Stop_Box ("Could not find MastOps record for MastOpsIdno " * String(Jcoper.MAST_OPS_IDNO))
+                        Procedure_Return
+                    End    
+//                    End
+                    //Quantity always 1
+                    Move 1 to nQty
+                    //Find Item Tax Rate if applicable
+                    If (MastOps.IsTaxable) Begin
+                        Move SalesTaxGroup.Rate                                                    to nTaxRate
+                        //Calculate Tax Amount
+                        Move (nQty*Esitem.PROD_UNITS1*nTaxRate/100)                      to nTaxAmount
+                    End
+                    //Increment Sequence Number
+                    Increment iSeq
+                    Set Field_Changed_Value of hoDD Field Quotedtl.Sequence         to Escomp.Sequence
+                    Set Field_Changed_Value of hoDD Field Quotedtl.Description      to Esitem.INSTRUCTION
+                    Set Field_Changed_Value of hoDD Field Quotedtl.Quantity         to nQty
+                    Set Field_Changed_Value of hoDD Field Quotedtl.Price            to Esitem.PROD_UNITS1
+                    Set Field_Changed_Value of hoDD Field Quotedtl.TaxRate          to nTaxRate
+                    Set Field_Changed_Value of hoDD Field Quotedtl.TaxAmount        to nTaxAmount
+                    Set Field_Changed_Value of hoDD Field Quotedtl.EstimateItemID   to Esitem.ITEM_ID
+                    Get Request_Validate    of hoDD                                 to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Processing Stopped"
+                        Procedure_Return
+                    End
+                    Send Request_Save       of hoDD
+                    Increment iNewDtl
+                    Reread Esitem
+                        Move Quotedtl.QuotedtlID to Esitem.QuoteDtlReference
+                        SaveRecord Esitem
+                    Unlock
+                End
+
+            End // Check if update is needed
+            Find GT Esitem by Index.3
+        Loop
+        Send Info_Box ("New Quote Detail created: " + String(iNewDtl) + "\n";
+                        +"Updated Quote Detail: " + String(iUpdatedDtl)) ("Create / Sync Quote"+ String(iQuoteHdrIdno))
+        //
+        Set piQuotehdrId        to iQuoteHdrIdno
+    End_Procedure
+End_Object

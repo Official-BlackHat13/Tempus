@@ -1,0 +1,40 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Ref_Dtl (# 46)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Ref_Dtl
+  USER DISPLAY NAME         : Ref_Dtl
+  DATAFLEX FILE NAME        : Ref_Dtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 220       ( USED: 220 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 45 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Ref_Hdr_Idno     NUM   10.0     1  1   Ref_Hdr.FIELD_1 (45,1)
+  2  ReferenceIdno    NUM   10.0    12  1   Referenc.FIELD_1 (44,1)
+  3  Company          ASC     30    23      
+  4  Name             ASC     30    53      
+  5  Title            ASC     50    83      
+  6  Phone            ASC     14   133      
+  7  Email            ASC     50   147      
+  8  Print            ASC      1   197      
+  9  HighLight        ASC      1   198      
+ 10  Ref_Dtl_idno     NUM   10.0   199      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Ref_Hdr_Idno    NO  NO       0      0       2     ON-LINE
+       ReferenceIdno   NO  NO 
+

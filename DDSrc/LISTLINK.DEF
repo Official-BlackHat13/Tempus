@@ -1,0 +1,40 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Listlink (# 28)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:LISTLINK
+  USER DISPLAY NAME         : Listlink
+  DATAFLEX FILE NAME        : Listlink
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 43        ( USED: 43 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 7729 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ListlinkID       NUM   10.0     1  1   
+  2  ContactIdno      NUM   10.0    12  2   Contact.FIELD_2 (6,2)
+  3  ListCode         ASC     10    23  2   Maillist.FIELD_1 (27,1)
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ListlinkID      NO  NO       0      0       1     ON-LINE
+
+  2    ContactIdno     NO  NO       0      0       3     ON-LINE
+       ListCode        NO  NO 
+       ListlinkID      NO  NO 
+
+  3    ListCode        NO  NO       0      0       3     ON-LINE
+       ContactIdno     NO  NO 
+       ListlinkID      NO  NO 
+

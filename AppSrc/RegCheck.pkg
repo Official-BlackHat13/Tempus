@@ -1,0 +1,2369 @@
+//****************************************************************************
+// $Module type: Package
+// $Module name: RegCheck.pkg. Uses RegCheck.inc and Language.pkg
+// $Author     : Nils G. Svedmyr, Eurosoft.
+// Contributions by Frank G. Vandervelpen, Peter H. van Wijk,
+//               Vincent Oorsprong, Ulbe Stellema, Peter Tawse,
+//               Sergey Natarov, Dennis Piccioni, SJK, 
+//               Bob Worsley and Wil van Antwerpen
+// e-mail      : nilss@eurosoft.se (invalid by now, use wil-a@vdf-guidance.com instead)
+// Created     : 1998-12-21 @ 15:04
+//
+// See also    : RegCheck.doc for documentation.
+//
+// Usage       : To be included at the top code of a VDF .src file, below the Workspace object.
+//               That's all there is to it!
+// Last Update : 2007-09-24 @ 13:00
+
+// $Rev History
+//    1998-12-21 Module header created
+//    1999-01-02 Nils G. Changed package into a class.
+//    1999-01-03 Nils G. Added standard status log support.
+//    1999-01-08 Nils G. Removed hard-coded channels for Direct_Input and
+//                       Direct_Output. The Seq_Chnl package is now used instead.
+//                       This is to avoid possible conflicts with other packages or
+//                       source code that might use the same channels.
+//    1999-01-28 Nils G. Added the function FindNetwareConnection to check if user is
+//                       logged on to a Novell Server (Not only has Client32 installed).
+//    1999-02-08 Nils G. Added public properties psComputerName psUserLoginName (Strings).
+//                       Moved user documentation to RegCheck.doc.
+//    1999-02-21         Added property to force the possible change of the setting even if there are
+//                       two database drivers loaded. It is possible that a (example accounting) BTrieve
+//                       database get consulted for info while the rest of the data is in DataFlex
+//                       Property Integer pbDriverBruteForce PUBLIC TRUE
+//                       Also added piFiles property, which is the number of FILES setting for Config.sys
+//    1999-02-23 Nils G. Added several checkings to Novell Client32
+//    1999-02-24 Nils G. Added property pbNTRegistryBackup, to conditionally backup the registry
+//                       on NT machines when a change has taken place.
+//    1999-03-04 Nils G. Changed CheckConfigSys and DoAppendConfigSys to also handle the case in
+//                       config.sys with FILESHIGH=xx
+//    2000-11-16 PHvW    Made Changed for Windows NT 2K.
+//                       Added test for NT sp1.
+//                       Ironed out compiler error for VDF 7. So this is possible not working for VDF6
+//    2001-11-22 PHvW    Added logic for NT2k and higher. Not tested for XP
+//                       I would like this pkg to work in a way that it does stop the program or gives a warning
+//                       when run on ME and XP-Home. Do not think any vdf software should run on it.
+//    2002-04-22 PHvW    Changed a lot of code. Romeved the stuff mentioned above.
+//                       Added logic for detecting the windows version. Added properties to select
+//                       On what windows version you want to allow your application to run.
+//                       Added several error messages. Did not translate them. And are
+//                       for improvement.
+//                       Cleaned up the code for remarked not needed code since vdf7
+//                       Not tested on vdf8, minor testing (only on win2k sp2)
+//                       So far debug mode is set to on
+//    2002-09-29 PHvW    Removed stuff because of VDF8
+//    2002-11-26 WvA     Added compiler directive to avoid redefine errors for external
+//                       function Win32_WNetGetUser
+//                       Reintroduced VDF7 compatibility for now. Be aware that this
+//                       is not going to last for ever.
+//    2003-05-05 WvA     Changed references to .NET server into 2003 Server
+//    2003-05-05 WvA    Windows server 2000, 2003 and XP honour the traditional NT settings
+//                       but for these platforms there is a new setting
+//
+//                       HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MRXSmb\Parameters\OplocksDisabled
+//                       See also: http://support.microsoft.com/default.aspx?scid=kb;en-us;Q296264
+//                      This setting has been added for Clients only
+//    2003-05-22 WvA    Fixed a problem with the translations for the english language (Thanks Peter Tawse for finding this)
+//    2003-06-09 WvA    The DriveWriteBehind settings were wrongly written out as string while
+//                      the value should have been binary. (Thanks Renato Villa)
+//                      Renamed function ComputerName into NetbiosComputerName in order to avoid
+//                      a naming clash with Tufware's report classes.
+//    2004-01-30 PAT    Added/Improved support for windows 2003 and netware
+//    2005-11-19 SJK    Changed "Run_With_Warning" behaviour so that it doesn't bail out, but actually runs
+//    2005-11-19 WVA    Added a new constant string csRegCheckStopBoxCaption which is used for all stop boxes by regcheck
+//                      so that it is more clear where the error originates from.
+//                      Changed Steve's suggestion a little bit to still write out a logfile entry. 
+//    2006-09-02 RLW    Add "RegCheck" to all stop_box captions so we can tell where the error comes from
+//    2007-08-21 WvA    Added support for detecting Windows Vista and windows
+//                      Server editions. Replaced OS strings with constants
+//                      Fixed uppercase for W2K stop run detection and changed defaults
+//                      A unknown windows version will warn not stop, same for the home version.
+//    2007-09-24 WvA    The Defaults were also set in the oRegCheck object which i missed to amend.
+//                      The introduction of the OS string constants missed another W2k typo in the tests.
+//    2007-09-25 WvA    There was some really funky code for detecting if run on a server,
+//                      this is now simplified and uses results from the standard API.
+//                      Fixed so that any changes for setting server properties are logged (wrong condition)
+//                      Fixed text in english/dutch, you need to restart the PC not just the program in order
+//                      to see the difference in oplock settings!
+//
+//****************************************************************************
+//
+//  Requests
+//
+//    2002-04-22 PHvW   Would like to add a test which IE is installed and
+//                       which common controls version is installed. Just prevent problems when running
+//                       VDF application.
+//    2003-05-05 WvA    Extra code for Recent Netware Settings and checking netware settings
+//                        The current version can be found at:
+//                        HKEY_LOCAL_MACHINE\SOFTWARE\Novell\  "CurrentVersion"="4.83"
+//
+//****************************************************************************
+
+Use Windows       // Standard pre-compiled DAC package
+//
+// PHvW 07/09/2000 19:57 vdf7 change Next package was used for type definition
+//                       But is removed so added to this class
+//
+Use Seq_Chnl.pkg  // Standard DAC package
+Use RegCheck.inc  // All textstrings for this package (Multiple languages)
+
+// Uncomment the "#REPLACE DEGUG$$MODE ON" line if you want to see debug
+// values for this code. Used by procedure DoCheckCurrentClient.
+// The purpose is for you (and me) to check that this package is working properly...
+//#REPLACE DEBUG$$MODE ON
+#COMMAND xSHOWLN
+  #IFSAME DEBUG$$MODE ON
+      Showln !1 !2 !3 !4 !5 !6 !7 !8 !9
+  #ENDIF
+#ENDCOMMAND
+
+//*************** DEFINE STATEMENTS ********************'
+
+#IFDEF NO_ERROR
+#ELSE
+  Define NO_ERROR                         For 0
+#ENDIF
+#IFDEF ERROR_NO_MORE_ITEMS
+#ELSE
+  Define ERROR_NO_MORE_ITEMS              For 259
+#ENDIF
+#IFDEF ERROR_MORE_DATA
+#ELSE
+  Define ERROR_MORE_DATA                  For 234
+#ENDIF
+#IFDEF ERROR_NOT_AUTHENTICATED
+#ELSE
+  Define ERROR_NOT_AUTHENTICATED          For 1244
+#ENDIF
+
+#IFDEF FORMAT_MESSAGE_ALLOCATE_BUFFER
+#ELSE
+  Define FORMAT_MESSAGE_ALLOCATE_BUFFER   For |CI$00000100
+  Define FORMAT_MESSAGE_IGNORE_INSERTS    For |CI$00000200
+  Define FORMAT_MESSAGE_FROM_STRING       For |CI$00000400
+  Define FORMAT_MESSAGE_FROM_HMODULE      For |CI$00000800
+  Define FORMAT_MESSAGE_FROM_SYSTEM       For |CI$00001000
+  Define FORMAT_MESSAGE_ARGUMENT_ARRAY    For |CI$00002000
+  Define FORMAT_MESSAGE_MAX_WIDTH_MASK    For |CI$000000FF
+#ENDIF
+
+#IFDEF RESOURCE_CONNECTED
+#ELSE
+  Enum_List
+    Define RESOURCE_CONNECTED             For |CI$00000001
+    Define RESOURCE_GLOBALNET RESOURCE_REMEMBERED RESOURCE_RECENT RESOURCE_CONTEXT
+  End_Enum_List
+#ENDIF
+
+#IFDEF RESOURCETYPE_UNKNOWN
+#ELSE
+  Define RESOURCETYPE_ANY                 For |CI$00000000
+  Define RESOURCETYPE_DISK                For |CI$00000001
+  Define RESOURCETYPE_PRINT               For |CI$00000002
+  Define RESOURCETYPE_RESERVED            For |CI$00000008
+  Define RESOURCETYPE_UNKNOWN             For |CI$FFFFFFFF
+#ENDIF
+
+#IFDEF RESOURCEUSAGE_CONNECTABLE
+#ELSE
+  Define RESOURCEUSAGE_CONNECTABLE        For |CI$00000001
+  Define RESOURCEUSAGE_CONTAINER          For |CI$00000002
+  Define RESOURCEUSAGE_NOLOCALDEVICE      For |CI$00000004
+  Define RESOURCEUSAGE_SIBLING            For |CI$00000008
+  Define RESOURCEUSAGE_ATTACHED           For |CI$00000010
+  Define RESOURCEUSAGE_ALL                For (RESOURCEUSAGE_CONNECTABLE + RESOURCEUSAGE_CONTAINER + RESOURCEUSAGE_ATTACHED)
+  Define RESOURCEUSAGE_RESERVED           For |CI$80000000
+#ENDIF
+
+#IFDEF RESOURCEDISPLAYTYPE_NETWORK
+#ELSE
+  Enum_List
+    Define RESOURCEDISPLAYTYPE_GENERIC
+    Define RESOURCEDISPLAYTYPE_DOMAIN
+    Define RESOURCEDISPLAYTYPE_SERVER
+    Define RESOURCEDISPLAYTYPE_SHARE
+    Define RESOURCEDISPLAYTYPE_FILE
+    Define RESOURCEDISPLAYTYPE_GROUP
+    Define RESOURCEDISPLAYTYPE_NETWORK
+    Define RESOURCEDISPLAYTYPE_ROOT
+    Define RESOURCEDISPLAYTYPE_SHAREADMIN
+    Define RESOURCEDISPLAYTYPE_DIRECTORY
+  End_Enum_List
+  Define RESOURCEDISPLAYTYPE_TREE         For |CI$0000000A
+  Define RESOURCEDISPLAYTYPE_NDSCONTAINER For |CI$0000000B
+#ENDIF
+
+#IFDEF WNNC_NET_MSNET
+#ELSE
+  Enum_List
+    Define WNNC_NET_MSNET                 For |CI$0001
+    Define WNNC_NET_LANMAN
+    Define WNNC_NET_NETWARE
+    Define WNNC_NET_VINES
+    Define WNNC_NET_10NET
+    Define WNNC_NET_LOCUS
+    Define WNNC_NET_SUN_PC_NFS
+    Define WNNC_NET_LANSTEP
+    Define WNNC_NET_9TILES
+    Define WNNC_NET_BWNFS
+    Define WNNC_NET_COGENT
+    Define WNNC_NET_FARALLON
+    Define WNNC_NET_APPLETALK
+    Define WNNC_NET_INTERGRAPH
+    Define WNNC_NET_SYMFONET
+    Define WNNC_NET_CLEARCASE
+    Define WNNC_NET_FRONTIER
+    Define WNNC_NET_BMC
+    Define WNNC_NET_DCE
+    Define WNNC_NET_DECORB
+    Define WNNC_NET_PROTSTOR
+    Define WNNC_NET_FJ_REDIR
+    Define WNNC_NET_DISTINCT
+    Define WNNC_NET_TWINS
+    Define WNNC_NET_RDR2SAMPLE
+  End_Enum_List
+  Define WNNC_NET_LANTASTIC               For |CI$000A
+  Define WNNC_NET_AS400                   For |CI$000B
+  Define WNNC_NET_FTP_NFS                 For |CI$000C
+  Define WNNC_NET_PATHWORKS               For |CI$000D
+  Define WNNC_NET_LIFENET                 For |CI$000E
+  Define WNNC_NET_POWERLAN                For |CI$000F
+#ENDIF
+
+Define MAX$COMPUTERNAME$LENGTH            For 15
+
+//****************** TYPE STRUCTURES *********************
+
+// ** Type    : _NETRESOURCE
+// ** Purpose : The _NETRESOURCE structure is returned during enumeration of resources on
+// **         : the network and during enumeration of currently connected resources.
+Type _NETRESOURCE
+  Field _NETRESOURCE.dwScope       As dWord
+  Field _NETRESOURCE.dwType        As dWord
+  Field _NETRESOURCE.dwDisplayType As dWord
+  Field _NETRESOURCE.dwUsage       As dWord
+  Field _NETRESOURCE.lpLocalName   As Pointer
+  Field _NETRESOURCE.lpRemoteName  As Pointer
+  Field _NETRESOURCE.lpComment     As Pointer
+  Field _NETRESOURCE.lpProvider    As Pointer
+End_Type // _NETRESOURCE
+
+// ** Type    : _NETINFOSTRUCT
+// ** Purpose : The NETINFOSTRUCT structure is used in the WNetGetNetworkInformation
+// **         : function to describe the behavior of the network.
+Type _NETINFOSTRUCT
+  Field _NETINFOSTRUCT.cbStructure       As dWord
+  Field _NETINFOSTRUCT.dwProviderVersion As dWord
+  Field _NETINFOSTRUCT.dwStatus          As dWord
+  Field _NETINFOSTRUCT.dwCharacteristics As dWord
+  Field _NETINFOSTRUCT.dwHandle          As dWord
+  Field _NETINFOSTRUCT.wNetType          As Word
+  Field _NETINFOSTRUCT.dwPrinters        As dWord
+  Field _NETINFOSTRUCT.dwDrives          As dWord
+End_Type // _NETINFOSTRUCT
+
+Type _DWORD
+  Field _DWORD.dWord As dWord
+End_Type // _DWORD
+
+Type _OSVERSIONINFO
+  Field _OSVERSIONINFO.dwOSVersionInfoSize As dWord
+  Field _OSVERSIONINFO.dwMajorVersion As dWord
+  Field _OSVERSIONINFO.dwMinorVersion As dWord
+  Field _OSVERSIONINFO.dwBuildNumber As dWord
+  Field _OSVERSIONINFO.dwPlatformId As dWord
+  Field _OSVERSIONINFO.szCSDVersion As Char 128
+End_Type // _OSVERSIONINFO
+
+// GetVersionEx constants
+
+Enumeration_List
+  Define VER_PLATFORM_WIN32s        // Win32s on Windows 3.1.
+  Define VER_PLATFORM_WIN32_WINDOWS // Win32 on Windows 95.
+  Define VER_PLATFORM_WIN32_NT      // Win32 on Windows NT, 2000, XP and 2003
+End_Enumeration_List
+
+Enumeration_List
+  Define Ver_MajorVersion_Windows_95              For 4
+  Define Ver_MajorVersion_Windows_98              For 4
+  Define Ver_MajorVersion_Windows_Me              For 4
+  Define Ver_MajorVersion_Windows_NT_351          For 3
+  Define Ver_MajorVersion_Windows_NT_40           For 4
+  Define Ver_MajorVersion_Windows_2000            For 5
+  Define Ver_MajorVersion_Windows_XP              For 5
+  Define Ver_MajorVersion_Windows_NET_Server      For 5
+End_Enumeration_List
+
+Enumeration_List
+  Define Ver_MinorVersion_Windows_95              For 0
+  Define Ver_MinorVersion_Windows_98              For 10
+  Define Ver_MinorVersion_Windows_Me              For 90
+  Define Ver_MinorVersion_Windows_NT_351          For 51
+  Define Ver_MinorVersion_Windows_NT_40           For 0
+  Define Ver_MinorVersion_Windows_2000            For 0
+  Define Ver_MinorVersion_Windows_XP              For 1
+  Define Ver_MinorVersion_Windows_NET_Server      For 1
+End_Enumeration_List
+
+//
+// PHvW 21/04/2002 09:53 Some vb Code
+//
+//Private Const VER_SUITE_SMALLBUSINESS As Long = &H1
+//Private Const VER_SUITE_ENTERPRISE As Long = &H2
+//Private Const VER_SUITE_BACKOFFICE As Long = &H4
+//Private Const VER_SUITE_COMMUNICATIONS As Long = &H8
+//Private Const VER_SUITE_TERMINAL As Long = &H10
+//Private Const VER_SUITE_SMALLBUSINESS_RESTRICTED As Long = &H20
+//Private Const VER_SUITE_EMBEDDEDNT As Long = &H40
+//Private Const VER_SUITE_DATACENTER As Long = &H80
+//Private Const VER_SUITE_SINGLEUSERTS As Long = &H100
+//Private Const VER_SUITE_PERSONAL As Long = &H200
+//Private Const VER_SUITE_BLADE As Long = &H400
+
+Enumeration_List
+  Define Ver_Suite_SmallBusiness                  For  |CI$0001
+  Define Ver_Suite_Enterprise                     For  |CI$0002
+  Define Ver_Suite_BackOffice                     For  |CI$0004
+  Define Ver_Suite_Communications                 For  |CI$0008
+  Define Ver_Suite_Terminal                       For  |CI$0010
+  Define Ver_Suite_SmallBusiness_Restricted       For  |CI$0020
+  Define Ver_Suite_EmbeddedNT                     For  |CI$0040
+  Define Ver_Suite_DataCenter                     For  |CI$0080
+  Define Ver_Suite_SingleUserTS                   For  |CI$0100
+  Define Ver_Suite_Personal                       For  |CI$0200
+  Define Ver_Suite_Blade                          For  |CI$0400
+End_Enumeration_List
+
+//
+// PHvW 21/04/2002 09:53 Some incorrect vb Code
+//
+//Private Const VER_SERVER_NT As Long = &H80000000
+//Private Const VER_WORKSTATION_NT As Long = &H40000000
+
+Enumeration_List
+  Define VER_NT_WORKSTATION                       For 1           // The system is running Windows NT 4.0 Workstation,
+                                                                  // Windows 2000 Professional, Windows XP Home Edition, or
+                                                                  // Windows XP Professional.
+  Define VER_NT_DOMAIN_CONTROLLER                 For 2           // The system is a domain controller.
+  Define VER_NT_SERVER                            For 3           // The system is a server.
+End_Enumeration_List
+
+
+Type _OSVERSIONINFOEX
+  Field _OSVERSIONINFOEX.dwOSVersionInfoSize      As dWord
+  Field _OSVERSIONINFOEX.dwMajorVersion           As dWord
+  Field _OSVERSIONINFOEX.dwMinorVersion           As dWord
+  Field _OSVERSIONINFOEX.dwBuildNumber            As dWord
+  Field _OSVERSIONINFOEX.dwPlatformId             As dWord
+  Field _OSVERSIONINFOEX.szCSDVersion             As Char 128
+  Field _OSVERSIONINFOEX.wServicePackMajor        As Word
+  Field _OSVERSIONINFOEX.wServicePackMinor        As Word
+  Field _OSVERSIONINFOEX.wSuiteMask               As Word
+  Field _OSVERSIONINFOEX.wProductType             As Byte
+  Field _OSVERSIONINFOEX.wReserved                As Byte
+End_Type // _OSVERSIONINFOEX
+
+// ** Function : LocalFree
+// ** Purpose  : The LocalFree function frees the specified local memory object and invalidates it's handle.
+// ** Params   : hMem - Handle to local memory object
+// ** Returns  : If the function succeeds, the return value is NULL.
+// **          : If the function fails, the return value is equal to a handle to the local memory object.
+//
+// PHvW 22/04/2002 17:47 Settings for properties
+//
+Enumeration_List
+  Define cx_Run_Do_Not_Run
+  Define cx_Run_With_Warning
+  Define cx_Run_Normal
+End_Enumeration_List
+
+Define CS_OSVERSION_UNKNOWN For "Windows Version UNKNOWN"
+Define CS_OSVERSION_WIN95   For "Windows 95"  
+Define CS_OSVERSION_WIN98   For "Windows 98"  
+Define CS_OSVERSION_WINME   For "Windows ME"  
+Define CS_OSVERSION_NT4WKS  For "Windows NT40 Professional"
+Define CS_OSVERSION_NT4SRV  For "Windows NT40 Server"
+Define CS_OSVERSION_NT4     For "Windows NT40" // ? Doesnt exist me thinks
+Define CS_OSVERSION_W2K     For "Windows 2000 Professional"
+Define CS_OSVERSION_W2KSRV  For "Windows 2000 Server"
+Define CS_OSVERSION_WXPHME  For "Windows XP Home"  
+Define CS_OSVERSION_WXP     For "Windows XP Professional"   
+Define CS_OSVERSION_2K3     For "Windows 2003 Server"  // also catches 2003 R2
+Define CS_OSVERSION_VISTA   For "Windows Vista"  
+Define CS_OSVERSION_LHSRV   For "Windows Server Longhorn" // Home Server and Server Core for example
+  
+
+//******************* EXTERNAL FUNCTIONS *************************************
+//
+//
+//
+// *WvA: For the ToDo list:
+// For applications designed for Windows 2000 and later, use VerifyVersionInfo 
+// instead of GetVersionEx to check the system version. VerifyVersionInfo is 
+// available with Windows 2000 and later versions. Applications must use 
+// VerifyVersionInfo for version checking to meet the Certified for 
+// Windows 2000 application specification. 
+//
+//
+External_Function32 GetVersionEx "GetVersionExA" KERNEL32.DLL ;
+  Pointer lpVersionInformation Returns Integer
+
+// ** Function : WNetOpenEnum
+// ** Purpose  : The WNetOpenEnum function starts an enumeration of network resources or
+// **          : existing connections.
+// ** Params   : dwScope       - Scope of enumeration
+// **          : dwType        - resource types to list
+// **          : dwUsage       - resource usage to list
+// **          : lpNetResource - Pointer to resource structure
+// **          : lphEnum       - Pointer to enumeration handle buffer
+// ** Returns  : If the function succeeds, the return value is NO_ERROR.
+// **          : If the function fails, the return value is an error code.
+External_Function32 WNetOpenEnum "WNetOpenEnumA" MPR.DLL ;
+  dWord dwScope ;
+  dWord dwType ;
+  dWord dwUsage ;
+  Pointer lpNetResource ;
+  Pointer lphEnum ;
+  Returns Integer
+
+// ** Function : WNetEnumResource
+// ** Purpose  : The WNetEnumResource function continues a network-resource enumeration
+// **          : started by the WNetOpenEnum function.
+// ** Params   : hEnum        - Handle to enumeration
+// **          : lpcCount     - Pointer to entries to list
+// **          : lpBuffer     - Pointer to buffer for results
+// **          : lpBufferSize - Pointer to buffer size variable
+// ** Returns  : If the function succeeds, the return value is one of the following values:
+// **          : NO_ERROR, ERROR_NO_MORE_ITEMS.
+// **          : If the function fails, the return value is an error code.
+External_Function32 WNetEnumResource "WNetEnumResourceA" MPR.DLL ;
+  Handle hEnum ;
+  Pointer lpcCount ;
+  Pointer lpBuffer ;
+  Pointer lpBufferSize ;
+  Returns Integer
+
+// ** Function : WNetCloseEnum
+// ** Purpose  : The WNetCloseEnum function ends a network resource enumeration started by
+// **          : the WNetOpenEnum function.
+// ** Params   : hEnum - Handle to enumeration
+// ** Returns  : If the function succeeds, the return value is NO_ERROR.
+// **          : If the function fails, the return value is an error code.
+External_Function32 WNetCloseEnum "WNetCloseEnum" MPR.DLL ;
+  Handle hEnum ;
+  Returns Integer
+
+// ** Function : WNetGetNetworkInformation
+// ** Purpose  : The WNetGetNetworkInformation function returns extended information about
+// **          : a specific network whose name was returned by a previous network enumeration.
+// ** Params   : lpProvider      - Pointer to provider name
+// **          : lpNetInfoStruct - Pointer to structure
+// ** Returns  : If the function succeeds, the return value is WN_SUCCESS.
+// **          : If the function fails, the return value is an error code.
+External_Function32 WNetGetNetworkInformation "WNetGetNetworkInformationA" MPR.DLL ;
+  Pointer lpProvider ;
+  Pointer lpNetInfoStruct ;
+  Returns Integer
+
+External_Function32 GetComputerName "GetComputerNameA" Kernel32.Dll ;
+  Pointer lpComputerName ;
+  Dword nNameSize ;
+  Returns Integer
+
+// ** 2002-12-26 WvA: Only declare if not already included
+#IFDEF GET_WIN32_WNETGETUSER
+#ELSE
+  External_function Win32_WNetGetUser 'WNetGetUserA' MPR.dll ;
+    Pointer lpName;
+    Pointer lpUserName;
+    String  lpnLength;
+    Returns DWord
+#ENDIF
+
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cName
+// $Author     : Nils G. Svedmyr, Eurosoft Sverige AB
+// Created     : 1999-01-02 @ 22:44
+//
+// Description
+//
+// $Rev History
+//    1999-01-02  Module header created
+//****************************************************************************
+Class cRegCheck Is a DFObject
+  Procedure Construct_Object
+    Forward Send Construct_Object
+    Set Focus_Mode To No_Activate
+    // Ask user before making changes?
+    Property Integer pbSilentMode              False
+    // Try to make changes on NT machines although it might not be possible due to
+    // unsufficient user rights. (User will get confirmation if not successful)
+    Property Integer pbDoNTRegistryChanges     True
+    Property Integer phoLogObject              0
+    Property String  psComputerName            ''
+    Property String  psUserLoginName           ''
+    // Number of files for Config.sys on Win95/98 machines if Novell Client32 is not used.
+    Property Integer piFiles                   0
+    // To conditionally make backup of the registry on NT machines, if changed.
+    Property Integer pbNTRegistryBackup        False
+    // To force the possible change of the setting even if there are two database drivers loaded.
+    // It is possible that a (example accounting) BTrieve database get consulted for info while
+    // the rest of the data is in DataFlex
+    Property Integer pbDriverBruteForce        True
+    // The next 5 properties gives info about the Operating System.
+    // They are set by the procedure DoSetOSProperties, which is send from
+    // the automatically invoked DoCheckCurrentClient.
+    //
+    // Identifies the major version number of the operating system.
+    // For example, for Windows NT version 3.51, the major version number is 3;
+    // and for Windows NT version 4.0, the major version number is 4.
+    Property Integer piMajorVersion            0
+    // Identifies the minor version number of the operating system. For example,
+    // for Windows NT version 3.51, the minor version number is 51; and for
+    // Windows NT version 4.0, the minor version number is 0.
+    // For Windows 95, dwMinorVersion is zero.
+    // For Windows 98, dwMinorVersion is greater than zero.
+    Property Integer piMinorVersion            0
+    // Identifies the build number of the operating system.
+    Property Integer piBuildNumber             0
+    // Identifies the operating system platform. This member can be one of the
+    // following values:
+    // VER_PLATFORM_WIN32s Win32s on Windows 3.1.
+    // VER_PLATFORM_WIN32_WINDOWS Win32 on Windows 95 or Windows 98.
+    // VER_PLATFORM_WIN32_NT Win32 on Windows NT.
+    Property Integer piPlatFormId              0
+    // Windows NT: Contains a string, such as "Service Pack 3",
+    // that indicates the latest Service Pack installed on the system. If no
+    // Service Pack has been installed, the string is empty.
+    // Windows 95: Contains a null-terminated string that provides arbitrary
+    // additional information about the operating system.
+    Property String psCSDVersion               ''
+    // PHvW 20/04/2002 14:37
+    // Identifies the major version number of the latest Service Pack installed
+    // on the system. For example, for Service Pack 3, the major version
+    // number is 3. If no Service Pack has been installed, the value is zero.
+    Property Integer piServicePackMajor        0
+    // PHvW 20/04/2002 14:37
+    // Identifies the minor version number of the latest Service Pack installed
+    // on the system. For example, for Service Pack 3, the minor version
+    // number is 0.
+    Property Integer piServicePackMinor        0
+    // PHvW 20/04/2002 14:37
+    // A set of bit flags that identify the product suites available on the system.
+    // This member can be a combination of the following values. (see msdn)
+    Property Integer piSuiteMask               0
+    // PHvW 20/04/2002 14:37
+    // Indicates additional information about the system. This member can be
+    // one of the following values.  (see msdn)
+    Property Integer piProductType             0
+    // PHvW 22/04/2002 17:48
+    // Contains which version of windows is running as a text.
+    // If it can not sort it out it will be CS_OSVERSION_UNKNOWN (="Windows Version UNKNOWN")
+    Property String  psOSVersion               ""
+    // PHvW 22/04/2002 17:50
+    // Running windows version is a server version
+    Property Integer pbNTServer                FALSE
+    // PHvW 22/04/2002 17:50
+    // Running on a Windows HOME version. That is Windows ME and Windows XP Home
+    // Both are not recommended platforms for business (networking is limited).
+    // So not for vdf.
+    Property Integer pbWindowsHome             FALSE
+    // PHvW 22/04/2002 17:51
+    // DO I have to check for the service pack and if it is to low
+    // deny the running of the application
+    Property Integer pbTestServicePack         TRUE
+    // PHvW 22/04/2002 17:52
+    // Default Settings for on which version a vdf program is allowed to run.
+    // By default not on Win95, Home versions and not known windows version.
+    Property Integer piRunOnWindows95          cx_Run_Do_Not_Run
+    Property Integer piRunOnWindows9X          cx_Run_Normal
+    Property Integer piRunOnWindowsNT40        cx_Run_Normal
+    Property Integer piRunOnWindowsNT2k        cx_Run_Normal
+    Property Integer piRunOnWindowsNTXP        cx_Run_Normal
+    Property Integer piRunOnWindowsNET         cx_Run_Normal
+    Property Integer piRunOnWindowsVista       cx_Run_Normal
+    Property Integer piRunOnWindowsLongHorn    cx_Run_Normal
+    Property Integer piRunOnHomeVersion        cx_Run_With_Warning
+    Property Integer piRunOnServerVersion      cx_Run_Normal
+    Property Integer piRunOnUnknownVersion     cx_Run_With_Warning
+    // PHvW 22/04/2002 17:53
+    // Default service pack for different windows versions.
+    // Added XP and NET service packs because they will come.
+    // Did not bother with win 9x service packs.
+    Property Integer piMinNT40_ServicePack     6
+    Property Integer piMinNT2K_ServicePack     1
+    Property Integer piMinXP_ServicePack       0
+    Property Integer piMinNET_ServicePack      0
+    Property Integer piMinVista_ServicePack    0
+  End_Procedure // Construct_Object
+
+//  Procedure DoCheckInternetExplorerVersion
+//      String sVersionIE sMessage
+//      Get_Foreign_Profile_String "Microsoft" "Internet Explorer" "Version" To sVersionIE
+//      Move (Left(sVersionIE,1)>='5') To gbIeIsOk
+//      If (gbIeIsOk =0) Begin
+//          Move ("You need to update your version of Intenet Explorer. The WebApp Studio requires version 5 or greater. You have version " +sVersionIe +' installed.) To sMessage
+//          Append sMessage "You may continue, but you will not be able to select the New Dialog or select Template Options."
+//          Send Info_Box sMessage "Internet Explorer Needs Updating"
+//      End
+//  End_Procedure
+
+
+  // ** Function : ReadString
+  // ** Purpose  : This function takes a pointer and reads until the first null character.
+  // ** Params   : pString - Pointer to the string
+  // ** Returns  : sString - The string excluding the null-character
+  Function ReadString Integer pString Returns String
+    String sCharacter sString
+    Pointer pCharacter
+    Integer iVoid
+
+    Move (Character(0)) To sCharacter
+    GetAddress Of sCharacter To pCharacter
+    Move (CopyMemory(pCharacter,pString, 1)) To iVoid
+    While (sCharacter <> (Character(0)))
+      Move (Append(sString,sCharacter)) To sString
+      GetAddress Of sCharacter To pCharacter
+      Increment pString
+      Move (CopyMemory(pCharacter, pString, 1)) To iVoid
+    End // While (sCharacter <> (Character(0)))
+    Function_Return sString
+  End_Function // ReadString
+
+  // ** Function : FindNetwareConnection
+  // ** Purpose  : This function determines if an active connection to a netware server exists.
+  // ** Params   : None
+  // ** Returns  : DFTrue if an active connection exists.
+  // **          : DFFalse if no active connection exists or an error occured.
+  // **          : -1 if an error was detected.
+  Function FindNetwareConnection Returns Integer
+    Pointer pEnumHandle pCount pBuffer pBufferSize pProvider pNetInfo pName pRemote pCharacter pServerHandle
+    String sEnumHandle sCount sBuffer sBufferSize sNetInfo sCharacter sRemote sServerHandle
+    Integer iResult iType iRetVal iVoid iUsage iScope
+
+    // Open the network resource enumeration...
+    Move (Repeat(Character(0), 4)) To sEnumHandle
+    GetAddress Of sEnumHandle To pEnumHandle
+    Move (WNetOpenEnum(RESOURCE_CONTEXT, RESOURCETYPE_DISK, 0, 0, pEnumHandle)) To iResult
+    Move (CopyMemory(pEnumHandle,pEnumHandle, 4)) To iVoid
+    Move (BytesToCVT(sEnumHandle, 1, 4)) To pEnumHandle
+
+    // If we can't open the resource, display an error and exit...
+    If (iResult <> NO_ERROR) Begin
+      Send DoShowLastError
+      Function_Return -1
+    End // If (iResult <> NO_ERROR) Begin
+
+    // Enumerate the network resources...
+    Repeat
+      Move (dWordToBytes(1)) To sCount
+      Move (Repeat(Character(0), 255)) To sBuffer
+      Move (dWordToBytes(255)) To sBufferSize
+      GetAddress Of sCount To pCount
+      GetAddress Of sBuffer To pBuffer
+      GetAddress Of sBufferSize To pBufferSize
+      Move (WNetEnumResource(pEnumHandle, pCount, pBuffer, pBufferSize)) To iResult
+      If (iResult <> NO_ERROR And iResult <> ERROR_NO_MORE_ITEMS) Begin
+        Send DoShowLastError
+        Function_Return -1
+      End // If (iResult <> NO_ERROR And iResult <> ERROR_NO_MORE_ITEMS) Begin
+      GetBuff From sBuffer At _NETRESOURCE.dwDisplayType To iType
+      // Check the resource type...
+      If iType Eq RESOURCEDISPLAYTYPE_SERVER Begin
+        GetBuff From sBuffer At _NETRESOURCE.lpProvider To pProvider
+        If pProvider Begin
+          ZeroType _NETINFOSTRUCT To sNetInfo
+          Put _NETINFOSTRUCT_Size To sNetInfo At _NETINFOSTRUCT.cbStructure
+          GetAddress Of sNetInfo To pNetInfo
+          Move (WNetGetNetworkInformation(pProvider, pNetInfo)) To iResult
+          // Check for errors...
+          If (iResult <> NO_ERROR) Begin
+            Send DoShowLastError
+            Function_Return -1
+          End // If (iResult <> NO_ERROR) Begin
+          // Check if this is a NetWare server...
+          GetBuff From sNetInfo At _NETINFOSTRUCT.wNetType To iType
+          If (iType = WNNC_NET_NETWARE) Begin
+//          If (iType = WNNC_NET_MSNET) Begin
+            Move (Repeat(Character(0), 4)) To sServerHandle
+            GetAddress Of sServerHandle To pServerHandle
+            GetAddress Of sBuffer To pBuffer
+            Move (WNetOpenEnum(RESOURCE_GLOBALNET,RESOURCETYPE_DISK, 0, pBuffer, pServerHandle)) To iResult
+            Move (CopyMemory(pServerHandle, pServerHandle, 4)) To iVoid
+            Move (BytesToCVT(sServerHandle, 1, 4)) To pServerHandle
+            // If we can't open the resource, try to close the other resource and exit...
+            If (iResult <> NO_ERROR) Begin
+              // If no active connection exists the following error is triggered, that way we will surpress it...
+              If (iResult <> ERROR_NOT_AUTHENTICATED) Send DoShowLastError
+              Move (WNetCloseEnum(pEnumHandle)) To iResult
+              If (iResult <> NO_ERROR) Send DoShowLastError
+              Function_Return -1
+            End // If (iResult <> NO_ERROR) Begin
+            Move (dWordToBytes(1)) To sCount
+            Move (Repeat(Character(0), 255)) To sBuffer
+            Move (dWordToBytes(255)) To sBufferSize
+            GetAddress Of sCount To pCount
+            GetAddress Of sBuffer To pBuffer
+            GetAddress Of sBufferSize To pBufferSize
+            Move (WNetEnumResource(pServerHandle, pCount, pBuffer, pBufferSize)) To iResult
+            If (iResult = NO_ERROR) Move 1 To iRetVal
+            Move (WNetCloseEnum(pServerHandle)) To iResult
+          End // If (iType = WNNC_NET_NETWARE) Begin
+        End // If pProvider Begin
+
+      End // If iType Eq RESOURCEDISPLAYTYPE_SERVER Begin
+    Until (iResult = ERROR_NO_MORE_ITEMS)
+
+    // Close the network resource enumeration...
+    Move (WNetCloseEnum(pEnumHandle)) To iResult
+
+    // Check for errors...
+    If (iResult <> NO_ERROR) Send DoShowLastError
+
+    Function_Return iRetVal
+  End_Function // FindNetwareConnection
+
+
+  // ** Procedure : DoShowLastError
+  // ** Purpose   : This procedure shows the error message for the last Windows API function called.
+  // ** Params    : None
+  // ** Returns   : None
+  Procedure DoShowLastError
+    Integer iFlags iResult iVoid iError
+    Pointer pAddress pBuffer
+    String sAddress sBuffer
+
+    // Allocate four bytes for the buffer address...
+    Move (Repeat(Character(0), 4)) To sAddress
+    GetAddress Of sAddress To pAddress
+    Move (GetLastError()) To iError
+    // Set the flags...
+    Move (FORMAT_MESSAGE_ALLOCATE_BUFFER Ior FORMAT_MESSAGE_FROM_SYSTEM Ior FORMAT_MESSAGE_IGNORE_INSERTS) ;
+      To iFlags
+    Move (FormatMessage(iFlags, 0, iError, 0, pAddress, 0, 0)) To iResult
+    // If FormatMessage fails the return value will be 0, therefore no bytes will be copied and the
+    // error will only display the error number returned from the calling function...
+    Move (CopyMemory(pAddress,pAddress, 4)) To iVoid
+    Move (BytesToCVT(sAddress, 1, 4)) To pAddress
+    Move (Repeat(Character(0), iResult)) To sBuffer
+    GetAddress Of sBuffer To pBuffer
+    Move (CopyMemory(pBuffer, pAddress, iResult)) To iVoid
+    // Display the error number and the message...
+    Error (3000 + iError) sBuffer
+    // Free the buffer...
+    Move (LocalFree(pAddress)) To iResult
+  End_Procedure // DoShowLastError
+
+  // Function that returns the Computer Name.
+  Function NetbiosComputerName Returns String
+    Pointer lpComputerName lpNameSize
+    String sComputerName sNameSize
+    Integer iRetval
+
+    Movestr (Repeat (Character (0), MAX$COMPUTERNAME$LENGTH + 1)) To sComputerName
+    GetAddress Of sComputerName To lpComputerName
+    Movestr (DwordToBytes (MAX$COMPUTERNAME$LENGTH + 1)) To sNameSize
+    GetAddress Of sNameSize To lpNameSize
+
+    Moveint (GetComputerName (lpComputerName, lpNameSize)) To iRetval
+
+    Function_Return (CString(sComputerName))
+  End_Function // NetbiosComputerName
+
+  // Function returns the User Name if user logged on to a network, else returns ''.
+  Function GetUserLoginName Returns String
+    String sName
+    Pointer lpNameAddr
+    Integer iRetval
+
+    Move (Repeat(Character(0),255)) To sName
+    GetAddress Of sName To lpNameAddr
+    Move (Win32_WNetGetUser(0, lpNameAddr, DWORDtoBytes(255))) To iRetval
+    If iRetval Eq 0 ;
+      Function_Return (ToOem(Cstring(sName)))
+    Else Function_Return ''
+  End_Function // GetUserLoginName
+
+  // Procedure sets OS info properties defined in this class
+  // The static variables and the structure used are declared in prnt_dlg.pkg.
+  Procedure DoSetOSProperties
+    Integer iRetval
+    String  sOSVersionInfo sCSDVersion
+    Pointer pOSVersionInfo
+
+    FillType _OSVERSIONINFO With 0 To sOSVersionInfo
+    Put _OSVERSIONINFO_Size To sOSVersionInfo At _OSVERSIONINFO.dwOSVersionInfoSize
+    GetAddress Of sOSVersionInfo To pOSVersionInfo
+    Move (GetVersionEx(pOSVersionInfo)) To iRetval // Function in Prnt_Dlg.pkg
+    Indicate Err False
+    If Not iRetval Begin
+      Error 500 csOsVersionNumberCouldNotRetrieved
+      Procedure_Return
+    End // If Not iRetval Begin
+    GetBuff From sOSVersionInfo At _OSVERSIONINFO.dwMajorVersion      To iRetval
+    Set piMajorVersion To iRetval
+    GetBuff From sOSVersionInfo At _OSVERSIONINFO.dwMinorVersion      To iRetval
+    Set piMinorVersion To iRetval
+    GetBuff From sOSVersionInfo At _OSVERSIONINFO.dwPlatformID        To iRetval
+    Set piPlatFormId To iRetval
+    GetBuff_String From sOSVersionInfo At _OSVERSIONINFO.szCSDVersion To sCSDVersion
+    Move (Cstring(sCSDVersion)) To sCSDVersion
+    Set psCSDVersion To (Trim(sCSDVersion))
+  End_Procedure // DoSetOSProperties
+
+  Procedure DoSetOSPropertiesEx
+    Integer iRetval
+    String  sOSVersionInfoEx sCSDVersion
+    Pointer pOSVersionInfoEx
+
+    FillType _OSVERSIONINFOEX With 0 To sOSVersionInfoEX
+    Put _OSVERSIONINFOEX_Size To sOSVersionInfoEx At _OSVERSIONINFOEX.dwOSVersionInfoSize
+    GetAddress Of sOSVersionInfoEX To pOSVersionInfoEX
+    Move (GetVersionEx(pOSVersionInfoEx)) To iRetval
+    Indicate Err False
+    If Not iRetval Begin
+      Error 500 csOsVersionNumberCouldNotRetrieved
+      Procedure_Return
+    End // If Not iRetval Begin
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.dwMajorVersion      To iRetval
+    Set piMajorVersion To iRetval
+    xSHOWLN "piMajorVersion : " iRetval
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.dwMinorVersion      To iRetval
+    Set piMinorVersion To iRetval
+    xSHOWLN "piMinorVersion : " iRetval
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.dwBuildNumber       To iRetval
+    Set piBuildNumber To iRetval
+    xSHOWLN "piBuildNumber : " iRetval
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.dwPlatformID        To iRetval
+    Set piPlatFormId To iRetval
+    xSHOWLN "piPlatFormId : " iRetval
+
+    GetBuff_String From sOSVersionInfoEx At _OSVERSIONINFOEX.szCSDVersion To sCSDVersion
+    Move (Cstring(sCSDVersion)) To sCSDVersion
+    Set psCSDVersion To (Trim(sCSDVersion))
+    xSHOWLN "psCSDVersion : " (Trim(sCSDVersion))
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.wServicePackMajor   To iRetval
+    Set piServicePackMajor To iRetval
+    xSHOWLN "piServicePackMajor : " iRetval
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.wServicePackMinor   To iRetval
+    Set piServicePackMinor To iRetval
+    xSHOWLN "piServicePackMinor : " iRetval
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.wSuiteMask           To iRetval
+    Set piSuiteMask To iRetval
+    xSHOWLN "piSuiteMask : " iRetval
+
+    GetBuff From sOSVersionInfoEx At _OSVERSIONINFOEX.wProductType        To iRetval
+    Set piProductType To iRetval
+    xSHOWLN "piProductType : " iRetval
+
+  End_Procedure // DoSetOSPropertiesEx
+
+  Procedure DoSetOsVersion
+    Integer iMajorVersion
+    Integer iMinorVersion
+    Integer iBuildNumber
+    Integer iPlatFormId
+    String  sCSDVersion
+    Integer iServicePackMajor
+    Integer iServicePackMinor
+    Integer iSuiteMask
+    Integer iProductType
+
+    Get piMajorVersion     To iMajorVersion
+    Get piMinorVersion     To iMinorVersion
+    Get piBuildNumber      To iBuildNumber
+    Get piPlatFormId       To iPlatFormId
+    Get psCSDVersion       To sCSDVersion
+    Get piServicePackMajor To iServicePackMajor
+    Get piServicePackMinor To iServicePackMinor
+    Get piSuiteMask        To iSuiteMask
+    Get piProductType      To iProductType
+
+    Case Begin
+      Case (iMajorVersion = 3)
+        Set psOSVersion To "Windows NT 3.51"
+        Case BREAK
+
+      Case (iMajorVersion = 4)                      // Windows 9X Series and Win NT 40
+        If (iPlatFormId = VER_PLATFORM_WIN32_WINDOWS) Begin    // Then Windows 95 or 98...
+          Case Begin
+            Case (iMinorVersion = 0)
+              Set psOSVersion To CS_OSVERSION_WIN95
+              Case BREAK
+            Case (iMinorVersion = 10)
+              Set psOSVersion To CS_OSVERSION_WIN98
+              Case BREAK
+            Case (iMinorVersion = 90)
+              Set psOSVersion   To CS_OSVERSION_WINME
+              Set pbWindowsHome To TRUE
+              Case BREAK
+            Case Else
+              Set psOSVersion To CS_OSVERSION_UNKNOWN
+          Case End
+        End
+        Else Begin
+          Case Begin
+            Case (iProductType = VER_NT_WORKSTATION)
+              Set psOSVersion To CS_OSVERSION_NT4WKS
+              Case BREAK
+            Case (iProductType = VER_NT_DOMAIN_CONTROLLER)
+              Set psOSVersion To CS_OSVERSION_NT4SRV
+              Set pbNTServer  To TRUE
+              Case BREAK
+            Case Else
+              Set psOSVersion To CS_OSVERSION_NT4
+          Case End
+        End
+        Case BREAK
+
+      Case (iMajorVersion = 5)                      // Windows NT2k Series
+        Case Begin
+          Case (iMinorVersion = 0)                  // Windows 2000
+            If (iProductType = VER_NT_WORKSTATION) Begin
+              Set psOSVersion To  CS_OSVERSION_W2K
+            End
+            Else Begin
+              Set psOSVersion To  CS_OSVERSION_W2KSRV
+              Set pbNTServer  To TRUE
+            End
+            Case BREAK
+
+          Case (iMinorVersion = 1)                  // XP (and NOT 2003 server)
+            Case Begin
+              Case (iSuiteMask Iand Ver_Suite_Personal)
+                Set psOSVersion   To CS_OSVERSION_WXPHME
+                Set pbWindowsHome To TRUE
+                Case BREAK
+
+              Case (iProductType = VER_NT_WORKSTATION)
+                Set psOSVersion To  CS_OSVERSION_WXP
+                Case BREAK
+
+              Case (iProductType = VER_NT_DOMAIN_CONTROLLER)
+                Set psOSVersion To  CS_OSVERSION_2K3
+                Set pbNTServer  To TRUE
+                Case BREAK
+
+              Case (iProductType = VER_NT_SERVER)
+                Set psOSVersion To  CS_OSVERSION_2K3
+                Set pbNTServer  To TRUE
+                Case BREAK
+
+              Case Else
+                Set psOSVersion To  CS_OSVERSION_UNKNOWN
+
+            Case End
+            Case BREAK
+
+          Case (iMinorVersion = 2)       // Windows 2003 Standard server - PAT
+                Set psOSVersion To CS_OSVERSION_2K3   //     PAT
+                Set pbNTServer  To TRUE                             //     PAT
+                Case BREAK                                          //     PAT
+          Case Else
+            Set psOSVersion To  CS_OSVERSION_UNKNOWN
+        Case End
+        Case BREAK
+
+      Case (iMajorVersion = 6)   // Windows Vista / Home Server Series
+        Case Begin
+          Case (iMinorVersion = 0)                  // Windows Vista
+            If (iProductType = VER_NT_WORKSTATION) Begin
+              Set psOSVersion To  CS_OSVERSION_VISTA
+            End
+            Else Begin
+              Set psOSVersion To  CS_OSVERSION_LHSRV
+              Set pbNTServer  To TRUE
+            End
+            Case BREAK
+
+          Case Else
+            Set psOSVersion To  CS_OSVERSION_UNKNOWN
+        Case End
+        Case BREAK
+
+      Case Else
+        Set psOSVersion To  CS_OSVERSION_UNKNOWN
+    Case End
+  End_Procedure // DoSetOsVersion
+
+  Procedure doCheckOsVersion
+    String  sOSVersion               // ""
+    Integer bNTServer                // FALSE
+    Integer bWindowsHome             // FALSE
+    Integer bTestServicePack         // TRUE
+
+    Integer iRunOnWindows95          // cx_Run_Do_Not_Run
+    Integer iRunOnWindows9X          // cx_Run_Normal
+    Integer iRunOnWindowsNT40        // cx_Run_Normal
+    Integer iRunOnWindowsNT2k        // cx_Run_Normal
+    Integer iRunOnWindowsNTXP        // cx_Run_Normal
+    Integer iRunOnWindowsNET         // cx_Run_Normal
+    Integer iRunOnWindowsVista       // cx_Run_Normal
+    Integer iRunOnWindowsLonghorn    // cx_Run_Normal
+    Integer iRunOnHomeVersion        // cx_Run_With_Warning
+    Integer iRunOnServerVersion      // cx_Run_Normal
+    Integer iRunOnUnknownVersion     // cx_Run_With_Warning
+
+    Integer iServicePackMajor        // 0
+
+    Integer iMinNT40_ServicePack     // 6
+    Integer iMinNT2K_ServicePack     // 1
+    Integer iMinXP_ServicePack       // 0
+    Integer iMinNET_ServicePack      // 0
+    Integer iVista_ServicePack       // 0
+
+    Integer iResult
+    String  sText
+
+    Get psOSVersion             To sOSVersion
+    Get pbNTServer              To bNTServer
+    Get pbWindowsHome           To bWindowsHome
+    Get pbTestServicePack       To bTestServicePack
+
+    Get piRunOnWindows95        To iRunOnWindows95
+    Get piRunOnWindows9X        To iRunOnWindows9X
+    Get piRunOnWindowsNT40      To iRunOnWindowsNT40
+    Get piRunOnWindowsNT2k      To iRunOnWindowsNT2k
+    Get piRunOnWindowsNTXP      To iRunOnWindowsNTXP
+    Get piRunOnWindowsNET       To iRunOnWindowsNET
+    Get piRunOnWindowsVista     To iRunOnWindowsVista
+    Get piRunOnWindowsLongHorn  To iRunOnWindowsLongHorn
+    Get piRunOnHomeVersion      To iRunOnHomeVersion
+    Get piRunOnServerVersion    To iRunOnServerVersion
+    Get piRunOnUnknownVersion   To iRunOnUnknownVersion
+
+    Get piServicePackMajor      To iServicePackMajor
+
+    Get piMinNT40_ServicePack   To iMinNT40_ServicePack
+    Get piMinNT2K_ServicePack   To iMinNT2K_ServicePack
+    Get piMinXP_ServicePack     To iMinXP_ServicePack
+    Get piMinNET_ServicePack    To iMinNET_ServicePack
+    Get piMinVista_ServicePack  To iVista_ServicePack
+
+    If (sOSVersion = CS_OSVERSION_UNKNOWN) Begin
+      Case Begin
+        Case (iRunOnUnknownVersion = cx_Run_Do_Not_Run)
+            Move csUnknownWindowsVersion To sText
+            Append sText csProgramWillBeTerminated
+            Send DoWriteLog sText
+            Send Stop_Box sText csRegcheckStopBoxCaption
+            Abort
+          Case BREAK
+        Case (iRunOnUnknownVersion = cx_Run_With_Warning)
+            Move csUnknownWindowsVersionQuestion To sText
+            Append sText csProgramAsksToBeTerminated
+            Get YesNo_Box csUnknownWindowsVersionQuestion To iResult
+            Send DoWriteLog sText
+            If (iResult = MBR_NO) Begin
+              Abort
+            End
+            ELSE BEGIN 
+              Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+            END
+          Case BREAK
+        Case Else
+      Case End
+    End
+
+    If (sOSVersion = CS_OSVERSION_WIN95) Begin
+      Case Begin
+        Case (iRunOnWindows95 = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnWindows95 = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Send DoWriteLog sText
+          Get YesNo_Box sText To iResult
+            If (iResult = MBR_NO) Begin
+            Abort
+          END 
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          END
+          Case BREAK
+        Case Else
+      Case End
+    End
+
+    If (sOSVersion = CS_OSVERSION_WIN95 Or sOSVersion = CS_OSVERSION_WIN98 Or sOSVersion = CS_OSVERSION_WINME) Begin
+      Case Begin
+        Case (iRunOnWindows9X = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnWindows9X = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Send DoWriteLog sText
+          Get YesNo_Box sText To iResult
+            If (iResult = MBR_NO) Begin
+            Abort
+          End
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          END
+          Case BREAK
+        Case Else
+      Case End
+    End
+
+    If (Pos ("NT4", sOSVersion) > 0) Begin
+      Case Begin
+        Case (iRunOnWindowsNT40 = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnWindowsNT40 = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          IF (iResult = MBR_NO) BEGIN
+            Abort
+          END
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          END
+          Case BREAK
+        Case Else
+      Case End
+    End
+
+    If (Pos ("2000", sOSVersion) > 0) Begin
+      Case Begin
+        Case (iRunOnWindowsNT2k = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnWindowsNT2k = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          IF (iResult = MBR_NO) BEGIN
+            Abort
+          END
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          END
+          Case BREAK
+        Case Else
+      Case End
+    End
+
+    If (Pos ("XP", sOSVersion) > 0) Begin
+      Case Begin
+        Case (iRunOnWindowsNTXP = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnWindowsNTXP = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          IF (iResult = MBR_NO) BEGIN
+            Abort
+          END
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          End
+          Case BREAK
+        Case Else
+      Case End
+    End
+
+    If (Pos ("NET", sOSVersion) > 0) Begin
+      Case Begin
+        Case (iRunOnWindowsNTXP = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnWindowsNTXP = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          If (iResult = MBR_NO) Begin
+            Abort
+          End
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          End
+          Case BREAK
+        Case Else
+      Case End
+    End // "NET"
+
+    If (sOSVersion=CS_OSVERSION_VISTA) Begin
+      Case Begin
+        Case (iRunOnWindowsVista = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText
+          Abort
+          Case BREAK
+        Case (iRunOnWindowsVista = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          If (iResult = MBR_NO) Begin
+            Abort
+          End
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          End
+          Case BREAK
+        Case Else
+      Case End
+    End // "VISTA"
+
+    If (sOSVersion=CS_OSVERSION_LHSRV) Begin
+      Case Begin
+        Case (iRunOnWindowsLongHorn = cx_Run_Do_Not_Run)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion)To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText
+          Abort
+          Case BREAK
+        Case (iRunOnWindowsLongHorn = cx_Run_With_Warning)
+          Move (csOSDoesNotRunOnWindowsStart + sOSVersion) To sText
+          Append sText csOSDoesNotRunOnWindowsWarning
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          If (iResult = MBR_NO) Begin
+            Abort
+          End
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          End
+          Case BREAK
+        Case Else
+      Case End
+    End // "LONGHORN"
+
+    If (bWindowsHome) Begin
+      Case Begin
+        Case (iRunOnHomeVersion = cx_Run_Do_Not_Run)
+          Move csOSVersionIsAHomeVersion To sText
+          Append sText csProgramWillBeTerminated
+          Send DoWriteLog sText
+          Send Stop_Box sText csRegcheckStopBoxCaption
+          Abort
+          Case BREAK
+        Case (iRunOnHomeVersion = cx_Run_With_Warning)
+          Move csOSVersionIsAHomeVersionWarning To sText
+          Append sText csProgramAsksToBeTerminated
+          Get YesNo_Box sText To iResult
+          Send DoWriteLog sText
+          IF (iResult = MBR_NO) BEGIN
+            Abort
+          END
+          ELSE BEGIN
+            Move "" To sText // SJK - If you don't do this, then selecting Yes to continue will never work!
+          END
+          Case BREAK
+      Case End
+    End
+
+    If (bTestServicePack) Begin
+      Case Begin
+        Case (sOSVersion = CS_OSVERSION_NT4WKS)
+          If (iServicePackMajor < iMinNT40_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinNT40_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case (sOSVersion = CS_OSVERSION_NT4SRV)
+          If (iServicePackMajor < iMinNT40_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinNT40_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case (sOSVersion = CS_OSVERSION_W2K)
+          If (iServicePackMajor < iMinNT2K_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinNT2K_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case (sOSVersion = CS_OSVERSION_W2KSRV)
+          If (iServicePackMajor < iMinNT2K_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinNT2K_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case (sOSVersion = CS_OSVERSION_WXPHME)
+          If (iServicePackMajor < iMinXP_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinXP_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case (sOSVersion = CS_OSVERSION_WXP)
+          If (iServicePackMajor < iMinXP_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinXP_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case (sOSVersion = CS_OSVERSION_2K3)
+          If (iServicePackMajor < iMinNET_ServicePack) Begin
+            Move csServicePackNotInstalledStart To sText
+            Append sText (String (iMinNET_ServicePack)) csServicePackNotInstalledMiddle
+          End
+          Case BREAK
+        Case Else
+      Case End
+      If (sText > "") Begin
+        Append sText sOSVersion csServicePackNotInstalledEnd
+        Send DoWriteLog sText
+        Send Stop_Box sText csRegcheckStopBoxCaption
+        Abort
+      End
+    End
+  End_Procedure // doCheckOsVersion
+
+  Procedure Set External_Profile_Dword String sRegPath String sKey String sValueName Dword dwValue
+    REG_SET_DWORD sRegPath sKey sValueName To dwValue
+  End_Procedure // External_Profile_Dword
+
+  Function External_Profile_Dword String sRegPath String sKey String sValueName Returns Dword
+    Integer dwValue defValue
+
+    Move REG_VALUE_NOT_EXIST To defValue
+    REG_GET_DWORD sRegpath sKey sValueName defValue To dwValue
+    Function_Return dwValue
+  End_Function // External_Profile_Dword
+
+  // Function returns: 0 if NWREDIR was not found
+  //                   1 if NWREDIR was found and ReadCaching is correct set to 0
+  //                  -1 if Then system.ini could not be opened...
+  //                  -2 if ReadCaching <> 0
+  Function CheckSystemIni Returns Integer
+    Integer iRetval iChannel
+    String sWindir sFileName sValue
+
+    Get_Windows_Directory To sWindir
+    Move '\SYSTEM.INI' To sFileName
+    // Use the seq_chnl.pkg to get the next free channel to open:
+    Get Seq_Open_Input_Channel (sWindir + sFileName) To iChannel
+    If iChannel Eq DF_SEQ_CHANNEL_ERROR Function_Return -1
+      Repeat
+        Readln sValue
+        If '[NWREDIR]' In (Uppercase(sValue)) Move -2 To iRetval
+        If iRetval Eq -2 Begin // Ok, we found it. Read next line.
+          Repeat           // We need to check for blank lines
+            Readln sValue
+          Until (Trim(sValue) Ne '' Or seqeof)
+          Move (Replaces(' ', sValue, '')) To sValue // Remove any embedded blanks.
+          If 'READCACHING=0' In (Uppercase(sValue)) Move 1 To iRetval
+          Indicate seqeof True  // We're done.
+        End
+      Until (seqeof)
+    Send Seq_Close_Channel iChannel
+    Function_Return iRetval
+  End_Function // CheckSystemIni
+
+  // This client does NOT have entries in System.ini to disable read caching
+  // for Netware Networks.
+  // Add an entry in System.ini to disable read caching.
+  Procedure DoAppendToSystemIni
+    String sWindir sFileName
+    Integer iChannel
+
+    Get_Windows_Directory To sWindir
+    Move '\SYSTEM.INI' To sFileName
+    Get Seq_Append_Output_Channel (sWindir + sFileName) To iChannel
+    If iChannel Eq DF_SEQ_CHANNEL_ERROR Begin // This should be impossible, but...
+      Error 33 (sWindir + sFileName)
+      Procedure_Return
+    End // If iChannel Eq DF_SEQ_CHANNEL_ERROR Begin
+    Writeln ''
+    Writeln ''
+    Writeln Channel iChannel '[NWREDIR]'
+    Writeln Channel iChannel 'READCACHING=0'
+    Send Seq_Close_Channel iChannel
+    If (iChannel = DF_SEQ_CHANNEL_ERROR) Error 32 (sWindir + sFileName)
+  End_Procedure // DoAppendToSystemIni
+
+  Procedure DoChangeSystemIni
+    String sWindir sFileName sFileName2 sValue
+    Integer iInChannel iOutChannel
+
+    Get_Windows_Directory To sWindir
+    Move '\SYSTEM.INI' To sFileName
+    Get Seq_Open_Input_Channel (sWindir + sFileName) To iInChannel
+    Move '\SYSTEM.NEW' To sFileName2
+    Get Seq_Open_Output_Channel ('DIRECT:' + sWindir + sFileName2) To iOutChannel
+    If (iInChannel  = DF_SEQ_CHANNEL_ERROR Or ;
+        iOutChannel = DF_SEQ_CHANNEL_ERROR) Begin // This should be impossible, but...
+      Send Seq_Close_Channel iInChannel
+      Send Seq_Close_Channel iOutChannel
+      If (iInChannel  = DF_SEQ_CHANNEL_ERROR) Error 33 (sWindir + sFileName)
+      If (iOutChannel = DF_SEQ_CHANNEL_ERROR) Error 32 (sWindir + sFileName)
+      Procedure_Return
+    End // If iChannel Eq DF_SEQ_CHANNEL_ERROR Begin
+    Repeat // This should be no problem since we only go here if we succesfully opened it before.
+      Readln Channel iInChannel sValue
+      If '[NWREDIR]' In (Uppercase(sValue)) Begin
+        Writeln Channel iOutChannel sValue
+        Writeln Channel iOutChannel 'READCACHING=0'
+      End // If '[NWREDIR]' in (Uppercase(sValue)) Begin
+      Else Writeln Channel iOutChannel sValue
+    Until (seqeof)
+
+    Send Seq_Close_Channel iInChannel
+    Send Seq_Close_Channel iOutChannel
+
+    Renamefile (sWindir + '\SYSTEM.INI') To (sWindir + '\SYSTEM.OLD')
+    Get Seq_Open_Input_Channel (sWindir + '\SYSTEM.INI') To iInChannel
+    Send Seq_Close_Channel iInChannel
+    If iInChannel Ne DF_SEQ_CHANNEL_ERROR ;
+      Erasefile  (sWindir + '\SYSTEM.INI')   // Workaround for rename file in pre 5.1 VDF versions.
+    Renamefile (sWindir + '\SYSTEM.NEW') To (sWindir + '\SYSTEM.INI')
+    If iInChannel Ne DF_SEQ_CHANNEL_ERROR ;
+      Erasefile  (sWindir + '\SYSTEM.NEW')
+
+  End_Procedure // DoChangeSystemIni
+
+  // Function returns: 0 if Files setting was incorrect
+  //                   1 if Files was correct
+  //                  -1 if Config.sys could not be opened
+  //                  -2 if Files setting was incorrect and FILESHIGH was used.
+  // We need to read each line from the file This is because
+  // 'FILES= ' can be present on more than one line.
+  Function CheckConfigSys Returns Integer
+    Integer iRetval iFiles iCheck iChannel
+    String sFileName sValue sCheck
+
+    Get piFiles To iFiles
+    If iFiles Eq 0 Function_Return 1 // Then we don't check
+    Move 'C:\CONFIG.SYS' To sFileName
+    Get Seq_Open_Input_Channel sFileName To iChannel
+    If iChannel Eq DF_SEQ_CHANNEL_ERROR Function_Return -1
+      Repeat
+        Readln sValue
+        Move (Uppercase(Trim(sValue))) To sValue
+        If ((sValue Contains 'FILES' And (sValue Contains '=')) And Not(sValue Contains 'REM')) Begin // Ok, we found it.
+          Move (Trim(Replace('FILES', sValue, ''))) To sValue
+          Move (Trim(Replace('=', sValue, '')))     To sValue
+          If (sValue Contains 'HIGH') Begin
+            Move (Trim(Replace('HIGH', sValue, ''))) To sValue
+            If (Trim(sValue) < iFiles)       Move -2 To iRetval // Then we will write FILESHIGH=xx to config.sys
+            Else If (Trim(sValue) >= iFiles) Move  1 To iRetval // Then FILES is correct.
+          End // If (sValue contains 'HIGH') Begin
+          Else If (Trim(sValue) >= iFiles)   Move  1 To iRetval // Then FILES is correct.
+        End // If ((sValue contains 'FILES' AND (sValue contains '=')) AND Not(sValue contains 'REM')) Begin
+      Until (seqeof)
+    Send Seq_Close_Channel iChannel
+    Function_Return iRetval
+  End_Function // CheckConfigSys
+
+  // Pass -2 if to write FILESHIGH=xx (consistent with CheckConfigSys above)
+  // Pass whatever else if to write FILES=xx
+  Procedure DoAppendConfigSys Integer iHigh
+    Integer iFiles iChannel
+    String sFileName
+
+    Move 'C:\CONFIG.SYS' To sFileName
+    Get piFiles To iFiles
+    Get Seq_Append_Output_Channel sFileName To iChannel // Append
+    Writeln ''
+    If iHigh Eq -2 Writeln Channel iChannel ('FILESHIGH = ' + Trim(iFiles))
+    Else Writeln Channel iChannel ('FILES = ' + Trim(iFiles))
+    Send Seq_Close_Channel iChannel
+  End_Procedure // DoAppendConfigSys
+
+  // VDF requires Opportunistic file locking be disabled at an NT based
+  // server when using the embedded database.
+  //
+  // The following registry changes are applied by this procedure:
+  // HKEY_LOCAL_MACHINE\system\CurrentControlSet\services\LanmanServer\EnableOplockForceClose-->1
+  // HKEY_LOCAL_MACHINE\system\CurrentControlSet\services\LanmanServer\EnableOpLocks-->0
+  Procedure DoCheckWindowsNTServerSettings
+    Integer dwValue1 dwValue2 iRetval iMajorVersion iServicePack
+    String sText sRegPath sKey sValue sLogText sCSDVersion
+
+    Integer bRunOnNew bRunOn2k
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+    Move 'CurrentControlSet\Services\LanmanServer'                    To sRegPath
+    Move 'Parameters'                                                 To sKey
+    Get External_Profile_Dword sRegPath sKey 'EnableOplockForceClose' To dwValue1
+    Get External_Profile_Dword sRegPath sKey 'EnableOpLocks'          To dwValue2
+
+    // Note: We do not check for REG_VALUE_NOT_EXIST here, it has been
+    // done in the procedure that called us (DoCheckCurrentClient)
+    If ((dwValue1 <> 1 Or dwValue2 <> 0) And (pbDoNTRegistryChanges(Self))) Begin
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText
+        Append sText csMakeChanges
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        If (dwValue1 <> 1) ;
+          Set External_Profile_Dword sRegPath sKey 'EnableOplockForceClose' To 1
+        If (dwValue2 <> 0) ;
+          Set External_Profile_Dword sRegPath sKey 'EnableOpLocks'          To 0
+        // Check if the changes were actually made. If not; user rights disallowed it.
+        Get External_Profile_Dword sRegPath sKey 'EnableOplockForceClose'   To dwValue1
+        Get External_Profile_Dword sRegPath sKey 'EnableOpLocks'            To dwValue2
+        If (dwValue1 = REG_VALUE_NOT_EXIST Or dwValue2 = REG_VALUE_NOT_EXIST) Move 4 To iRetval
+        Else Begin
+          Move 2 To iRetval
+          If (dwValue1 = 1) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\EnableOplockForceClose has been set to 1') To sLogText
+            Send DoWriteLog sLogText
+          End 
+          If (dwValue2 = 0) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\EnableOpLocks has been set to 0') To sLogText
+            Send DoWriteLog sLogText
+          End 
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // If ((dwValue1 <> 1 OR dwValue2 <> 0) AND (pbDoNTRegistryChanges(Self))) Begin
+
+    If iRetval Eq 1 Begin
+      Move csChangesWereDisallowed To sText   // We do this to avoid the length of a source line
+      Append sText csProgramWillBeTerminated  // to be more than 255 characters.
+      Send DoWriteLog sText
+    End // If iRetval eq 1 Begin
+    Else If iRetval Eq 2 Begin
+      Move csRegistryChangesHasBeenMade To sText
+      Append sText csPleaseRestartTheProgram
+      Send DoWriteLog sText
+    End // Else If iRetval eq 2 Begin
+    Else If iRetval Eq 4 Begin
+      Move csRegistryChangesCouldNotBePerformed To sText
+      Append sText csUserRightsIsProbablyNotSufficient
+      Append sText csContactYourSystemAdministrator
+      Send DoWriteLog sText
+    End // Else If iRetval eq 4 Begin
+
+    If iRetval Begin
+      Send Stop_Box sText csRegcheckStopBoxCaption
+      // RDISK makes a backup of the registry on NT machines
+      If (iRetval = 2 And (pbNTRegistryBackup(Self))) Begin
+        Send DoWriteLog 'RDISK /S has been run.'
+        Runprogram 'RDISK /S' // Aborts the VDF program.
+      End // If (iRetval = 2 AND (pbNTRegistryBackup(Self))) Begin
+      //If (iRetval = 1 Or iRetval = 3 Or iRetval = 4 Or iRetVal = 6 Or iRetVal = 7 Or iRetVal = 8) Begin
+      Abort
+      //End
+    End // If iRetval Begin
+
+  End_Procedure // DoCheckWindowsNTServerSettings
+
+  // In addition to VDF installation requirements,
+  // there are several other changes that needs to be made for each NT workstation in
+  // order to ensure the robustness of the dataflex database.
+  // The following registry changes are done if necessary by this procedure:
+  // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\UseOpportunisticLocking -->0'
+  // Registry has also been set to the recommended settings by LOTUS Corp.
+  // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\UtilizeNtCaching -->0'
+  // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\UseUnlockBehind -->1'
+  // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\UseLockReadUnlock -->0x0'
+  // For Windows 2000, XP and 2003 the rules are different, MS suggests to set the following registry key:
+  // HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MRXSmb\Parameters\OplocksDisabled --> 1
+  Procedure DoCheckWindowsNTClientSettings
+    Integer iRetval dwValue1 dwValue2 dwValue3 dwValue4 dwValue5
+    Integer iMajorVersion iServicePack
+    String sText sRegPath sKey sValue sLogText sCSDVersion sRegPath2
+
+    Integer bRunOnNew bRunOn2k
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+    Move 'CurrentControlSet\Services\LanmanWorkstation'                To sRegPath
+    Move 'Parameters'                                                  To sKey
+    Get External_Profile_Dword sRegPath sKey 'UseOpportunisticLocking' To dwValue1
+    Get External_Profile_Dword sRegPath sKey 'UtilizeNtCaching'        To dwValue2
+    Get External_Profile_Dword sRegPath sKey 'UseUnlockBehind'         To dwValue3
+    Get External_Profile_Dword sRegPath skey 'UseLockReadUnlock'       To dwValue4
+
+    // **WvA: If Windows 2000, XP, 2003 server or Vista then set the 
+    // following client setting.
+    Get piMajorVersion To iMajorVersion
+    If (iMajorVersion = 5 Or iMajorVersion = 6) Begin
+      Move 'CurrentControlSet\Services\MRXSmb'                         To sRegPath2
+      Move 'Parameters'                                                To sKey
+      Get External_Profile_Dword sRegPath2 sKey 'OplocksDisabled'      To dwValue5
+    End
+
+    If ((dwValue1 <> 0 Or dwValue2 <> 0 Or dwValue3 <> 1 Or dwValue4 <> 0 And (pbDoNTRegistryChanges(Self))) ;
+         Or (iMajorVersion=5 And dwValue5=0) Or (iMajorVersion=6 and dwValue5=0) ) Begin
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText     // We do this to avoid the length of a source line
+        Append sText csMakeChanges                  // to be more than 255 characters.
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+        If (dwValue1 <> 0) ;
+          Set External_Profile_Dword sRegPath sKey 'UseOpportunisticLocking' To 0
+        If (dwValue2 <> 0) ;
+          Set External_Profile_Dword sRegPath sKey 'UtilizeNtCaching'        To 0
+        If (dwValue3 <> 1) ;
+          Set External_Profile_Dword sRegPath sKey 'UseUnlockBehind'         To 1
+        If (dwValue4 <> 0) ;
+          Set External_Profile_Dword sRegPath sKey 'UseLockReadUnlock'       To 0
+        If ((iMajorVersion = 5 Or iMajorVersion = 6) And (dwValue5=0)) Begin
+          Set External_Profile_Dword sRegPath2 sKey 'OplocksDisabled'        To 1
+        End
+        // Now check that a change actualy were performed. If not user rights disallowed it.
+        Get External_Profile_Dword sRegPath sKey 'UseOpportunisticLocking' To dwValue1
+        If dwValue1 Eq REG_VALUE_NOT_EXIST Move 4 To iRetval
+        Else Begin
+          Move 2 To iRetval
+          If (dwValue1 <> 0) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\UseOpportunisticLocking has been set to 0') To sLogText
+            Send DoWriteLog sLogText
+          End // If (dwValue1 <> 0) Begin
+          If (dwValue2 <> 0) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\UtilizeNtCaching has been set to 0') To sLogText
+            Send DoWriteLog sLogText
+          End // If (dwValue2 <> 0) Begin
+          If (dwValue3 <> 1) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\UseUnlockBehind has been set to 1') To sLogText
+            Send DoWriteLog sLogText
+          End // If (dwValue3 <> 1) Begin
+          If (dwValue4 <> 0) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\UseLockReadUnlock has been set to 0') To sLogText
+            Send DoWriteLog sLogText
+          End // If (dwValue4 <> 0) Begin
+        End // Else Begin.
+        If ((iMajorVersion=5 Or iMajorVersion=6) And (dwValue5=0)) Begin
+          Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath2 + '\' + sKey + '\OplocksDisabled has been set to 1') To sLogText
+          Send DoWriteLog sLogText
+        End
+
+      End // If iRetval eq MBR_Yes Begin
+    End // If (dwValue1 ne 0 OR dwValue2 ne 0 OR dwValue3 ne 1 OR dwValue4 ne 0 AND (pbDoNTRegistryChanges(Self))) Begin
+
+    If iRetval Eq 1 Begin                           // We do this to avoid the length of a source line
+      Move csChangesWereDisallowed To sText // to be more than 255 characters.
+      Send DoWriteLog sText
+    End // If iRetval eq 1 Begin
+    Else If iRetval Eq 2 Begin
+      Move csRegistryChangesHasBeenMade To sText
+      Append sText csPleaseRestartTheProgram
+      Send DoWriteLog sText
+    End // Else If iRetval eq 2 Begin
+    Else If iRetval Eq 4 Begin
+      Move csRegistryChangesCouldNotBePerformed To sText
+      Append sText csUserRightsIsProbablyNotSufficient
+      Append sText csContactYourSystemAdministrator
+      Send DoWriteLog sText
+    End // Else If iRetval eq 4 Begin
+
+    If iRetval Begin
+      Send Stop_Box sText csRegcheckStopBoxCaption
+      // RDISK makes a backup of the registry on NT machines
+      If (iRetval = 2 And (pbNTRegistryBackup(Self))) Begin
+        Send DoWriteLog 'RDISK /S has been run.'
+        Runprogram 'RDISK /S'                          // This aborts the program.
+      End // If (iRetval = 2 AND (pbNTRegistryBackup(Self))) Begin
+      If (iRetval = 1 Or iRetval = 3 Or iRetval = 4 Or iRetVal = 6 Or iRetVal = 7 Or iRetVal = 8) Begin
+        ABORT
+      End
+    End // If iRetval Begin
+
+  End_Procedure // DoCheckWindowsNTClientSettings
+
+  // In addition to VDF installation requirements,
+  // there are changes that should be made for a Windows 95 WorkStation using Novell client32
+  // registry setting in order to ensure the robustness of the dataflex database.
+  // HKEY_LOCAL_MACHINE\Network\Novell\System Config\Netware Dos Requester\Cache Writes\0-->off
+  // This recommendation is made by Lotus Corp.
+  // Note: the registry setting 'Opportunistic Locking' does no longer exist from version 2.2
+  Procedure DoCheckNetwareClient32Settings
+    String  sRegPath sKey sValueName sRetval sRetval2 sText sLogText
+    Integer iRetval dwValue1 dwValue2 iCheck1 iCheck4
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+    Move 'Novell\System Config\Install'                      To sRegPath
+    Move 'Client Version'                                    To sKey
+    Get External_Profile_Dword sRegPath sKey 'Major Version' To dwValue1
+    Get External_Profile_Dword sRegPath sKey 'Minor Version' To dwValue2
+    If dwValue1 Lt 2 Move 1 To iCheck1
+    Else If (dwValue1 = 2 And dwValue2 < 2) Move 1 To iCheck1
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+    Move 'Novell\System Config'                              To sRegPath
+    Move 'Netware Dos Requester\Cache Writes'                To sKey
+    Move '0'                                                 To sValueName
+    Get_Foreign_Profile_String sRegPath sKey sValueName      To sRetval
+    xShowln "Cache Writes = " (Trim(sRetval))
+    // Some versions of Client32 write 'NO' and other 'off'
+    If (Uppercase(sRetval) <> 'NO' And Uppercase(sRetval) <> 'OFF') Begin
+      xShowln "Cache Writes needs to be changed."
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText     // We do this to avoid the length of a source line
+        Append sText csMakeChanges                  // to be more than 255 characters.
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+        Set_Foreign_Profile_String sRegPath sKey sValueName  To 'off'
+        Get_Foreign_Profile_String sRegPath sKey sValueName  To sRetval
+        xShowln "Cache Writes after change = " (Trim(sRetval))
+        If (Uppercase(sRetval) <> 'OFF') Move 1 To iCheck4
+        Else Begin
+          Move 2 To iCheck4
+          Move ('HKEY_LOCAL_MACHINE\Network\' + sRegPath + '\' + sKey + '\' + sValueName + ' has been set to OFF') To sLogText
+          Send DoWriteLog sLogText
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // If ((Uppercase(sRetval)) ne 'OFF') Begin
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+    Move 'Netware Dos Requester\Close Behind Ticks'          To sKey
+    Get_Foreign_Profile_String sRegPath sKey sValueName      To sRetval
+    xShowln "Close Behind Ticks = " (Trim(sRetval))
+    If (sRetval <> '0' And sRetval <> '') Begin
+      xShowln "Close Behind Ticks needs to be changed."
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText     // We do this to avoid the length of a source line
+        Append sText csMakeChanges                  // to be more than 255 characters.
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+        Set_Foreign_Profile_String sRegPath sKey sValueName  To '0'
+        Get_Foreign_Profile_String sRegPath sKey sValueName  To sRetval
+        xShowln "Close Behind Ticks after change = " (Trim(sRetval))
+        If (Uppercase(sRetval) <> '0') Move 1 To iCheck4
+        Else Begin
+          Move 2 To iCheck4
+          Move ('HKEY_LOCAL_MACHINE\Network\' + sRegPath + '\' + sKey + '\' + sValueName + ' has been set to 0') To sLogText
+          Send DoWriteLog sLogText
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // If (sRetval <> '0' AND sRetval <> '') Begin
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+    Move 'Netware Dos Requester\Delay Writes'                To sKey
+    Get_Foreign_Profile_String sRegPath sKey sValueName      To sRetval
+    xShowln "Delay Writes = " (Trim(sRetval))
+
+    // Delay Writes:
+    If (Uppercase(sRetval) <> 'NO' And Uppercase(sRetval) <> 'OFF') Begin
+      xShowln "Delay Writes to be changed."
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText     // We do this to avoid the length of a source line
+        Append sText csMakeChanges                  // to be more than 255 characters.
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+        Set_Foreign_Profile_String sRegPath sKey sValueName  To 'off'
+        Get_Foreign_Profile_String sRegPath sKey sValueName  To sRetval
+        xShowln "Delay Writes after change = " (Trim(sRetval))
+        If (Uppercase(sRetval) <> 'OFF') Move 1 To iCheck4
+        Else Begin
+          Move 2 To iCheck4
+          Move ('HKEY_LOCAL_MACHINE\Network\' + sRegPath + '\' + sKey + '\' + sValueName + ' has been set to OFF') To sLogText
+          Send DoWriteLog sLogText
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // If (Uppercase(sRetval) <> 'NO' AND Uppercase(sRetval) <> 'OFF') Begin
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+    Move 'Netware Dos Requester\File Cache Level'            To sKey
+    Get_Foreign_Profile_String sRegPath sKey sValueName      To sRetval
+    If ((Uppercase(sRetval)) <> '0') Begin
+      xShowln "File Cache Level needs to be changed."
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText     // We do this to avoid the length of a source line
+        Append sText csMakeChanges                  // to be more than 255 characters.
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+        Set_Foreign_Profile_String sRegPath sKey sValueName  To '0'
+        Get_Foreign_Profile_String sRegPath sKey sValueName  To sRetval
+        If (Uppercase(sRetval) <> '0') Move 1 To iCheck4
+        Else Begin
+          Move 2 To iCheck4
+          Move ('HKEY_LOCAL_MACHINE\Network\' + sRegPath + '\' + sKey + '\' + sValueName + ' has been set to 0') To sLogText
+          Send DoWriteLog sLogText
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // If ((Uppercase(sRetval)) <> '0') Begin
+
+    If iRetval Eq 1 Begin
+      Move csChangesWereDisallowed To sText
+      Send DoWriteLog sText
+    End // If iRetval eq 1 Begin
+    If iCheck1 Begin
+      Move csYourNovellNetwareClient32VersionIs To sText       // We do this to avoid the length of a source line
+      Append sText " " (Trim(dwValue1) + "." + Trim(dwValue2)) // to be more than 255 characters.
+      Append sText csAndNeedToBeAtLeastVersion
+      Append sText csContactYourSystemAdministrator
+      Send DoWriteLog sText
+    End // If iCheck1 Begin
+
+    If iCheck4 Begin
+      If iCheck4 Eq 1 Begin
+        Move csRegistryChangesCouldNotBePerformed To sText
+        Append sText csUserRightsIsProbablyNotSufficient
+        Append sText csContactYourSystemAdministrator
+        Send DoWriteLog sText
+      End // If iCheck4 eq 1 Begin
+      Else If iCheck4 Eq 2 Begin
+        Move csRegistryChangesHasBeenMade To sText
+        Append sText csPleaseRestartTheProgram
+        Send DoWriteLog sText
+      End // Else If iCheck4 eq 2 Begin
+    End // If iCheck4 Begin
+
+    If (iRetval Or iCheck1 Or iCheck4) Begin
+      Send Stop_Box sText csRegcheckStopBoxCaption
+      Abort // Quit the application.
+    End // If (iRetal OR iCheck1 OR iCheck4) Begin
+  End_Procedure // DoCheckNetwareClient32Settings
+
+  // a Virtual Network Redirector VREDIR.VXD, ver. 4.00.955 or higher must be present.
+  // Due to the nature of local caching, it will NOT support ANY DataFlex based application running
+  // on a Microsoft Network in which this machine is a client.
+  // Although an acceptable Virtual Network Redirector (VREDIR.VXD) is found,
+  // (ver. 4.00.955 or higher) local read caching may still occur.
+  // The value of 'DiscardCacheOnOpen' will be set to 1 of the branch:
+  // HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VxD\VREDIR of the registry.
+  // There is one more setting that is needed for a Windows 95 WorkStation, in order to
+  // ensure the robustness of the dataflex database.
+  // HKEY_LOCAL_MACHINE\System\CurrentControlSet\control\FileSystem\DriveWriteBehind-->00 00 00 00
+  // This recommendation has been made by Lotus Corp.
+  Procedure DoCheckWindows95ClientSettings
+    String  sRegPath sKey sValueName
+    String  sRetval sText sProgram sLogText
+    Integer iRetval iReply iCheck1 iCheck2 iCheck3 iCheck4 dwValue
+
+    // Function returns  0 if Files setting was not correct
+    //                   1 if Files was correct
+    //                  -1 if Config.sys could not be opened...
+    //                  -2 if Files setting was incorrect and FILESHIGH was used.
+    Get CheckConfigSys To iRetval
+    xShowln "CheckConfigIni returns = " iRetval
+    If (iRetval = 0 Or iRetval = -2) Begin
+      Move MBR_Yes To iReply
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMadeToYourConfig To sText
+        Append sText csMakeChanges
+        Get YesNo_Box sText To iReply
+      End // If Not (pbSilentMode(Self)) Begin
+      If iReply Eq MBR_Yes Begin
+        Send DoAppendConfigSys iRetval
+        Move 33 To iCheck1
+      End // If iReply eq MBR_Yes Begin
+      Else Move 4 To iCheck1
+    End // If iRetval eq 0 Begin
+
+    Else If iRetval Eq -1 Move 11 To iCheck1
+
+    Get CheckSystemIni To iRetval
+    xShowln "CheckSystemIni returns = " iRetval
+    // Function returns  0 if NWREDIR was not found
+    //                   1 if NWREDIR was found and ReadCaching is correct set to 0
+    //                  -1 if Then system.ini could not be opened...
+    //                  -2 if ReadCaching <> 0
+    If (iRetval = 0 Or iRetval = -2) Begin
+      Move MBR_Yes To iReply
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMadeToYourSystem To sText
+        Append sText csMakeChanges
+        Get YesNo_Box sText To iReply
+      End // If Not (pbSilentMode(Self)) Begin
+      If iReply Eq MBR_Yes Begin
+        If iRetval Eq 0 Begin
+          Send DoAppendToSystemIni
+          Move 3 To iCheck1
+        End // If iRetval eq 0 Begin
+        Else If iRetval Eq -2 Begin
+          Send DoChangeSystemIni
+          Move 2 To iCheck1
+        End // Else If iRetval eq -2 Begin
+      End // If iReply eq MBR_Yes Begin
+      Else Move 4 To iCheck1
+    End // If iRetval eq 0 Begin
+
+    Else If iRetval Eq -1 Move 1 To iCheck1
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+    Move 'CurrentControlSet\Services\VXD'                              To sRegPath
+    Move 'VREDIR'                                                      To sKey
+    Get External_Profile_Dword sRegPath sKey 'DiscardCacheOnOpen'      To dwValue
+
+    If dwValue Eq REG_VALUE_NOT_EXIST Move 1 To iCheck2
+
+    Else If (dwValue <> 1) Begin
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText
+        Append sText csMakeChanges
+        Get YesNo_Box sText To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+        If (dwValue <> 1 ) ;
+          Set External_Profile_Dword sRegPath sKey 'DiscardCacheOnOpen' To 1
+        Get External_Profile_Dword sRegPath sKey 'DiscardCacheOnOpen'   To dwValue
+        If dwValue Eq REG_VALUE_NOT_EXIST Move 1 To iCheck3
+        Else Begin
+          Move 2 To iCheck3
+          If (dwValue <> 1 ) Begin
+            Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\DiscardCacheOnOpen has been set to 1') To sLogText
+            Send DoWriteLog sLogText
+          End // If (dwValue <> 1 ) Begin
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // Else If dwValue ne 1 Begin
+
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+    Move 'CurrentControlSet\Control'                            To sRegPath
+    Move 'FileSystem'                                           To sKey
+    Get_Foreign_Profile_String sRegPath sKey 'DriveWriteBehind' To sRetval
+    If (sRetVal <> "") Begin
+      // ToDo: Add code here to delete the old string value
+      //Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\DriveWriteBehind has a string version setting of'*trim(sRetVal)) to sLogText
+      //Send DoWriteLog sLogText
+      //Get RegDeleteValue hKey sValueToDelete To iVoid
+    End
+    Get External_Profile_Dword sRegPath sKey 'DriveWriteBehind' To dwValue
+    If ((dwValue Eq REG_VALUE_NOT_EXIST) Or (dwValue <> 0)) Begin
+      Move MBR_Yes To iRetval
+      If Not (pbSilentMode(Self)) Begin
+        Move csChangesAreAboutToBeMade To sText
+        Append sText csMakeChanges
+        Get YesNo_Box sText To iRetval
+        If iRetval Eq MBR_No Move 1 To iRetval
+      End // If Not (pbSilentMode(Self)) Begin
+      If iRetval Eq MBR_Yes Begin
+        Set pbSilentMode To True                    // Do this to prevent asking the user again...
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+        Set External_Profile_Dword sRegPath sKey 'DriveWriteBehind' To 0
+        Get External_Profile_Dword sRegPath sKey 'DriveWriteBehind' To dwValue
+        If ((dwValue Eq REG_VALUE_NOT_EXIST) Or (dwValue <> 0)) Move 1 To iCheck4
+        Else Begin
+          Move 2 To iCheck4
+          Move ('HKEY_LOCAL_MACHINE\System\' + sRegPath + '\' + sKey + '\DriveWriteBehind has been set to 00 00 00 00') To sLogText
+          Send DoWriteLog sLogText
+        End // Else Begin
+      End // If iRetval eq MBR_Yes Begin
+    End // If Trim(sValdata3) ne '00 00 00 00' Begin
+    If iRetval Eq MBR_NO Begin
+      Move csChangesWereDisallowed To sText
+      Append sText csProgramWillBeTerminated
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // If iRetval eq MBR_NO Begin
+
+    If iCheck1 Eq 11 Begin
+      Move csConfigSysCouldNotBeOpened To sText
+      Append sText csContactYourSystemAdministrator
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // If iCheck1 eq 11 Begin
+
+    If iCheck1 Eq 33 Begin
+      Move csImportantChangesHaveBeenMadeToYourConfig To sText
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // Else If iCheck1 eq 33 Begin
+
+    If iCheck1 Eq 1 Begin
+      Move csSystemIniCouldNotBeOpened To sText
+      Append sText csContactYourSystemAdministrator
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // If iCheck1 eq 1 Begin
+
+    Else If (iCheck1 = 2 Or iCheck1 = 3) Begin
+      Move csImportantChangesHaveBeenMadeToYourSystem To sText
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // Else If (iCheck1 = 2 OR iCheck1 = 3) Begin
+
+    Else If (iCheck1 = 4) Begin
+      Move csChangesWereDisallowed To sText
+      Append sText csProgramWillBeTerminated
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // Else If (iCheck1 = 2 OR iCheck1 = 3) Begin
+
+    If iCheck2 Begin
+      Move csProgramFailedToLocateVredir To sText
+      Append sText csThisProgramWillNotRunProperlyWithoutIt
+      Append sText csProgramWillBeTerminated
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // If iCheck2 Begin
+
+    If (iCheck3 Or iCheck4) Begin
+      If (iCheck3 = 1 Or iCheck4 = 1) Begin
+        Move csRegistryChangesCouldNotBePerformed To sText
+        Append sText csUserRightsIsProbablyNotSufficient
+        Append sText csContactYourSystemAdministrator
+      End // If (iCheck3 eq 1 OR iCheck4 eq 1) Begin
+      Else If (iCheck3 = 2 Or iCheck4 = 2) Begin
+        Move csRegistryChangesHasBeenMade To sText
+        Append sText csPleaseRestartTheProgram
+      End // Else If (iCheck3 eq 2 OR iCheck4 eq 2) Begin
+      Send DoWriteLog sText
+      Send Stop_Box sText csRegcheckStopBoxCaption
+    End // If (iCheck3 OR iCheck4) Begin
+
+    If (iRetval = MBR_NO Or iCheck1 Or iCheck2 Or iCheck3 Or iCheck4) Begin
+      If iCheck2 Begin
+        // Check if there's a Vrdr2Upd.exe in the WorkSpace Programs directory.
+#IF (FMAC_VERSION > 7)
+
+        // ** 2002-11-26 WvA in the case of VDF8
+        Get psProgramPath Of (phoWorkspace(ghoApplication)) To sProgram
+#ELSE
+
+        // ** 2002-11-26 WvA in the case of VDF7
+        Get CurrentProgramPath Of ghoWorkSpace To sProgram
+#ENDIF
+        If (Right(sProgram, 1)) Ne '\' Append sProgram '\'
+        Append sProgram "Vrdr2upd.exe"
+        File_Exist sProgram iRetval
+        If (Not(iRetval)) Begin
+          Get_Profile_String "Defaults" "VDFRootDir" To sProgram
+          If (Right(sProgram, 1)) Ne '\' Append sProgram '\'
+          Append sProgram "MSREDIR\Vrdr2upd.exe"
+          File_Exist sProgram iRetval
+        End
+        If iRetval Begin // Ok, we found it. Exit this program and run Vrdr2Upd.exe.
+          If Not (pbSilentMode(Self)) Begin
+            Move csAnUpdateToMicrosoftsVirtualNetwork To sText
+            Get YesNo_Box sText To iRetval
+            If iRetval Eq MBR_YES Begin
+              Send DoWriteLog 'Vrdr2upd.exe started.'
+              Runprogram sProgram // Note: This aborts the program!
+            End
+          End // If Not (pbSilentMode(Self)) Begin
+          Else Begin
+            Send DoWriteLog 'Vrdr2upd.exe run.'
+            Runprogram sProgram
+          End // Else Begin.
+        End // [Not Seqeof] Begin
+      End // If iCheck2 Begin
+      Abort // Quit the application.
+    End // If (iRetval eq MBR_NO OR iCheck1 OR iCheck2 OR iCheck3 OR iCheck4) Begin
+
+  End_Procedure // DoCheckWindows95ClientSettings
+
+  // Write changes to registry et. al. to a log file, which is
+  // either a .txt file or database file depending on the object
+  // used at the bottom of this code. Default = Log to RegCheck.txt
+  Procedure DoWriteLog String sText
+    String sUser sComputerName
+    Integer ho bAnsiState
+
+    Get phoLogObject To ho
+    If Not ho Procedure_Return // No log object defined. Do NOT log.
+    Get pbAnsiState  Of ho To bAnsiState
+    Get psComputerName To sComputerName          // Public property of this class.
+    Insert ('Machine Name: ' + sComputerName + " - Text: ") In sText At 1
+    Get psUserLoginName To sUser                 // Public property of this class.
+    Insert ('User Name: ' + sUser + " - ") In sText At 1
+    Move (Replaces("\n", sText, " ")) To sText
+    If bAnsiState ;
+      Send Log_Status To (phoLogObject(Self)) (ToAnsi(sText))
+    Else ;
+      Send Log_Status To (phoLogObject(Self)) sText
+  End_Procedure // DoWriteLog
+
+  // This is the main procedure that checks which Windows version is running
+  // and calls the appropiate procedure above.
+  // Note: The custom command xShowln can be found at the top of this package.
+  //       Uncomment the line #REPLACE DEBUG$$MODE ON to help debug this code.
+  Procedure DoCheckCurrentClient
+    Integer dwNovell dwValue iRetval iCount
+    Integer iMajorVersion  iMinorVersion  iPlatFormId  iProductType
+    String sKey sValueName sRetval sUser sRegPath sDriverName sText sCSDVersion
+
+    // ********* DBMS DRIVERS CHECKING *************
+    Get_Attribute DF_NUMBER_DRIVERS To iRetval     // Check that only 'DATAFLEX' is loaded as DBMS driver.
+    For iCount From 1 To iRetval
+      Get_Attribute DF_DRIVER_NAME Of iCount To sDriverName
+      xShowln sDriverName ' DBMS driver is loaded'
+    Loop // For i From 1 To iRetval
+    xShowln 'Number of DBMS driver(s) loaded = ' iRetval
+    If ((iRetval <> 1) And (Not (pbDriverBruteForce (Self)))) Begin
+      xShowln "Another driver in addition to the DATAFLEX DBMS driver is loaded and"
+      xShowln "NO checking of this machines registry settings has been done."
+      xShowln "Note: The driver(s) might have been loaded automatically by"
+      xShowln "entries in your DFini.cfg in the VDFx\USR or VDFx\BIN folder (where x is a number between 5 and 12)"
+      Procedure_Return // We're out of here.
+    End // If (Uppercase(sDriverName) ne 'DATAFLEX') Begin
+
+    // ********** LOGON CHECKING **************
+    Get psUserLoginName To sUser       // Public property of this class set by end_construct_object
+    If (Trim(sUser) > '') Begin
+      xShowln 'User logged on as = ' sUser
+    End // If (Trim(sUser)) > '' Begin
+    Else Begin
+      xShowln 'User _not_ logged on, using DBMS driver = ' sDriverName
+    End // Else Begin
+
+    // ********** SET PUBLIC OS PROPERTIES ******************
+    Indicate Err False
+    Send DoSetOSProperties // Sets 5 info Public properties about the OS.
+    If ((piMajorVersion (Self)) > 4) Begin
+      Indicate Err False
+      Send DoSetOSPropertiesEx // Sets 5 info Public properties about the OS.
+    End
+    //Send DoSetOsVersion
+    //SEND doCheckOsVersion
+
+    If [Err] Begin
+      Move csOSVersionNumberCouldNotRetrieved To sText
+      Append sText csProgramWillBeTerminated
+      Send Stop_Box sText csRegcheckStopBoxCaption // Then this is not a Win95/98 nor a NT version!
+      Abort               // We're out of here!
+    End // [Err] Begin
+    Else Begin
+      Send DoSetOsVersion
+      Send doCheckOsVersion
+    End
+
+    Get piMajorVersion To iMajorVersion
+    Get piMinorVersion To iMinorVersion
+    Get piPlatFormId   To iPlatFormId
+    Get piProductType  To iProductType                                  // PAT
+
+    // *********** NOVELL CLIENT32 INFO ***************
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'Network'
+    Move 'Novell\System Config\Install'                      To sRegPath
+    Move 'Client Version'                                    To sKey
+    Get External_Profile_Dword sRegPath sKey 'Major Version' To dwNovell
+
+    // *********** WINDOWS 95/98 CLIENT ***************
+    If iPlatFormId Eq VER_PLATFORM_WIN32_WINDOWS Begin    // Then Windows 95 or 98...
+      If iMinorVersion      Eq 0 xShowln 'Machine is running Windows 95'
+      Else If iMinorVersion Gt 0 xShowln 'Machine is running Windows 98'
+
+      If dwNovell Eq REG_VALUE_NOT_EXIST Begin    // Netware Client 32 not installed.
+        xShowln 'No Netware Client 32 installed'
+        Send DoCheckWindows95ClientSettings
+        // This is to ensure that data gets written to disk on Win95/98
+        // stand alone machines instead of being cached...
+        Set_Attribute DF_HIGH_DATA_INTEGRITY To 1 // Set it to True.
+        Procedure_Return // We're done.
+      End // If dwValue eq REG_VALUE_NOT_EXIST Begin
+      Else Begin                                  // Netware Client 32 is installed.
+        xShowln 'Netware Client 32 is installed'
+        Get FindNetwareConnection To iRetval
+        If iRetval Begin                          // Yes, Logged on to a Novell server.
+          xShowln 'User logged on to a Novell server'
+          Send DoCheckNetwareClient32Settings     // Then we check Netware 32 settings.
+          Procedure_Return
+        End // If iRetval Begin
+        Else Begin
+          xShowln 'User is _not_ logged onto a Novell Server'
+          Send DoCheckWindows95ClientSettings     // No, not logged on to a Novell server.
+          Procedure_Return // We're done.
+        End // Else Begin
+      End // Else Begin
+    End // If iRetval eq VER_PLATFORM_WIN32_WINDOWS Begin
+
+    // ************ WINDOWS NT CLIENT OR SERVER ************
+    Else If iPlatFormId Eq VER_PLATFORM_WIN32_NT Begin
+      Get psCSDVersion To sCSDVersion
+      xShowln 'Machine is running Windows NT. Version: ' iMajorVersion '.' iMinorVersion ' ' sCSDVersion
+      If ((iMajorVersion=5) And (iMinorVersion=1) ;
+      And  (iProductType=1)) Begin
+        xShowln 'Windows NT. Version: ' iMajorVersion '.' iMinorVersion ' means:  Windows 2000 W/Stn.'
+      End
+      If ((iMajorVersion = 5) And (iMinorVersion=1)) Begin
+        xShowln 'Windows NT. Version: ' iMajorVersion '.' iMinorVersion ' means:  Windows XP'
+      End
+      If ((iMajorVersion=5) And (iMinorVersion=2) ) Begin
+        xShowln 'Windows NT. Version: ' iMajorVersion '.' iMinorVersion ' means:  Windows 2003 Server.'
+      End
+
+      // **WvA: 09-25-2007, Eh what? the logic below fails me, so it 
+      //                is replaced with checking a NT Server property..
+      //If sUser Le '' Begin                                   
+      If (pbNTServer(Self)=false) Begin
+        // User not logged in, then this must be a NT client.
+        xShowln 'Not logged on, this is a NT Client machine'
+        Send DoCheckWindowsNTClientSettings
+        // This is to ensure that data gets written to disk on Win95/98
+        // stand alone machines instead of being cached...
+        Set_Attribute DF_HIGH_DATA_INTEGRITY To 1 // Set it to True.  
+        // ToDo? Does a netware client need to be set?
+        Procedure_Return
+      End // If sUser eq '' Begin
+      Else Begin
+
+        // 
+        Set_Registry_Root To HKEY_LOCAL_MACHINE 'System'
+        //Get External_Profile_Dword 'CurrentControlSet\Services\LanmanServer' 'Parameters' 'EnableOplockForceClose' ;
+        //  To dwValue
+        //If dwValue Ne REG_VALUE_NOT_EXIST Begin   // Then NT Server...
+          xShowln 'This is a NT Server'
+          Send DoCheckWindowsNTServerSettings
+          //Send DoCheckWindowsNTClientSettings   // Should we do this as well??? (In case client is used for both)
+        //Procedure_Return
+        //End // If dwValue ne REG_VALUE_NOT_EXIST Begin
+        //Else Begin                                // ...else NT Client.
+          If dwNovell Eq REG_VALUE_NOT_EXIST Begin    // Netware Client 32 not installed.
+            Send DoCheckWindowsNTClientSettings
+            xShowln 'NT Client with no Netware Client 32 installed'
+            Procedure_Return // We're done.
+          End // If dwValue eq REG_VALUE_NOT_EXIST Begin
+          Else Begin
+            xShowln 'This is an NT Client machine that has a Netware Client 32 installed.'
+            Get FindNetwareConnection To iRetval
+            If iRetval Begin                          // Yes, Logged on to a Novell server.
+              xShowln 'User logged on to a Novell server'
+              Send DoCheckNetwareClient32Settings     // Then we check Netware 32 settings as well.
+              Procedure_Return
+            End // If iRetval Begin
+            Else Send DoCheckWindowsNTClientSettings
+          End // Else Begin
+        //End // Else Begin (NT client)
+      End // Else Begin (pbNTServer(Self)=false)
+    End // Else if iRetval eq VER_PLATFORM_WIN32_NT Begin
+
+    Procedure_Return
+  End_Procedure // DoCheckCurrentClient
+
+  Procedure End_Construct_Object
+    Forward Send End_Construct_Object
+    Set psComputerName  To (NetBiosComputerName(Self))
+    Set psUserLoginName To (GetUserLoginName(Self))
+    Send DoCheckCurrentClient                           // Start checking (main procedure)
+    Set_Registry_Root To HKEY_LOCAL_MACHINE 'SOFTWARE'  // We must reset this!
+  End_Procedure // End_Construct_Object
+
+End_Class // cRegCheck
+
+Use StatAlog.pkg  // Standard package to log to an Ascii file.
+// Log_Name is the name of the Ascii file.
+// If this is a WorkSpace aware program, the log file will be
+// placed in the Data directory of the current workspace.
+Object oLogRegCheck Is a StatusAsciiLog
+  Property Integer pbAnsiState 1
+  Set Close_Always_State To True
+
+#IF (FMAC_VERSION > 7)
+
+  // ** 2002-11-26 WvA in the case of VDF8
+  xShowln ((Left ((psDataPath(phoWorkspace(ghoApplication))), (Pos (";", (psDataPath(phoWorkspace(ghoApplication)))) - 1))) + '\RegCheck.log')
+  If (phoWorkspace(ghoApplication)) ;
+    Set Log_Name To ((Left((psDataPath(phoWorkspace(ghoApplication))), (Pos (";", (psDataPath(phoWorkspace(ghoApplication)))) - 1))) + '\RegCheck.log')
+  Else ;
+    Set Log_Name To '.\RegCheck.log'
+#ELSE
+
+  // ** 2002-11-26 WvA in the case of VDF7
+  xShowln ((Left ((CurrentDataPath(ghoWorkSpace)), (Pos (";", (CurrentDataPath(ghoWorkSpace))) - 1))) + '\RegCheck.log')
+  If ghoWorkSpace ;
+    Set Log_Name To ((Left((CurrentDataPath(ghoWorkSpace)), (Pos (";", (CurrentDataPath(ghoWorkSpace))) - 1))) + '\RegCheck.log')
+  Else ;
+    Set Log_Name To '.\RegCheck.log'
+#ENDIF
+End_Object // oLogRegCheck
+
+// ...Or you could use this to log to a database:
+//Use StatFlog.pkg  // Standard package for logging to StatLog.dat.
+//  Property Integer pbAnsiState 0
+// Note: You need to provide the database Statlog.dat yourself.
+//       (Hint: There is one in one of the Example directories)
+//       ...and you need to change the field lenght considerably.
+//Object oLogRegCheck is a StatusdbLog
+   // For Augmentation Only. This is called when a new record is about
+   // to be saved. You can make any changes, set new field values, etc.
+//   Procedure OnNewRecord
+//   End_Procedure
+//End_Object // oLogRegCheck
+
+// MAIN REGISTRY CHECKING OBJECT:
+Object oRegCheck Is a cRegCheck
+  Set pbSilentMode             To False       // Set True to NOT ask user before changing the registry.
+  Set pbNTRegistryBackup       To False       // Make backup of the NT registry after a change?
+  Set pbDoNTRegistryChanges    To True        // Set True to try making registry changes on NT machines.
+  Set phoLogObject To (oLogRegCheck(Self)) // Set this to the log object if you want to log to a file.
+  Set pbDriverBruteForce       To True        // Do perform checking if other drivers than DataFlex loaded.
+  Set piFiles                  To 200         // Number of Files in Config.sys for client not running Client32.
+
+  //
+  // Set what you think is your configuration
+  //
+  Set piRunOnWindows95         To cx_Run_Do_Not_Run
+  Set piRunOnWindows9X         To cx_Run_Normal
+  Set piRunOnWindowsNT40       To cx_Run_Normal
+  Set piRunOnWindowsNT2k       To cx_Run_Normal
+  Set piRunOnWindowsNTXP       To cx_Run_Normal
+  Set piRunOnWindowsNET        To cx_Run_Normal
+  Set piRunOnWindowsVista      To cx_Run_Normal
+  Set piRunOnHomeVersion       To cx_Run_Normal
+  Set piRunOnServerVersion     To cx_Run_Normal
+  Set piRunOnUnknownVersion    To cx_Run_With_Warning
+
+  Set piMinNT40_ServicePack    To 6
+  Set piMinNT2K_ServicePack    To 1
+  Set piMinXP_ServicePack      To 0
+  Set piMinNET_ServicePack     To 0
+  Set piMinVista_ServicePack   To 0
+End_Object // oRegCheck                    // You can remark piFiles or set it to 0 to not perform test of Config.sys
+// End-Of-File.

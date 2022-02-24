@@ -1,0 +1,5 @@
+#REPLACE FILE45 Ref_Hdr
+#REPLACE Ref_Hdr.Recnum |FN45,0
+#REPLACE Ref_Hdr.Ref_Hdr_Idno |FN45,1
+#REPLACE Ref_Hdr.Description |FS45,2
+#REPLACE Ref_Hdr.SalesRep |FS45,3

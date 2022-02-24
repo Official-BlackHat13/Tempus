@@ -1,0 +1,63 @@
+// Class Name: Esvars_DataDictionary
+// Revision  : 5
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Esvars
+Open Jcoper
+
+
+Class Esvars_DataDictionary is a cGlblDataDictionary
+
+    Function Validate_Save  Returns Integer
+        Local Integer iReturnVal
+        Forward Get Validate_Save  To iReturnVal
+        If (Not(iReturnVal)) Begin
+            // Insert Code Here
+            if (Esvars.Input_Type=3 and Esvars.Itemnum<=0) error 900 "Sequence # must be greater than zero."
+        End
+        Function_Return iReturnVal
+    End_Function   // Validate_Save
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Main_File To Esvars.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Jcoper.File_Number
+
+        // Field-based properties.......................
+
+
+        Set Field_Option Field Esvars.Varnum DD_NOENTER to True
+
+
+        Set Field_Class_Name Field Esvars.Decimals To "cPtDbSpinForm"
+        Set Field_Value_Range Field Esvars.Decimals To 0 4
+        Set Status_Help Field Esvars.Decimals To "Specifies decimal places for display and input restriction"
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Esvars.Spin_Increment To 1
+    End_Procedure    // Field_Defaults
+
+End_Class    // Esvars_DataDictionary

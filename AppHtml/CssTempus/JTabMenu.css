@@ -1,0 +1,71 @@
+
+/*--------------------------
+    TABMENU STYLE
+---------------------------*/
+
+.JTabMenu .Header{
+    float:left;
+    width:100%;
+    background-color: white;
+    background: url("../Images/TabMenu/TabBackground.gif") repeat-x bottom;
+    font-size:93%;
+    line-height:normal;
+}
+
+.JTabMenu .Header ul {
+    margin:0;
+    padding:10px 10px 0;
+    list-style:none;
+}
+
+.JTabMenu .Header li {
+    float:left;
+    background:url("../Images/TabMenu/TabInactiveLeft.gif") no-repeat left top;
+    margin:0;
+    padding:0 0 0 9px;
+}
+
+.JTabMenu .Header span {
+    float:left;
+    display:block;
+    background:url("../Images/TabMenu/TabInactiveRight.gif") no-repeat right top;
+    padding:5px 15px 4px 6px;
+    text-decoration:none;
+    font-weight:normal;
+    color:#fff;
+    cursor:pointer;
+    }
+    /* Commented Backslash Hack
+    hides rule from IE5-Mac &*/
+    .JTabMenu .Header span {float:none;}
+    /* End IE5-Mac hack */
+
+.JTabMenu .Header .Current {
+    background-image:url("../Images/TabMenu/TabActiveLeft.gif");
+    }
+
+.JTabMenu .Header .Current  span {
+    background-image:url("../Images/TabMenu/TabActiveRight.gif");
+    padding-bottom:5px;
+    color: #53A6CC;
+    }
+
+.JTabMenu .Content	{
+    margin: 5px;
+	background: white;
+    }
+
+.JTabMenu {
+    width: 100%;
+    margin-bottom: 10px;
+    border-collapse: collapse;
+	background: white;
+    }
+
+.JTabMenu .ContentContainer	{
+    border: 1px solid #ddd ;
+    border-top: 0;
+    padding: 10px;
+    padding-bottom:0px;
+    vertical-align: top;
+    }

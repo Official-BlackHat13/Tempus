@@ -1,0 +1,55 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Snowrep (# 34)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : DATAFLEX
+  FILE ROOT NAME            : salesrep.dat
+  USER DISPLAY NAME         : Snow sales reps
+  DATAFLEX FILE NAME        : Snowrep
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 896       ( USED: 843 )
+  MAX NUMBER OF RECORDS     : 10000     ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : FILE
+  HEADER INTEGRITY CHECKING : YES
+  TRANSACTION TYPE          : CLIENT ATOMIC
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : 
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  RepIdno          NUM    8.0     1  1   
+  2  LastName         ASC     30     5  2   
+  3  FirstName        ASC     30    35  2   
+  4  Address1         ASC     50    65      
+  5  Address2         ASC     50   115      
+  6  City             ASC     35   165      
+  7  State            ASC      2   200      
+  8  Zip              ASC     10   202      
+  9  Phone1           ASC     14   212      
+ 10  PhoneType1       ASC      1   226      
+ 11  Phone2           ASC     14   227      
+ 12  PhoneType2       ASC      1   241      
+ 13  Phone3           ASC     14   242      
+ 14  PhoneType3       ASC      1   256      
+ 15  EmailAddress     ASC     50   257      
+ 16  PhoneExt1        ASC      6   307      
+ 17  PhoneExt2        ASC      6   313      
+ 18  PhoneExt3        ASC      6   319      
+ 19  Status           ASC      1   325      
+ 20  Initials         ASC      5   326      
+ 21  InvMessage       TEX    512   331      
+ 22  ComissionFlag    ASC      1   843      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    RepIdno         NO  NO       4      2       1     ON-LINE
+
+  2    LastName        NO  NO       64     5       3     ON-LINE
+       FirstName       NO  NO 
+       RepIdno         NO  NO 
+

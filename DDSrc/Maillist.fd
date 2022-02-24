@@ -1,0 +1,5 @@
+#REPLACE FILE27 Maillist
+#REPLACE Maillist.Recnum |FN27,0
+#REPLACE Maillist.ListCode |FS27,1
+#REPLACE Maillist.Description |FS27,2
+#REPLACE Maillist.AutoCreateFlag |FN27,3

@@ -1,0 +1,55 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Weblog (# 21)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:WEBLOG
+  USER DISPLAY NAME         : Weblog
+  DATAFLEX FILE NAME        : Weblog
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 144       ( USED: 144 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 12 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  WeblogIdno       NUM   10.0     1  1   
+  2  HitDate          DAT     10    12  2   
+  3  HitHr            NUM    5.0    35  2   
+  4  HitMin           NUM    5.0    41  2   
+  5  HitSec           NUM    5.0    47  2   
+  6  Success          NUM    5.0    53  2   
+  7  EmployeeIdno     NUM   10.0    59  2   
+  8  PIN              NUM    5.0    70      
+  9  TransType        NUM    5.0    76      
+ 10  JobNumber1       ASC      8    82      
+ 11  EquipmentIdno    ASC      8    90      
+ 12  JobNumber2       ASC      8    98      
+ 13  MaterialIdno     ASC      8   106      
+ 14  MaterialQty      ASC      8   114      
+ 15  CallerId         ASC     12   122  3   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    WeblogIdno      NO  NO       0      0       1     ON-LINE
+
+  2    EmployeeIdno    NO  NO       0      0       7     ON-LINE
+       HitDate         NO  NO 
+       HitHr           NO  NO 
+       HitMin          NO  NO 
+       HitSec          NO  NO 
+       Success         NO  NO 
+       WeblogIdno      NO  NO 
+
+  3    CallerId        NO  NO       0      0       2     ON-LINE
+       WeblogIdno      NO  NO 
+

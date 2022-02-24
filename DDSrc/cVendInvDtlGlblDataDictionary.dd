@@ -1,0 +1,129 @@
+Use cGlblDataDictionary.pkg
+
+Open VendInvDtl
+Open VendInvHdr
+Open System
+
+Register_Function TimeValidation Integer iField String sTime Returns Integer
+
+Class cVendInvDtlGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to VendInvDtl.File_Number
+
+        Set Add_Server_File to VendInvHdr.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+        
+        Set Field_Auto_Increment Field VendInvDtl.VendInvDtlIdno to File_Field System.LastVenInvDtlIdno
+
+        Set Field_Validate_msg Field VendInvDtl.StartTme to get_TimeValidation
+
+        Set Field_Validate_msg Field VendInvDtl.StopTime to get_TimeValidation
+
+        Set Field_Mask_Type Field VendInvDtl.Rate to Mask_Currency_Window
+        Set Field_Mask Field VendInvDtl.Rate to "$ *0.00"
+
+        Set Field_Mask_Type Field VendInvDtl.TaxAmount to Mask_Currency_Window
+        Set Field_Mask Field VendInvDtl.TaxAmount to "$ *0.00"
+
+        Set Field_Mask_Type Field VendInvDtl.Total to Mask_Currency_Window
+        Set Field_Mask Field VendInvDtl.Total to "$ *0.00"
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        Add VendInvDtl.TaxAmount        to VendInvHdr.TaxTotal
+        Add VendInvDtl.Total            to VendInvHdr.TotalAmount
+    End_Procedure
+
+    Procedure Backout
+        Forward Send Backout
+        Subtract VendInvDtl.TaxAmount   from VendInvHdr.TaxTotal
+        Subtract VendInvDtl.Total       from VendInvHdr.TotalAmount
+    End_Procedure
+
+    // IsTimeValid
+    Function IsTimeValid String ByRef sTime Integer ByRef iHr Integer ByRef iMin Returns Boolean
+        Integer iLength
+        String  sHr sMin
+        //
+        Move (Trim(sTime))   to sTime
+        Move (length(sTime)) to iLength
+        If (iLength < 1 or iLength > 5) Begin
+            Function_Return True
+        End
+        //
+        If (iLength < 3) Begin
+            Move sTime to iHr
+        End
+        Else Begin
+            Move     (right(sTime,2)) to iMin
+            If (iLength = 3) Begin
+                Move (left (sTime,1)) to iHr
+            End
+            Else Begin
+                Move (left (sTime,2)) to iHr
+            End
+        End
+        //
+        If (iHr > 23 or iMin > 59) Begin
+            Function_Return True
+        End
+        //
+        Move iHr                       to sHr
+        If (length(sHr) = 1) Begin
+            Move ("0" + sHr )          to sHr
+        End
+        Move iMin                      to sMin
+        If (length(sMin) = 1) Begin
+            Move ("0" + sMin)          to sMin
+        End
+        Move (sHr + ":" + sMin)        to sTime
+    End_Function  // IsTimeValid
+    
+    Function TimeValidation Integer iField String sTime Returns Integer
+        Boolean bError
+        Integer iHr iMin
+        //
+        If (OPERATION_MODE <> MODE_WAITING) Function_Return
+        //
+            If (sTime <> "") Begin
+            Get IsTimeValid (&sTime) (&iHr) (&iMin)           to bError
+            If (not(bError)) Begin
+                Set Field_Changed_Value iField                to sTime
+            End
+        End
+        Function_Return bError
+    End_Function
+
+    Function QuantityValidation Integer iField Number nQuantity Returns Integer
+        Boolean bState
+        Number  nPrice
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field VendInvDtl.Rate to nPrice
+            Set Field_Changed_Value Field VendInvDtl.Total to (nQuantity * nPrice)
+        End
+    End_Function   // QuantityValidation
+    
+    Function PriceValidation Integer iField Number nPrice Returns Integer
+        Boolean bState
+        Number  nQuantity
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field VendInvDtl.Quantity   to nQuantity
+            Set Field_Changed_Value Field VendInvDtl.Total      to (nQuantity * nPrice)
+        End
+    End_Function   // PriceValidation
+
+End_Class

@@ -1,0 +1,36 @@
+Use cGlblDataDictionary.pkg
+
+Open Areanote
+Open Areas
+Open System
+
+Class cAreanoteDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Areanote.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Areas.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Areanote.AreanoteId to File_Field System.AreanoteId
+
+    End_Procedure
+
+    Procedure Field_Defaults
+        Date dToday
+        //
+        Sysdate dToday
+        //
+        Forward Send Field_Defaults
+        //
+        Set Field_Changed_Value Field Areanote.Notedate to dToday
+    End_Procedure
+
+End_Class

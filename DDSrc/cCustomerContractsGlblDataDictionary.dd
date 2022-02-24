@@ -1,0 +1,70 @@
+Use cGlblDataDictionary.pkg
+
+Open CustomerContracts
+Open System
+Open Customer
+Open Attachments
+
+Register_Object CustomerContracts_sl
+
+Class cCustomerContractsGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to CustomerContracts.File_Number
+
+        Set ParentNoSwitchIfCommitted Customer.File_Number to True
+
+        Set ParentNullAllowed Attachments.File_Number to True
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field CustomerContracts.ContractIdno to File_Field System.LastCustomerContractIdno
+        Set Field_Prompt_Object Field CustomerContracts.ContractIdno to CustomerContracts_sl
+        Set Key_Field_State Field CustomerContracts.ContractIdno to True
+
+        Set Field_Prompt_Object Field CustomerContracts.DisplayName to CustomerContracts_sl
+
+        Set Field_Prompt_Object Field CustomerContracts.StartDate to CustomerContracts_sl
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1                 to CustomerContracts.ChangedFlag
+        End
+        
+    End_Procedure
+
+    Function Validate_Cascade_Delete Returns Boolean
+        Boolean bRetVal
+        Forward Get Validate_Cascade_Delete to bRetVal
+        Move (CustomerContracts.AssignedCount<>0) to bRetVal
+        Function_Return bRetVal
+    End_Function
+
+    Function Validate_Delete Returns Integer
+        Integer iRetVal
+        Forward Get Validate_Delete to iRetVal
+        If (not(iRetVal)) Begin
+            Move (CustomerContracts.AssignedCount<>0) to iRetVal
+            If (iRetVal) Begin 
+                Send UserError ("This contract is assigned to an Order and cannot be removed.") "Deleting not allowed."
+            End
+        End
+        Function_Return iRetVal
+    End_Function
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use CustomerContracts.sl
+#ENDIF

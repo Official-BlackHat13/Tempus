@@ -1,0 +1,37 @@
+Use cGlblDataDictionary.pkg
+
+Open CO_Head
+Open CO_DTL
+Open Order
+Open System
+
+Register_Object CO_Head_sl
+
+Class cCO_HeadGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to CO_Head.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Order.File_Number
+
+        Set Add_Client_File to CO_DTL.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field CO_Head.CO_Head_ID to File_Field System.CO_Head
+        Set Field_Prompt_Object Field CO_Head.CO_Head_ID to CO_Head_sl
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use CO_Head.sl
+#ENDIF

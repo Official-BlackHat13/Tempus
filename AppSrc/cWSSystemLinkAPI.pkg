@@ -1,0 +1,259 @@
+// cWSSystemLinkAPI.pkg
+// Class:   cWSSystemLinkAPI
+// Created: 1/22/2020 1:10:06.382 PM
+// 
+
+Use cClientWebService.pkg
+
+// 
+// Class:   cWSSystemLinkAPI
+// 
+// Interface:
+// 
+// Function wsCreateTimeTransaction String llsEmployeeNumber String llsJobNumber String llsEquipNumber String llsPhone String llsGPSLat String llsGPSLong String llsAttachIdno String BYREF llsErrorMsg Returns Boolean
+// Function wsCreateMaterialTransaction String llsEmployeeNumber String llsJobNumber String llsEquipNumber String llsMatQty String llsPhone String llsGPSLat String llsGPSLong String BYREF llsErrorMsg Returns Boolean
+// Function wsEndShiftTransaction String llsEmployeeIdno String llsPhone String llsGPSLat String llsGPSLong String BYREF llsErrorMsg Returns Boolean
+// 
+// 
+
+Class cWSSystemLinkAPI is a cClientWebService
+
+    Procedure Construct_object
+        Forward send Construct_object
+        Set psServiceLocation     to 'https://tempus.interstatepm.com/tempusfield/SystemLinkAPI.wso'
+        Set psWSDLLocation        to 'https://tempus.interstatepm.com/tempusfield/SystemLinkAPI.wso?WSDL'
+    End_Procedure
+
+    // 
+    // Function wsCreateTimeTransaction
+    // 
+    // Use for time transaction initiated by Time Clock or CEPMs Tempus
+    // 
+    Function wsCreateTimeTransaction String llsEmployeeNumber String llsJobNumber String llsEquipNumber String llsPhone String llsGPSLat String llsGPSLong String llsAttachIdno String BYREF llsErrorMsg Returns Boolean
+        Boolean llCreateTimeTransactionResult
+        String llsErrorMsgEmpty
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "CreateTimeTransaction"
+        Set pbRequestBare          to false
+        Set pbRequestOnly          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "CreateTimeTransactionResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineParameter xsString 1 1 "sEmployeeNumber" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter llsEmployeeNumber to spParameters[0].ValueTree
+
+        // Parameter 1
+        Get DefineParameter xsString 1 1 "sJobNumber" "http://tempuri.org/" to spParameters[1].SoapParamDef 
+        ValueTreeSerializeParameter llsJobNumber to spParameters[1].ValueTree
+
+        // Parameter 2
+        Get DefineParameter xsString 1 1 "sEquipNumber" "http://tempuri.org/" to spParameters[2].SoapParamDef 
+        ValueTreeSerializeParameter llsEquipNumber to spParameters[2].ValueTree
+
+        // Parameter 3
+        Get DefineParameter xsString 1 1 "sPhone" "http://tempuri.org/" to spParameters[3].SoapParamDef 
+        ValueTreeSerializeParameter llsPhone to spParameters[3].ValueTree
+
+        // Parameter 4
+        Get DefineParameter xsString 1 1 "sGPSLat" "http://tempuri.org/" to spParameters[4].SoapParamDef 
+        ValueTreeSerializeParameter llsGPSLat to spParameters[4].ValueTree
+
+        // Parameter 5
+        Get DefineParameter xsString 1 1 "sGPSLong" "http://tempuri.org/" to spParameters[5].SoapParamDef 
+        ValueTreeSerializeParameter llsGPSLong to spParameters[5].ValueTree
+
+        // Parameter 6
+        Get DefineParameter xsString 1 1 "sAttachIdno" "http://tempuri.org/" to spParameters[6].SoapParamDef 
+        ValueTreeSerializeParameter llsAttachIdno to spParameters[6].ValueTree
+
+        // Parameter 7
+        Get DefineParameter xsString 1 1 "sErrorMsg" "http://tempuri.org/" to spParameters[7].SoapParamDef 
+        ValueTreeSerializeParameter llsErrorMsg to spParameters[7].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineParameter xsBoolean 1 1 "CreateTimeTransactionResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        // Return Parameter - Returned BYREF (in/out)
+        Get DefineParameter xsString 1 1 "sErrorMsg" "http://tempuri.org/" to spReturnParameters[1].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llCreateTimeTransactionResult
+            Move llsErrorMsgEmpty to llsErrorMsg
+            ValueTreeDeserializeParameter spReturnParameters[1].ValueTree to llsErrorMsg
+        End
+        Else Begin
+            Send LastError
+        End
+
+        Function_return llCreateTimeTransactionResult
+    End_Function
+
+    // 
+    // Function wsCreateMaterialTransaction
+    // 
+    // Use for material transaction initiated by Time Clock or CEPMs Tempus
+    // 
+    Function wsCreateMaterialTransaction String llsEmployeeNumber String llsJobNumber String llsEquipNumber String llsMatQty String llsPhone String llsGPSLat String llsGPSLong String BYREF llsErrorMsg Returns Boolean
+        Boolean llCreateMaterialTransactionResult
+        String llsErrorMsgEmpty
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "CreateMaterialTransaction"
+        Set pbRequestBare          to false
+        Set pbRequestOnly          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "CreateMaterialTransactionResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineParameter xsString 1 1 "sEmployeeNumber" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter llsEmployeeNumber to spParameters[0].ValueTree
+
+        // Parameter 1
+        Get DefineParameter xsString 1 1 "sJobNumber" "http://tempuri.org/" to spParameters[1].SoapParamDef 
+        ValueTreeSerializeParameter llsJobNumber to spParameters[1].ValueTree
+
+        // Parameter 2
+        Get DefineParameter xsString 1 1 "sEquipNumber" "http://tempuri.org/" to spParameters[2].SoapParamDef 
+        ValueTreeSerializeParameter llsEquipNumber to spParameters[2].ValueTree
+
+        // Parameter 3
+        Get DefineParameter xsString 1 1 "sMatQty" "http://tempuri.org/" to spParameters[3].SoapParamDef 
+        ValueTreeSerializeParameter llsMatQty to spParameters[3].ValueTree
+
+        // Parameter 4
+        Get DefineParameter xsString 1 1 "sPhone" "http://tempuri.org/" to spParameters[4].SoapParamDef 
+        ValueTreeSerializeParameter llsPhone to spParameters[4].ValueTree
+
+        // Parameter 5
+        Get DefineParameter xsString 1 1 "sGPSLat" "http://tempuri.org/" to spParameters[5].SoapParamDef 
+        ValueTreeSerializeParameter llsGPSLat to spParameters[5].ValueTree
+
+        // Parameter 6
+        Get DefineParameter xsString 1 1 "sGPSLong" "http://tempuri.org/" to spParameters[6].SoapParamDef 
+        ValueTreeSerializeParameter llsGPSLong to spParameters[6].ValueTree
+
+        // Parameter 7
+        Get DefineParameter xsString 1 1 "sErrorMsg" "http://tempuri.org/" to spParameters[7].SoapParamDef 
+        ValueTreeSerializeParameter llsErrorMsg to spParameters[7].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineParameter xsBoolean 1 1 "CreateMaterialTransactionResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        // Return Parameter - Returned BYREF (in/out)
+        Get DefineParameter xsString 1 1 "sErrorMsg" "http://tempuri.org/" to spReturnParameters[1].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llCreateMaterialTransactionResult
+            Move llsErrorMsgEmpty to llsErrorMsg
+            ValueTreeDeserializeParameter spReturnParameters[1].ValueTree to llsErrorMsg
+        End
+        Else Begin
+            Send LastError
+        End
+
+        Function_return llCreateMaterialTransactionResult
+    End_Function
+
+    // 
+    // Function wsEndShiftTransaction
+    // 
+    // Use to end shift transaction initiated by Time Clock or CEPMs Tempus
+    // 
+    Function wsEndShiftTransaction String llsEmployeeIdno String llsPhone String llsGPSLat String llsGPSLong String BYREF llsErrorMsg Returns Boolean
+        Boolean llEndShiftTransactionResult
+        String llsErrorMsgEmpty
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "EndShiftTransaction"
+        Set pbRequestBare          to false
+        Set pbRequestOnly          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "EndShiftTransactionResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineParameter xsString 1 1 "sEmployeeIdno" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter llsEmployeeIdno to spParameters[0].ValueTree
+
+        // Parameter 1
+        Get DefineParameter xsString 1 1 "sPhone" "http://tempuri.org/" to spParameters[1].SoapParamDef 
+        ValueTreeSerializeParameter llsPhone to spParameters[1].ValueTree
+
+        // Parameter 2
+        Get DefineParameter xsString 1 1 "sGPSLat" "http://tempuri.org/" to spParameters[2].SoapParamDef 
+        ValueTreeSerializeParameter llsGPSLat to spParameters[2].ValueTree
+
+        // Parameter 3
+        Get DefineParameter xsString 1 1 "sGPSLong" "http://tempuri.org/" to spParameters[3].SoapParamDef 
+        ValueTreeSerializeParameter llsGPSLong to spParameters[3].ValueTree
+
+        // Parameter 4
+        Get DefineParameter xsString 1 1 "sErrorMsg" "http://tempuri.org/" to spParameters[4].SoapParamDef 
+        ValueTreeSerializeParameter llsErrorMsg to spParameters[4].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineParameter xsBoolean 1 1 "EndShiftTransactionResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        // Return Parameter - Returned BYREF (in/out)
+        Get DefineParameter xsString 1 1 "sErrorMsg" "http://tempuri.org/" to spReturnParameters[1].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llEndShiftTransactionResult
+            Move llsErrorMsgEmpty to llsErrorMsg
+            ValueTreeDeserializeParameter spReturnParameters[1].ValueTree to llsErrorMsg
+        End
+        Else Begin
+            Send LastError
+        End
+
+        Function_return llEndShiftTransactionResult
+    End_Function
+
+End_Class
+

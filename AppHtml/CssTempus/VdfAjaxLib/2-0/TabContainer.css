@@ -1,0 +1,75 @@
+/*
+The style definitions for the tabcontainer.
+
+Component:
+   vdf.gui.TabContainer
+*/
+
+.tabcontainer{
+   width: 100%;
+}
+
+/*
+   HEADER
+*/
+.tabcontainer .header{
+   height: 36px;
+   background: url(TabContainer/header_background.gif) repeat-x bottom;
+}
+
+.tabcontainer .header ul{
+   list-style: none;
+   padding: 0px 0px 0px 0px;
+   margin: 0px 0px 0px 0px;
+   float: left;
+}
+
+/*
+   Buttons
+*/
+.tabcontainer .header li{
+   float: left;
+   margin: 0px 0px 0px 0px;
+   padding: 0px 0px 0px 4px;
+   background: url(TabContainer/tab_left.gif) no-repeat bottom left;
+   text-align: center;
+}
+
+.tabcontainer .header a:focus{
+   text-decoration: underline;
+}
+
+.tabcontainer .header li.active{
+   background: url(TabContainer/tab_active_left.gif) no-repeat bottom left;
+}
+
+.tabcontainer .header li a, .tabcontainer .header li a:hover, .tabcontainer .header li span{
+   display: block;
+   background: url(TabContainer/tab_background.gif) no-repeat right bottom;
+   padding: 20px 10px 8px 3px;
+   color: white;
+   text-align: center;
+   min-width: 80px;
+   cursor: pointer;
+}
+
+.tabcontainer .header li.active a, .tabcontainer .header li.active a:hover, .tabcontainer .header li.active span{
+   background: url(TabContainer/tab_active_background.gif) no-repeat right bottom;
+}
+
+/*
+   Container
+*/
+.tabcontainer .container{
+    border: 1px solid #878787;
+    border-top: 0px;
+    vertical-align: top;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+}
+
+.tabcontainer .container div.tabcontent{
+   visibility: none;
+   padding: 10px;
+   margin: 0px 0px 0px 0px;
+}

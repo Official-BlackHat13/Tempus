@@ -1,0 +1,850 @@
+Use Batchdd.pkg
+Use for_all.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use Invhdr.DD
+Use MastOps.DD
+Use Opers.DD
+Use Invdtl.DD
+Use SalesRep.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cOrderDtlGlblDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+Use TransactionCostCalculator.bp
+
+Use POInpusModalDialog.dg
+Use UserMultiSelectionDialog.dg
+Use UserInputDialog.dg
+
+Use Functions.pkg
+
+Open Trans
+Open SalesTaxGroup
+
+
+Object oInvoiceCreationProcess is a BusinessProcess
+
+    Property Integer piStart
+    Property Integer piStop
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrderDtl_DD is a cOrderDtlGlblDataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Object oInvhdr_DD is a Invhdr_DataDictionary
+        Set DDO_Server to oOrder_DD
+        Send DefineAllExtendedFields
+    End_Object
+
+    Object oInvdtl_DD is a Invdtl_DataDictionary
+        Set Constrain_file to Invhdr.File_number
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oInvhdr_DD
+        Send DefineAllExtendedFields
+        Set ParentNullAllowed Opers.File_Number to True
+    End_Object
+
+    Set Main_DD to oInvdtl_DD
+    Set Display_Error_State to True
+
+    Procedure OnProcess
+        Integer iStart iStop hoDD iCount
+        //
+        Get piStart to iStart
+        Get piStop  to iStop
+        //
+        Set Main_DD             to oInvhdr_DD
+        Move oInvhdr_DD         to hoDD
+        //
+        Send Clear of hoDD
+        Move iStart to Invhdr.InvoiceIdno
+        Send Find  of hoDD EQ 1
+        While ((Found) and Invhdr.InvoiceIdno >= iStart and Invhdr.InvoiceIdno <= iStop)
+            Send Update_Status Invhdr.InvoiceIdno
+            Get Field_Current_Value of hoDD Field Invhdr.PrintCount to iCount
+            Increment iCount
+            Set Field_Changed_Value of hoDD Field Invhdr.PrintCount to iCount
+            Send Request_Save       of hoDD
+            Send Find               of hoDD GT 1
+        Loop
+    End_Procedure
+
+    Function DoVoidInvoice Integer iInvId Returns Boolean
+        Boolean bSuccess
+        Boolean bCancel
+        Integer iCountforme
+        //
+        Clear Invhdr
+        Move iInvId to Invhdr.InvoiceIdno
+        Find EQ Invhdr.InvoiceIdno
+        If (Found and Invhdr.InvoiceIdno = iInvId) Begin
+            Relate Invhdr
+            Get Confirm ("Void invoice number" * String(iInvId) + "?")     to bCancel
+            If (not(bCancel)) Begin
+                If (Invhdr.CreatedDate < "12/26/2013") Begin
+                    // free the Trans records to be invoiced later
+                    Clear Invhdr
+                    Move iInvId to Invdtl.InvoiceIdno
+                    Find GE Invdtl by Index.2
+                    While ((Found) and Invdtl.InvoiceIdno = iInvId)
+                        Clear Trans
+                        Move Invdtl.TransIdno to Trans.TransIdno
+                        Find EQ Trans by Index.1
+                        If (Found) Begin
+                            Reread Trans
+                            Move 0 to Trans.InvoicedFlag
+                            Move 0 to Trans.InvoiceDate
+                            SaveRecord Trans
+                            Unlock
+                        End
+                        Find gt Invdtl.InvoiceIdno
+                    Loop
+                End
+                Else Begin
+                    // free the Trans records based on the Trans.InvoiceIdno                
+                    Clear Trans
+                    Move iInvId             to Trans.InvoiceIdno
+                    Move "1"                to Trans.InvoicedFlag
+                    Find GE Trans by Index.11
+                    While ((Found) and Trans.InvoiceIdno = iInvId and Trans.InvoicedFlag = "1")                   
+                        Reread Trans
+                        Move 0 to Trans.InvoiceIdno
+                        Move 0 to Trans.InvoicedFlag
+                        Move 0 to Trans.InvoiceDate
+                        SaveRecord Trans
+                        Unlock
+                        Move iInvId to Trans.InvoiceIdno
+                        Move "1"    to Trans.InvoicedFlag
+                        Find GT Trans by Index.11
+                    Loop
+                    // 
+                End
+                //Release the Order
+                If (Order.SalesInvoiceOK_Flag=1) Begin
+                    Get Confirm ("Release Job#"*String(Order.JobNumber)*"for re-billing?")     to bCancel
+                    If (not(bCancel)) Begin
+                        Move 0 to Order.SalesInvoiceOK_Flag
+                        Move '' to Order.SalesInvoiceOK
+                        Move '' to Order.InvoiceReference
+                        Move 1 to Order.ChangedFlag
+                        SaveRecord Order
+                    End
+                End
+                //
+                //Void the invoice
+                Send Clear of oInvhdr_DD
+                Move iInvId to Invhdr.InvoiceIdno
+                Send Request_Find of oInvhdr_DD EQ Invhdr.File_Number 1
+                If ((Found) and Invhdr.InvoiceIdno = iInvId) Begin
+                    Set Field_Changed_Value of oInvhdr_DD Field Invhdr.EditFlag to 1
+                    Set Field_Changed_Value of oInvhdr_DD Field Invhdr.VoidFlag to 1
+                    Send Request_Save       of oInvhdr_DD
+                End
+                //
+                Function_Return True
+            End
+        End
+    End_Function
+
+    Function DoCreateInvoices Integer iAreaNumber Date dBegin Date dEnd Returns Integer
+        Boolean bFail
+        Integer iLastFound hoDD iJobNumber iRecId iInvhdrRecId iSeq
+        String sSalesRepInitials sCustomerTerms //Ben
+        Number  nQty nTaxRate nTaxAmount
+        Date    dToday
+        //
+        Sysdate dToday
+        //
+        Clear Trans
+        Move iAreaNumber to Trans.AreaNumber
+        Find ge Trans by Index.5
+        While ((Found) and Trans.InvoicedFlag = 0 and Trans.AreaNumber = iAreaNumber)
+            If (Trans.StartDate >= dBegin and Trans.StartDate <= dEnd) Begin
+                If (Trans.JobNumber <> iJobNumber) Begin
+                    Move 0                  to iSeq
+                    Move Trans.JobNumber    to iJobNumber
+                    Set Main_DD             to oInvhdr_DD
+                    Move oInvhdr_DD         to hoDD
+                    //
+                    
+                    Get FindSalesInitials of oInvoiceCreationProcess iJobNumber to sSalesRepInitials //Ben
+                    Get FindCustomerTerms of oInvoiceCreationProcess iJobNumber to sCustomerTerms
+                    
+                    Send Clear_All          of hoDD
+                    Move Trans.JobNumber                                            to Order.JobNumber
+                    Send Request_Find       of hoDD EQ Order.File_Number 1
+                    Set Field_Changed_Value of hoDD Field Invhdr.InvoiceDate        to Trans.StartDate
+                    Set Field_Changed_Value of hoDD Field Invhdr.InvEditorFlag      to "IE"
+                    Set Field_Changed_Value of hoDD Field Invhdr.SalesInitials      to sSalesRepInitials //Ben
+                    Set Field_Changed_Value of hoDD Field Invhdr.Terms              to sCustomerTerms
+                    Get Request_Validate    of hoDD                                 to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Processing stopped"
+                        Function_Return
+                    End
+                    Send Request_Save       of hoDD
+                End
+                //
+                Set Main_DD                                                  to oInvdtl_DD
+                Move oInvdtl_DD                                              to hoDD
+                Send Clear              of hoDD
+                //
+                If (Trans.ElapsedMinutes > 0) Begin
+                    Move (Trans.ElapsedMinutes / 60)                         to nQty
+                End
+                Else Begin
+                    Move Trans.Quantity                                      to nQty
+                End
+                Move Trans.OpersIdno                                         to Opers.OpersIdno
+                Send Request_Find       of hoDD EQ Opers.File_Number 1
+                //
+                If (MastOps.QtyDivisor <> 0) Begin
+                    Move (nQty / MastOps.QtyDivisor)                         to nQty
+                End
+                //
+                Get FindItemTaxRate of oInvoiceCreationProcess Opers.LocationIdno Opers.MastOpsIdno to nTaxRate
+                If (nTaxRate) Begin
+                    Move (nQty*Opers.SellRate*nTaxRate/100)                      to nTaxAmount
+                End
+                Increment                                                       iSeq
+                //
+                Set Field_Changed_Value of hoDD Field Invdtl.TransIdno       to Trans.TransIdno
+                Set Field_Changed_Value of hoDD Field Invdtl.StartTime       to Trans.StartTime
+                Set Field_Changed_Value of hoDD Field Invdtl.StartDate       to Trans.StartDate
+                Set Field_Changed_Value of hoDD Field Invdtl.StartHr         to Trans.StartHr
+                Set Field_Changed_Value of hoDD Field Invdtl.StartMin        to Trans.StartMin
+                Set Field_Changed_Value of hoDD Field Invdtl.StopTime        to Trans.StopTime
+                Set Field_Changed_Value of hoDD Field Invdtl.StopDate        to Trans.StopDate
+                Set Field_Changed_Value of hoDD Field Invdtl.StopHr          to Trans.StopHr
+                Set Field_Changed_Value of hoDD Field Invdtl.StopMin         to Trans.StopMin
+                Set Field_Changed_Value of hoDD Field Invdtl.ElapsedMinutes  to Trans.ElapsedMinutes
+                Set Field_Changed_Value of hoDD Field Invdtl.TaxRate         to nTaxRate
+                Set Field_Changed_Value of hoDD Field Invdtl.TaxAmount       to nTaxAmount
+                Set Field_Changed_Value of hoDD Field Invdtl.Quantity        to nQty
+                Set Field_Changed_Value of hoDD Field Invdtl.Price           to Opers.SellRate
+                Set Field_Changed_Value of hoDD Field Invdtl.Comment         to Trans.Comment
+                Set Field_Changed_Value of hoDD Field Invdtl.Description     to Opers.Description
+                Set Field_Changed_Value of hoDD Field Invdtl.Sequence        to iSeq
+                Get Request_Validate    of hoDD                              to bFail
+                If (bFail) Begin
+                    Send Stop_Box "Processing Stopped"
+                    Function_Return
+                End
+                Send Request_Save       of hoDD
+                Reread
+                Move 1      to Trans.InvoicedFlag
+                Move dToday to Trans.InvoiceDate
+                SaveRecord Trans
+                Unlock
+                Clear Trans
+                If (iLastFound > 0) Begin
+                    Move iLastFound to Trans.Recnum
+                    Find eq Trans.Recnum
+                End
+                Else Begin
+                    Move iAreaNumber to Trans.AreaNumber
+                End
+            End
+            Else Begin
+                Move Trans.Recnum to iLastFound
+            End
+            Find gt Trans by Index.5
+        Loop
+    End_Function
+
+    Function DoCreateInvoiceForJobAndDates Integer iJobNumber Date dBegin Date dEnd Returns Integer
+        Boolean bFail bSuccess
+        Integer hoDD iRecId iInvhdrRecId iSeq iTransCounter iOpersIdno iAttachEquipIdno iAttachOpersidno
+        String sSalesRepInitials sCustomerTerms sAttachDescription sAttachOpersName //Ben
+        Number  nQty nTotalCurrentCost nSubInvPerctg nTaxRate nTaxAmount nEquipSellRate nAttachSellRate nCombiSellRate
+        Date    dToday
+        //
+        Sysdate dToday
+        //
+        Clear Trans
+        Move iJobNumber to Trans.JobNumber
+        Move dBegin     to Trans.StartDate
+        Find ge Trans by Index.2
+        While ((Found) and Trans.JobNumber = iJobNumber and Trans.StartDate >= dBegin and Trans.StartDate <= dEnd)
+            If (Trans.InvoicedFlag = 0) Begin
+                If (iRecId = 0) Begin
+                    Move 0                          to iSeq
+                    Move Trans.JobNumber            to iJobNumber
+                    Set Main_DD                     to oInvhdr_DD
+                    Move oInvhdr_DD                 to hoDD
+                    //
+                    //BEN - Following Lines were added 05092013
+                    Get FindSalesInitials of oInvoiceCreationProcess iJobNumber to sSalesRepInitials
+                    Get FindCustomerTerms of oInvoiceCreationProcess iJobNumber to sCustomerTerms
+                    //
+                    Send Clear_All          of hoDD
+                    Move Trans.JobNumber                                            to Order.JobNumber
+                    Send Request_Find       of hoDD EQ Order.File_Number 1
+                    Set Field_Changed_Value of hoDD Field Invhdr.InvoiceDate        to Trans.StartDate
+                    Set Field_Changed_Value of hoDD Field Invhdr.InvEditorFlag      to "IE"
+                    Set Field_Changed_Value of hoDD Field Invhdr.SalesInitials      to sSalesRepInitials
+                    Set Field_Changed_Value of hoDD Field Invhdr.Terms              to sCustomerTerms
+                    Set Field_Changed_Value of hoDD Field Invhdr.StartDateRange     to dBegin
+                    Set Field_Changed_Value of hoDD Field Invhdr.StopDateRange      to dEnd
+                    Set Field_Changed_Value of hoDD Field Invhdr.TotalCost          to nTotalCurrentCost
+                    Get Request_Validate    of hoDD                          to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Processing stopped"
+                        Function_Return
+                    End
+                    Send Request_Save       of hoDD
+                    Move Invhdr.Recnum                                       to iRecId
+                End
+                //
+                Set Main_DD                                                  to oInvdtl_DD
+                Move oInvdtl_DD                                              to hoDD
+                Send Clear              of hoDD
+                //
+                Move 0                          to nAttachSellRate
+                Move 0                          to nCombiSellRate
+                Move 0                          to nEquipSellRate
+                //
+                Move Trans.OpersIdno            to iOpersIdno
+                Move Trans.AttachEquipIdno      to iAttachEquipIdno
+                Move Trans.AttachOpersIdno      to iAttachOpersidno
+                // Attachments before Equipment
+                If (iAttachOpersidno<>0) Begin
+                    Move iAttachOpersidno to Opers.OpersIdno
+                    Find EQ Opers by Index.1
+                    If ((Found) and Opers.OpersIdno = iAttachOpersidno) Begin
+                        Move Opers.Description to sAttachDescription
+                        Move Opers.Name to sAttachOpersName
+                        Move Opers.SellRate to nAttachSellRate
+                    End
+                End
+                Else Begin
+                    Move "" to sAttachOpersName
+                    Move "" to sAttachDescription
+                    Move 0 to nAttachSellRate
+                End                  
+                //
+                If (Trans.ElapsedMinutes > 0) Begin
+                    Move (Trans.ElapsedMinutes / 60)                         to nQty
+                End
+                Else Begin
+                    Move Trans.Quantity                                      to nQty
+                End
+              
+                //
+                Move iOpersIdno                                         to Opers.OpersIdno
+                Send Request_Find       of hoDD EQ Opers.File_Number 1
+                //
+                If (MastOps.QtyDivisor <> 0) Begin
+                    Move (nQty / MastOps.QtyDivisor)                         to nQty
+                End
+                //
+                //Equipment and Attachment Sell Rate Combined
+                Move Opers.SellRate to nEquipSellRate
+                Move (nEquipSellRate + nAttachSellRate)                         to nCombiSellRate
+                
+                //
+                Get FindItemTaxRate of oInvoiceCreationProcess Opers.LocationIdno Opers.MastOpsIdno to nTaxRate
+                If (nTaxRate) Begin
+                    Move (nQty*nCombiSellRate*nTaxRate/100)                      to nTaxAmount
+                End
+                Increment                                                       iSeq
+                //
+                Set Field_Changed_Value of hoDD Field Invdtl.TransIdno                  to Trans.TransIdno
+                Set Field_Changed_Value of hoDD Field Invdtl.StartTime                  to Trans.StartTime
+                Set Field_Changed_Value of hoDD Field Invdtl.StartDate                  to Trans.StartDate
+                Set Field_Changed_Value of hoDD Field Invdtl.StartHr                    to Trans.StartHr
+                Set Field_Changed_Value of hoDD Field Invdtl.StartMin                   to Trans.StartMin
+                Set Field_Changed_Value of hoDD Field Invdtl.StopTime                   to Trans.StopTime
+                Set Field_Changed_Value of hoDD Field Invdtl.StopDate                   to Trans.StopDate
+                Set Field_Changed_Value of hoDD Field Invdtl.StopHr                     to Trans.StopHr
+                Set Field_Changed_Value of hoDD Field Invdtl.StopMin                    to Trans.StopMin
+                Set Field_Changed_Value of hoDD Field Invdtl.ElapsedMinutes             to Trans.ElapsedMinutes
+                Set Field_Changed_Value of hoDD Field InvDtl.AttachOpersIdno            to iAttachOpersidno
+                Set Field_Changed_Value of hoDD Field InvDtl.AttachMastOpsIdno          to Trans.AttachMastOpsIdno
+                Set Field_Changed_Value of hoDD Field InvDtl.AttachOpersName            to sAttachOpersName
+                Set Field_Changed_Value of hoDD Field Invdtl.AttachOpersDescription     to sAttachDescription
+                Set Field_Changed_Value of hoDD Field Invdtl.TaxRate                    to nTaxRate
+                Set Field_Changed_Value of hoDD Field Invdtl.TaxAmount                  to nTaxAmount
+                Set Field_Changed_Value of hoDD Field Invdtl.Quantity                   to nQty
+                Set Field_Changed_Value of hoDD Field Invdtl.Price                      to nCombiSellRate
+                Set Field_Changed_Value of hoDD Field Invdtl.Comment                    to Trans.Comment
+                Set Field_Changed_Value of hoDD Field Invdtl.Description                to (Opers.Description*sAttachDescription)
+                Set Field_Changed_Value of hoDD Field Invdtl.Sequence                   to iSeq
+                Get Request_Validate    of hoDD                                         to bFail
+                If (bFail) Begin
+                    Send Stop_Box "Processing Stopped"
+                    Function_Return
+                End
+                Send Request_Save       of hoDD
+                
+//                //Calculate the CostValue and write to InvHdr.TotalCost       
+//                If (Trans.EmployerIdno <> "101") Begin // Non-Interstate
+//                    Add (Trans.CurrentContractorRate * nQty) to nTotalCurrentCost
+//                End     
+//                
+//                If (Trans.EmployerIdno = "101") Begin // Interstate
+//                    // Sidewalk labor is excluded from Trans.CurrentLaborRate
+//                    If (MastOps.ReportCategory = "Sidewalk") Begin 
+//                        Add (MastOps.CostRate * nQty) to nTotalCurrentCost
+//                    End
+//                    // Everything else has Trans.CurrentLaborRate added to the value
+//                    If (MastOps.ReportCategory <> "Sidewalk") Begin
+//                        If (MastOps.CostType = "Material")Begin
+//                            Add (MastOps.CostRate *nQty ) to nTotalCurrentCost
+//                        End
+//                        If (MastOps.CostType <> "Material") Begin
+//                            Add ((MastOps.CostRate+Trans.CurrentLaborRate) * nQty) to nTotalCurrentCost
+//                        End
+//                    End
+//                End
+                                
+                Reread
+                Move Invhdr.InvoiceIdno to Trans.InvoiceIdno
+                Move 1      to Trans.InvoicedFlag
+                Move dToday to Trans.InvoiceDate
+                SaveRecord Trans
+                Unlock
+            End
+            Increment iTransCounter
+            Find gt Trans by Index.2
+        Loop
+        If (iTransCounter = 0 and iRecId = 0) Begin
+            Send Info_Box ("No Transactions found - No Invoice created")
+        End
+        Else Begin
+            //Calculate the cost and save it to the InvHdr
+            Open Invhdr
+            //Get CalculateCostForDateRange of oTransactionCostCalculator iJobNumber dBegin dEnd to nTotalCurrentCost // OLD function
+            Get CalculateCostForDateRange of oTransactionCostCalculator iJobNumber dBegin dEnd (&nTotalCurrentCost) (&nSubInvPerctg) to bSuccess
+            Reread
+            Move nTotalCurrentCost to Invhdr.TotalCost
+            Move nSubInvPerctg to Invhdr.SubInvPercentage
+            SaveRecord Invhdr
+            Unlock
+            //  
+        End
+       
+        Function_Return iRecId
+    End_Function
+
+    Function DoCreateInvoiceHeader Integer iJobNumber Date dBegin Date dEnd Returns Integer
+        Boolean bCancel bSuccess
+        Integer iRecId hoDD iWorkType //iJobNumber
+        //String  sWorkType 
+        String sSalesRepinitials sCustomerTerms
+        Number nTotalCurrentCost nSubInvPerctg
+        Date    dToday //dBegin dEnd
+        Move oInvhdr_DD to hoDD
+        Send Clear        of hoDD
+        Move iJobNumber to Order.JobNumber
+        Send Request_Find of hoDD EQ Order.File_Number 1
+        If (Found) Begin
+            
+            // BEN - Invoice Term Addition 03/01/2013 - Salesperson Addition 03/01/2013 
+            // Pulling the Customers Term information from the Customer table and adding it to the InvoiceHdr table.
+            Get FindSalesInitials of oInvoiceCreationProcess iJobNumber to sSalesRepInitials
+            Get FindCustomerTerms of oInvoiceCreationProcess iJobNumber to sCustomerTerms
+            //Get CalculateCostForDateRange of oTransactionCostCalculator iJobNumber dBegin dEnd to nTotalCurrentCost // OLD Function
+            Get CalculateCostForDateRange of oTransactionCostCalculator iJobNumber dBegin dEnd (&nTotalCurrentCost) (&nSubInvPerctg) to bSuccess
+            
+            Set Field_Changed_Value of hoDD Field Invhdr.InvoiceDate        to dBegin
+            Set Field_Changed_Value of hoDD Field Invhdr.InvEditorFlag      to "IE"
+            Set Field_Changed_Value of hoDD Field Invhdr.Terms              to sCustomerTerms
+            Set Field_Changed_Value of hoDD Field Invhdr.SalesInitials      to sSalesRepInitials
+            Set Field_Changed_Value of hoDD Field Invhdr.StartDateRange     to dBegin
+            Set Field_Changed_Value of hoDD Field Invhdr.StopDateRange      to dEnd
+            Set Field_Changed_Value of hoDD Field Invhdr.TotalCost          to nTotalCurrentCost
+            Set Field_Changed_Value of hoDD Field Invhdr.SubInvPercentage   to nSubInvPerctg
+            Get Request_Validate    of hoDD                                 to bCancel
+            
+            If (not(bCancel)) Begin
+                Send Request_Save   of hoDD
+                Move Invhdr.Recnum to iRecId
+            End
+        End
+        Function_Return iRecId
+    End_Function
+
+    Function DoCreateInvoiceFromOrder Integer iJobNumber Returns Integer
+        Boolean bFail bHasOrdDtlRec
+        Integer hoDD iRecId iInvhdrRecId iSeq iNewInvoiceIdno
+        String  sSalesRepInitials sCustomerTerms sInvMessage
+        Number  nQty nTaxRate nTaxAmount
+        Date    dToday
+        //
+        Sysdate dToday
+        
+        If (Order.PO_Flag=1) Begin
+            String sPONumber
+            Move (Trim(Order.PO_Number)) to sPONumber
+            Get PopupUserInput of oUserInputDialog "PO Required" "Please enter the PO Number" sPONumber False to sPONumber
+            Set Field_Changed_Value of oOrder_DD Field Order.PO_Number to sPONumber
+        End    
+        Send Request_Save of oOrder_DD 
+
+        Clear OrderDtl
+        Move iJobNumber to OrderDtl.JobNumber
+        Find GE OrderDtl by 2
+        If ((Found) and OrderDtl.JobNumber = iJobNumber) Begin
+            Move True to bHasOrdDtlRec
+        End
+        Else Begin
+            Move False to bHasOrdDtlRec
+        End
+        If (not(bHasOrdDtlRec)) Begin
+            Send Stop_Box "There are no Detail Items on the Order to be invoiced"
+            Function_Return
+        End
+
+        Get FindSalesInitials of oInvoiceCreationProcess iJobNumber to sSalesRepInitials
+        Get FindCustomerTerms of oInvoiceCreationProcess iJobNumber to sCustomerTerms
+        
+        // Select InvHdr DD
+        Set Main_DD     to oInvhdr_DD
+        Move oInvhdr_DD to hoDD
+        // Fill InvHdr with Values
+        Send Clear_All          of hoDD
+        Move iJobNumber                                             to Order.JobNumber
+        Send Request_Find       of hoDD EQ Order.File_Number 1
+        Set Field_Changed_Value of hoDD Field Invhdr.InvoiceDate    to dToday
+        Set Field_Changed_Value of hoDD Field Invhdr.InvEditorFlag  to "IR"
+        Set Field_Changed_Value of hoDD Field Invhdr.StartDateRange to Order.JobOpenDate
+        Set Field_Changed_Value of hoDD Field Invhdr.StopDateRange  to Order.JobCloseDate
+        Set Field_Changed_Value of hoDD Field Invhdr.EditFlag       to 1
+        Set Field_Changed_Value of hoDD Field Invhdr.ChangedFlag    to 1
+        Set Field_Changed_Value of hoDD Field Invhdr.InvoiceType    to Order.BillingType
+        Set Field_Changed_Value of hoDD Field Invhdr.SalesInitials  to sSalesRepInitials
+        Set Field_Changed_Value of hoDD Field Invhdr.Terms          to sCustomerTerms
+        
+        Get Request_Validate    of hoDD                          to bFail
+        If (bFail) Begin
+            Send Stop_Box "Processing stopped for INVOICE HEADER"
+            Function_Return 0
+        End
+        Send Request_Save       of hoDD
+        Move Invhdr.Recnum                                      to iInvhdrRecId
+        Move Invhdr.InvoiceIdno                                 to iNewInvoiceIdno
+        // Select InvDtl DD
+        Set Main_DD                                              to oInvdtl_DD
+        Move oInvdtl_DD                                          to hoDD
+        // Fill InvDtl with Values
+        Clear OrderDtl
+        Move iJobNumber                                          to OrderDtl.JobNumber
+        Find ge OrderDtl by 2
+        While ((Found) and OrderDtl.JobNumber = iJobNumber)
+            Send Clear          of hoDD
+            Send Request_Assign of hoDD Invhdr.File_Number
+            
+            //
+            Move OrderDtl.MastOpsIdno  to MastOps.MastOpsIdno
+            Find eq MastOps by Index.1
+            If (Found) Begin
+                Move MastOps.Recnum                        to iRecId
+                Send Find_By_Recnum of hoDD MastOps.File_Number iRecId
+                Increment                                                       iSeq
+                //
+//                Get FindItemTaxRate of oInvoiceCreationProcess Quotehdr.LocationIdno Quotedtl.MastOpsIdno to nTaxRate
+//                If (nTaxRate) Begin
+//                    Move (Quotedtl.Quantity*Quotedtl.Price*nTaxRate/100)     to nTaxAmount
+//                End
+                //
+                Set Field_Changed_Value of hoDD Field Invdtl.Quantity        to OrderDtl.Quantity
+                Set Field_Changed_Value of hoDD Field Invdtl.Price           to OrderDtl.Price
+                Set Field_Changed_Value of hoDD Field Invdtl.TaxRate         to OrderDtl.TaxRate
+                Set Field_Changed_Value of hoDD Field Invdtl.TaxAmount       to OrderDtl.TaxAmount                
+                Set Field_Changed_Value of hoDD Field Invdtl.Description     to OrderDtl.InvoiceDescription
+                Set Field_Changed_Value of hoDD Field Invdtl.Sequence        to OrderDtl.Sequence
+                Set Field_Changed_Value of hoDD Field Invdtl.MastOpsIdno     to OrderDtl.MastOpsIdno
+                Get Request_Validate    of hoDD                              to bFail
+                If (bFail) Begin
+                    Send Stop_Box "Processing Stopped for INVOICE DETAIL"
+                    Function_Return 0
+                End
+                Send Request_Save       of hoDD 
+            End // if Opers record found
+            Find gt OrderDtl by 2
+        Loop
+        Function_Return iNewInvoiceIdno
+    End_Function
+
+//    Function DoCreateMonthlyInvoice Integer[] iFoundOrders String[] sSelectedActivities Date dBegin Date dEnd Returns Boolean
+//        Boolean bSuccess bFail
+//        Number nTaxRate nTaxAmount nQty
+//        Integer hoDD eResponse iOrderCount iOrderCounter iActivityCounter iJobNumber iLocationIdno iLoopCount iOpersIdno 
+//        Integer iInvHdrIdno iActivityCount iSeq iMonthNumber iYear iCommentOpersIdno
+//        String sWorkType sSalesRepInitials sCustomerTerms sMonthName sMonthlyDescription
+//        Date    dToday
+//        //
+//        Sysdate dToday
+//        
+//        Move 0 to iOrderCounter
+//        
+//        Get PopupUserMultiSelectTable of oUserMultiSelectionDialog "Select Activity Type" (&sSelectedActivities) to bSuccess
+//        If (bSuccess) Begin
+//            Move (SizeOfArray(iFoundOrders)) to iOrderCount
+//            Move (SizeOfArray(sSelectedActivities)) to iActivityCount
+//            
+//            For iOrderCounter from 0 to (iOrderCount-1)
+//                Move iFoundOrders[iOrderCounter] to iJobNumber
+//                Clear Order
+//                Move iJobNumber to Order.JobNumber
+//                Find EQ Order.JobNumber
+//                If ((Found) and Order.JobNumber = iJobNumber) Begin
+//                    //Showln ("Job# " + String(Order.JobNumber) + " Billing type is Monthly")
+//                    Move 0 to iInvHdrIdno
+//                    Move "0" to iSeq
+//                    Move Order.LocationIdno to iLocationIdno
+//                    //
+//                    Clear Opers
+//                    Move iLocationIdno to Opers.LocationIdno
+//                    Move 1 to Opers.MonthlyItemFlag
+//                    Find GE Opers by 7
+//                    While ((Found) and Opers.LocationIdno = iLocationIdno and Opers.MonthlyItemFlag = 1)
+//                        Relate Opers
+//                        //Showln (" --- Operation: " + Trim(MastOps.Name) + " is a Flagged monthly Item - MastOps.ActivityType: " + MastOps.ActivityType)
+//                        
+//                        For iActivityCounter from 0 to (iActivityCount-1)
+//                            If (MastOps.ActivityType = sSelectedActivities[iActivityCounter]) Begin
+//                                Move Opers.OpersIdno to iOpersIdno
+//                                //Showln (" --- --- Selected Operation: " + Trim(MastOps.Name))                                
+//                                If (iInvHdrIdno = 0) Begin
+//                                    // Create Header Here (Only for Invoices where items where found)
+//                                    Move Customer.Terms to sCustomerTerms
+//                                    Move SalesTaxGroup.Rate to nTaxRate
+//                                    // Select InvHdr DD
+//                                    Set Main_DD     to oInvhdr_DD
+//                                    Move oInvhdr_DD to hoDD
+//                                    // Fill InvHdr with Values
+//                                    Send Clear_All          of hoDD
+//                                    Move iJobNumber                                          to Order.JobNumber
+//                                    Send Request_Find       of hoDD EQ Order.File_Number 1
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.InvoiceDate to dBegin
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.StartDateRange to dBegin
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.StopDateRange to dEnd
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.InvoiceType   to Order.WorkType
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.SalesInitials to Order.RepIdno
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.Terms         to sCustomerTerms
+//                                    Set Field_Changed_Value of hoDD Field Invhdr.InvEditorFlag to "IE"
+//                                    Get Request_Validate    of hoDD                            to bFail
+//                                    If (bFail) Begin
+//                                        Send Stop_Box "Processing stopped for INVOICE HEADER"
+//                                        Function_Return
+//                                    End
+//                                    Move Order.LocationIdno to iLocationIdno
+//                                    Move Order.WorkType to sWorkType
+//                                    
+//                                    Send Request_Save       of hoDD       
+//                                    // Header is created       
+//                                    Move Invhdr.InvoiceIdno to iInvHdrIdno                            
+//                                End
+//                                If (iInvHdrIdno <> 0) Begin
+//                                    Move "1" to nQty
+//                                    Set Main_DD                                              to oInvdtl_DD
+//                                    Move oInvdtl_DD                                          to hoDD
+//                                    //
+//                                    If (iSeq = 0) Begin
+//                                        Send Clear of hoDD
+//                                        Move iOpersIdno to Opers.OpersIdno
+//                                        Send Request_Find       of hoDD EQ Opers.File_Number 1
+//                                        
+//                                        Move (DateGetMonth(dBegin)) to iMonthNumber
+//                                        Move (DateGetYear(dBegin))  to iYear
+//                                        Get FindMonthName iMonthNumber to sMonthName
+//                                        Move (Uppercase(sMonthName)+","*(String(iYear))) to sMonthlyDescription
+//                                        //
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Description    to sMonthlyDescription
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Price          to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.TaxRate        to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.TaxAmount      to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Quantity       to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Sequence       to iSeq
+//                                        Get Request_Validate    of hoDD                             to bFail
+//                                        If (bFail) Begin
+//                                            Send Stop_Box "Processing Stopped at Detail creation"
+//                                            Function_Return
+//                                        End
+//                                        Send Request_Save       of hoDD
+//                                        //
+//                                        Increment iSeq
+//                                    End
+//                                    If (iSeq = 1) Begin
+//                                        Send Clear of hoDD
+//                                        Move iOpersIdno to Opers.OpersIdno
+//                                        Send Request_Find       of hoDD EQ Opers.File_Number 1
+//                                        //
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Description    to ""
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Price          to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.TaxRate        to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.TaxAmount      to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Quantity       to 0
+//                                        Set Field_Changed_Value of hoDD Field Invdtl.Sequence       to iSeq
+//                                        Get Request_Validate    of hoDD                             to bFail
+//                                        If (bFail) Begin
+//                                            Send Stop_Box "Processing Stopped at Detail creation"
+//                                            Function_Return
+//                                        End
+//                                        Send Request_Save       of hoDD
+//                                        //
+//                                        Increment iSeq
+//                                    End
+//                                    // All other items
+//                                    Send Clear of hoDD
+//                                    Move iOpersIdno to Opers.OpersIdno
+//                                    Send Request_Find       of hoDD EQ Opers.File_Number 1                      
+//                                    If (nTaxRate) Begin
+//                                        Move (nQty*Opers.SellRate*nTaxRate/100)                          to nTaxAmount
+//                                    End
+//                                    Set Field_Changed_Value of hoDD Field Invdtl.Description    to (Trim(Opers.Description))
+//                                    Set Field_Changed_Value of hoDD Field Invdtl.Price          to Opers.SellRate
+//                                    Set Field_Changed_Value of hoDD Field Invdtl.TaxRate        to nTaxRate
+//                                    Set Field_Changed_Value of hoDD Field Invdtl.TaxAmount      to nTaxAmount
+//                                    Set Field_Changed_Value of hoDD Field Invdtl.Quantity       to nQty
+//                                    Set Field_Changed_Value of hoDD Field Invdtl.Sequence       to iSeq
+//                                    Get Request_Validate    of hoDD                             to bFail
+//                                    If (bFail) Begin
+//                                        Send Stop_Box "Processing Stopped at Detail creation"
+//                                        Function_Return
+//                                    End
+//                                    Send Request_Save       of hoDD
+//                                    //
+//                                    Increment iSeq
+//                                End
+//                            End
+//                        Loop                    
+//
+//                        Find GT Opers by 7
+//                    Loop 
+//                End
+//            Loop             
+//        End
+//        Else Begin
+//            // User Canceled
+//        End
+//
+//        Function_Return bSuccess
+//    End_Function
+
+
+    Procedure DoIncrementPrintCount Integer iStart Integer iStop
+        Set piStart to iStart
+        Set piStop  to iStop
+        Send DoProcess
+    End_Procedure
+    
+   
+    Function FindSalesInitials Integer iJobNumber Returns String
+        String sSalesRepInitials
+        Integer iRepIdno
+        
+        Clear Order
+        Move iJobNumber to Order.JobNumber
+        Find eq Order.JobNumber
+        If (Found) Begin
+            Move Order.RepIdno to iRepIdno
+            Clear SalesRep
+            Move iRepIdno to SalesRep.RepIdno
+            Find eq SalesRep.RepIdno
+            If (Found) Begin
+                 Move (Trim(SalesRep.Initials)) to sSalesRepInitials
+            End
+        End
+        Function_Return sSalesRepInitials
+    End_Function
+    
+    Function FindCustomerTerms Integer iJobNumber Returns String
+        String sCustomerTerms
+        Integer iCustomerIdno
+        
+        Clear Order
+        Move iJobNumber to Order.JobNumber
+        Find eq Order.JobNumber
+        If (Found) Begin
+            Move Order.CustomerIdno to iCustomerIdno
+            Clear Customer
+            Move iCustomerIdno to Customer.CustomerIdno
+            Find eq Customer.CustomerIdno
+            If (Found) Begin
+                Move (Trim(Customer.Terms)) to sCustomerTerms
+            End
+        End
+        Function_Return sCustomerTerms
+    End_Function
+    
+    Function FindItemTaxRate Integer iLocationIdno Integer iMastOpsIdno Returns Number
+        Number nTaxRate
+        Boolean bIsTaxable
+        Open MastOps
+        Move iMastOpsIdno to MastOps.MastOpsIdno
+        Find EQ MastOps by Index.1
+        If ((Found) and MastOps.MastOpsIdno = iMastOpsIdno and MastOps.IsTaxable) Begin
+            Open Location
+            Move iLocationIdno to Location.LocationIdno
+            Find EQ Location by Index.1
+            If ((Found) and Location.LocationIdno = iLocationIdno) Begin
+                Relate SalesTaxGroup
+                Move SalesTaxGroup.Rate to nTaxRate
+            End
+        End
+        Function_Return nTaxRate
+    End_Function
+    
+    Function FindAttachOpersIdno Integer iAttachEquipIdno Integer iLocationIdno Returns Integer
+        Integer iAttachOpersIdno
+        Move iAttachEquipIdno to Equipmnt.EquipIdno
+        Find EQ Equipmnt by Index.1
+        If (Found) Begin
+            Move iLocationIdno to Opers.LocationIdno
+            Move Equipmnt.MastOpsIdno to Opers.MastOpsIdno
+            Find EQ Opers by Index.2
+            If (Found) Begin
+                Function_Return Opers.OpersIdno
+            End
+        End
+        Else Function_Return 0
+    End_Function
+           
+End_Object

@@ -1,0 +1,71 @@
+Use cGlblDataDictionary.pkg
+
+Open Attachments
+Open System
+Open Order
+Open Quotehdr
+Open Eshead
+Open Quotedtl
+Open CustomerContracts
+
+Class cAttachmentsGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to Attachments.File_Number
+
+        Set CascadeDeleteAllowed CustomerContracts.File_Number to False
+
+        Set CascadeDeleteNull CustomerContracts.File_Number to True
+        Set CascadeDeleteNull Order.File_Number to True
+        Set CascadeDeleteNull Quotehdr.File_Number to True
+
+        Set ParentNullAllowed CustomerContracts.File_Number to True
+        Set ParentNullAllowed Order.File_Number to True
+        Set ParentNullAllowed Quotehdr.File_Number to True
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Attachments.AttachIdno to File_Field System.LastAttachIdno
+
+        Set Field_Class_Name Field Attachments.Description to "Edit"
+
+        Set Field_Class_Name Field Attachments.EstimateFlag to "Checkbox"
+
+        Set Field_Class_Name Field Attachments.QuoteFlag to "Checkbox"
+
+        Set Field_Class_Name Field Attachments.OrderFlag to "Checkbox"
+
+        Set Field_Class_Name Field Attachments.InvoiceFlag to "Checkbox"
+
+    End_Procedure
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field Attachments.EstimateFlag to 1
+        Set Field_Changed_Value Field Attachments.QuoteFlag to 1
+        Set Field_Changed_Value Field Attachments.OrderFlag to 1
+        Set Field_Changed_Value Field Attachments.InvoiceFlag to 0
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        If (CustomerContracts.ContractIdno<>0) Begin
+            Add 1 to CustomerContracts.AssignedCount
+        End
+    End_Procedure
+
+    Procedure Backout
+        Forward Send Backout
+        If (CustomerContracts.ContractIdno<>0) Begin
+            Subtract 1 from CustomerContracts.AssignedCount
+        End
+    End_Procedure
+
+End_Class

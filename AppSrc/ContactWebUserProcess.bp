@@ -1,0 +1,77 @@
+Use Batchdd.pkg
+Use User.DD
+
+Object oContactWebUserProcess is a BusinessProcess
+
+    Property Integer piUserId
+    Property Integer piContactId
+    Property String  psLoginName
+    Property String  psPassword
+    Property String  psFirstName
+    Property String  psLastName
+
+    Object oUser_DD is a User_DataDictionary
+    End_Object
+
+    Set Main_DD to oUser_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        Integer hoDD iUserId iContactId
+        String  sLoginName sPassword sFirstName sLastName
+        //
+        Get Main_DD     to hoDD
+        Get piUserId    to iUserId
+        Get piContactId to iContactId
+        Get psLoginName to sLoginName
+        Get psPassword  to sPassword
+        Get psFirstName to sFirstName
+        Get psLastName  to sLastName
+        //
+        Send Clear of hoDD
+        If (iUserId) Begin
+            Move iUserId to User.UserId
+            Send Find of hoDD EQ 1
+        End
+        Set Field_Changed_Value of hoDD Field User.CustContactId to iContactId
+        Set Field_Changed_Value of hoDD Field User.LoginName     to sLoginName
+        Set Field_Changed_Value of hoDD Field User.Password      to sPassword
+        Set Field_Changed_Value of hoDD Field User.FirstName     to sFirstName
+        Set Field_Changed_Value of hoDD Field User.LastName      to sLastName
+        Send Request_Save       of hoDD
+        //
+        Set piUserId to User.UserId
+    End_Procedure
+
+    Function DoUpdateWebUser  ;
+        Integer ByRef iUserId ;
+        Integer iContactId    ;
+        String  sLoginName    ;
+        String  sPassword     ;
+        String  sFirstName    ;
+        String  sLastName     ;
+        Returns Boolean
+        //
+        Set piUserId    to iUserId
+        Set piContactId to iContactId
+        Set psLoginName to sLoginName
+        Set psPassword  to sPassword
+        Set psFirstName to sFirstName
+        Set psLastName  to sLastName
+        //
+        Send DoProcess
+        //
+        Get piUserId to iUserId
+        Function_Return (Error_Count(Self) <> 0)
+    End_Function
+
+End_Object
+

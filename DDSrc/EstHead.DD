@@ -1,0 +1,57 @@
+// Class Name: Esthead_DataDictionary
+// Revision  : 8
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Esthead
+Open Estdtl
+Open System
+
+
+Class Esthead_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Esthead.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+        Set Add_Client_File to Estdtl.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Esthead.Estheadidno to File_Field System.Lastestimate
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Esthead.Estheadidno DD_AUTOFIND to True
+        Set Key_Field_State Field Esthead.Estheadidno To TRUE
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // Esthead_DataDictionary
+

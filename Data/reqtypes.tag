@@ -1,0 +1,3 @@
+ReqtypesCode
+Description
+ChangedFlag

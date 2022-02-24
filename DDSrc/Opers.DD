@@ -1,0 +1,228 @@
+// Class Name: Opers_DataDictionary
+// Revision  : 31
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Opers
+Open Trans
+Open Invdtl
+Open Location
+Open Mastops
+Open System
+Open Syslog
+
+
+Register_Object Opers_Cost_Type_VT
+Register_Object Opers_Calc_Basis_VT
+Register_Object Opers_Activity_Type_VT
+Register_Object Opers_Status_VT
+
+Object Opers_Cost_Type_VT  is a DescriptionValidationTable
+    Set Validate_State    To FALSE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Labor" "Labor"
+        Send Add_Table_Value "Travel" "Travel"
+        Send Add_Table_Value "Material" "Material"
+        Send Add_Table_Value "Equipment" "Equipment"
+        Send Add_Table_Value "Supplies" "Supplies"
+        Send Add_Table_Value "PM Material" "PM Material"
+        Send Add_Table_Value "Subcontractor" "Subcontractor"
+        Send Add_Table_Value "Credit" "Credit"
+        Send Add_Table_Value "PerTime" "PerTime"
+    End_Procedure    // Fill_List
+End_Object   // Opers_Cost_Type_VT
+
+Object Opers_Calc_Basis_VT  is a DescriptionValidationTable
+    Set Validate_State    To FALSE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Hours" "Hours"
+        Send Add_Table_Value "Units" "Units"
+        Send Add_Table_Value "Sq. Feet" "Square Feet"
+        Send Add_Table_Value "Ln. Feet" "Linear Feet"
+        Send Add_Table_Value "X-Other" "Other"
+        Send Add_Table_Value "Pounds" "Pounds"
+        Send Add_Table_Value "Gallons" "Gallons"
+        Send Add_Table_Value "Yards" "Yards"
+        Send Add_Table_Value "Tons" "Tons"
+        Send Add_Table_Value "Bags" "Bags"
+    End_Procedure    // Fill_List
+End_Object   // Opers_Calc_Basis_VT
+
+Object Opers_Activity_Type_VT  is a DescriptionValidationTable
+    Set Validate_State    To FALSE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Snow Removal" "Snow"
+        Send Add_Table_Value "Pavement Mnt." "PM"
+        Send Add_Table_Value "Concrete" "Concrete"
+        Send Add_Table_Value "Sweeping" "Sweeping"
+        Send Add_Table_Value "Striping" "Striping"
+        Send Add_Table_Value "Excavating" "Excavating"
+        Send Add_Table_Value "Other" "Other"
+    End_Procedure    // Fill_List
+End_Object   // Opers_Activity_Type_VT
+
+Object Opers_Status_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "A" "Active"
+        Send Add_Table_Value "I" "Inactive"
+        Send Add_Table_Value "H" "Hidden"
+    End_Procedure    // Fill_List
+End_Object   // Opers_Status_VT
+
+//Register_Object Opers2_sl                       //////////////////////CHANGE
+Register_Object Operations_SL
+
+
+Class Opers_DataDictionary is a cGlblDataDictionary
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Opers.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    // Update:
+    Procedure Update
+        Forward Send Update
+
+        Move Location.CustomerIdno to Opers.CustomerIdno
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1                 to Opers.ChangedFlag
+        End
+    End_Procedure    // Update
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Opers.File_Number
+
+        Set Add_Server_File to Location.File_Number
+        Set Add_Server_File to MastOps.File_Number
+
+        Set Add_Client_File to Trans.File_Number
+        Set Add_Client_File to Invdtl.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+
+        // Child (Client) file structure................
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL        
+        Set Add_System_File to Syslog.File_Number DD_Lock_On_All
+
+        Set Field_Auto_Increment Field Opers.Opersidno to File_Field System.Lastopers
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Opers.Opersidno DD_AUTOFIND to True
+        Set Key_Field_State Field Opers.Opersidno To TRUE
+        Set Field_Prompt_Object Field Opers.OpersIdno to Operations_SL
+
+        Set Field_Prompt_Object Field Opers.Name to Operations_SL
+
+        Set Field_Mask_Type Field Opers.SellRate to Mask_Currency_Window
+        Set Field_Mask Field Opers.SellRate to "$ #,###,##0.0000"
+
+        Set Field_Mask_Type Field Opers.CostRate to Mask_Currency_Window
+        Set Field_Mask Field Opers.CostRate to "$ #,###,##0.0000"
+
+
+        Set Field_Class_Name Field Opers.Costtype To "cGlblDbComboForm"
+        Set Field_Value_Table Field Opers.Costtype to Opers_Cost_Type_VT
+
+        Set Field_Class_Name Field Opers.Calcbasis To "cGlblDbComboForm"
+        Set Field_Value_Table Field Opers.Calcbasis to Opers_Calc_Basis_VT
+
+        Set Field_Value_Table Field Opers.Activitytype to Opers_Activity_Type_VT
+
+
+        Set Field_Class_Name Field Opers.Status To "cGlblDbComboForm"
+        Set Field_Option Field Opers.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Opers.Status to Opers_Status_VT
+
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // Opers.OpersIdno
+        Set piKey2 to 3 // Opers.LocationIdno
+        Set piKey3 to 4 // Opers.MastOpsIdno
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+
+    End_Procedure    // Construct_Object
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   1 // Opers.OpersIdno
+        Send DoAddArrayValue hArray   2 // Opers.CustomerIdno
+        Send DoAddArrayValue hArray   3 // Opers.LocationIdno
+        Send DoAddArrayValue hArray   4 // Opers.MastOpsIdno
+        Send DoAddArrayValue hArray   5 // Opers.Name
+        Send DoAddArrayValue hArray   6 // Opers.SellRate
+        Send DoAddArrayValue hArray  11 // Opers.Description
+        Send DoAddArrayValue hArray  13 // Opers.Status
+        Send DoAddArrayValue hArray  17 // Opers.ExcludeCostFlag
+        Send DoAddArrayValue hArray  19 // Opers.MonthlyItemFlag
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Opers.Status To "A"
+        Set Field_Changed_Value Field Opers.DisplaySequence to 99.00
+    End_Procedure    // Field_Defaults
+
+
+End_Class
+#IFDEF Is$WebApp
+#ELSE
+Use Operations_SL.sl
+
+#ENDIF
+

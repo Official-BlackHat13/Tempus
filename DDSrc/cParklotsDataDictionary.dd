@@ -1,0 +1,71 @@
+Use cGlblDataDictionary.pkg
+
+Open Parklots
+Open Location
+Open System
+Open Lotacces
+
+Object Parklots_AsphaltStatus is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "P" "Poor"
+        Send Add_Table_Value "F" "Fair"
+        Send Add_Table_Value "G" "Good"
+        Send Add_Table_Value "E" "Excellent"
+    End_Procedure
+    Set Allow_Blank_State to True
+End_Object
+
+Register_Object Parklots_sl
+
+Class cParklotsDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Parklots.File_Number
+
+        Set Add_Client_File to Lotacces.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Location.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Parklots.ParkingLotId to File_Field System.ParkingLotId
+        Set Field_Prompt_Object Field Parklots.ParkingLotId to Parklots_sl
+
+        Set Field_Option Field Parklots.Description DD_REQUIRED to True
+
+        Set Field_Option Field Parklots.Crosswalks DD_NOENTER to True
+
+        Set Field_Option Field Parklots.Islands DD_NOENTER to True
+
+        Set Field_Value_Table Field Parklots.AsphaltStatus to Parklots_AsphaltStatus
+        Set Field_Class_Name Field Parklots.AsphaltStatus to "cGlblDbComboForm"
+        Set Field_Option Field Parklots.AsphaltStatus DD_CAPSLOCK to True
+
+    End_Procedure
+
+    Function Validate_Save Returns Integer
+        Integer iRetval
+        //
+        Forward Get Validate_Save to iRetval
+        If (not(iRetval)) Begin
+            If (Parklots.ParkingLotId = 0) Begin
+                Send UserError "ID cannot be 0" "Validation Error"
+                Move 1 to iRetval
+            End
+        End
+        Function_Return iRetval
+    End_Function
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Parklots.sl
+#ENDIF

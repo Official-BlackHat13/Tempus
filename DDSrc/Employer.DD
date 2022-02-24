@@ -1,0 +1,289 @@
+// Class Name: Employer_DataDictionary
+// Revision  : 13
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Employer
+Open Employee
+Open Equipmnt
+Open System
+Open Syslog
+Open WebAppUser
+Open Locequip
+Open Terms
+
+
+Register_Object Employer_Phonetype1_VT
+Register_Object Employer_Phonetype2_VT
+Register_Object Employer_Phonetype3_VT
+Register_Object Employer_Status_VT
+
+Object TermsValidation is a FileValidationTable
+    Set Validate_State to False
+    Set Allow_Blank_State to False
+    Set Main_File         to Terms.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 1 // description is in field 2
+    Set Ordering          to 1 // load by index 1
+End_Object
+
+Object Employer_Phonetype1_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Employer_Phonetype1_VT
+
+Object Employer_Phonetype2_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Employer_Phonetype2_VT
+
+Object Employer_Phonetype3_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Employer_Phonetype3_VT
+
+Object Employer_Status_VT  is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "A" "Active"
+        Send Add_Table_Value "I" "Inactive"
+        Send Add_Table_Value "T" "Terminated"
+    End_Procedure    // Fill_List
+End_Object   // Employer_Status_VT
+Register_Object Employer_sl
+
+
+Class Employer_DataDictionary is a cGlblDataDictionary
+
+    // Update:
+    Procedure Update
+
+        
+        Forward Send Update
+        // Insert Code Here
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Employer.ChangedFlag //mark record as altered
+        End
+    End_Procedure   // Update
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Employer.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Employer.File_Number
+
+        Set Add_Client_File to Employee.File_Number
+        Set Add_Client_File to Equipmnt.File_Number
+        Set Add_Client_File to Locequip.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL        
+        Set Add_System_File to Syslog.File_Number DD_Lock_On_All
+
+        Set Field_Auto_Increment Field Employer.Employeridno to File_Field System.Lastemployer
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Employer.Employeridno DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Employer.Employeridno to Employer_sl
+        Set Key_Field_State Field Employer.Employeridno To TRUE
+
+        Set Field_Prompt_Object Field Employer.Name to Employer_sl
+
+        Set Field_Option Field Employer.State DD_CAPSLOCK to True
+
+        Set Field_Mask_Type Field Employer.Zip to Mask_Window
+        Set Field_Mask Field Employer.Zip to "#####-####"
+
+
+        Set Field_Validate_msg Field Employer.Phone1 To get_PhoneValidation
+
+        Set Field_Class_Name Field Employer.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Option Field Employer.Phonetype1 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employer.Phonetype1 to Employer_Phonetype1_VT
+
+        Set Field_Validate_msg Field Employer.Phone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Employer.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Option Field Employer.Phonetype2 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employer.Phonetype2 to Employer_Phonetype2_VT
+
+        Set Field_Validate_msg Field Employer.Phone3 To get_PhoneValidation
+
+        Set Field_Class_Name Field Employer.Phonetype3 To "cGlblDbComboForm"
+        Set Field_Option Field Employer.Phonetype3 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employer.Phonetype3 to Employer_Phonetype3_VT
+
+
+        Set Field_Class_Name Field Employer.Status To "cGlblDbComboForm"
+        Set Field_Option Field Employer.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employer.Status to Employer_Status_VT
+
+        Set Field_Class_Name Field Employer.Terms to "Combo"
+        Set Field_Value_Table Field Employer.Terms to TermsValidation
+
+        Set Field_Class_Name Field Employer.GEOExclusionFlag to "Checkbox"
+        Set piPrimaryIndex to 1
+
+        
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // Employer.EmployerIdno
+        //Set piKey2 to 2 // 
+        //Set piKey3 to 3 // 
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+
+    End_Procedure    // Construct_Object
+
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   1 // Employer.EmployerIdno
+        Send DoAddArrayValue hArray   2 // Employer.Name
+        Send DoAddArrayValue hArray   3 // Employer.Main_Contact
+        Send DoAddArrayValue hArray   4 // Employer.Address1
+        Send DoAddArrayValue hArray   5 // Employer.Address2
+        Send DoAddArrayValue hArray   6 // Employer.City
+        Send DoAddArrayValue hArray   7 // Employer.State
+        Send DoAddArrayValue hArray   8 // Employer.Zip
+        Send DoAddArrayValue hArray  15 // Employer.EmailAddress
+        Send DoAddArrayValue hArray  20 // Employer.Status
+        Send DoAddArrayValue hArray  22 // Employer.ManagedBy
+        Send DoAddArrayValue hArray  24 // Employer.GLInsExpDate
+        Send DoAddArrayValue hArray  25 // Employer.AutoInsExpDate
+        Send DoAddArrayValue hArray  26 // Employer.WorkCompInsDate
+        Send DoAddArrayValue hArray  27 // Employer.ContractSignedFlag
+        Send DoAddArrayValue hArray  30 // Employer.Notes
+        Send DoAddArrayValue hArray  31 // Employer.W9Flag
+        Send DoAddArrayValue hArray  33 // Employer.TruckingOnlyFlag
+        Send DoAddArrayValue hArray  34 // Employer.Terms
+        Send DoAddArrayValue hArray  35 // Employer.GEOExclusionFlag
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Employer.Phonetype1 To "O"
+        Set Field_Changed_Value   Field Employer.Phonetype2 To "F"
+        Set Field_Changed_Value   Field Employer.Phonetype3 To "M"
+        Set Field_Changed_Value   Field Employer.Status To "A"
+        Set Field_Changed_Value Field Employer.Terms to "Net 38"
+    End_Procedure    // Field_Defaults
+
+    Function EmployerStatusValidation Integer iColumn String sValue Returns Boolean
+        Boolean bError
+        Boolean bState bGLInsOk bWorkCompOk bAutoInsOk bContrSignedOk
+        String sCurrentStatus sErrorMessage
+        Date dToday dGLInsExp dAutoInsExp dWorkCompExp dContrSigned
+        Sysdate dToday
+        
+        Move Employer.Status to sCurrentStatus
+                
+        If (OPERATION_MODE = MODE_WAITING) Begin
+            Get Field_Changed_State Employer.Status to bState
+            If (bState) Begin
+                Case Begin
+                    Case (sValue="A")
+                        Get Field_Current_Value Field Employer.GLInsExpDate         to dGLInsExp
+                        Move (dGLInsExp>=dToday) to bGLInsOk
+                        Get Field_Current_Value Field Employer.AutoInsExpDate       to dAutoInsExp
+                        Move (dAutoInsExp>=dToday) to bAutoInsOk
+                        Get Field_Current_Value Field Employer.WorkCompInsDate      to dWorkCompExp
+                        Move (dWorkCompExp>=dToday) to bWorkCompOk
+                        Get Field_Current_Value Field Employer.ContractSignedFlag   to dContrSigned
+                        Move (dContrSigned<>0) to bContrSignedOk
+                        
+                        If (not(bGLInsOk) or not(bAutoInsOk) or not(bWorkCompOk) or not(bContrSignedOk)) Begin
+                            Move ("To activate " + Trim(Employer.Name) +" following documents need to be renewed:\n\n") to sErrorMessage
+                            If (not(bGLInsOk)) Begin
+                                Move (Append(sErrorMessage, (" - General Liability - Exp: "  + String(dGLInsExp) + "\n"))) to sErrorMessage
+                            End
+                            If (not(bAutoInsOk)) Begin
+                                Move (Append(sErrorMessage, (" - Auto Insurance - Exp: "  + String(dAutoInsExp) + "\n"))) to sErrorMessage
+                            End
+                            If (not(bWorkCompOk)) Begin
+                                Move (Append(sErrorMessage, (" - Workmans Comp. - Exp: "  + String(dWorkCompExp) + "\n"))) to sErrorMessage
+                            End
+                            If (not(bContrSignedOk)) Begin
+                                Move (Append(sErrorMessage, (" - Contract is not signed \n"))) to sErrorMessage
+                            End                
+                            Send Info_Box sErrorMessage "Error Activating - Documents Expired"
+                            
+                            Set Field_Changed_Value Field Employer.Status to sCurrentStatus
+                            Function_Return True                
+                        End
+                        //
+                        // Activate all Employees and Equipment?
+                        Set Field_Changed_Value Field Employer.Status to sValue
+                        Function_Return False
+                    Case Break
+                    Case (sValue="I")
+                        // Do you want to deactivate all Employees and all Equipment?
+                        Function_Return False
+                    Case Break
+                    Case Else
+                        Function_Return False
+                Case End
+            End
+            Function_Return False
+        End
+        Function_Return False
+    End_Function
+    
+
+End_Class
+#IFDEF Is$WebApp
+#ELSE
+
+Use Employer.sl      // Employer_sl
+
+#ENDIF
+

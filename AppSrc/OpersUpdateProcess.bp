@@ -1,0 +1,114 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use MastOps.DD
+Use Opers.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+
+Object oOpersUpdateProcess is a BusinessProcess
+
+    Property Boolean pbMassCreate
+    Property Integer piMastOpsIdno
+    Property Integer piCount
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastops_DD
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oLocation_DD
+        Send DefineAllExtendedFields
+    End_Object
+
+    Set Main_DD to oLocation_DD
+    Set Display_Error_State to True
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        Boolean bMassCreate bFound bFail
+        Integer iMastOpsIdno
+        //
+        Get pbMassCreate  to bMassCreate
+        Get piMastOpsIdno to iMastOpsIdno
+        //
+        If (bMassCreate) Begin
+            Send Clear of oLocation_DD
+            Send Find  of oLocation_DD FIRST_RECORD 1
+            Move (Found) to bFound
+            While (bFound)
+                Send Update_Status Location.Recnum
+                //
+                If (Location.Status = "A") Begin
+                    Send Clear          of oOpers_DD
+                    Send Request_Assign of oOpers_DD Location.File_Number
+                    Move iMastOpsIdno                to MastOps.MastOpsIdno
+                    Send Request_Find   of oOpers_DD EQ MastOps.File_Number 1
+                    //
+                    Set Field_Changed_Value of oOpers_DD Field Opers.Name            to MastOps.Name
+                    Set Field_Changed_Value of oOpers_DD Field Opers.SellRate        to MastOps.SellRate
+                    Set Field_Changed_Value of oOpers_DD Field Opers.CostRate        to MastOps.CostRate
+                    Set Field_Changed_Value of oOpers_DD Field Opers.CostType        to MastOps.CostType
+                    Set Field_Changed_Value of oOpers_DD Field Opers.CalcBasis       to MastOps.CalcBasis
+                    Set Field_Changed_Value of oOpers_DD Field Opers.ActivityType    to MastOps.ActivityType
+                    Set Field_Changed_Value of oOpers_DD Field Opers.Description     to MastOps.Description
+                    Set Field_Changed_Value of oOpers_DD Field Opers.Display         to 0
+                    Set Field_Changed_Value of oOpers_DD Field Opers.Status          to MastOps.Status
+                    Set Field_Changed_Value of oOpers_DD Field Opers.DisplaySequence to MastOps.DisplaySequence
+                    Get Request_Validate    of oOpers_DD                             to bFail
+                    If (not(bFail)) Begin
+                        Send Request_Save   of oOpers_DD
+                        If (Opers.Recnum <> 0) Begin
+                            Set piCount to (piCount(Self) + 1)
+                        End
+                    End
+                End // If (Location.Status = "A") Begin
+                Send Find of oLocation_DD GT 1
+                Move (Found) to bFound
+            Loop
+        End
+    End_Procedure
+
+    Procedure DoMassCreateOperations Integer iMastOpsIdno
+        Set pbMassCreate  to True
+        Set piMastOpsIdno to iMastOpsIdno
+        Set piCount       to 0
+        Send DoProcess
+        Send Info_Box (String(piCount(Self)) * "Opers records created with MastOps.Idno" * String(iMastOpsIdno))
+    End_Procedure
+
+End_Object

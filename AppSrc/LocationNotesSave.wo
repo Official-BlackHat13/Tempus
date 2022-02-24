@@ -1,0 +1,86 @@
+// LocationNotes.wo
+// Location Notes
+Use cAjaxWebBusinessProcess.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+//Use User.DD
+Use Locnotes.DD
+
+Object oLocationNotes Is A cAjaxWebBusinessProcess
+    Set psDescription To "Location Notes"
+    Set pbClearAfterSave To False
+
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+    End_Object // oLocation_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+//    Object oUser_DD Is A User_DataDictionary
+//        Send DefineAllExtendedFields
+//    End_Object // oUser_DD
+
+    Object oLocnotes_DD Is A Locnotes_DataDictionary
+
+        Property Integer piUserId
+
+        Send DefineAllExtendedFields
+        Set DDO_Server To oOrder_DD
+//        Set DDO_Server To oUser_DD
+
+        Procedure Creating
+            Integer iUserId
+            //
+            Forward Send Creating
+            //
+            Get piUserId to iUserId
+            Move iUserId to Locnotes.CreatedBy
+        End_Procedure
+    End_Object // oLocnotes_DD
+
+    Set Main_DD To oLocnotes_DD
+
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew To True
+    Set pbAllowSaveEdit To True
+    Set pbAllowDelete To True
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+
+    Procedure OnAjaxRequestStart TAjaxRequestData ByRef tRequestData
+        Integer iUserId
+        //
+        Forward Send OnAjaxRequestStart (&tRequestData)
+        //
+        Get GetAjaxRequestUserData "sUserId" to iUserId
+        Set piUserId of oLocnotes_DD         to iUserId
+//        //
+//        If (not(HasRecord(oUser_DD)) and iUserId <> 0) Begin
+//            Move iUserId to User.UserId
+//            Send Request_Find of oLocnotes_DD EQ User.File_Number 1
+//        End
+    End_Procedure   
+
+End_Object // oLocationNotes

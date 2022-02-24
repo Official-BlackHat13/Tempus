@@ -1,0 +1,53 @@
+Use cGlblDataDictionary.pkg
+
+Open WorkType
+Open MastOps
+Open Employee
+Open DivisionMgr
+
+Register_Object WorkType_sl
+
+Class cWorkTypeGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to WorkType.File_Number
+
+        Set Add_Server_File to DivisionMgr.File_Number
+
+        Set Add_Client_File to MastOps.File_Number
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+
+        Set Field_Prompt_Object Field WorkType.WorkTypeId to WorkType_sl
+        Set Key_Field_State Field WorkType.WorkTypeId to True
+        Set Field_Option Field WorkType.WorkTypeId DD_AUTOFIND to True
+
+        Set Field_Prompt_Object Field WorkType.Description to WorkType_sl
+
+        Set Field_Mask_Type Field WorkType.HourlyCost to Mask_Currency_Window
+        Set Field_Mask Field WorkType.HourlyCost to "$ #,###,##0.00"
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to WorkType.ChangedFlag
+        End
+        
+    End_Procedure
+    
+    
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use WorkType.sl
+#ENDIF

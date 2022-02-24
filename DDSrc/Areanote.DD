@@ -1,0 +1,58 @@
+// Class Name: Areanote_DataDictionary
+// Revision  : 1
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Areanote
+Open Areas
+Open System
+
+
+Class Areanote_DataDictionary  is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Areanote.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Areas.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Areanote.Areanoteid to File_Field System.Areanoteid
+
+        // Field-based properties.......................
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        date dToday
+        //
+        Sysdate dToday
+        //
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Areanote.Notedate To dToday
+    End_Procedure    // Field_Defaults
+
+End_Class    // Areanote_DataDictionary
+

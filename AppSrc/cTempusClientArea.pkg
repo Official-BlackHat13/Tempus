@@ -1,0 +1,248 @@
+//***************************************************************************
+//*
+//* Class:        cTempusClientArea
+//* Package Name: cTempusClientArea.pkg
+//*
+//***************************************************************************
+
+// this package is part of the Vdfquery suite
+Use Array.nui
+
+Class cOpenFileArray is an Array
+    // track file number & alias status
+    item_property_list
+        item_property Integer piFileNumber
+        item_property Integer piAliasStatus
+    end_item_property_list cOpenFileArray
+    //
+End_Class // cOpenFileArray
+// store component id's of each component in batch calculation
+Class cComponentArray is an Array
+    item_property_list
+        item_property String  psComponentId
+        item_property Integer piQty1
+        item_property Integer piQty2
+        item_property Integer piQty3
+        item_property Integer piPages
+        item_property Number  pnWidth
+        item_property Number  pnLength
+        item_property Integer piColors1
+        item_property Integer piColors2
+        item_property Integer piFormPages
+        item_property Integer piNumberUp
+        item_property Integer piLastItem
+    end_item_property_list cComponentArray
+End_Class
+// used to store properties of any interrupted Opcode calculation
+Class cLinkLevelDataArray is an Array
+    item_property_list
+        item_property Integer piProcessIndex
+        item_property String  psLinkSymbol
+        item_property String  psLinkedFrom
+        item_property Integer pbMultiValue
+        item_property Integer pbReturnValue
+        item_property Integer piOpcodeRow
+    end_item_property_list cLinkLevelDataArray
+End_Class
+// used to store progress status
+Class cCalcStatusArray is an Array
+    item_property_list
+        item_property Integer piLinkOpcode
+        item_property Integer piLinkLevel
+        item_property String  psLinkSymbol
+    end_item_property_list cCalcStatusArray
+    //
+    Procedure DoAddItem Integer iLinkOpcode Integer iLinkLevel String sLinkSymbol
+        Integer iRow
+        //
+        Get Row_Count         to iRow
+        Set piLinkOpcode iRow to iLinkOpcode
+        Set piLinkLevel  iRow to iLinkLevel
+        Set psLinkSymbol iRow to sLinkSymbol
+    End_Procedure
+    //
+End_Class
+
+Use cGlblClientArea.pkg
+
+Class cTempusClientArea is a cGlblClientArea
+
+    // Construct_Object: Object constructor.
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        // Define new Properties: Property {Type} {pxName} {initial_value}
+        Property Integer piAddOpcode
+        // Order Processing
+        Property Boolean pbComponentId
+        //
+        Property String  psHeaderId
+        Property Integer piComponentRec
+        Property String  psComponentId
+        // Calc flags
+        Property Integer pbNeedsCalced
+        // Quantity synchronization
+        Property Integer piQty1
+        Property Integer piQty2
+        Property Integer piQty3
+        Property Integer piQtyOpcode
+        // Pagespecs synchronization
+        Property Integer piPages
+        Property Number  pnWidth
+        Property Number  pnLength
+        Property Integer piColors1
+        Property Integer piColors2
+        // Sheet Layout synchronization
+        Property Integer piFormPages
+        Property Integer piNumberUp
+        //
+        Property Boolean pbAddMaster
+        Property Integer piCalcMode 28 // CE_TEST
+        Property Integer piLinkLevel
+        Property Integer pbProcessFlag
+        Property Integer pbCanceled
+        // these two properties support link symbol "X"
+        Property Boolean pbCalcError
+        Property String  psCalcError
+        //
+        // used in Wizard mode to ensure
+        // cometics
+        Property Boolean pbStoreDefault
+        //
+        Property Integer pbWizardMode
+        Property Integer pbValidateMode True
+        // used only by Order Management
+        Property Integer pbLogRecalc
+        //
+        // the following is set true by pressing the F2 key in interactive mode
+        // from the input dialog.  It remains true until a link is executed at
+        // which point it is reset to false
+        Property Integer pbAutoSave
+        //
+        // the following is set to true to indicate a maintenance calculation
+        // that requires exclusion of procedure Backout
+        Property Integer pbNoBackout
+        //
+        Property Integer pbBatchMode
+        // used to report a calculation error
+        Property String  psFormula
+        // following property, when true, causes the
+        // StoreVariableValues function to return to the
+        // the previous prompt
+        Property Boolean pbBackup
+        Property Boolean pbReturn
+        // maintained for the help system
+        Property Integer piCC
+        // the following are maintained for each link level
+        // they are pushed & popped as the link level changes
+        Property Integer piOpcode
+        Property Integer piOpcodeRow
+        Property Integer piProcessIndex
+        Property Integer pbMultiValue
+        Property Integer pbReturnValue True
+        Property String  psLinkSymbol
+        Property String  psCurrentStandard
+        Property String  psLinkedTo
+        Property String  psLinkedFrom
+        // the following are maintained for
+        // the batch array process
+        Property Integer piKeyIndex
+        Property Integer piKeyCount
+        Property Integer piComponentIndex
+        Property Integer piRangeStart
+        Property Integer piRangeStop
+        // the following maintains a count of
+        // items created during a batch recalc
+        Property Integer piBatchCreatedCount
+        // the following boolean determines
+        // whether or not link level info is
+        // sent to a text file
+        Property Integer pbDebug
+        // temp directory used by pbDebug
+        Property String  psTempDir
+        // holds first created debug .TXT file
+        Property String  psDebugFile
+        // this is the ID of the View(s) activated
+        // by the login process
+        Property Integer phMainViewId
+        Property Integer phAlt1ViewId
+        // are be using the Calc Engine
+        Property Boolean pbCalcEngine
+//        // used by Scheduling
+//        Property Integer piDisplayMode     dmAll //dmScheduled
+//        // used by Invoicing
+//        Property Date    pdAccounting      0
+//        // used by VPUpdate to disable record ID checking
+//        Property Integer pbNoRecIdChecking False
+//        //
+//        Property Boolean pbScheduleErrorFlag    False
+//        Property String  psScheduleErrorMessage ""
+//
+        // used to toggle close database for maint mode from up1cmp.active_apps value
+        Property Boolean pbMaintMode False
+
+
+        // Create child objects
+        // Calc Engine Arrays
+        Object oOpenFileArray is a cOpenFileArray
+        End_Object // oOpenFileArray
+        // store component id's of each component in batch calculation
+        Object oComponentArray is a cComponentArray
+        End_Object
+        // one entry for each component/opcode record
+        Object OpcodeKeyStorageArray is an Array
+        End_Object
+        // 38 entries for each item record
+        Object OpcodeDataStorageArray is an Array
+            // item  0       Item record number
+            // item  1 -  9  Vars
+            // item 10 - 12  Calc units
+            // item 13 - 15  Table stds
+            // item 16 - 18  Prod units
+            // item 19 - 21  Est$
+            // item 22 - 24  Sell$
+            // item 25 - 33  Var flags
+            // item 34       Jcoper calc_flags
+            // item 35       Item calc_flags
+            // item 36       Component Recnum
+            // item 37       Component Id
+        End_Object
+        // store link level values Qty 1
+        Object oQty1Array is an Array
+            // used to store 23 values per calculated standard (LinkLevel)
+            // 0-8      Variables
+            // 9-17     Constants
+            // 18       Calc units formula
+            // 19       Table value
+            // 20       Prod units formula
+            // 21       Est$
+            // 22       Sell units formula
+        End_Object
+        Object oFlagArray is an Array
+            // when NOT testing, used to store supplemental variable info
+        End_Object
+        Object oQty2Array is an Array
+        End_Object
+        Object oQty3Array is an Array
+        End_Object
+        //
+        Object oOpcodeArray is an Array
+            // used to store the OpCodes of link levels
+            // initial OpCode is Item 0
+        End_Object
+        //
+        Object oLinkLevelDataArray is a cLinkLevelDataArray
+            // used to store properties of any interrupted Opcode calculation
+        End_Object
+
+        Object oCalcStatusArray is a cCalcStatusArray
+            // used to store progress status
+        End_Object
+
+        // Set property values:
+
+    End_Procedure
+
+    // Create and augment procedure and functions
+
+End_Class // cGlblClientArea

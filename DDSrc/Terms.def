@@ -1,0 +1,45 @@
+-----------------------------------------------------------------------------
+  DATE: 11/15/2018      TIME: 11:59                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Terms (# 83)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Terms
+  USER DISPLAY NAME         : Terms
+  DATAFLEX FILE NAME        : Terms
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 137       ( USED: 137 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 33 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Terms            ASC     25     1  1   
+  2  DueDays          NUM    4.0    26      
+  3  DiscountDay      NUM    4.0    32      
+  4  DiscountPercent  NUM    4.4    38      
+  5  DayOfMonthDue    NUM    2.0    48      
+  6  DueNextMonthDays  NUM    2.0    54      
+  7  DiscountDayOfMonth  NUM    2.0    60      
+  8  DiscountPercentOfMonth  NUM    4.4    66      
+  9  Status           ASC      1    76  2   
+ 10  QBTermsRefListId  ASC     50    77  3   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Terms           NO  NO       0      0       1     ON-LINE
+
+  2    Status          NO  NO       0      0       2     ON-LINE
+       Terms           NO  NO 
+
+  3    QBTermsRefListId NO  NO       0      0       2     ON-LINE
+       Terms           NO  NO 
+

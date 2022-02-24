@@ -1,0 +1,332 @@
+//PrintEmployees
+
+// Register all objects
+Register_Object PrintEmployees
+Register_Object oEmployerNameGroup
+Register_Object oFromEmployerName
+Register_Object oToEmployerName
+Register_Object oDestinationGroup
+Register_Object oScreenRadio
+Register_Object oPrinterRadio
+Register_Object oFileRadio
+Register_Object oPrintButton
+Register_Object oCancelButton
+Register_Object oCrystalPrintEmployees
+
+
+
+
+
+Use DFAllEnt.pkg
+Use cCrystal.pkg
+
+Activate_View Activate_PrintEmployees for PrintEmployees
+
+Object PrintEmployees is a ReportView
+    Set Label To "PrintEmployees"
+    Set Location to 6 6
+    Set Size to 138 460
+    
+    Property String psStart
+    Property String psStop
+    Property Boolean pbActive
+    Property Boolean pbInactive
+    
+    
+    Object oEmployerNameGroup is a Group
+        Set Label to "Select Name"
+        Set Location to 5 5
+        
+        Object oFromEmployerName is a Form
+            Set Size to 13 379
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Prompt_Button_Mode to pb_PromptOn
+            Set Prompt_Object to Employer_sl
+            
+            // This procedure is called if Move_Value_Out_state is true, we use the SelectBestColumn
+            // function to retrieve the column for the passed file and field number. After retrieving
+            // the column we setup the list.
+            
+            Procedure Prompt_CallBack Integer hPrompt
+                Integer iColumn
+                // 4 and 2 are the file and field numbers for Employer.Name
+                Get SelectBestColumn of hPrompt 4 2 to iColumn
+                Set peUpdateMode of hPrompt to umPromptValue
+                Set piUpdateColumn of hPrompt to iColumn
+                Set piInitialColumn of hPrompt to iColumn
+            End_Procedure // Prompt_CallBack
+            
+            
+        End_Object // FromEmployerName
+        
+        Object oToEmployerName is a Form
+            Set Size to 13 379
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Prompt_Button_Mode to pb_PromptOn
+            Set Prompt_Object to Employer_sl
+            
+            // This procedure is called if Move_Value_Out_state is true, we use the SelectBestColumn
+            // function to retrieve the column for the passed file and field number. After retrieving
+            // the column we setup the list.
+            
+            Procedure Prompt_CallBack Integer hPrompt
+                Integer iColumn
+                // 4 and 2 are the file and field numbers for Employer.Name
+                Get SelectBestColumn of hPrompt 4 2 to iColumn
+                Set peUpdateMode of hPrompt to umPromptValue
+                Set piUpdateColumn of hPrompt to iColumn
+                Set piInitialColumn of hPrompt to iColumn
+            End_Procedure // Prompt_CallBack
+            
+            
+        End_Object // ToEmployerName
+        
+        Set Size to 43 450
+    
+    End_Object // EmployerNameGroup
+    
+    Object oDestinationGroup is a RadioGroup
+        Set Label to "Output destination"
+        Set Location to 53 5
+        Set Size to 46 77
+        
+        Object oScreenRadio is a Radio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object // oScreenRadio
+        
+        Object oPrinterRadio is a Radio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object // oPrinterRadio
+        
+        Object oFileRadio is a Radio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file, application or email"
+        End_Object // oFileRadio
+        
+        
+        // This function returns the output destination constant.
+        
+        Function PrintDestination Returns Integer
+            Integer iCurrentRadio eDestination
+            Get Current_Radio to iCurrentRadio
+            If (iCurrentRadio=0)  Move PRINT_TO_WINDOW  to eDestination
+            If (iCurrentRadio=1)  Move PRINT_TO_PRINTER to eDestination
+            If (iCurrentRadio=2)  Move PRINT_TO_FILE    to eDestination
+            Function_Return eDestination
+        End_Function // PrintDestination
+        
+    End_Object // oDestinationGroup
+    
+    Object oPrintButton is a Button
+        Set Label to "Print"
+        Set Size to 14 50
+        Set Location to 104 350
+        Set Status_Help to "Print the report"
+        Set Default_State to True
+        
+        // This procedure outputs the report by sending RunReport.
+        
+        Procedure OnClick
+            Send RunReport of oCrystalPrintEmployees
+        End_Procedure // OnClick
+        
+    End_Object // oPrintButton
+    
+    Object oCancelButton is a Button
+        Set Label to "Cancel"
+        Set Size to 14 50
+        Set Location to 104 405
+        Set Status_Help to "Cancel this Panel"
+        
+        // This procedure closes the view.
+        
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure // OnClick
+        
+    End_Object // oCancelButton
+    
+    
+    Object oCrystalPrintEmployees is a cCrystal
+        Set psReportName to "IC Employer Employee.rpt"
+        
+        
+        // This event is sent when the report is run and the cCrystalReport COM object has been created.
+        Procedure OnInitializeReport handle hoReport
+            Integer eDestination
+            String  sSelection
+            String  sFromEmployerName sToEmployerName sActive sInactive
+            Boolean bActive bInactive
+            
+            Forward Send OnInitializeReport hoReport
+            
+            // Set the print destination.
+            
+            Get PrintDestination of oDestinationGroup to eDestination
+            Set peOutputDestination to eDestination
+            
+            // Create the selection formula string.
+            
+            Get psStart to sFromEmployerName
+            Get psStop   to sToEmployerName
+            Get pbActive to bActive
+            Get pbInactive to bInactive
+            If (not(bActive)) Move "and {EMPLOYEE.Status}<>'A'" to sActive
+            If (not(bInactive)) Move "and {EMPLOYEE.Status}<>'I'" to sInactive
+            Move (Trim(sToEmployerName))   to sToEmployerName
+            Move (Trim(sFromEmployerName)) to sFromEmployerName
+            If (sFromEmployerName<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{EMPLOYER.Name} >= "+'"'+(sFromEmployerName)+'"'+sActive+sInactive) to sSelection
+            End
+            If (sToEmployerName<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{EMPLOYER.Name} <= "+'"'+(sToEmployerName)+'"'+sActive+sInactive) to sSelection
+            End
+            
+            // Set the selection formula.
+            Set ComRecordSelectionFormula of hoReport to sSelection
+            // Sort Order
+            Send DeleteSortOrder of hoReport
+            Send AppendSortField of hoReport "EMPLOYEE" "FirstName" crAscendingOrder 
+            //Send AppendSortField of hoReport "EMPLOYEE" "LastName" crAscendingOrder 
+        End_Procedure // OnInitializeReport
+        
+        
+        // Event is called when report is sent to previewer
+        Procedure OnDisplayReport Handle hoReport
+            Handle hoViewer
+            
+            Forward Send OnDisplayReport hoReport
+            
+            // Viewer options can be customized by setting properties of the active/x viewer object
+            //Get ActiveXReportViewerObject of hoReport to hoViewer // handle of active/x viewer
+            
+            //Set ComDisplayToolbar           of hoViewer to True
+            //Set ComDisplayTabs              of hoViewer to False
+            //Set ComDisplayGroupTree         of hoViewer to False
+            //Set ComEnableGroupTree          of hoViewer to False
+            //Set ComEnablePrintButton        of hoViewer to True
+            //Set ComEnableCloseButton        of hoViewer to False
+            //Set ComEnableRefreshButton      of hoViewer to False
+            //Set ComEnableExportButton       of hoViewer to True
+            //Set ComEnableSearchExpertButton of hoViewer to True
+            //Set ComEnableHelpButton         of hoViewer to False
+            //Set ComEnableZoomControl        of hoViewer to True
+            //Set ComEnableProgressControl    of hoViewer to True
+            //Set ComEnableSearchControl      of hoViewer to True
+            //Set ComEnableNavigationControls of hoViewer to True
+            //Set ComEnableDrillDown          of hoViewer to False
+            //Set ComEnableAnimationCtrl      of hoViewer to True
+            //Set ComEnableSelectExpertButton of hoViewer to False
+            //Set ComLaunchHTTPHyperlinksInNewBrowser of hoViewer to True
+            
+        End_Procedure // OnDisplayReport
+        
+        
+        // Event is called when report is sent to Export
+        Procedure OnExportReport Handle hoReport
+            Handle hoExport
+            
+            Forward Send OnExportReport hoReport
+            
+            // By default Export options will be prompted when report is run.
+            
+            // Or, Export can be set up within the program
+            //Set pbExportPrompt of hoReport to False // suppress prompt for all export information
+            //Get ExportObject of hoReport to hoExport
+            
+            // Sample for export to disk file (word)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport to "Report.dat"
+            
+            // Sample for export to disk file (XML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTXML
+            //Set ComXMLFileName     of hoExport to "Report.xml"
+            
+            // Sample for export to disk file (HTML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTHTML40
+            //Set ComHTMLFileName    of hoExport to "Report.html"
+            
+            // Sample for export to mapi
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTEMailMAPI
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport to "Report.dat"
+            //Set ComMailToList      of hoExport to "Add-name@name.net"
+            //Set ComMailSubject     of hoExport to "Add-Subject"
+            //Set ComMailMessage     of hoExport to "Add-Message"
+            //Set ComMailBccList     of hoExport to "Add-name@name.net"
+            
+            // Sample for export to application (Word)
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTApplication
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            
+        End_Procedure // OnExportReport
+        
+        
+        // procedure is called when report is sent to printer
+        Procedure OnPrintReport Handle hoReport
+            
+            Forward Send OnPrintReport hoReport
+            
+            Set pbPrinterPrompt of hoReport to True // will prompt to set-up printer
+            
+            // Or... printer can be set up within the program
+            //Send ComSelectPrinter of hoReport "sDriverName" "sPrinterName" "sPortName"
+            //Set piPrinterCopies   of hoReport to 1
+            //Set pbPrinterCollate  of hoReport to True
+            
+        End_Procedure // OnPrintReport
+                    
+        
+    
+    End_Object // oCrystalPrintEmployees
+    
+    Procedure DoStartReport
+        String sStart sStop
+        //
+        Get Value of oFromEmployerName to sStart
+        Get Value of oToEmployerName   to sStop
+        //
+        Set psStart to sStart
+        Set psStop  to sStop
+        //
+        Send RunReport of oCrystalPrintEmployees
+    End_Procedure
+
+    Procedure DoJumpStartReport String sEmployerName Boolean bActive Boolean bInactive
+        Set psStart to sEmployerName
+        Set psStop to sEmployerName
+        Set pbActive to bActive
+        Set pbInactive to bInactive
+        Send RunReport of oCrystalPrintEmployees
+    End_Procedure 
+    
+    
+End_Object // PrintEmployees
+

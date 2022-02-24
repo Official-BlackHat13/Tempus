@@ -1,0 +1,46 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Sht_Hdr (# 48)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Sht_Hdr
+  USER DISPLAY NAME         : Sht_Hdr
+  DATAFLEX FILE NAME        : Sht_Hdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 65886     ( USED: 65886 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 3 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Invoice_ID       NUM   10.0     1      Invhdr.FIELD_1 (14,1)
+  2  Date             DAT     10    12      
+  3  QB_Invoice_ID    ASC     30    35      
+  4  PO_Number        ASC     30    65      
+  5  Wind_Vel         ASC     20    95      
+  6  Wind_Dir         ASC     20   115      
+  7  Temp             ASC     20   135      
+  8  Snowfall         ASC     30   155      
+  9  Salt_Used        ASC     30   185      
+ 10  Site_Hours       NUM    4.2   215      
+ 11  Comments         TEX    256   223      
+ 12  Time_In_Out      TEX    256 16606      
+ 13  Sht_Hdr_ID       NUM   10.0 32989  1   
+ 14  Equipment        TEX    256 33000      
+ 15  Personnel        TEX    256 49383      
+ 16  Bill_Rate        ASC     50 65766      
+ 17  Services_Dates   ASC     60 65816      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Sht_Hdr_ID      NO  NO       0      0       1     ON-LINE
+

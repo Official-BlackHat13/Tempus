@@ -1,0 +1,235 @@
+// Class Name: Order_DataDictionary
+// Revision  : 25
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Order
+Open Trans
+Open Invhdr
+Open Location
+Open System
+Open Locnotes
+Open Quotehdr
+Open Project
+Open Jobcosts
+Open SalesRep
+Open pminvhdr
+
+
+Register_Object Order_Work_Type_VT
+
+Object Order_Work_Type_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "S" "Snow Removal"
+        Send Add_Table_Value "P" "Pavement Maintenance"
+        Send Add_Table_Value "E" "Excavation"
+        Send Add_Table_Value "O" "Other"
+    End_Procedure    // Fill_List
+End_Object   // Order_Work_Type_VT
+
+Object BillingType_VT is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "T" "Time & Material"
+        Send Add_Table_Value "N" "No Charge"
+        Send Add_Table_Value "S" "Standard"
+    End_Procedure
+End_Object
+
+Register_Object BillingType_VT
+
+
+
+Register_Function QuoteReferenceValidation Integer iField Integer iQuoteReference Returns Boolean
+
+Register_Object Order_sl
+
+Class Order_DataDictionary is a cGlblDataDictionary
+ 
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Order.File_Number
+
+        Set Add_Server_File to Location.File_Number
+        Set Add_Server_File to Project.File_Number
+        Set Add_Server_File to SalesRep.File_Number
+
+        Set Add_Client_File to Trans.File_Number
+        Set Add_Client_File to Invhdr.File_Number
+        Set Add_Client_File to Locnotes.File_Number
+        Set Add_Client_File to Jobcosts.File_Number
+        Set Add_Client_File to pminvhdr.File_Number
+        Set Cascade_Delete_State to False
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to False
+        
+        // Child (Client) file structure................
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to Quotehdr.File_Number DD_Lock_On_All
+
+        Set Field_Auto_Increment Field Order.Jobnumber to File_Field System.Lastjob
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Order.Customeridno DD_AUTOFIND to True
+        Set Key_Field_State Field Order.Customeridno To TRUE
+       
+        //Set Field_Option Field Order.PO_Number DD_NOENTER to False
+
+        Set Field_Option Field Order.Jobnumber DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Order.Jobnumber to Order_sl
+        Set Field_Option Field Order.JobNumber DD_ZERO_SUPPRESS to True
+        Set Key_Field_State Field Order.JobNumber to True
+
+
+        Set Field_Value_Table Field Order.Worktype to Order_Work_Type_VT
+
+        Set Field_Option Field Order.Planner DD_CAPSLOCK to True
+
+        Set Field_Prompt_Object Field Order.JobCloseDate to Order_sl
+
+        Set Field_Option Field Order.QuoteReference DD_ZERO_SUPPRESS to True
+        Set Field_Validate_msg Field Order.QuoteReference to get_QuoteReferenceValidation
+        Set Field_Option Field Order.QuoteAmount DD_ZERO_SUPPRESS to True
+
+        Set Field_Class_Name Field Order.RoundingExempt to "cGlblDbCheckBox"
+
+        Set Field_Class_Name Field Order.MonthlyBilling to "cGlblDbCheckBox"
+
+        Set Field_Option Field Order.JobCostTotal DD_NOENTER to True
+
+        Set Field_Class_Name Field Order.CostStatus to "cGlblDbCheckBox"
+        Set Field_Label_Short Field Order.CostStatus to "Cost Not Complete"
+        Set Field_Label_Long Field Order.CostStatus to "Cost Not Complete"
+
+        Set Field_Value_Table Field Order.BillingType to BillingType_VT
+
+
+    End_Procedure    // Construct_Object
+
+    Function QuoteReferenceValidation Integer iField Integer iQuoteReference Returns Boolean
+        Boolean bFail
+        //
+        Send Refind_Records
+        //
+        If (iQuoteReference <> Order.QuoteReference) Begin
+            Clear Quotehdr
+            Move iQuoteReference to Quotehdr.QuotehdrID
+            Find eq Quotehdr.QuotehdrID
+            If ((Found) and Quotehdr.CustomerIdno = Customer.CustomerIdno and Quotehdr.LocationIdno = Location.LocationIdno) Begin
+                Move (Quotehdr.Status = "W") to bFail
+                If (bFail) Begin
+                    Send UserError "Quote has already been converted to an order" "Validation Error"
+                End
+                If (bFail) Break
+                Set Field_Changed_Value Field Order.QuoteAmount to Quotehdr.Amount
+            End
+            Else Begin
+                Send UserError "Quote number is not for this Organization/Location" "Validation Error"
+                Move True to bFail
+            End
+        End
+        Function_Return bFail
+    End_Function
+
+    Procedure Save_Main_File
+        Forward Send Save_Main_File
+        //
+        If (Order.QuoteReference <> 0) Begin
+            Clear Quotehdr
+            Move Order.QuoteReference to Quotehdr.QuotehdrID
+            Find eq Quotehdr.QuotehdrID
+            If ((Found) and Quotehdr.Status <> "W") Begin
+                Reread
+                Move "W" to Quotehdr.Status
+                SaveRecord Quotehdr
+                Unlock
+            End
+        End
+    End_Procedure
+
+    Procedure Backout
+        Forward Send Backout
+        //
+        Subtract 1 from Location.OrderCount
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        Move Location.CustomerIdno to Order.CustomerIdno
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1                 to Order.ChangedFlag
+        End
+        //
+        Add 1 to Location.OrderCount
+        //
+        #IFDEF Is$WebApp
+        #ELSE
+        Move Customer.Name to Order.Organization
+        Move Location.Name to Order.LocationName
+        //
+        If (Location.PropmgrIdno <> 0) Begin
+            Integer iRecId
+            //
+            Move Contact.Recnum to iRecId
+            Clear Contact
+            Move Location.PropmgrIdno to Contact.ContactIdno
+            Find eq Contact.ContactIdno
+            If (Found) Begin
+                Move (Trim(Contact.FirstName) * Trim(Contact.LastName)) to Order.PropertyManager
+            End
+            Clear Contact
+            If (iRecId) Begin
+                Move iRecId to Contact.Recnum
+                Find eq Contact.Recnum
+            End
+        End
+        #ENDIF
+    End_Procedure   // Update
+
+    Procedure Creating
+        Forward Send Creating
+        //
+        Move "A" to Location.Status
+        Move "A" to Customer.Status
+    End_Procedure
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+//        Date dToday
+        //
+//        sysdate dToday
+        //
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field Order.BillingType to "S"
+//        Set Field_Default_Value   Field Order.Jobopendate To dToday
+    End_Procedure    // Field_Defaults
+
+End_Class
+Use Order.sl
+///Use Order_SnowOpenNotCanceled.sl
+#IFDEF Is$WebApp
+#ELSE
+
+#ENDIF
+

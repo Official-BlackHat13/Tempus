@@ -1,0 +1,16 @@
+OpersIdno
+CustomerIdno
+LocationIdno
+MastOpsIdno
+Name
+SellRate
+CostRate
+CostType
+CalcBasis
+ActivityType
+Description
+Display
+Status
+DisplaySequence
+ChangedFlag
+IsScheduled

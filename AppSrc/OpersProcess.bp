@@ -1,0 +1,248 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+
+Object oOpersProcess is a BusinessProcess
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Set Main_DD to oOpers_DD
+    
+    Struct tOpersRecord
+        Integer iCustomerIdno
+        Integer iLocationIdno
+        Integer iMastOpsIdno
+        String  sName
+        Number  nSellRate
+        Number  nCostRate
+        String  sCostType
+        String  sCalcBasis
+        String  sActivityType
+        String  sDescription
+        Number  nDisplay
+        String  sStatus
+        Number  nDisplaySequence
+        Number  nChangedFlag
+        Number  nIsScheduled
+        String  sExcludeCostFlag
+        Number  nRecordOwner
+        Number  nMonthlyItemFlag
+    End_Struct
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+//    Procedure OnProcess
+//        Boolean bFail
+//        Integer hoDD
+//        //
+//        Get Main_DD to hoDD
+//        //
+//        Send Find of hoDD GE 1
+//        While (Found)
+//            Send Update_Status Opers.OpersIdno
+//            //
+//            If (MastOps.IsScheduled) Begin
+//                Set Field_Changed_Value of hoDD Field Opers.DisplaySequence to MastOps.DisplaySequence
+//                Set Field_Changed_Value of hoDD Field Opers.Description     to MastOps.Description
+//                Set Field_Changed_Value of hoDD Field Opers.ChangedFlag     to 1
+//                Get Request_Validate    of hoDD                             to bFail
+//                If (not(bFail)) Begin
+//                    Send Request_Save   of hoDD
+//                End
+//            End
+//            //
+//            Send Find of hoDD GT 1
+//        Loop
+//    End_Procedure
+
+    Function UpdateRelatedOpers Integer iMastOpsIdno Boolean bStatus Boolean bPricing Boolean bDescription Boolean bName Returns Integer
+        Integer iUpdatedOpersCount
+        //Integer hoDD
+        Boolean bFail
+        
+        //Get Main_DD to hoDD
+        
+        Move iMastOpsIdno to Opers.MastOpsIdno
+        Send Find of oOpers_DD GE 3
+        While ((Found) and Opers.MastOpsIdno = iMastOpsIdno)
+            
+            Set Field_Changed_Value of oOpers_DD Field Opers.ChangedFlag                        to 1
+            If (bStatus) Set Field_Changed_Value of oOpers_DD Field Opers.Status                to MastOps.Status
+            If (bPricing) Set Field_Changed_Value of oOpers_DD Field Opers.SellRate             to MastOps.SellRate
+            If (bDescription) Set Field_Changed_Value of oOpers_DD Field Opers.Description      to MastOps.Description
+            If (bName) Set Field_Changed_Value of oOpers_DD Field Opers.Name                    to MastOps.Name
+
+            Get Request_Validate    of oOpers_DD to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of oOpers_DD
+                    Increment iUpdatedOpersCount
+                End
+            Send Find of oOpers_DD GT 3
+        Loop
+        
+        Function_Return iUpdatedOpersCount
+    End_Function
+
+
+        Function CopyOpersRecords Integer iCopyFromLocIdno Integer iCopyToLocIdno Boolean bOverwrite String ByRef sErrMsg Returns Boolean
+            Integer iCopyCount iNewCount iOverwriteCount iArraySize i
+            Boolean bSuccess bFail
+            Handle hoDD
+            tOpersRecord[] aOpersCopy
+            //
+            Set Main_DD to oOpers_DD
+            Move oOpers_DD to hoDD
+            //
+            Send Initialize_StatusPanel of ghoStatusPanel "Copy Pricelist Records" "" ""
+            Send Start_StatusPanel of ghoStatusPanel
+            Send Clear_All of hoDD
+            Move iCopyFromLocIdno to Opers.LocationIdno
+            Send Request_Find of hoDD GE Opers.File_Number 2
+            While ((Found) and Opers.LocationIdno = iCopyFromLocIdno)
+                Send Update_StatusPanel of ghoStatusPanel ("Copying records from "+Trim(Location.Name))
+                Get Field_Current_Value of hoDD Field Opers.CustomerIdno     to aOpersCopy[iCopyCount].iCustomerIdno
+                Get Field_Current_Value of hoDD Field Opers.LocationIdno     to aOpersCopy[iCopyCount].iLocationIdno
+                Get Field_Current_Value of hoDD Field Opers.MastOpsIdno      to aOpersCopy[iCopyCount].iMastOpsIdno
+                Get Field_Current_Value of hoDD Field Opers.Name             to aOpersCopy[iCopyCount].sName
+                Get Field_Current_Value of hoDD Field Opers.SellRate         to aOpersCopy[iCopyCount].nSellRate
+                Get Field_Current_Value of hoDD Field Opers.CostRate         to aOpersCopy[iCopyCount].nCostRate
+                Get Field_Current_Value of hoDD Field Opers.CostType         to aOpersCopy[iCopyCount].sCostType
+                Get Field_Current_Value of hoDD Field Opers.CalcBasis        to aOpersCopy[iCopyCount].sCalcBasis
+                Get Field_Current_Value of hoDD Field Opers.ActivityType     to aOpersCopy[iCopyCount].sActivityType
+                Get Field_Current_Value of hoDD Field Opers.Description      to aOpersCopy[iCopyCount].sDescription
+                Get Field_Current_Value of hoDD Field Opers.Display          to aOpersCopy[iCopyCount].nDisplay
+                Get Field_Current_Value of hoDD Field Opers.Status           to aOpersCopy[iCopyCount].sStatus
+                Get Field_Current_Value of hoDD Field Opers.DisplaySequence  to aOpersCopy[iCopyCount].nDisplaySequence
+                Get Field_Current_Value of hoDD Field Opers.ChangedFlag      to aOpersCopy[iCopyCount].nChangedFlag
+                Get Field_Current_Value of hoDD Field Opers.IsScheduled      to aOpersCopy[iCopyCount].nIsScheduled
+                Get Field_Current_Value of hoDD Field Opers.ExcludeCostFlag  to aOpersCopy[iCopyCount].sExcludeCostFlag
+                Get Field_Current_Value of hoDD Field Opers.RecordOwner      to aOpersCopy[iCopyCount].nRecordOwner
+                Get Field_Current_Value of hoDD Field Opers.MonthlyItemFlag  to aOpersCopy[iCopyCount].nMonthlyItemFlag
+                Increment iCopyCount
+                //Find GT Opers by 2
+                Send Request_Find of hoDD GT Opers.File_Number 2
+            Loop
+            //4.    Refind Opers of original locations
+            //Check if record exists
+            Send Update_StatusPanel of ghoStatusPanel ""
+            Move (SizeOfArray(aOpersCopy)) to iArraySize
+            For i from 0 to (iArraySize-1)
+                Send Clear_All of hoDD
+                Move iCopyToLocIdno             to Opers.LocationIdno
+                Move aOpersCopy[i].iMastOpsIdno to Opers.MastOpsIdno
+                Send Request_Find of hoDD EQ Opers.File_Number 4
+                //Find EQ Opers by 4
+                If ((Found) and Opers.LocationIdno = iCopyToLocIdno and aOpersCopy[i].iMastOpsIdno=Opers.MastOpsIdno) Begin
+                    //Overwrite ?
+                    If (bOverwrite) Begin
+                        Set Field_Changed_Value of hoDD Field Opers.Name               to aOpersCopy[i].sName
+                        Set Field_Changed_Value of hoDD Field Opers.SellRate           to aOpersCopy[i].nSellRate
+                        Set Field_Changed_Value of hoDD Field Opers.CostRate           to aOpersCopy[i].nCostRate
+                        Set Field_Changed_Value of hoDD Field Opers.CostType           to aOpersCopy[i].sCostType
+                        Set Field_Changed_Value of hoDD Field Opers.CalcBasis          to aOpersCopy[i].sCalcBasis
+                        Set Field_Changed_Value of hoDD Field Opers.ActivityType       to aOpersCopy[i].sActivityType
+                        Set Field_Changed_Value of hoDD Field Opers.Description        to aOpersCopy[i].sDescription
+                        Set Field_Changed_Value of hoDD Field Opers.Display            to aOpersCopy[i].nDisplay
+                        Set Field_Changed_Value of hoDD Field Opers.Status             to aOpersCopy[i].sStatus
+                        Set Field_Changed_Value of hoDD Field Opers.DisplaySequence    to aOpersCopy[i].nDisplaySequence
+                        Set Field_Changed_Value of hoDD Field Opers.ChangedFlag        to 1 //always flag as changed
+                        Set Field_Changed_Value of hoDD Field Opers.IsScheduled        to aOpersCopy[i].nIsScheduled
+                        Set Field_Changed_Value of hoDD Field Opers.ExcludeCostFlag    to aOpersCopy[i].sExcludeCostFlag
+                        Set Field_Changed_Value of hoDD Field Opers.RecordOwner        to aOpersCopy[i].nRecordOwner
+                        Set Field_Changed_Value of hoDD Field Opers.MonthlyItemFlag    to aOpersCopy[i].nMonthlyItemFlag
+                        Get Request_Validate of hoDD to bFail
+                        If (bFail) Begin
+                            Send Stop_Box "Processing Stopped updating record" "Error Processing"
+                            Move ("Could not overwrite record MastOps#:"*String(aOpersCopy[i].iMastOpsIdno)*"-"*aOpersCopy[i].sName) to sErrMsg
+                            Function_Return (False)
+                        End
+                        Send Request_Save of hoDD
+                        Increment iOverwriteCount
+                    End
+                End
+                Else Begin
+                    //Create New Opers Record
+                    Send Clear_All of hoDD
+                    Move iCopyToLocIdno to Location.LocationIdno
+                    Send Request_Find of hoDD EQ Location.File_Number 1
+                    Move aOpersCopy[i].iMastOpsIdno to MastOps.MastOpsIdno
+                    Send Request_Find of hoDD EQ MastOps.File_Number 1
+                    //
+                    Set Field_Changed_Value of hoDD Field Opers.Name               to aOpersCopy[i].sName
+                    Set Field_Changed_Value of hoDD Field Opers.SellRate           to aOpersCopy[i].nSellRate
+                    Set Field_Changed_Value of hoDD Field Opers.CostRate           to aOpersCopy[i].nCostRate
+                    Set Field_Changed_Value of hoDD Field Opers.CostType           to aOpersCopy[i].sCostType
+                    Set Field_Changed_Value of hoDD Field Opers.CalcBasis          to aOpersCopy[i].sCalcBasis
+                    Set Field_Changed_Value of hoDD Field Opers.ActivityType       to aOpersCopy[i].sActivityType
+                    Set Field_Changed_Value of hoDD Field Opers.Description        to aOpersCopy[i].sDescription
+                    Set Field_Changed_Value of hoDD Field Opers.Display            to aOpersCopy[i].nDisplay
+                    Set Field_Changed_Value of hoDD Field Opers.Status             to aOpersCopy[i].sStatus
+                    Set Field_Changed_Value of hoDD Field Opers.DisplaySequence    to aOpersCopy[i].nDisplaySequence
+                    Set Field_Changed_Value of hoDD Field Opers.ChangedFlag        to 1 //always flag as changed
+                    Set Field_Changed_Value of hoDD Field Opers.IsScheduled        to aOpersCopy[i].nIsScheduled
+                    Set Field_Changed_Value of hoDD Field Opers.ExcludeCostFlag    to aOpersCopy[i].sExcludeCostFlag
+                    Set Field_Changed_Value of hoDD Field Opers.RecordOwner        to aOpersCopy[i].nRecordOwner
+                    Set Field_Changed_Value of hoDD Field Opers.MonthlyItemFlag    to aOpersCopy[i].nMonthlyItemFlag
+                    Get Request_Validate of hoDD to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Processing Stopped creating new record." "Error Processing"
+                        Move ("Could not create new record MastOps#:"*String(aOpersCopy[i].iMastOpsIdno)*"-"*aOpersCopy[i].sName) to sErrMsg
+                        Function_Return (False)
+                    End
+                    Send Request_Save of hoDD
+                    Increment iNewCount
+                End
+                
+            Loop
+            //
+            Send Stop_StatusPanel of ghoStatusPanel 
+            //
+            Move ("Originals Copied:"*String(iCopyCount)*"| New:"*String(iNewCount)*" | Overwritten:"*String(iOverwriteCount)) to sErrMsg
+            //
+            Move (If(bOverwrite,(iCopyCount=(iOverwriteCount+iNewCount)),(iNewCount>0))) to bSuccess
+            Function_Return (bSuccess)
+        End_Function
+
+End_Object
+

@@ -1,0 +1,41 @@
+-----------------------------------------------------------------------------
+  DATE: 05/12/2015      TIME: 17:44                                  PAGE:  1
+  FILE DEFINITION FOR FILE: PropDtl (# 64)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:PropDtl
+  USER DISPLAY NAME         : PropDtl
+  DATAFLEX FILE NAME        : PropDtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 183       ( USED: 183 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  PropHdr_Idno     NUM    8.0     1  2   PropHdr.FIELD_1 (63,1)
+  2  PropDtl_Idno     NUM    8.0    12  1   
+  3  SnowDepth        ASC     20    23      
+  4  PlowPrice        ASC     20    43      
+  5  ShovelPrice      ASC     20    63      
+  6  DeicePrice       ASC     20    83      
+  7  SideWalkDeice    ASC     20   103      
+  8  AddService       ASC     30   123      
+  9  AddPrice         ASC     20   153      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    PropDtl_Idno    NO  NO       0      0       1     ON-LINE
+
+  2    PropHdr_Idno    NO  NO       0      0       2     ON-LINE
+       PropDtl_Idno    NO  NO 
+

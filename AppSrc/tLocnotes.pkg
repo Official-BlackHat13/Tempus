@@ -1,0 +1,32 @@
+// tLocnotes.pkg
+// used to retrieve remote server data
+
+Struct tLocnotes
+    String  sRowId
+    Integer iLocnotesId
+    Integer iJobNumber
+    Integer iLocationIdno
+    Date    dCreatedDate
+    String  sCreatedTime
+    Integer iCreatedBy
+    Date    dNoteDate
+    Integer iLocnotesRef
+    String  sNote
+    Integer iIsEmail
+    String  sReqtypesCode
+    String  sStatus
+    String  sAssignedTo
+    Date    dAssignedDate
+    String  sAssignedTime
+    Integer iAssignedBy
+    Date    dResolvedDate
+    String  sResolvedTime
+    Integer iResolvedBy
+    Date    dClosedDate
+    String  sClosedTime
+    Integer iClosedBy
+    String  sResolution
+    Integer iChangedFlag
+    String  sCallerName
+    String  sCallerPhone
+End_Struct

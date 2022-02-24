@@ -1,0 +1,132 @@
+-----------------------------------------------------------------------------
+  DATE: 07/19/2018      TIME: 13:43                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Trans (# 10)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Transactions
+  USER DISPLAY NAME         : Transactions
+  DATAFLEX FILE NAME        : Trans
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 575       ( USED: 575 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 461204 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  TransIdno        NUM    8.0     1  1   
+  2  CustomerIdno     NUM    8.0    12      
+  3  LocationIdno     NUM    8.0    23      
+  4  JobNumber        NUM    8.0    34  2   Order.FIELD_3 (8,3)
+  5  EventIdno        NUM    8.0    45      
+  6  EmployeeIdno     NUM    8.0    56  3   Employee.FIELD_1 (1,1)
+  7  OpersIdno        NUM    8.0    67  4   Opers.FIELD_1 (7,1)
+  8  StartTime        ASC     10    78  6   
+  9  StartDate        DAT     10    88  6   
+ 10  StartHr          NUM    2.0   111  2   
+ 11  StartMin         NUM    2.0   117  2   
+ 12  StopTime         ASC     10   123 13   
+ 13  StopDate         DAT     10   133      
+ 14  StopHr           NUM    2.0   156      
+ 15  StopMin          NUM    2.0   162      
+ 16  ElapsedMinutes   NUM    6.0   168      
+ 17  ElapsedHours     NUM    6.2   179      
+ 18  Quantity         NUM    6.2   189      
+ 19  Comment          ASC     50   199      
+ 20  InvoicedFlag     NUM    2.0   249  5   
+ 21  InvoiceDate      DAT     10   255      
+ 22  EquipmentID      ASC     15   278      
+ 23  AreaNumber       NUM    4.0   293  5   
+ 24  TransReference   NUM    8.0   299  8   
+ 25  EquipIdno        NUM    8.0   310 13   
+ 26  ReportCategory   ASC     10   321      
+ 27  CallerId         ASC     12   331  9   
+ 28  EmployerIdno     NUM    8.0   343 10   
+ 29  CurrentLaborRate  NUM    6.2   354      
+ 30  CurrentContractorRate  NUM    6.2   364      
+ 31  CurrentSellRate  NUM    6.4   374      
+ 32  InvoiceIdno      NUM    8.0   386 11   
+ 33  MastOpsIdno      NUM    8.0   397      
+ 34  CurrentRentalRate  NUM    6.2   408      
+ 35  CurrentOperatorRate  NUM    4.2   418      
+ 36  CEPM_JobNumber   NUM    8.0   426 12   
+ 37  CallerId_Out     ASC     12   437      
+ 38  GPSLat_In        NUM    4.8   449      
+ 39  GPSLong_In       NUM    4.8   463      
+ 40  GPSLat_Out       NUM    4.8   477      
+ 41  GPSLong_Out      NUM    4.8   491      
+ 42  AttachEquipIdno  NUM    8.0   505      
+ 43  CurrAttachContrRate  NUM    6.2   516      
+ 44  AttachOpersIdno  NUM    8.0   526      
+ 45  AttachMastOpsIdno  NUM    8.0   537      
+ 46  VendInvoicedFlag  NUM    2.0   548 14   
+ 47  VendInvHdrIdno   NUM    8.0   554 14   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    TransIdno       NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       5     ON-LINE
+       StartDate       NO  NO 
+       StartHr         NO  NO 
+       StartMin        NO  NO 
+       TransIdno       NO  NO 
+
+  3    EmployeeIdno    NO  NO       0      0       4     ON-LINE
+       StartDate       NO  NO 
+       StartTime       NO  NO 
+       TransIdno       NO  NO 
+
+  4    OpersIdno       NO  NO       0      0       2     ON-LINE
+       TransIdno       NO  NO 
+
+  5    InvoicedFlag    NO  NO       0      0       6     ON-LINE
+       AreaNumber      NO  NO 
+       JobNumber       NO  NO 
+       StartDate       NO  NO 
+       StartTime       NO  NO 
+       TransIdno       NO  NO 
+
+  6    StartDate       NO  NO       0      0       3     ON-LINE
+       StartTime       NO  NO 
+       TransIdno       NO  NO 
+
+  7    InvoicedFlag    NO  NO       0      0       4     ON-LINE
+       StartDate       NO  NO 
+       StartTime       NO  NO 
+       TransIdno       NO  NO 
+
+  8    TransReference  NO  NO       0      0       2     ON-LINE
+       TransIdno       NO  NO 
+
+  9    CallerId        NO  NO       0      0       2     ON-LINE
+       TransIdno       NO  NO 
+
+  10   EmployerIdno    NO  NO       0      0       3     ON-LINE
+       StartDate       NO  NO 
+       TransIdno       NO  NO 
+
+  11   InvoiceIdno     NO  NO       0      0       3     ON-LINE
+       InvoicedFlag    NO  NO 
+       TransIdno       NO  NO 
+
+  12   CEPM_JobNumber  NO  NO       0      0       2     ON-LINE
+       TransIdno       NO  NO 
+
+  13   EquipIdno       NO  NO       0      0       4     ON-LINE
+       StartDate       NO  NO 
+       StopTime        NO  NO 
+       TransIdno       NO  NO 
+
+  14   VendInvHdrIdno  NO  NO       0      0       3     ON-LINE
+       VendInvoicedFlag NO  NO 
+       TransIdno       NO  NO 
+

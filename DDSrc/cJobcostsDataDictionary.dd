@@ -1,0 +1,109 @@
+Use cGlblDataDictionary.pkg
+
+Open Jobcosts
+Open System
+Open Order
+Open MastOps
+
+Object oCostTypeVT is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "MATERIAL" "MATERIAL"
+        Send Add_Table_Value "EQUIPMENT" "EQUIPMENT"
+        Send Add_Table_Value "SUPPLIES" "SUPPLIES"
+        Send Add_Table_Value "CONTRACTOR" "SUB-CONTRACTOR"
+        Send Add_Table_Value "LABOR" "LABOR"
+    End_Procedure
+End_Object
+
+Register_Function UnitCostValidation Integer iField Number nUnitCost Returns Integer
+
+Class cJobcostsDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Jobcosts.File_Number
+
+        Set Add_Server_File to Order.File_Number
+        Set Add_Server_File to MastOps.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Jobcosts.JobcostsId to File_Field System.JobcostsId
+
+        Set Field_Option Field Jobcosts.WorkDate DD_REQUIRED to True
+        Set Field_Class_Name Field Jobcosts.WorkDate to "cdbszDatePicker"
+
+        //Set Field_Value_Table Field Jobcosts.CostType to oCostTypeVT
+        //Set Field_Option Field Jobcosts.CostType DD_CAPSLOCK to True
+
+        Set Field_Option Field Jobcosts.MastOpsIdno DD_ZERO_SUPPRESS to True
+
+        Set Field_Validate_msg Field Jobcosts.UnitCost to get_UnitCostValidation
+        Set Field_Entry_msg Field Jobcosts.UnitCost to UnitCostEntry
+
+        Set Field_Option Field Jobcosts.TotalCost DD_NOENTER to True
+
+        Set Field_Class_Name Field Jobcosts.ExcludeFlag to "cGlblDbCheckBox"
+
+    End_Procedure
+
+    Procedure Backout
+        Forward Send Backout
+        //
+        Subtract Jobcosts.TotalCost from Order.JobCostTotal
+        //
+        If      (Jobcosts.CostType = "EQUIPMENT") Begin
+            Subtract Jobcosts.TotalCost from Order.EquipmentCost
+        End
+        Else If (Jobcosts.CostType = "MATERIAL") Begin
+            Subtract Jobcosts.TotalCost from Order.MaterialCost
+        End
+        Else If (Jobcosts.CostType = "SUPPLIES") Begin
+            Subtract Jobcosts.TotalCost from Order.SuppliesCost
+        End
+        Else If (Jobcosts.CostType = "CONTRACTOR") Begin
+            Subtract Jobcosts.TotalCost from Order.OutsideSvcsCost
+        End
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        //
+        
+        Add Jobcosts.TotalCost to Order.JobCostTotal
+        //
+        If      (Jobcosts.CostType = "EQUIPMENT") Begin
+            Add Jobcosts.TotalCost to Order.EquipmentCost
+        End
+        Else If (Jobcosts.CostType = "MATERIAL") Begin
+            Add Jobcosts.TotalCost to Order.MaterialCost
+        End
+        Else If (Jobcosts.CostType = "SUPPLIES") Begin
+            Add Jobcosts.TotalCost to Order.SuppliesCost
+        End
+        Else If (Jobcosts.CostType = "CONTRACTOR") Begin
+            Add Jobcosts.TotalCost to Order.OutsideSvcsCost
+        End
+    End_Procedure
+
+    Function UnitCostValidation Integer iField Number nUnitCost Returns Integer
+        Number nQuantity
+        //
+        Get Field_Current_Value Field Jobcosts.Quantity  to nQuantity
+        Set Field_Changed_Value Field Jobcosts.TotalCost to (nQuantity * nUnitCost)
+    End_Function
+
+    Procedure UnitCostEntry Integer iField Number nUnitCost
+        If (nUnitCost = 0) Begin
+            Send Refind_Records
+            Set Field_Changed_Value iField to MastOps.CostRate
+        End
+    End_Procedure
+
+End_Class

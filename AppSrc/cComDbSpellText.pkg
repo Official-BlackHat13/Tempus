@@ -1,0 +1,1371 @@
+// Visual DataFlex COM proxy classes generated from C:\Program Files\Chado SpellText\ChadoSpellText.ocx
+Use FlexCom20.pkg
+Use cComDbActiveXControl.pkg
+
+
+Define OLEeDebugOptions for Integer
+    // No_Debugging
+    Define OLENo_Debugging for 0
+    // Debug_Actions
+    Define OLEDebug_Actions for 1
+    // Debug_Performance
+    Define OLEDebug_Performance for 2
+
+Define OLEeDoneAction for Integer
+    // Do_Nothing
+    Define OLEDo_Nothing for 0
+    // Fire_Done_Event
+    Define OLEFire_Done_Event for 1
+    // Show_Msg_Box
+    Define OLEShow_Msg_Box for 2
+
+Define OLEeStyles for Integer
+    // MultiLine
+    Define OLEMultiLine for 0
+    // SingleLine
+    Define OLESingleLine for 1
+    // MultiLine_NoScrollBars
+    Define OLEMultiLine_NoScrollBars for 2
+    // MultiLine_NoBorder
+    Define OLEMultiLine_NoBorder for 3
+    // MultiLine_NoScrollBars_NoBorder
+    Define OLEMultiLine_NoScrollBars_NoBorder for 4
+    // SingleLine_NoBorder
+    Define OLESingleLine_NoBorder for 5
+
+Define OLEeWhatToDo for Integer
+    // IGNORE_THIS_ONE
+    Define OLEIGNORE_THIS_ONE for 0
+    // IGNORE_ALL
+    Define OLEIGNORE_ALL for 1
+    // ADD_TO_CUSTOM
+    Define OLEADD_TO_CUSTOM for 2
+    // CHANGE_WORD
+    Define OLECHANGE_WORD for 3
+    // CHANGE_ALL
+    Define OLECHANGE_ALL for 4
+    // CANCEL_CHECKING
+    Define OLECANCEL_CHECKING for 5
+
+// CLSID: {E3EF583F-8955-4B00-A79F-B697D261635D}
+Class cCom_SpellText is a Mixin
+
+    // Allows you to add a new menu item to the popup menu that appears when the user right-clicks on the text.  If they choose the item, the PopupMenuEvent event will fire.
+    Procedure ComAddPopupMenuItem String llsMenuCaption
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsMenuCaption
+        Send InvokeComMethod to hDispatchDriver 1610874549 OLE_VT_VOID
+    End_Procedure
+
+    // This function allows you to add a key phrase and a corresponding replacement string.  Whenever the key phrase is typed, it will be instantly replaced with the replacement string.
+    Procedure ComAddAutoTypePair String llsKeyPhrase String llsReplacement
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 2
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsKeyPhrase
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsReplacement
+        Send InvokeComMethod to hDispatchDriver 1610874550 OLE_VT_VOID
+    End_Procedure
+
+    // Used to clear the Change All list of words that has been specified by the user.
+    Procedure ComClearChangeAll
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874551 OLE_VT_VOID
+    End_Procedure
+
+    // Clears out the base dictionary.  Good for using only the words in your custom dictionary.
+    Procedure ComClearBaseDictionary
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874547 OLE_VT_VOID
+    End_Procedure
+
+    // Allows you to remove words from  the custom and base dictionaries.
+    Procedure ComRemoveWordsFromDictionary String llsWords
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsWords
+        Send InvokeComMethod to hDispatchDriver 1610874541 OLE_VT_VOID
+    End_Procedure
+
+    // Causes the focus to move to the SpellText control.
+    Procedure ComSetFocusToMe
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874542 OLE_VT_VOID
+    End_Procedure
+
+    // Allows you to load or append new data into the custom dictionary.
+    Procedure ComLoadCustomDictionary String llsFileName Boolean llbAppendToExisting
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 2
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsFileName
+        Send DefineParam to hDispatchDriver OLE_VT_BOOL llbAppendToExisting
+        Send InvokeComMethod to hDispatchDriver 1610874543 OLE_VT_VOID
+    End_Procedure
+
+    // Allows you to save the custom dictionary.
+    Procedure ComSaveCustomDictionary String llsFileName
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsFileName
+        Send InvokeComMethod to hDispatchDriver 1610874544 OLE_VT_VOID
+    End_Procedure
+
+    // Allows you to add words to the current custom dictionary.
+    Procedure ComAddWordsToCustom String llsNewWords
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsNewWords
+        Send InvokeComMethod to hDispatchDriver 1610874513 OLE_VT_VOID
+    End_Procedure
+
+    // Allows you to specify words that should always be ignored during spell checking (for this session only).
+    Procedure ComIgnoreAll String llsToIgnore
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Send DefineParam to hDispatchDriver OLE_VT_BSTR llsToIgnore
+        Send InvokeComMethod to hDispatchDriver 1610874514 OLE_VT_VOID
+    End_Procedure
+
+    // Used to clear out the Ignore All list.
+    Procedure ComClearIgnoreList
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874527 OLE_VT_VOID
+    End_Procedure
+
+    // Used to clear the custom dictionary.
+    Procedure ComClearCustomDictionary
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874545 OLE_VT_VOID
+    End_Procedure
+
+    // Immediately checks the spelling.
+    Procedure ComCheckSpellingNow
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874515 OLE_VT_VOID
+    End_Procedure
+
+    // Allows you to check an arbitrary string for spelling errors.
+    Procedure ComCheckString String ByRef llsToCheck
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Send DefineParam to hDispatchDriver (OLE_VT_BYREF ior OLE_VT_BSTR) llsToCheck
+        Send InvokeComMethod to hDispatchDriver 1610874516 OLE_VT_VOID
+    End_Procedure
+
+    // Controls whether typing is allowed in the control.
+    { MethodType=Property DesignTime=False }
+    Function ComReadOnly Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092274 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Controls whether typing is allowed in the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComReadOnly Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092274 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Number of logical lines in the control.
+    { MethodType=Property DesignTime=False }
+    Function ComNumberOfLines Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092268 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Length of current logical line.
+    { MethodType=Property DesignTime=False }
+    Function ComCurrentLineLength Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092267 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Number of characters to the left of the cursor on the logical line.
+    { MethodType=Property DesignTime=False }
+    Function ComCurrentCharOffset Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092266 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Current logical line number that the cursor is in.
+    { MethodType=Property DesignTime=False }
+    Function ComCurrentLineNumber Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092265 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Controls what kind of debugging events the control generates during normal operations.
+    { MethodType=Property DesignTime=False }
+    Function ComDebugOption Returns OLEeDebugOptions
+        Handle hDispatchDriver
+        OLEeDebugOptions retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092258 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Controls what kind of debugging events the control generates during normal operations.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComDebugOption OLEeDebugOptions value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092258 OLE_VT_I4 to value
+    End_Procedure
+
+    // The foreground color for a misspelled word when using dialog-based checking.
+    { MethodType=Property DesignTime=False }
+    Function ComMisspellingForeColor Returns OLE_COLOR
+        Handle hDispatchDriver
+        OLE_COLOR retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092257 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // The foreground color for a misspelled word when using dialog-based checking.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComMisspellingForeColor OLE_COLOR value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092257 OLE_VT_I4 to value
+    End_Procedure
+
+    // The background color for a misspelled word when using dialog-based checking.
+    { MethodType=Property DesignTime=False }
+    Function ComMisspellingBackColor Returns OLE_COLOR
+        Handle hDispatchDriver
+        OLE_COLOR retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092256 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // The background color for a misspelled word when using dialog-based checking.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComMisspellingBackColor OLE_COLOR value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092256 OLE_VT_I4 to value
+    End_Procedure
+
+    // Allows you to specify the name of the custom dictionary.  The custom dictionary is loaded when SpellText first starts, and is saved when it is destroyed.
+    { MethodType=Property DesignTime=False }
+    Function ComCustomDictionaryFileName Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092240 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to specify the name of the custom dictionary.  The custom dictionary is loaded when SpellText first starts, and is saved when it is destroyed.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComCustomDictionaryFileName String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092240 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Specifies whether the control should check spelling when the control loses focus.
+    { MethodType=Property DesignTime=False }
+    Function ComCheckOnFocusLoss Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092239 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Specifies whether the control should check spelling when the control loses focus.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComCheckOnFocusLoss Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092239 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Allows you to control whether the user can cancel out of the spell checking corrections dialog.
+    { MethodType=Property DesignTime=False }
+    Function ComAllowCancel Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092254 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to control whether the user can cancel out of the spell checking corrections dialog.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComAllowCancel Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092254 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Allows you to control whether the user can add new words to the custom dictionary in both the popup menu (for Passive Checking) and the corrections dialog.
+    { MethodType=Property DesignTime=False }
+    Function ComAllowAddToCustom Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092264 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to control whether the user can add new words to the custom dictionary in both the popup menu (for Passive Checking) and the corrections dialog.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComAllowAddToCustom Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092264 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Determines what to do when the spell check is done.
+    { MethodType=Property DesignTime=False }
+    Function ComDoneAction Returns OLEeDoneAction
+        Handle hDispatchDriver
+        OLEeDoneAction retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092238 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Determines what to do when the spell check is done.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComDoneAction OLEeDoneAction value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092238 OLE_VT_I4 to value
+    End_Procedure
+
+    // Controls the appearance of the control.
+    { MethodType=Property DesignTime=False }
+    Function ComStyle Returns OLEeStyles
+        Handle hDispatchDriver
+        OLEeStyles retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092263 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Controls the appearance of the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComStyle OLEeStyles value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092263 OLE_VT_I4 to value
+    End_Procedure
+
+    // Allows you to ignore words that are all caps.
+    { MethodType=Property DesignTime=False }
+    Function ComIgnoreAllCaps Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092237 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to ignore words that are all caps.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComIgnoreAllCaps Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092237 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Allows you to ignore any words that have numbers embedded in them.
+    { MethodType=Property DesignTime=False }
+    Function ComIgnoreWithNumbers Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092236 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to ignore any words that have numbers embedded in them.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComIgnoreWithNumbers Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092236 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Allows you to ignore Internet web page or e-mail addresses.
+    { MethodType=Property DesignTime=False }
+    Function ComIgnoreInternetAddrs Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092235 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to ignore Internet web page or e-mail addresses.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComIgnoreInternetAddrs Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092235 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Specifies whether you wish to handle spelling errors through an event (AutoHandleErrors=false), or have the control automatically  handle them for you (AutoHandleErrors=true).
+    { MethodType=Property DesignTime=False }
+    Function ComAutoHandleErrors Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092234 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Specifies whether you wish to handle spelling errors through an event (AutoHandleErrors=false), or have the control automatically  handle them for you (AutoHandleErrors=true).
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComAutoHandleErrors Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092234 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Allows you to control whether suggestions are generated for a misspelled word.
+    { MethodType=Property DesignTime=False }
+    Function ComSuggestCorrections Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092233 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Allows you to control whether suggestions are generated for a misspelled word.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComSuggestCorrections Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092233 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Controls whether spell checking is done as the user types.
+    { MethodType=Property DesignTime=False }
+    Function ComPassiveChecking Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092262 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Controls whether spell checking is done as the user types.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComPassiveChecking Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092262 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Color to use for wavy underline underneatch misspelled words when using Passive Checking.
+    { MethodType=Property DesignTime=False }
+    Function ComPassiveCheckColor Returns OLE_COLOR
+        Handle hDispatchDriver
+        OLE_COLOR retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092261 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Color to use for wavy underline underneatch misspelled words when using Passive Checking.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComPassiveCheckColor OLE_COLOR value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092261 OLE_VT_I4 to value
+    End_Procedure
+
+    // Indicates whether the control ignores the case of words when checking spelling.
+    { MethodType=Property DesignTime=False }
+    Function ComIgnoreCase Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092260 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Indicates whether the control ignores the case of words when checking spelling.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComIgnoreCase Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092260 OLE_VT_BOOL to value
+    End_Procedure
+
+    // This property controls whether a Validate event is fired when focus is lost.
+    { MethodType=Property DesignTime=False }
+    Function ComCausesValidation Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092259 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // This property controls whether a Validate event is fired when focus is lost.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComCausesValidation Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092259 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns/sets the background color of the control.
+    { MethodType=Property DesignTime=False }
+    Function ComBackColor Returns OLE_COLOR
+        Handle hDispatchDriver
+        OLE_COLOR retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -501 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets the background color of the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComBackColor OLE_COLOR value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver -501 OLE_VT_I4 to value
+    End_Procedure
+
+    // Returns/sets the foreground color used to display text in the control.
+    { MethodType=Property DesignTime=False }
+    Function ComForeColor Returns OLE_COLOR
+        Handle hDispatchDriver
+        OLE_COLOR retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -513 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets the foreground color used to display text in the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComForeColor OLE_COLOR value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver -513 OLE_VT_I4 to value
+    End_Procedure
+
+    // Returns/sets a value that determines whether an object can respond to user-generated events.
+    { MethodType=Property DesignTime=False }
+    Function ComEnabled Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -514 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets a value that determines whether an object can respond to user-generated events.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComEnabled Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver -514 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns a Font object.
+    { MethodType=Property DesignTime=False }
+    Function ComFont Returns Variant
+        Handle hDispatchDriver
+        Variant retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -512 OLE_VT_DISPATCH to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns a Font object.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFont Variant value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver -512 OLE_VT_DISPATCH to value
+    End_Procedure
+
+    // Returns/sets bold font styles.
+    { MethodType=Property DesignTime=False }
+    Function ComFontBold Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092232 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets bold font styles.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFontBold Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092232 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns/sets italic font styles.
+    { MethodType=Property DesignTime=False }
+    Function ComFontItalic Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092231 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets italic font styles.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFontItalic Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092231 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns or sets the name of the font used to display the text.
+    { MethodType=Property DesignTime=False }
+    Function ComFontName Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092230 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets the name of the font used to display the text.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFontName String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092230 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Returns or sets the size (in points) of the text in the control.
+    { MethodType=Property DesignTime=False }
+    Function ComFontSize Returns Float
+        Handle hDispatchDriver
+        Float retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092229 OLE_VT_R4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets the size (in points) of the text in the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFontSize Float value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092229 OLE_VT_R4 to value
+    End_Procedure
+
+    // Returns or sets an indicator of whether the displayed text has strike-through characters.
+    { MethodType=Property DesignTime=False }
+    Function ComFontStrikethru Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092228 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets an indicator of whether the displayed text has strike-through characters.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFontStrikethru Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092228 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns or sets an indicator of whether the displayed text is underlined.
+    { MethodType=Property DesignTime=False }
+    Function ComFontUnderline Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092227 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets an indicator of whether the displayed text is underlined.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComFontUnderline Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092227 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns the handle to the window of the underlying text box for the control.
+    { MethodType=Property DesignTime=False }
+    Function ComHWnd Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -515 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // This property sets the value of the mouse pointer as it moves over the control.
+    { MethodType=Property DesignTime=False }
+    Function ComMousePointer Returns Short
+        Handle hDispatchDriver
+        Short retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092226 OLE_VT_I2 to retVal
+        Function_Return retVal
+    End_Function
+
+    // This property sets the value of the mouse pointer as it moves over the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComMousePointer Short value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092226 OLE_VT_I2 to value
+    End_Procedure
+
+    // Sets a custom mouse icon.
+    { MethodType=Property DesignTime=False }
+    Function ComMouseIcon Returns Variant
+        Handle hDispatchDriver
+        Variant retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092225 OLE_VT_DISPATCH to retVal
+        Function_Return retVal
+    End_Function
+
+    // Sets a custom mouse icon.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComMouseIcon Variant value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092225 OLE_VT_DISPATCH to value
+    End_Procedure
+
+    // Maximum number of characters this control can handle.  If this is set to 0, then the limit is roughly 65,000 characters.
+    { MethodType=Property DesignTime=False }
+    Function ComMaxLength Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092224 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Maximum number of characters this control can handle.  If this is set to 0, then the limit is roughly 65,000 characters.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComMaxLength Integer value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092224 OLE_VT_I4 to value
+    End_Procedure
+
+    // If this property is true, the user will not be able to enter data into the control.
+    { MethodType=Property DesignTime=False }
+    Function ComLocked Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092223 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // If this property is true, the user will not be able to enter data into the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComLocked Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092223 OLE_VT_BOOL to value
+    End_Procedure
+
+    //  Returns/sets the source application and topic for a destination control.
+    { MethodType=Property DesignTime=False }
+    Function ComLinkTopic Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092222 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    //  Returns/sets the source application and topic for a destination control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComLinkTopic String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092222 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Returns/sets the amount of time a control waits for a response to a DDE message.
+    { MethodType=Property DesignTime=False }
+    Function ComLinkTimeout Returns Short
+        Handle hDispatchDriver
+        Short retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092221 OLE_VT_I2 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets the amount of time a control waits for a response to a DDE message.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComLinkTimeout Short value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092221 OLE_VT_I2 to value
+    End_Procedure
+
+    // Returns/sets the type of link used for a DDE conversation and activates the connection.
+    { MethodType=Property DesignTime=False }
+    Function ComLinkMode Returns Short
+        Handle hDispatchDriver
+        Short retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092220 OLE_VT_I2 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets the type of link used for a DDE conversation and activates the connection.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComLinkMode Short value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092220 OLE_VT_I2 to value
+    End_Procedure
+
+    // Returns/sets the data passed to a destination control in a DDE conversation with another application.
+    { MethodType=Property DesignTime=False }
+    Function ComLinkItem Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092219 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets the data passed to a destination control in a DDE conversation with another application.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComLinkItem String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092219 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Returns/Sets whether this object can act as an OLE drop target, and whether this takes place automatically or under programmatic control.
+    { MethodType=Property DesignTime=False }
+    Function ComOLEDropMode Returns Short
+        Handle hDispatchDriver
+        Short retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092218 OLE_VT_I2 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/Sets whether this object can act as an OLE drop target, and whether this takes place automatically or under programmatic control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComOLEDropMode Short value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092218 OLE_VT_I2 to value
+    End_Procedure
+
+    // Returns/Sets whether this object can act as an OLE drag/drop source, and whether this process is started automatically or under programmatic control.
+    { MethodType=Property DesignTime=False }
+    Function ComOLEDragMode Returns Short
+        Handle hDispatchDriver
+        Short retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092217 OLE_VT_I2 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/Sets whether this object can act as an OLE drag/drop source, and whether this process is started automatically or under programmatic control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComOLEDragMode Short value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092217 OLE_VT_I2 to value
+    End_Procedure
+
+    // Returns/sets a value that determines whether characters typed by a user or placeholder characters are displayed in a control.
+    { MethodType=Property DesignTime=False }
+    Function ComPasswordChar Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092216 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns/sets a value that determines whether characters typed by a user or placeholder characters are displayed in a control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComPasswordChar String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092216 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Determines text display direction and control visual appearance on a bidirectional system.
+    { MethodType=Property DesignTime=False }
+    Function ComRightToLeft Returns Boolean
+        Handle hDispatchDriver
+        Boolean retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -611 OLE_VT_BOOL to retVal
+        Function_Return retVal
+    End_Function
+
+    // Determines text display direction and control visual appearance on a bidirectional system.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComRightToLeft Boolean value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver -611 OLE_VT_BOOL to value
+    End_Procedure
+
+    // Returns or sets the length of the selected text.  
+    { MethodType=Property DesignTime=False }
+    Function ComSelLength Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092215 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets the length of the selected text.  
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComSelLength Integer value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092215 OLE_VT_I4 to value
+    End_Procedure
+
+    // Returns or sets the start of the selection.  If there is no selection, returns the cursor position.
+    { MethodType=Property DesignTime=False }
+    Function ComSelStart Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092214 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets the start of the selection.  If there is no selection, returns the cursor position.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComSelStart Integer value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092214 OLE_VT_I4 to value
+    End_Procedure
+
+    // Returns or sets the selected text.
+    { MethodType=Property DesignTime=False }
+    Function ComSelText Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092213 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets the selected text.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComSelText String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092213 OLE_VT_BSTR to value
+    End_Procedure
+
+    // (Member is Bindable)
+    // (Member is DefaultBind)
+    // Returns or sets the actual text displayed by the control, but with the data in Variant format (rather than string).
+    { MethodType=Property DesignTime=False }
+    Function ComTextMemo Returns Variant
+        Handle hDispatchDriver
+        Variant retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092276 OLE_VT_VARIANT to retVal
+        Function_Return retVal
+    End_Function
+
+    // (Member is Bindable)
+    // (Member is DefaultBind)
+    // Returns or sets the actual text displayed by the control, but with the data in Variant format (rather than string).
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComTextMemo Variant value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092276 OLE_VT_VARIANT to value
+    End_Procedure
+
+    // (Member is Bindable)
+    // Returns or sets the actual text displayed by the control.
+    { MethodType=Property DesignTime=False }
+    Function ComText Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 0 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // (Member is Bindable)
+    // Returns or sets the actual text displayed by the control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComText String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 0 OLE_VT_BSTR to value
+    End_Procedure
+
+    // (Member is Bindable)
+    // Another way to get the contents of the control.  Identical to the Text property.
+    { MethodType=Property DesignTime=False }
+    Function ComEnteredText Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver -517 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // (Member is Bindable)
+    // Another way to get the contents of the control.  Identical to the Text property.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComEnteredText String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver -517 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Returns or sets the text displayed for the tool tip for this control.
+    { MethodType=Property DesignTime=False }
+    Function ComToolTipText Returns String
+        Handle hDispatchDriver
+        String retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092212 OLE_VT_BSTR to retVal
+        Function_Return retVal
+    End_Function
+
+    // Returns or sets the text displayed for the tool tip for this control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComToolTipText String value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092212 OLE_VT_BSTR to value
+    End_Procedure
+
+    // Help File Context ID for this control.
+    { MethodType=Property DesignTime=False }
+    Function ComWhatsThisHelpID Returns Integer
+        Handle hDispatchDriver
+        Integer retVal
+        Get phDispatchDriver to hDispatchDriver
+        Get InvokeComMethod of hDispatchDriver 1745092211 OLE_VT_I4 to retVal
+        Function_Return retVal
+    End_Function
+
+    // Help File Context ID for this control.
+    { MethodType=Property DesignTime=False }
+    Procedure Set ComWhatsThisHelpID Integer value
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send PrepareParams to hDispatchDriver 1
+        Set ComProperty of hDispatchDriver 1745092211 OLE_VT_I4 to value
+    End_Procedure
+
+    // Forces a complete repaint of a object.
+    Procedure ComRefresh
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver -550 OLE_VT_VOID
+    End_Procedure
+
+    // Transfers contents of the control to destination application in DDE conversation.
+    Procedure ComLinkSend
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874522 OLE_VT_VOID
+    End_Procedure
+
+    //  Asks the source DDE application to update the contents of the control.
+    Procedure ComLinkRequest
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874523 OLE_VT_VOID
+    End_Procedure
+
+    // Transfers contents of the control to source application in DDE conversation.
+    Procedure ComLinkPoke
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874524 OLE_VT_VOID
+    End_Procedure
+
+    // Starts an OLE drag/drop event with the given control as the source.
+    Procedure ComOLEDrag
+        Handle hDispatchDriver
+        Get phDispatchDriver to hDispatchDriver
+        Send InvokeComMethod to hDispatchDriver 1610874525 OLE_VT_VOID
+    End_Procedure
+End_Class
+
+// CLSID: {6766EEBD-7989-4011-BFC5-96098B82A532}
+Class cCom__SpellText is a Mixin
+
+    // Occurs when the user presses and then releases a mouse button over an object.
+    { MethodType=Event }
+    Procedure OnComClick
+    End_Procedure
+
+    // Occurs when the user presses and releases a mouse button and then presses and releases it again over an object.
+    { MethodType=Event }
+    Procedure OnComDblClick
+    End_Procedure
+
+    // Occurs when the user presses a key while an object has the focus.
+    { MethodType=Event }
+    Procedure OnComKeyDown Short ByRef llKeyCode Short ByRef llShift
+    End_Procedure
+
+    // Occurs when the user presses and releases an ANSI key.
+    { MethodType=Event }
+    Procedure OnComKeyPress Short ByRef llKeyAscii
+    End_Procedure
+
+    //  Occurs when the user releases a key while an object has the focus.
+    { MethodType=Event }
+    Procedure OnComKeyUp Short ByRef llKeyCode Short ByRef llShift
+    End_Procedure
+
+    // Occurs when the user presses the mouse button while an object has the focus.
+    { MethodType=Event }
+    Procedure OnComMouseDown Short ByRef llButton Short ByRef llShift Float ByRef llx Float ByRef lly
+    End_Procedure
+
+    // Occurs when the user moves the mouse.
+    { MethodType=Event }
+    Procedure OnComMouseMove Short ByRef llButton Short ByRef llShift Float ByRef llx Float ByRef lly
+    End_Procedure
+
+    // Occurs when the user releases the mouse button while an object has the focus.
+    { MethodType=Event }
+    Procedure OnComMouseUp Short ByRef llButton Short ByRef llShift Float ByRef llx Float ByRef lly
+    End_Procedure
+
+    // Occurs when the contents of a control have changed.
+    { MethodType=Event }
+    Procedure OnComChange
+    End_Procedure
+
+    // Occurs when an OLE drag/drop operation is initiated either manually or automatically.
+    { MethodType=Event }
+    Procedure OnComOLEStartDrag Variant llData Integer ByRef llAllowedEffects
+    End_Procedure
+
+    // Occurs at the OLE drag/drop source control when the drop target requests data that was not provided to the DataObject during the OLEDragStart event.
+    { MethodType=Event }
+    Procedure OnComOLESetData Variant llData Short ByRef llDataFormat
+    End_Procedure
+
+    // Occurs at the source control of an OLE drag/drop operation when the mouse cursor needs to be changed.
+    { MethodType=Event }
+    Procedure OnComOLEGiveFeedback Integer ByRef llEffect Boolean ByRef llDefaultCursors
+    End_Procedure
+
+    // Occurs when the mouse is moved over the control during an OLE drag/drop operation, if its OLEDropMode property is set to manual.
+    { MethodType=Event }
+    Procedure OnComOLEDragOver Variant llData Integer ByRef llEffect Short ByRef llButton Short ByRef llShift Float ByRef llx Float ByRef lly Short ByRef llState
+    End_Procedure
+
+    // Occurs when data is dropped onto the control via an OLE drag/drop operation, and OLEDropMode is set to manual.
+    { MethodType=Event }
+    Procedure OnComOLEDragDrop Variant llData Integer ByRef llEffect Short ByRef llButton Short ByRef llShift Float ByRef llx Float ByRef lly
+    End_Procedure
+
+    // Occurs at the OLE drag/drop source control after a manual or automatic drag/drop has been completed or canceled.
+    { MethodType=Event }
+    Procedure OnComOLECompleteDrag Integer ByRef llEffect
+    End_Procedure
+
+    // Occurs when an object receives the focus.
+    { MethodType=Event }
+    Procedure OnComGainedFocus
+    End_Procedure
+
+    // Occurs when an object loses the focus.
+    { MethodType=Event }
+    Procedure OnComLosingFocus
+    End_Procedure
+
+    // Occurs when a misspelling has been detected, and AutoHandleErrors = false.
+    { MethodType=Event }
+    Procedure OnComSpellingError2 String ByRef llBadWord String llSuggestions Integer llOffsetOfWord Integer ByRef llWhatToDo
+    End_Procedure
+
+    // Event to notify you when spell checking is done.  Called only if DoneAction is FIRE_DONE_EVENT.
+    { MethodType=Event }
+    Procedure OnComSpellCheckDone
+    End_Procedure
+
+    // Fired when debugging information becomes available.  See the DebugOption property.
+    { MethodType=Event }
+    Procedure OnComDebugEvent String llDebugInfo
+    End_Procedure
+
+    // Occurs when a custom popup menu item is selected by the user.  See AddPopupMenuItem.
+    { MethodType=Event }
+    Procedure OnComPopupMenuEvent String llWordOver String llWhatHappened Boolean ByRef llCancel
+    End_Procedure
+
+    { Visibility=Private }
+    Procedure RegisterComEvents
+        Send RegisterComEvent -600 msg_OnComClick
+        Send RegisterComEvent -601 msg_OnComDblClick
+        Send RegisterComEvent -602 msg_OnComKeyDown
+        Send RegisterComEvent -603 msg_OnComKeyPress
+        Send RegisterComEvent -604 msg_OnComKeyUp
+        Send RegisterComEvent -605 msg_OnComMouseDown
+        Send RegisterComEvent -606 msg_OnComMouseMove
+        Send RegisterComEvent -607 msg_OnComMouseUp
+        Send RegisterComEvent 1 msg_OnComChange
+        Send RegisterComEvent 2 msg_OnComOLEStartDrag
+        Send RegisterComEvent 3 msg_OnComOLESetData
+        Send RegisterComEvent 4 msg_OnComOLEGiveFeedback
+        Send RegisterComEvent 5 msg_OnComOLEDragOver
+        Send RegisterComEvent 6 msg_OnComOLEDragDrop
+        Send RegisterComEvent 7 msg_OnComOLECompleteDrag
+        Send RegisterComEvent 11 msg_OnComGainedFocus
+        Send RegisterComEvent 12 msg_OnComLosingFocus
+        Send RegisterComEvent 13 msg_OnComSpellingError2
+        Send RegisterComEvent 9 msg_OnComSpellCheckDone
+        Send RegisterComEvent 10 msg_OnComDebugEvent
+        Send RegisterComEvent 14 msg_OnComPopupMenuEvent
+    End_Procedure
+End_Class
+
+// CoClass
+// ProgID: ChadoSpellText.SpellText
+// CLSID: {E22CCE14-B7AC-11D1-A1C2-444553540000}
+{ CLSID="{E22CCE14-B7AC-11D1-A1C2-444553540000}" }
+Class cComDbSpellText is a cComDbActiveXControl
+    Import_Class_Protocol cCom_SpellText
+    Import_Class_Protocol cCom__SpellText
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set psProgID to "{E22CCE14-B7AC-11D1-A1C2-444553540000}"
+        Set psEventId to "{6766EEBD-7989-4011-BFC5-96098B82A532}"
+        Set peAutoCreate to acDeferredAutoCreate
+        //Connect the default bindable property
+        Send RegisterPropertyChangeEvent 1745092276 msg_OnControlValueChanged
+    End_Procedure
+
+    Function ControlValue Returns String
+        //Associate the default bindable property with Get Value
+        String retVal
+        Get ComTextMemo to retVal
+        Function_Return retVal
+    End_Function
+
+    Procedure Set ControlValue String sVal
+        //Associate the default bindable property with Set Value
+        Set ComTextMemo to sVal
+    End_Procedure
+End_Class
+
+// CLSID: {FCC8D1C0-2B21-11D2-A1C2-8EE2478EFE79}
+Class cCom_Spelling is a Mixin
+End_Class
+
+// CoClass
+// CLSID: {FCC8D1C1-2B21-11D2-A1C2-8EE2478EFE79}
+Class cComSpelling is a cComAutomationObject
+    Import_Class_Protocol cCom_Spelling
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set peAutoCreate to acNoAutoCreate
+    End_Procedure
+End_Class

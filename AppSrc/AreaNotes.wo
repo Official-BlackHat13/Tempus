@@ -1,0 +1,64 @@
+// AreaNotes.wo
+// Area Notes
+Use cAjaxWebBusinessProcess.pkg
+
+Use Areas.DD
+Use Areanote.DD
+
+Object oAreaNotes Is A cAjaxWebBusinessProcess
+    Set psDescription To "Area Notes"
+    Set pbClearAfterSave To False
+
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oAreanote_DD Is A Areanote_DataDictionary
+
+        Property Integer piUserId
+
+        Send DefineAllExtendedFields
+        Set DDO_Server To oAreas_DD
+        Set No_Delete_State to True
+
+        Procedure Creating
+            Integer iHr iMin iSec iUserId
+            String  sTime
+            Date    dToday
+            //
+            Forward Send Creating
+            //
+            Sysdate dToday iHr iMin iSec
+            Get IsTimeString iHr iMin iSec to sTime
+            Get piUserId                   to iUserId
+            Move dToday                    to Areanote.CreatedDate
+            Move sTime                     to Areanote.CreatedTime
+            Move iUserId                   to Areanote.CreatedBy
+        End_Procedure
+    End_Object // oAreanote_DD
+
+    Set Main_DD To oAreanote_DD
+
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew To True
+    Set pbAllowSaveEdit To True
+    Set pbAllowDelete To True
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+
+    Procedure OnAjaxRequestStart TAjaxRequestData ByRef tRequestData
+        Integer iUserId
+        //
+        Forward Send OnAjaxRequestStart (&tRequestData)
+        //
+        Get GetAjaxRequestUserData "sUserId" to iUserId
+        Set piUserId of oAreanote_DD         to iUserId
+    End_Procedure
+
+End_Object // oAreaNotes

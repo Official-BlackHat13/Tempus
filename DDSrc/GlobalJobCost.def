@@ -1,0 +1,41 @@
+-----------------------------------------------------------------------------
+  DATE: 10/06/2017      TIME: 09:20                                  PAGE:  1
+  FILE DEFINITION FOR FILE: GlobalJobCost (# 80)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:GlobalJobCost
+  USER DISPLAY NAME         : GlobalJobCost
+  DATAFLEX FILE NAME        : GlobalJobCost
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 96        ( USED: 96 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 4 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CostIdno         NUM    8.0     1  1   
+  2  Description      ASC     50    12  2   
+  3  Status           ASC      1    62  3   
+  4  MastOpsIdno      NUM    8.0    63      MastOps.FIELD_1 (11,1)
+  5  Rate             NUM    8.2    74      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CostIdno        NO  NO       0      0       1     ON-LINE
+
+  2    Description     NO  NO       0      0       2     ON-LINE
+       CostIdno        NO  NO 
+
+  3    Status          NO  NO       0      0       3     ON-LINE
+       Description     NO  NO 
+       CostIdno        NO  NO 
+

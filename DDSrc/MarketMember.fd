@@ -1,0 +1,8 @@
+#REPLACE FILE72 MarketMember
+#REPLACE MarketMember.Recnum |FN72,0
+#REPLACE MarketMember.MemberIdno |FN72,1
+#REPLACE MarketMember.ContactIdno |FN72,2
+#REPLACE MarketMember.MktGroupIdno |FN72,3
+#REPLACE MarketMember.GroupName |FS72,4
+#REPLACE MarketMember.CreatedBy |FS72,5
+#REPLACE MarketMember.Created |FD72,6

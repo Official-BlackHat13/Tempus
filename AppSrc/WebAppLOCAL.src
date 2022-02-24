@@ -1,0 +1,41 @@
+//http://localhost/ISC/TestContent.htm
+
+Use GlobalAllWebAppClasses.pkg
+
+Object oApplication is a cGlblApplication
+End_Object
+
+Object oWebApp is a cWebApp
+    Use SessionManager.wo
+    Use WebService.wo
+    Use TransactionEntry.wo
+    Use TransactionCollection.wo
+    Use EmployeeTranactions.wo
+    Use OpenTransactions.wo
+    Use AreaStandards.wo
+    Use EmployeeHistory.wo
+    Use CloseTransaction.wo
+    Use LocationNotes.wo
+    Use AreaNotes.wo
+    Use InvoiceHistoryReport.wo
+    Use PropertyManagerLocations.wo
+    Use TransactionHistory.wo
+    Use RecentActivity.wo
+    Use LocationEmail.wo
+    Use CallCenterCreateItem.wo
+    Use CallCenterUpdateItem.wo
+    Use OpenCallCenterItems.wo
+
+    //    Procedure OnattachProcess
+    //       // perform any initialization for the newly attached process.
+    //       Showln "attach"
+    //    End_Procedure
+
+    //    Procedure OnDetachProcess
+    //       // perform any de-initialization for the process that is being detached.
+    //       Showln "detach"
+    //    End_Procedure
+
+End_Object
+
+Send StartWebApp of oWebApp

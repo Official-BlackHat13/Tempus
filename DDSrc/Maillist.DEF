@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Maillist (# 27)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:MAILLIST
+  USER DISPLAY NAME         : Mailing List Master
+  DATAFLEX FILE NAME        : Maillist
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 67        ( USED: 67 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 25 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ListCode         ASC     10     1  1   
+  2  Description      ASC     40    11  2   
+  3  AutoCreateFlag   NUM    5.0    51  3   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ListCode        NO  NO       0      0       1     ON-LINE
+
+  2    Description     NO  NO       0      0       2     ON-LINE
+       ListCode        NO  NO 
+
+  3    AutoCreateFlag  NO  NO       0      0       2     ON-LINE
+       ListCode        NO  NO 
+

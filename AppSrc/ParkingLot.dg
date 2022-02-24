@@ -1,0 +1,333 @@
+Use DFClient.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use cParklotsDataDictionary.dd
+Use cLotaccesDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cGlblDbModalPanel.pkg
+Use cGlblDbForm.pkg
+
+Object oParkingLot is a cGlblDbModalPanel
+
+    Property Integer piRecId
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oParklots_DD is a cParklotsDataDictionary
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oLotacces_DD is a cLotaccesDataDictionary
+        Set Constrain_file to Parklots.File_number
+        Set DDO_Server to oParklots_DD
+    End_Object
+
+    Set Main_DD to oParklots_DD
+    Set Server to oParklots_DD
+
+    Set Label to "Parking Lot Specification Maintenance"
+    Set Size to 235 278
+    Set piMinSize to 89 211
+    Set Location to 5 17
+    Set Border_Style to Border_Thick
+    Set Locate_Mode to Center_On_Panel
+
+    Object oParklots_ParkingLotId is a cGlblDbForm
+        Entry_Item Parklots.ParkingLotId
+        Set Location to 15 56
+        Set Size to 13 42
+        Set Label to "Lot ID:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+        Set Prompt_Button_Mode to PB_PromptOn
+        Set Enabled_State to False
+    End_Object
+    Object oParklots_Description is a cGlblDbForm
+        Entry_Item Parklots.Description
+        Set Location to 30 56
+        Set Size to 13 210
+        Set Label to "Description:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+        Set Color to clYellow
+    End_Object
+    Object oParklots_SqFtTotal is a cGlblDbForm
+        Entry_Item Parklots.SqFtTotal
+        Set Location to 45 56
+        Set Size to 13 30
+        Set Label to "Total Sq Ft:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_FullHashMarks is a cGlblDbForm
+        Entry_Item Parklots.FullHashMarks
+        Set Location to 45 145
+        Set Size to 13 30
+        Set Label to "Full Hash Mrks:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_LightPoles is a cGlblDbForm
+        Entry_Item Parklots.LightPoles
+        Set Location to 45 236
+        Set Size to 13 30
+        Set Label to "Light Poles:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_SqFtSidewalks is a cGlblDbForm
+        Entry_Item Parklots.SqFtSidewalks
+        Set Location to 60 56
+        Set Size to 13 30
+        Set Label to "Sidewalks:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_CurbLinearFeet is a cGlblDbForm
+        Entry_Item Parklots.CurbLinearFeet
+        Set Location to 60 145
+        Set Size to 13 30
+        Set Label to "Curb Linear Ft:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_Crosswalks is a cGlblDbForm
+        Entry_Item Parklots.Crosswalks
+        Set Location to 60 236
+        Set Size to 13 30
+        Set Label to "Crosswalks:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_ParkingStalls is a cGlblDbForm
+        Entry_Item Parklots.ParkingStalls
+        Set Location to 75 56
+        Set Size to 13 30
+        Set Label to "Parking Stalls:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_Arrows is a cGlblDbForm
+        Entry_Item Parklots.Arrows
+        Set Location to 75 145
+        Set Size to 13 30
+        Set Label to "Arrows:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_Islands is a cGlblDbForm
+        Entry_Item Parklots.Islands
+        Set Location to 75 236
+        Set Size to 13 30
+        Set Label to "Islands:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_HandicapStalls is a cGlblDbForm
+        Entry_Item Parklots.HandicapStalls
+        Set Location to 90 56
+        Set Size to 13 30
+        Set Label to "Handicap Stalls:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_Stencils is a cGlblDbForm
+        Entry_Item Parklots.Stencils
+        Set Location to 90 145
+        Set Size to 13 30
+        Set Label to "Stencils:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_AsphaltStatus is a cGlblDbComboForm
+        Entry_Item Parklots.AsphaltStatus
+        Set Location to 100 214
+        Set Size to 13 52
+        Set Label to "Asphalt Status:"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+
+        Procedure Next
+            Boolean bState
+            //
+            Get IsNextState to bState
+            Send EnableNext    bState
+            //
+            Forward Send Next
+        End_Procedure
+    End_Object
+    Object oParklots_HCStencils is a cGlblDbForm
+        Entry_Item Parklots.HCStencils
+        Set Location to 105 56
+        Set Size to 13 30
+        Set Label to "HC Stencils:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_SpeedBumps is a cGlblDbForm
+        Entry_Item Parklots.SpeedBumps
+        Set Location to 105 145
+        Set Size to 13 30
+        Set Label to "Speed Bumps:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_SolidLineFeet is a cGlblDbForm
+        Entry_Item Parklots.SolidLineFeet
+        Set Location to 120 56
+        Set Size to 13 30
+        Set Label to "Solid Line Ft:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_StormDrains is a cGlblDbForm
+        Entry_Item Parklots.StormDrains
+        Set Location to 120 145
+        Set Size to 13 30
+        Set Label to "Storm Drains:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_HalfHashMarks is a cGlblDbForm
+        Entry_Item Parklots.HalfHashMarks
+        Set Location to 135 56
+        Set Size to 13 30
+        Set Label to "1/2 Hash Mrks:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+    Object oParklots_Bollards is a cGlblDbForm
+        Entry_Item Parklots.Bollards
+        Set Location to 135 145
+        Set Size to 13 30
+        Set Label to "Bollards:"
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oAccessoryGrid is a dbGrid
+        Set Server to oLotacces_DD
+        Set Size to 55 259
+        Set Location to 153 9
+        Set Wrap_State to True
+        Set Child_Table_State to True
+
+        Begin_Row
+            Entry_Item Lotacces.LotAccessoryId
+            Entry_Item Lotacces.AccessoryType
+            Entry_Item Lotacces.Description
+            Entry_Item Lotacces.Length
+            Entry_Item Lotacces.Width
+        End_Row
+
+        Set Main_File to Lotacces.File_number
+
+        Set Header_Label 0 to "LotAccessoryId"
+        Set Form_Width 0 to 0
+        Set Column_Shadow_State 0 to True
+
+        Set Form_Width 1 to 50
+        Set Header_Label 1 to "Type"
+        Set Column_Combo_State 1 to True
+
+        Set Form_Width 2 to 132
+        Set Header_Label 2 to "Description"
+
+        Set Form_Width 3 to 34
+        Set Header_Label 3 to "Length"
+        Set Header_Justification_Mode 3 to JMode_Right
+
+        Set Form_Width 4 to 34
+        Set Header_Label 4 to "Width"
+        Set Header_Justification_Mode 4 to JMode_Right
+
+        Function Child_Entering Returns Integer
+            Integer iRetval iRecId
+            // Check with header to see if it is saved.
+            Delegate Get IsSavedParkingLot to iRetval
+            //
+            Function_Return iRetval // if non-zero do not enter
+        End_Function  // Child_Entering
+    End_Object
+
+    Object oSaveButton is a Button
+        Set Label    to "&Save"
+        Set Location to 215 160
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Request_Save
+        End_Procedure
+    End_Object
+
+    Object oCloseButton is a Button
+        Set Size to 14 50
+        Set Label    to "&Close"
+        Set Location to 215 215
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+    On_Key Key_Alt+Key_S Send KeyAction of oSaveButton
+    On_Key Key_Alt+Key_C Send KeyAction of oCloseButton
+
+    Function IsSavedParkingLot Returns Integer
+        Integer iRecId
+        //
+        Get Current_Record of oParklots_DD to iRecId
+        //
+        If (iRecId = 0) Begin
+            Send Stop_Box "No Parking Lot created/selected"
+            Function_Return 1
+        End
+    End_Function
+
+    Procedure Request_Save
+        Boolean bFail
+        Integer hoDD
+        //
+        Get Server                   to hoDD
+        Get Request_Validate of hoDD to bFail
+        If (not(bFail)) Begin
+            Send Request_Save of hoDD
+            Set piRecId to (Current_Record(hoDD))
+        End
+        Send Activate of oParklots_Description
+    End_Procedure
+
+    Function DoAddParkingLot Integer iRecId Returns Integer
+        Integer hoDD
+        //
+        Set piRecId to 0
+        Get Server  to hoDD
+        Send Clear  of hoDD
+        Send Find_By_Recnum of hoDD Location.File_Number iRecId
+        Send Popup_Modal
+        Function_Return (piRecId(Self))
+    End_Function
+
+    Procedure DoEditParkingLot Integer iRecId
+        Send Find_By_Recnum of oParklots_DD Parklots.File_Number iRecId
+        If (Found) Begin
+            Send Popup_Modal
+        End
+    End_Procedure
+End_Object

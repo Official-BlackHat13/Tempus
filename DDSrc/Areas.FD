@@ -1,0 +1,9 @@
+#REPLACE FILE19 Areas
+#REPLACE Areas.Recnum |FN19,0
+#REPLACE Areas.AreaNumber |FN19,1
+#REPLACE Areas.Name |FS19,2
+#REPLACE Areas.Manager |FS19,3
+#REPLACE Areas.ChangedFlag |FN19,4
+#REPLACE Areas.EmployeeIdno |FN19,5
+#REPLACE Areas.RecordOwner |FN19,6
+#REPLACE Areas.ReviewedToDate |FD19,7

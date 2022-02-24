@@ -1,0 +1,8 @@
+AreanoteId
+AreaNumber
+CreatedDate
+CreatedTime
+CreatedBy
+NoteDate
+AreanoteRef
+Note

@@ -1,0 +1,374 @@
+Use cWebSessionManager.pkg
+Use cWebAppSessionDataDictionary.dd
+Use cWebAppUserDataDictionary.dd
+
+
+{ HelpTopic=cWebSessionManagerStandard }
+Class cWebSessionManagerStandard is a cWebSessionManager
+    
+    Procedure Construct_Object
+        Handle hoUserDD hoEmployeeDD hoSessionDD
+        
+        Forward Send Construct_Object
+        
+        Property Handle phoUserDD 0      // Handle to the WebAppUser DDO
+        Property Handle phoEmployeeDD 0  // Handle to the Employee DDO
+        Property Handle phoSessionDD 0   // Handle to the WebAppSession DDO        
+        
+        Get Create (RefClass(cWebAppUserDataDictionary)) to hoUserDD
+        Get Create (RefClass(e))
+        Get Create (RefClass(cWebAppSessionDataDictionary)) to hoSessionDD
+        Set DDO_Server of hoSessionDD to hoUserDD
+
+        Set phoUserDD to hoUserDD
+        Set phoSessionDD to hoSessionDD
+        { Visibility=Private }
+        Property Boolean pbCreatingNewSession False
+        Property Integer piSessionTimeout 480        
+        Property String psLoginName
+        Property String psUserName ""
+        Property Integer piUserRights 0
+        Property Integer piEmployerIdno
+        Property String psEmployerName
+    End_Procedure
+    
+    Function CreateSession String sRemoteAddress Returns String
+        String sSessionKey
+        Integer iErr
+        Boolean bLogWebSession
+        Handle hoSessionDD       
+        Get phoSessionDD to hoSessionDD
+        
+        //  Get session key
+        Forward Get CreateSession sRemoteAddress to sSessionKey
+        
+        Get pbLogWebSession to bLogWebSession
+        If not bLogWebSession Begin
+            Function_Return sSessionKey        
+        End
+
+        //  Store session
+        Send Clear of hoSessionDD
+        Set Field_Changed_Value of hoSessionDD Field WebAppSession.SessionKey to sSessionKey
+        Set Field_Changed_Value of hoSessionDD Field WebAppSession.RemoteAddress to sRemoteAddress
+        Set Field_Changed_Value of hoSessionDD Field WebAppSession.Active to "Y"
+        Get Request_Validate of hoSessionDD to iErr
+        If (iErr) Begin
+            // this should not happen. If it does its a programming error
+            Error DFERR_PROGRAM C_$WebAppSesionValidateFailed
+            Function_Return ""
+        End
+        Send Request_Save of hoSessionDD
+       
+        Function_Return sSessionKey        
+    End_Function
+    
+    
+    Function ValidateSession String sSessionKey Returns Boolean
+        DateTime dtLastAccess dtCurrent
+        TimeSpan tsDiff
+        Integer iErr iSessionTimeout iSpanMinutes
+        Boolean bResult bCreatingNewSession
+        Boolean bLogWebSession 
+        Integer eLoginMode
+        String sTime
+        Handle hoSessionDD hoUserDD       
+        
+        Get phoSessionDD to hoSessionDD
+        Get phoUserDD to hoUserDD
+        
+        Get pbLogWebSession to bLogWebSession
+        Get peLoginMode to eLoginMode
+        
+        // for this object, you can only disable logging if login completely is disabled
+        If (not(bLogWebSession) and (eLoginMode<>lmLoginNone)) Begin
+            Error DFERR_PROGRAM C_$WebSessionLoggingMustBeEnabled
+            Function_Return False
+        End
+
+        //  Clear session properties
+        Send UpdateSessionProperties True
+        
+        If not bLogWebSession Begin
+            Forward Get ValidateSession sSessionKey to bResult
+            Function_Return bResult
+        End        
+        
+        Move False to bResult
+        Get piSessionTimeout to iSessionTimeout 
+        
+        //  Check if session exists
+        Send Clear of hoSessionDD
+        Move sSessionKey to WebAppSession.SessionKey
+        Send Find of hoSessionDD EQ Index.1
+            
+        If (Found) Begin
+            //  Calculate timespan between now and last access time
+            Move (CurrentDateTime()) to dtCurrent
+            Move WebAppSession.LastAccessDate to dtLastAccess
+            Get StringToTime of hoSessionDD dtLastAccess WebAppSession.LastAccessTime to dtLastAccess
+            Move (dtCurrent - dtLastAccess) to tsDiff
+            Move (SpanTotalMinutes(tsDiff)) to iSpanMinutes
+            
+            //  Check if session didn't time out
+            If ((iSessionTimeout <= 0 or (iSpanMinutes < iSessionTimeout)) and WebAppSession.Active = "Y") Begin
+                Forward Get ValidateSession sSessionKey to bResult
+                   
+                If (bResult) Begin
+                    //  Update session record
+                    Get TimeToString of hoSessionDD dtCurrent to sTime 
+                    Set Field_Changed_Value of hoSessionDD Field WebAppSession.LastAccessDate to dtCurrent
+                    Set Field_Changed_Value of hoSessionDD Field WebAppSession.LastAccessTime to sTime
+                    Set Field_Changed_Value of hoSessionDD Field WebAppSession.UseCount to (WebAppSession.UseCount + 1)
+                    Get Request_Validate of hoSessionDD to iErr
+                    If (iErr) Begin
+                        // this should not happen. If it does its a programming error
+                        Error DFERR_PROGRAM C_$WebAppSesionValidateFailed
+                        Function_Return False
+                    End
+                    Send Request_Save of hoSessionDD
+                    
+                    //  Update user properties
+                    Send UpdateSessionProperties False
+                End
+            End
+            Else Begin
+                // Test the Creating New Session Flag to protect against infinite recursion....
+                Get pbCreatingNewSession to bCreatingNewSession
+                
+                If (not(bCreatingNewSession)) Begin
+                    Set pbCreatingNewSession to True                    
+                    Send RecreateSession to ghoWebApp
+                    Error DFERR_WEBAPP_SESSION_TIMEOUT "Your application session has timed out or is inactive, please login again."
+                    Send NavigateRefresh of ghoWebApp          // refresh the WebApp at the client (triggers a login)
+                    Set pbCreatingNewSession to False
+                End
+            End
+        End
+        Else Begin
+            Error DFERR_WEBAPP_BAD_SESSION_KEY "Session key not known (reload page to recreate session)"
+        End
+        
+        Function_Return bResult
+    End_Function
+    
+    Function UserLogin String sLoginName String sPassword Returns Boolean
+        String sSessionKey sUserPassword
+        Handle hoSessionDD hoUserDD
+        Boolean bMatch  
+        
+        Get phoSessionDD to hoSessionDD
+        Get phoUserDD to hoUserDD
+        Integer iErr eLoginMode
+        
+        // Refind session record
+        Get psSessionKey to sSessionKey
+        Send Clear of hoSessionDD
+        Move sSessionKey to WebAppSession.SessionKey
+        Send Find of hoSessionDD EQ Index.1
+        
+        If (Found and WebAppSession.SessionKey = sSessionKey) Begin
+            Get peLoginMode to eLoginMode
+            
+            //  Find the user
+            Move sLoginName to WebAppUser.LoginName
+            Send Find of hoUserDD EQ Index.1
+            
+            // Check username and password
+            If (Found and (Lowercase(sLoginName) = Lowercase(Trim(WebAppUser.LoginName)))) Begin
+                Get Field_Current_Value of hoUserDD Field WebAppUser.Password to sUserPassword
+                Get ComparePasswords (Trim(sUserPassword)) (Trim(sPassword)) to bMatch
+                
+                If (bMatch) Begin
+                    // Store the login
+                    Set Field_Changed_Value of hoUserDD Field WebAppUser.LastLogin to (CurrentDateTime())
+                    Get Request_Validate of hoSessionDD to iErr
+                    If (iErr) Begin
+                        // this should not happen. If it does its a programming error
+                        Error DFERR_PROGRAM C_$WebAppSesionValidateFailed
+                        Function_Return False
+                    End
+                    
+                    Send Request_Save of hoSessionDD
+                    
+                    // Update session properties
+                    Send UpdateSessionProperties False
+                    Send NotifyChangeRights
+                    Function_Return True
+                End
+                Else Begin
+                    //  We should rely directly on this buffer elsewhere but just be sure
+                    Send Clear of hoUserDD
+                End
+            End
+        End
+          
+        Function_Return False
+    End_Function
+    
+    Function EmployeeAuthorization String sEmployeeId String sPIN Returns Boolean
+        String sSessionKey sUserPassword
+        Handle hoSessionDD hoEmployeeDD
+        Boolean bMatch  
+        
+        Get phoSessionDD to hoSessionDD
+        Get phoUserDD to hoEmployeeDD
+        Integer iErr eLoginMode
+        
+        // Refind session record
+        Get psSessionKey to sSessionKey
+        Send Clear of hoSessionDD
+        Move sSessionKey to WebAppSession.SessionKey
+        Send Find of hoSessionDD EQ Index.1
+        
+        If (Found and WebAppSession.SessionKey = sSessionKey) Begin
+            Get peLoginMode to eLoginMode
+            
+            //  Find the user
+            Open Employee
+            Clear Employee
+            Move sEmployeeId to Employee.EmployeeIdno
+            Send Find of hoEmployeeDD EQ Index.1
+            
+            // Check username and password
+            If (Found and (Lowercase(sLoginName) = Lowercase(Trim(WebAppUser.LoginName)))) Begin
+                Get Field_Current_Value of hoEmployeeDD Field WebAppUser.Password to sPIN
+                Get ComparePasswords (Trim(sPIN)) (Trim(sPassword)) to bMatch
+                
+                If (bMatch) Begin
+                    // Store the login
+                    Set Field_Changed_Value of hoEmployeeDD Field WebAppUser.LastLogin to (CurrentDateTime())
+                    Get Request_Validate of hoSessionDD to iErr
+                    If (iErr) Begin
+                        // this should not happen. If it does its a programming error
+                        Error DFERR_PROGRAM C_$WebAppSesionValidateFailed
+                        Function_Return False
+                    End
+                    
+                    Send Request_Save of hoSessionDD
+                    
+                    // Update session properties
+                    Send UpdateSessionProperties False
+                    Send NotifyChangeRights
+                    Function_Return True
+                End
+                Else Begin
+                    //  We should rely directly on this buffer elsewhere but just be sure
+                    Send Clear of hoEmployeeDD
+                End
+            End
+        End
+          
+        Function_Return False
+    End_Function
+    
+    Function IsLoggedIn Returns Boolean
+        String sLoginName
+        Boolean bLogWebSession bLoggedIn
+        
+        Get pbLogWebSession to bLogWebSession
+        If not bLogWebSession Begin
+            Forward Get IsLoggedIn to bLoggedIn
+            Function_Return bLoggedIn
+        End
+        
+        Get psLoginName to sLoginName
+        
+        Function_Return (sLoginName <> "")
+    End_Function
+    
+    
+    //
+    // This procedure is called when validating a session and after logging in. Its purpose is to 
+    // update properties based on the session and user data. Augment this function to update 
+    // properties based on the session / user table. Note that WebAppUser and WebAppSession contain
+    // the right records when this procedure is called.
+    //
+    // Params:
+    //      bClear   True if the procedure is called before session validation to clear properties.
+    //
+    Procedure UpdateSessionProperties Boolean bClear
+        Handle hoUserDD
+        
+        Get phoUserDD to hoUserDD
+        
+        //  Update user properties
+        If (not(bClear) and HasRecord(hoUserDD)) Begin
+            Set psUsername to (Trim(WebAppUser.FullName))
+            Set psLoginName to (Trim(WebAppUser.LoginName))
+            Set piUserRights to WebAppUser.Rights
+            Set piEmployerIdno to WebAppUser.EmployerIdno
+            Move WebAppUser.EmployerIdno to Employer.EmployerIdno
+            Find EQ Employer.EmployerIdno
+            Set psEmployerName to Employer.Name
+            
+            Send OnSessionPropertiesSet 
+        End
+        Else Begin
+            Set psUsername to ""
+            Set psLoginName to ""
+            Set piUserRights to 0
+            
+            Send OnSessionPropertiesClear
+        End
+    End_Procedure
+    
+    //
+    // This function is called to perform the password comparison. It gets the entered password and
+    // the password value of the user table as parameters. The WebAppUser buffer will contain the
+    // right record. This function can be augmented to implement security features like storing the
+    // password as a hashed value.
+    //
+    // Params:
+    //      sUserPassword       Value of the WebAppUser.Password field.
+    //      sEnteredPassword    Value entered on the login screen during login.
+    //
+    Function ComparePasswords String sUserPassword String sEnteredPassword Returns Boolean
+        Function_Return (sUserPassword = sEnteredPassword)
+    End_Function
+    
+    Function ComparePINs String sPIN String sEnteredPIN Returns Boolean
+        Function_Return (sPIN = sEnteredPIN)
+    End_Function
+    
+    { MethodType=Event }
+    Procedure OnSessionPropertiesSet
+        //  Empty event stub
+    End_Procedure
+    
+    { MethodType=Event }
+    Procedure OnSessionPropertiesClear
+        //  Empty event stub
+    End_Procedure
+    
+    Procedure EndSession
+        Integer iErr
+        Boolean bLogWebSession
+        Handle hoSessionDD       
+        
+        Get phoSessionDD to hoSessionDD
+        Get pbLogWebSession to bLogWebSession
+        If not bLogWebSession Begin
+            Forward Send EndSession
+            Procedure_Return
+        End
+            
+        //  Check if session exists
+        Send Clear of hoSessionDD
+        Get psSessionKey to WebAppSession.SessionKey
+        
+        Send Find of hoSessionDD EQ Index.1
+        If (Found) Begin
+            Set Field_Changed_Value of hoSessionDD Field WebAppSession.Active to "N"
+            Get Request_Validate of hoSessionDD to iErr
+            If (iErr) Begin
+                // this should not happen. If it does its a programming error
+                Error DFERR_PROGRAM C_$WebAppSesionValidateFailed
+                Procedure_Return
+            End
+            Send Request_Save of hoSessionDD
+        End
+    End_Procedure
+
+End_Class
+

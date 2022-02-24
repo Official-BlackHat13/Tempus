@@ -1,0 +1,4 @@
+#REPLACE FILE49 CO_Head
+#REPLACE CO_Head.Recnum |FN49,0
+#REPLACE CO_Head.CO_Head_ID |FN49,1
+#REPLACE CO_Head.Job_Number |FN49,2

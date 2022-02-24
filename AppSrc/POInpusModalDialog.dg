@@ -1,0 +1,65 @@
+Use Windows.pkg
+Use dfEntry.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cGlblDbForm.pkg
+
+Object oPOInpusModalDialog is a dbModalPanel
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Set Main_DD to oOrder_DD
+    Set Server to oOrder_DD
+
+    Set Size to 54 205
+    Set Label to "PO Number"
+    Set piMinSize to 54 205
+    Set Location to 1 2
+    Set Border_Style To Border_Thick
+    
+    Object oOrder_PO_Number is a cGlblDbForm
+        Entry_Item Order.PO_Number
+        Set Location to 18 10
+        Set Size to 13 186
+        Set Label to "Please enter the required PO Number"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+        Set Label_Row_Offset to 2
+        Set Label_FontWeight to fw_Bold
+    End_Object
+    
+    Object oOK_Btn is a Button
+        Set Size to 14 81
+        Set Label    to "&OK"
+        Set Location to 34 115
+        Set peAnchors To anBottomRight
+        Procedure OnClick
+            Send Request_Save of oOrder_DD
+            Send Close_Panel
+        End_Procedure
+    End_Object
+End_Object

@@ -1,0 +1,20 @@
+// tContact.pkg
+// used to update remote server data
+
+Struct tContact
+    Integer     iRecId
+    Integer     iCustomerIdno
+    Integer     iContactIdno
+    String      sLastName
+    String      sFirstName
+    String      sAddress1
+    String      sAddress2  
+    String      sCity
+    String      sState
+    String      sZip
+    String      sPhone1
+    String      sPhone2
+    String      sEmailAddress
+    String      sStatus
+    Integer     iChangedFlag
+End_Struct

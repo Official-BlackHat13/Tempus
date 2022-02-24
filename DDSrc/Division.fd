@@ -1,0 +1,4 @@
+#REPLACE FILE43 Division
+#REPLACE Division.Recnum |FN43,0
+#REPLACE Division.DivIdno |FN43,1
+#REPLACE Division.Name |FS43,2

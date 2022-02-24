@@ -1,0 +1,65 @@
+Use DFClient.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use cLocationAPFormGlblDataDictionary.dd
+
+Use cTextEdit.pkg
+Use cDbScrollingContainer.pkg
+Use dbSuggestionForm.pkg
+Use cToolTipController.pkg
+Use cGlblDbCheckBox.pkg
+
+Object oAPForm is a dbModalPanel
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocationAPForm_DD is a cLocationAPFormGlblDataDictionary
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Set Main_DD to oLocationAPForm_DD
+    Set Server to oLocationAPForm_DD
+
+    Set Label to "APForm"
+    Set Size to 397 510
+    Set piMinSize to 89 211
+    Set Location to 2 1
+    Set Border_Style to Border_Thick
+
+
+    Function PopupAPForm Returns Boolean
+        Boolean bCancel
+        //
+        Send Popup_Modal of Self
+        //
+        Get pbCancel to bCancel
+        If not bCancel Begin
+            Function_Return True
+        End
+        //
+        Function_Return False
+    End_Function
+
+    Procedure Activating
+        Forward Send Activating
+    End_Procedure
+
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_btn
+
+End_Object

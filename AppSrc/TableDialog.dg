@@ -1,0 +1,1465 @@
+// TableDialog.dg
+
+// Register all objects
+Register_Object CloseButton
+Register_Object oTableContainer
+Register_Object Jccntr_DD
+Register_Object Jcdept_DD
+Register_Object Jcoper_Bracket_Desc
+Register_Object Jcoper_Bracket_Var
+Register_Object Jcoper_Bracket1_Value
+Register_Object Jcoper_Bracket2_Value
+Register_Object Jcoper_Bracket3_Value
+Register_Object Jcoper_Bracket4_Value
+Register_Object Jcoper_Bracket5_Value
+Register_Object Jcoper_DD
+Register_Object Jcoper_L10b1_Std
+Register_Object Jcoper_L10b2_Std
+Register_Object Jcoper_L10b3_Std
+Register_Object Jcoper_L10b4_Std
+Register_Object Jcoper_L10b5_Std
+Register_Object Jcoper_L1b1_Std
+Register_Object Jcoper_L1b2_Std
+Register_Object Jcoper_L1b3_Std
+Register_Object Jcoper_L1b4_Std
+Register_Object Jcoper_L1b5_Std
+Register_Object Jcoper_L2b1_Std
+Register_Object Jcoper_L2b2_Std
+Register_Object Jcoper_L2b3_Std
+Register_Object Jcoper_L2b4_Std
+Register_Object Jcoper_L2b5_Std
+Register_Object Jcoper_L3b1_Std
+Register_Object Jcoper_L3b2_Std
+Register_Object Jcoper_L3b3_Std
+Register_Object Jcoper_L3b4_Std
+Register_Object Jcoper_L3b5_Std
+Register_Object Jcoper_L4b1_Std
+Register_Object Jcoper_L4b2_Std
+Register_Object Jcoper_L4b3_Std
+Register_Object Jcoper_L4b4_Std
+Register_Object Jcoper_L4b5_Std
+Register_Object Jcoper_L5b1_Std
+Register_Object Jcoper_L5b2_Std
+Register_Object Jcoper_L5b3_Std
+Register_Object Jcoper_L5b4_Std
+Register_Object Jcoper_L5b5_Std
+Register_Object Jcoper_L6b1_Std
+Register_Object Jcoper_L6b2_Std
+Register_Object Jcoper_L6b3_Std
+Register_Object Jcoper_L6b4_Std
+Register_Object Jcoper_L6b5_Std
+Register_Object Jcoper_L7b1_Std
+Register_Object Jcoper_L7b2_Std
+Register_Object Jcoper_L7b3_Std
+Register_Object Jcoper_L7b4_Std
+Register_Object Jcoper_L7b5_Std
+Register_Object Jcoper_L8b1_Std
+Register_Object Jcoper_L8b2_Std
+Register_Object Jcoper_L8b3_Std
+Register_Object Jcoper_L8b4_Std
+Register_Object Jcoper_L8b5_Std
+Register_Object Jcoper_L9b1_Std
+Register_Object Jcoper_L9b2_Std
+Register_Object Jcoper_L9b3_Std
+Register_Object Jcoper_L9b4_Std
+Register_Object Jcoper_L9b5_Std
+Register_Object Jcoper_Lookup_Desc
+Register_Object Jcoper_Lookup_Var
+Register_Object Jcoper_Lookup1_Value
+Register_Object Jcoper_Lookup10_Value
+Register_Object Jcoper_Lookup2_Value
+Register_Object Jcoper_Lookup3_Value
+Register_Object Jcoper_Lookup4_Value
+Register_Object Jcoper_Lookup5_Value
+Register_Object Jcoper_Lookup6_Value
+Register_Object Jcoper_Lookup7_Value
+Register_Object Jcoper_Lookup8_Value
+Register_Object Jcoper_Lookup9_Value
+Register_Object Jcoper_Prorate_Bracket
+Register_Object Jcoper_Prorate_Lookup
+Register_Object Jcoper_Table_Std_Desc
+Register_Object JcoperTable
+Register_Object TableGroup
+
+
+//AB/ AppBuild VIEW
+
+//AB-IgnoreStart
+
+Use DFAllEnt.pkg
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+
+//AB-IgnoreEnd
+
+Object oTableDialog is a dbModalPanel
+    set Locate_Mode to CENTER_ON_PANEL
+    Set Label    to "Estimating Standard Table"
+    Set Size to 244 477
+    Set Location to 5 -1
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(self))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to (Jccntr_DD(self))
+
+        Procedure InitializeEstimatingStandard
+            set Field_Changed_Value field Jcoper.Est_std to "Y"
+        End_Procedure
+    End_Object    // Jcoper_DD
+
+    Set Main_DD to (Jcoper_DD(self))
+    Set Server to (Jcoper_DD(self))
+
+    Object oTableContainer is a dbGroup
+        Set Size to 42 340
+        Set Location to 0 5
+        Object Jcoper_Lookup_Var is a dbForm
+            Entry_Item Jcoper.Lookup_var
+            Set Label to "Table row is selected by variable number"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 13
+            Set Location to 10 150
+            Set Enabled_State to False
+        End_Object    // Jcoper_Lookup_Var
+
+        Object Jcoper_Bracket_Var is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket_var
+            Set Label to "Table column is selected by variable number"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 13
+            Set Location to 25 150
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket_Var
+
+        Object Jcoper_Prorate_Lookup is a dbCheckBox
+            //AB-StoreTopStart
+            //AB-StoreTopEnd
+            Entry_Item Jcoper.Prorate_lookup
+            //Set Label to "Prorate calculations between rows"
+            Set Size to 10 10 // 125
+            Set Location to 10 200
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+        End_Object    // Jcoper_Prorate_Lookup
+
+        object LookupLabel is a Textbox
+            set Size to 10 110
+            set Location to 10 213
+            set Value to "Prorate calculations between rows"
+        end_object
+
+        Object Jcoper_Prorate_Bracket is a dbCheckBox
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Prorate_bracket
+            //Set Label to "Prorate calculations between columns"
+            Set Size to 10 10 //136
+            Set Location to 25 200
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Prorate_Bracket
+
+        object BracketLabel is a Textbox
+            set Size to 10 110
+            set Location to 25 213
+            set Value to "Prorate calculations between columns"
+        end_object
+
+    End_Object    // Container1
+
+    Object TableGroup is a dbGroup
+        Set Size to 195 468
+        Set Location to 45 5
+        Object Jcoper_Table_Std_Desc is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Table_std_desc
+            Set Label to "Description"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 90
+            Set Location to 10 106
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Table_Std_Desc
+
+        Object Jcoper_Bracket_Desc is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket_desc
+            Set Label to "Standards Brackets"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 90
+            Set Location to 10 270
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket_Desc
+
+        Object Jcoper_Bracket1_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket1_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 68
+            Set Location to 25 106
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket1_Value
+
+        Object Jcoper_Bracket2_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket2_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 68
+            Set Location to 25 178
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket2_Value
+
+        Object Jcoper_Bracket3_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket3_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 68
+            Set Location to 25 251
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket3_Value
+
+        Object Jcoper_Bracket4_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket4_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 68
+            Set Location to 25 322
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket4_Value
+
+        Object Jcoper_Bracket5_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Bracket5_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 68
+            Set Location to 25 394
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Bracket5_Value
+
+        Object Jcoper_Lookup_Desc is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup_desc
+            Set Label to "Lookup Value"
+            Set Label_Col_Offset to -1
+            Set Label_Justification_Mode to jMode_Top
+            Set Size to 13 90
+            Set Location to 25 5
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup_Desc
+
+        Object Jcoper_Lookup1_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup1_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 40 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup1_Value
+
+        Object Jcoper_L1b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L1b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L1b1_Std
+
+        Object Jcoper_L1b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L1b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L1b2_Std
+
+        Object Jcoper_L1b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L1b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L1b3_Std
+
+        Object Jcoper_L1b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L1b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L1b4_Std
+
+        Object Jcoper_L1b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L1b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L1b5_Std
+
+        Object Jcoper_Lookup2_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup2_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 55 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup2_Value
+
+        Object Jcoper_L2b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L2b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L2b1_Std
+
+        Object Jcoper_L2b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L2b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L2b2_Std
+
+        Object Jcoper_L2b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L2b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L2b3_Std
+
+        Object Jcoper_L2b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L2b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L2b4_Std
+
+        Object Jcoper_L2b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L2b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L2b5_Std
+
+        Object Jcoper_Lookup3_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup3_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 70 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup3_Value
+
+        Object Jcoper_L3b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L3b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L3b1_Std
+
+        Object Jcoper_L3b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L3b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L3b2_Std
+
+        Object Jcoper_L3b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L3b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L3b3_Std
+
+        Object Jcoper_L3b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L3b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L3b4_Std
+
+        Object Jcoper_L3b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L3b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L3b5_Std
+
+        Object Jcoper_Lookup4_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup4_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 85 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup4_Value
+
+        Object Jcoper_L4b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L4b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L4b1_Std
+
+        Object Jcoper_L4b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L4b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L4b2_Std
+
+        Object Jcoper_L4b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L4b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L4b3_Std
+
+        Object Jcoper_L4b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L4b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L4b4_Std
+
+        Object Jcoper_L4b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L4b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L4b5_Std
+
+        Object Jcoper_Lookup5_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup5_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 100 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup5_Value
+
+        Object Jcoper_L5b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L5b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 100 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L5b1_Std
+
+        Object Jcoper_L5b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L5b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 100 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L5b2_Std
+
+        Object Jcoper_L5b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L5b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 100 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L5b3_Std
+
+        Object Jcoper_L5b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L5b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 100 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L5b4_Std
+
+        Object Jcoper_L5b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L5b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 100 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L5b5_Std
+
+        Object Jcoper_Lookup6_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup6_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 115 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup6_Value
+
+        Object Jcoper_L6b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L6b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 115 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L6b1_Std
+
+        Object Jcoper_L6b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L6b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 115 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L6b2_Std
+
+        Object Jcoper_L6b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L6b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 115 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L6b3_Std
+
+        Object Jcoper_L6b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L6b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 115 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L6b4_Std
+
+        Object Jcoper_L6b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L6b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 115 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L6b5_Std
+
+        Object Jcoper_Lookup7_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup7_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 130 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup7_Value
+
+        Object Jcoper_L7b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L7b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 130 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L7b1_Std
+
+        Object Jcoper_L7b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L7b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 130 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L7b2_Std
+
+        Object Jcoper_L7b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L7b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 130 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L7b3_Std
+
+        Object Jcoper_L7b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L7b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 130 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L7b4_Std
+
+        Object Jcoper_L7b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L7b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 130 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L7b5_Std
+
+        Object Jcoper_Lookup8_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup8_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 145 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup8_Value
+
+        Object Jcoper_L8b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L8b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 145 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L8b1_Std
+
+        Object Jcoper_L8b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L8b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 145 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L8b2_Std
+
+        Object Jcoper_L8b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L8b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 145 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L8b3_Std
+
+        Object Jcoper_L8b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L8b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 145 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L8b4_Std
+
+        Object Jcoper_L8b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L8b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 145 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L8b5_Std
+
+        Object Jcoper_Lookup9_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup9_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 160 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup9_Value
+
+        Object Jcoper_L9b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L9b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 160 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L9b1_Std
+
+        Object Jcoper_L9b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L9b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 160 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L9b2_Std
+
+        Object Jcoper_L9b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L9b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 160 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L9b3_Std
+
+        Object Jcoper_L9b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L9b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 160 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L9b4_Std
+
+        Object Jcoper_L9b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L9b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 160 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L9b5_Std
+
+        Object Jcoper_Lookup10_Value is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Lookup10_value
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 78
+            Set Location to 175 17
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Lookup10_Value
+
+        Object Jcoper_L10b1_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L10b1_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 175 108
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L10b1_Std
+
+        Object Jcoper_L10b2_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L10b2_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 175 180
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L10b2_Std
+
+        Object Jcoper_L10b3_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L10b3_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 175 252
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L10b3_Std
+
+        Object Jcoper_L10b4_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L10b4_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 175 324
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L10b4_Std
+
+        Object Jcoper_L10b5_Std is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.L10b5_std
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 175 396
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_L10b5_Std
+
+    End_Object    // TableGroup
+
+    Object CloseButton is a Button
+        //AB-StoreTopStart
+        on_key kCancel send Close_Panel
+        //AB-StoreTopEnd
+        Set Label to "&Close"
+        Set Location to 25 422
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+    End_Object    // CloseButton
+
+    Procedure DoDisplayTable integer iOperRec
+        integer hDD iOpcode
+        string  sLabel sCenter sDescription
+        //
+        get Server          to hDD
+        send Clear          of hDD
+        send Find_By_Recnum of hDD Jcoper.File_number iOperRec
+        //
+        get Field_Current_Value      of hDD field Jcoper.Opcode        to iOpcode
+        get File_Field_Current_Value of hDD file_field Jccntr.Nickname to sCenter
+        get Field_Current_Value      of hDD field Jcoper.Name          to sDescription
+        move (string(iOpcode) * "-" * sCenter * "-" * sDescription)    to sLabel
+        set Label                                                      to sLabel
+        //
+        send Popup_Modal
+    End_Procedure // DoDisplayTable
+
+    //AB-StoreStart
+    on_key Key_Alt+Key_C send KeyAction of CloseButton
+    //AB-StoreEnd
+
+End_Object    // oTableDialog
+
+//AB/ End_Object    // prj
+

@@ -1,0 +1,2037 @@
+// CalcWizard.pkg
+
+use CEWizard.pkg
+use Jccntrce.sl
+use Jcoperce.sl
+
+register_object VarValue11
+register_object VarValue12
+register_object VarValue13
+register_object VarValue14
+register_object VarValue15
+register_object VarValue16
+register_object VarValue17
+register_object VarValue18
+register_object VarValue19
+
+object oCalcWizard is a cCEWizardPanel
+
+    //use Jccntrce.sl
+    //use Jcoperce.sl
+    use CEWizard.dg
+
+    set Title         to "Calculation Wizard"
+    set Wizard_Bitmap to "PPMSCALC.BMP"
+    set Popup_State   to TRUE
+    set Locate_Mode   to CENTER_ON_PANEL
+    set GUILocation   to 15 5
+
+    object oVariablesPage is a cCEWizardPage
+
+        property integer piFG 0
+        property integer piBG 0
+
+        property integer piShadowColor  0
+        //
+        if      (Jcpars.NoInput_Color = 3) set piShadowColor to clGreen
+        else if (Jcpars.NoInput_Color = 2) set piShadowColor to clActiveCaption
+        else if (Jcpars.NoInput_Color = 1) set piShadowColor to clLtGray
+        else                               set piShadowColor to clGray
+
+        set ShortTitle to "Variables/Formulas"
+
+        send AddWizardPage self
+
+        Object oCurrentStandard is a Textbox
+            set FontWeight to 600
+            Set GUILocation To 2 0
+            Set GUISize To 15 150
+        End_Object
+
+        Object LineControl1 is a LineControl
+            Set GUILocation TO 18 0
+            Set GUISize     TO 2 520
+        End_Object    // LineControl1
+
+        Object VarTag1 IS A CETagForm
+            set GUILocation to 25 0
+            set piItem      to 0
+        End_object
+
+        Object VarTag2 IS A CETagForm
+            set GUILocation to 50 0
+            set piItem      to 1
+        End_object
+
+        Object VarTag3 IS A CETagForm
+            set GUILocation to 75 0
+            set piItem      to 2
+        End_object
+
+        Object VarTag4 IS A CETagForm
+            set GUILocation to 100 0
+            set piItem      to 3
+        End_object
+
+        Object VarTag5 IS A CETagForm
+            set GUILocation to 125 0
+            set piItem      to 4
+        End_object
+
+        Object VarTag6 IS A CETagForm
+            set GUILocation to 150 0
+            set piItem      to 5
+        End_object
+
+        Object VarTag7 IS A CETagForm
+            set GUILocation to 175 0
+            set piItem      to 6
+        End_object
+
+        Object VarTag8 IS A CETagForm
+            set GUILocation to 200 0
+            set piItem      to 7
+        End_object
+
+        Object VarTag9 IS A CETagForm
+            set GUILocation to 225 0
+            set piItem      to 8
+        End_object
+
+        #IFDEF CE_CALC_TEST
+        Object oQuantity1 Is A Textbox
+            set FontWeight to 600
+            Set GUILocation To 2 280
+            Set GUISize To 15 50
+            set Label to "Quantity 1"
+        End_Object
+        #ENDIF
+
+        object VarCheckbox11 is a CEValueCheckbox
+            set GUILocation   to 27 255
+        end_object
+
+        object VarComboForm11 is a CEValueComboForm
+            set GUILocation   to 25 255
+            //
+        //    procedure Combo_Fill_List
+        //        send Combo_Add_Item "_"
+        //    end_procedure  // Combo_fill_list
+        end_object
+
+        Object VarValue11 IS A CEValueForm
+            Set GUILocation         to 25 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 0
+            set phCheckbox          to (VarCheckbox11(self))
+            set phComboForm         to (VarComboForm11(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure DisplayDefaultQuantity integer iQty
+                set Value to iQty
+            end_procedure
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag1 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox12 is a CEValueCheckbox
+            set GUILocation   to 52 255
+        end_object
+
+        object VarComboForm12 is a CEValueComboForm
+            set GUILocation   to 50 255
+        end_object
+
+        Object VarValue12 IS A CEValueForm
+            Set GUILocation         To 50 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 1
+            set phCheckbox          to (VarCheckbox12(self))
+            set phComboForm         to (VarComboForm12(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure DisplayDefaultQuantity integer iQty
+                set Value to iQty
+            end_procedure
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag2 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox13 is a CEValueCheckbox
+            set GUILocation   to 77 255
+        end_object
+
+        object VarComboForm13 is a CEValueComboForm
+            set GUILocation   to 75 255
+        end_object
+
+        Object VarValue13 IS A CEValueForm
+            set GUILocation         to 75 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 2
+            set phCheckbox          to (VarCheckbox13(self))
+            set phComboForm         to (VarComboForm13(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure DisplayDefaultQuantity integer iQty
+                set Value to iQty
+            end_procedure
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag3 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox14 is a CEValueCheckbox
+            set GUILocation   to 102 255
+        end_object
+
+        object VarComboForm14 is a CEValueComboForm
+            set GUILocation   to 100 255
+        end_object
+
+        Object VarValue14 IS A CEValueForm
+            Set GUILocation         to 100 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 3
+            set phCheckbox          to (VarCheckbox14(self))
+            set phComboForm         to (VarComboForm14(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag4 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox15 is a CEValueCheckbox
+            set GUILocation   to 127 255
+        end_object
+
+        object VarComboForm15 is a CEValueComboForm
+            set GUILocation   to 125 255
+        end_object
+
+        Object VarValue15 IS A CEValueForm
+            Set GUILocation         To 125 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 4
+            set phCheckbox          to (VarCheckbox15(self))
+            set phComboForm         to (VarComboForm15(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag5 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox16 is a CEValueCheckbox
+            set GUILocation   to 152 255
+        end_object
+
+        object VarComboForm16 is a CEValueComboForm
+            set GUILocation   to 150 255
+        end_object
+
+        Object VarValue16 IS A CEValueForm
+            Set GUILocation         to 150 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 5
+            set phCheckbox          to (VarCheckbox16(self))
+            set phComboForm         to (VarComboForm16(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag6 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox17 is a CEValueCheckbox
+            set GUILocation   to 177 255
+        end_object
+
+        object VarComboForm17 is a CEValueComboForm
+            set GUILocation   to 175 255
+        end_object
+
+        Object VarValue17 IS A CEValueForm
+            Set GUILocation         to 175 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 6
+            set phCheckbox          to (VarCheckbox17(self))
+            set phComboForm         to (VarComboForm17(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag7 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox18 is a CEValueCheckbox
+            set GUILocation   to 202 255
+        end_object
+
+        object VarComboForm18 is a CEValueComboForm
+            set GUILocation   to 200 255
+        end_object
+
+        Object VarValue18 IS A CEValueForm
+            Set GUILocation         to 200 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 7
+            set phCheckbox          to (VarCheckbox18(self))
+            set phComboForm         to (VarComboForm18(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag8 to self
+            end_procedure
+        End_object
+
+        object VarCheckbox19 is a CEValueCheckbox
+            set GUILocation   to 227 255
+        end_object
+
+        object VarComboForm19 is a CEValueComboForm
+            set GUILocation   to 225 255
+        end_object
+
+        Object VarValue19 IS A CEValueForm
+            Set GUILocation         to 225 255
+            set phArray             to (oQty1Array(self))
+            set phFlags             to (oFlagArray(self))
+            set piItem              to 8
+            set phCheckbox          to (VarCheckbox19(self))
+            set phComboForm         to (VarComboForm19(self))
+            //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+            set phValueForm         to (self)
+            //
+            procedure End_Construct_Object
+                forward send End_Construct_Object
+                //
+                set phVarValue of VarTag9 to self
+            end_procedure
+        End_object
+
+        #IFDEF CE_CALC_TEST
+        Object oQuantity2 Is A Textbox
+            set FontWeight  to 600
+            Set GUILocation to 2 370
+            Set GUISize     to 15 50
+            set Label       to "Quantity 2"
+        End_Object
+
+        Object VarValue21 IS A CEValueTestForm
+            Set GUILocation To 25 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 0
+        End_object
+
+        Object VarValue22 IS A CEValueTestForm
+            Set GUILocation To 50 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 1
+        End_object
+
+        Object VarValue23 IS A CEValueTestForm
+            Set GUILocation To 75 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 2
+        End_object
+
+        Object VarValue24 IS A CEValueTestForm
+            Set GUILocation To 100 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 3
+        End_object
+
+        Object VarValue25 IS A CEValueTestForm
+            Set GUILocation To 125 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 4
+        End_object
+
+        Object VarValue26 IS A CEValueTestForm
+            Set GUILocation To 150 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 5
+        End_object
+
+        Object VarValue27 IS A CEValueTestForm
+            Set GUILocation To 175 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 6
+        End_object
+
+        Object VarValue28 IS A CEValueTestForm
+            Set GUILocation To 200 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 7
+        End_object
+
+        Object VarValue29 IS A CEValueTestForm
+            Set GUILocation To 225 345
+            set phArray     to (oQty2Array(self))
+            set piItem      to 8
+        End_object
+
+        Object oQuantity3 Is A Textbox
+            set FontWeight  to 600
+            Set GUILocation to 2 460
+            Set GUISize     to 15 50
+            set Label       to "Quantity 3"
+        End_Object
+
+        Object VarValue31 IS A CEValueTestForm
+            Set GUILocation To 25 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 0
+        End_object
+
+        Object VarValue32 IS A CEValueTestForm
+            Set GUILocation To 50 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 1
+        End_object
+
+        Object VarValue33 IS A CEValueTestForm
+            Set GUILocation To 75 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 2
+        End_object
+
+        Object VarValue34 IS A CEValueTestForm
+            Set GUILocation To 100 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 3
+        End_object
+
+        Object VarValue35 IS A CEValueTestForm
+            Set GUILocation To 125 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 4
+        End_object
+
+        Object VarValue36 IS A CEValueTestForm
+            Set GUILocation To 150 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 5
+        End_object
+
+        Object VarValue37 IS A CEValueTestForm
+            Set GUILocation To 175 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 6
+        End_object
+
+        Object VarValue38 IS A CEValueTestForm
+            Set GUILocation To 200 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 7
+        End_object
+
+        Object VarValue39 IS A CEValueTestForm
+            Set GUILocation To 225 435
+            set phArray     to (oQty3Array(self))
+            set piItem      to 8
+        End_object
+
+        Object LineControl1 is a LineControl
+            Set GUILocation TO 250 0
+            Set GUISize     TO 2 520
+        End_Object    // LineControl1
+
+        Object CalcLabel Is A Textbox
+            set GUILocation to 257 0
+            set GUISize to 20 50
+            set Value to "Calc. Units: ="
+        End_Object
+
+        Object CalcDescription Is A CETagForm
+            set GUILocation   to 257 70
+            set GUISize       to 20 110
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to FALSE
+            Procedure DisplayTag integer hoStandards integer iOpcodeRow integer iShadowColor
+                set Value item 0 to Jcoper.Calc_units_desc
+            End_Procedure
+        End_Object
+
+        Object CalcUnitsValue1 IS A CEValueTestForm
+            Set GUILocation to 257 255
+            set phArray     to (oQty1Array(self))
+            set piItem      to 18
+        End_object
+
+        Object CalcUnitsValue2 IS A CEValueTestForm
+            Set GUILocation To 257 345 //365
+            set phArray     to (oQty2Array(self))
+            set piItem      to 18
+        End_object
+
+        Object CalcUnitsValue3 IS A CEValueTestForm
+            Set GUILocation To 257 435 //445
+            set phArray     to (oQty3Array(self))
+            set piItem      to 18
+        End_object
+
+        Object TableLabel Is A Textbox
+            set GUILocation to 282 0
+            set GUISize     to 20 75
+            set Value       to "Table Std. : ="
+        End_Object
+
+        Object TableDescription Is A CETagForm
+            set GUILocation   to 282 70
+            set GUISize       to 20 110
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to FALSE
+            Procedure DisplayTag integer hoStandards integer iOpcodeRow integer iShadowColor
+                set Value item 0 to Jcoper.Table_std_desc
+            End_Procedure
+        End_Object
+
+        Object TableValue1 IS A CEValueTestForm
+            Set GUILocation To 282 255 //285
+            set phArray     to (oQty1Array(self))
+            set piItem      to 19
+        End_object
+
+        Object TableValue2 IS A CEValueTestForm
+            Set GUILocation To 282 345 //365
+            set phArray     to (oQty2Array(self))
+            set piItem      to 19
+        End_object
+
+        Object TableValue3 IS A CEValueTestForm
+            Set GUILocation To 282 435 //445
+            set phArray     to (oQty3Array(self))
+            set piItem      to 19
+        End_object
+
+        Object ProdLabel Is A Textbox
+            set GUILocation to 307 0
+            set GUISize     to 20 75
+            set Value       to "Prod. Units: ="
+        End_Object
+
+        Object FormulaType Is A CETagForm
+            set GUILocation   to 307 70
+            set GUISize       to 20 10
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to FALSE
+            //set Color to clInactiveCaptionText
+            Procedure DisplayTag integer hoStandards integer iOpcodeRow integer iShadowColor
+                set Value item 0 to Jcoper.Est_formula_typ
+            End_Procedure
+        End_Object
+
+        Object ProdDescription Is A CETagForm
+            set GUILocation   to 307 80
+            set GUISize       to 20 110
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to FALSE
+            Procedure DisplayTag integer hoStandards integer iOpcodeRow integer iShadowColor
+                set Value item 0 to Jcoper.Calc_std_desc
+            End_Procedure
+        End_Object
+
+        Object ProdUnitsValue1 IS A CEValueTestForm
+            Set GUILocation To 307 255 //285
+            set phArray     to (oQty1Array(self))
+            set piItem      to 20
+        End_object
+
+        Object ProdUnitsValue2 IS A CEValueTestForm
+            Set GUILocation To 307 345 //365
+            set phArray     to (oQty2Array(self))
+            set piItem      to 20
+        End_object
+
+        Object ProdUnitsValue3 IS A CEValueTestForm
+            Set GUILocation To 307 435 //445
+            set phArray     to (oQty3Array(self))
+            set piItem      to 20
+        End_object
+        #ENDIF
+
+        Object oLinkStandard Is A Textbox
+            #IFDEF CE_CALC_TEST
+                Set GUILocation To 332 0
+                set FontWeight  to 600
+            #ELSE
+                set GUILocation to 257 0
+                set FontWeight  to 400
+            #ENDIF
+            Set GUISize         To 20 300
+        End_Object
+
+        // this object is the only focusable object on the page
+        // without it, the program hangs
+        Object FoolTheWizard Is A CETagForm
+            set GUILocation   to 357 0
+            set GUISize       to 20 0
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to TRUE
+            set Color to clInactiveCaptionText
+        End_Object
+
+        procedure UpdateVariableDisplay
+            integer iVoid
+            handle  hWnd
+            //
+            get Window_Handle                          to hWnd
+            if hWnd move (integer(UpdateWindow(hWnd))) to iVoid
+        end_procedure
+
+        procedure DisplayVariableValue integer iProcessIndex
+            integer iLinkLevel
+            //
+            get piLinkLevel to iLinkLevel
+            if      (iProcessIndex = 0) begin
+                send DisplayValue of VarValue11 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue21 iLinkLevel
+                send DisplayValue of VarValue31 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 1) begin
+                send DisplayValue of VarValue12 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue22 iLinkLevel
+                send DisplayValue of VarValue32 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 2) begin
+                send DisplayValue of VarValue13 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue23 iLinkLevel
+                send DisplayValue of VarValue33 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 3) begin
+                send DisplayValue of VarValue14 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue24 iLinkLevel
+                send DisplayValue of VarValue34 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 4) begin
+                send DisplayValue of VarValue15 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue25 iLinkLevel
+                send DisplayValue of VarValue35 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 5) begin
+                send DisplayValue of VarValue16 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue26 iLinkLevel
+                send DisplayValue of VarValue36 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 6) begin
+                send DisplayValue of VarValue17 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue27 iLinkLevel
+                send DisplayValue of VarValue37 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 7) begin
+                send DisplayValue of VarValue18 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue28 iLinkLevel
+                send DisplayValue of VarValue38 iLinkLevel
+                #ENDIF
+            end
+            else if (iProcessIndex = 8) begin
+                send DisplayValue of VarValue19 iLinkLevel
+                #IFDEF CE_CALC_TEST
+                send DisplayValue of VarValue29 iLinkLevel
+                send DisplayValue of VarValue39 iLinkLevel
+                #ENDIF
+            end
+            send UpdateVariableDisplay
+        end_procedure // DisplayVariableValue
+
+        procedure DisplayVariableDefault integer iProcessIndex
+            integer iLinkLevel
+            //
+            get piLinkLevel to iLinkLevel
+            if      (iProcessIndex = 0) send DisplayDefault of VarValue11 iLinkLevel
+            else if (iProcessIndex = 1) send DisplayDefault of VarValue12 iLinkLevel
+            else if (iProcessIndex = 2) send DisplayDefault of VarValue13 iLinkLevel
+            else if (iProcessIndex = 3) send DisplayDefault of VarValue14 iLinkLevel
+            else if (iProcessIndex = 4) send DisplayDefault of VarValue15 iLinkLevel
+            else if (iProcessIndex = 5) send DisplayDefault of VarValue16 iLinkLevel
+            else if (iProcessIndex = 6) send DisplayDefault of VarValue17 iLinkLevel
+            else if (iProcessIndex = 7) send DisplayDefault of VarValue18 iLinkLevel
+            else if (iProcessIndex = 8) send DisplayDefault of VarValue19 iLinkLevel
+            send UpdateVariableDisplay
+        end_procedure // DisplayVariableDefault
+
+        procedure DisplayDefaultQuantities integer iQty1 integer iQty2 integer iQty3
+            send DisplayDefaultQuantity of VarValue11 iQty1
+            send DisplayDefaultQuantity of VarValue12 iQty2
+            send DisplayDefaultQuantity of VarValue13 iQty3
+        end_procedure
+
+        Procedure DisplayCalcUnitsValue
+            #IFDEF CE_CALC_TEST
+            integer iLinkLevel
+            //
+            get piLinkLevel to iLinkLevel
+            send DisplayValue of CalcUnitsValue1 iLinkLevel
+            send DisplayValue of CalcUnitsValue2 iLinkLevel
+            send DisplayValue of CalcUnitsValue3 iLinkLevel
+            #ENDIF
+        End_Procedure
+
+        Procedure DisplayTableValue
+            #IFDEF CE_CALC_TEST
+            integer iLinkLevel
+            //
+            get piLinkLevel to iLinkLevel
+            send DisplayValue of TableValue1 iLinkLevel
+            send DisplayValue of TableValue2 iLinkLevel
+            send DisplayValue of TableValue3 iLinkLevel
+            #ENDIF
+        End_Procedure
+
+        Procedure DisplayProdUnitsValue
+            #IFDEF CE_CALC_TEST
+            integer iLinkLevel
+            //
+            get piLinkLevel to iLinkLevel
+            send DisplayValue of ProdUnitsValue1 iLinkLevel
+            send DisplayValue of ProdUnitsValue2 iLinkLevel
+            send DisplayValue of ProdUnitsValue3 iLinkLevel
+            #ENDIF
+        End_Procedure
+
+        object oVariableTagBroadcaster is a Broadcaster
+            send Add_Element (VarTag1(self))
+            send Add_Element (VarTag2(self))
+            send Add_Element (VarTag3(self))
+            send Add_Element (VarTag4(self))
+            send Add_Element (VarTag5(self))
+            send Add_Element (VarTag6(self))
+            send Add_Element (VarTag7(self))
+            send Add_Element (VarTag8(self))
+            send Add_Element (VarTag9(self))
+            #IFDEF CE_CALC_TEST
+            send Add_Element (CalcDescription(self))
+            send Add_Element (TableDescription(self))
+            send Add_Element (FormulaType(self))
+            send Add_Element (ProdDescription(self))
+            #ENDIF
+        end_object // oVariableTagBroadcaster
+        set Broadcast_State of oVariableTagBroadcaster to TRUE
+
+        Procedure DisplayTags
+            integer hArray iRow iColor
+            string  sCurrentStandard
+            //
+            get psCurrentStandard         to sCurrentStandard
+            set Value of oCurrentStandard to sCurrentStandard
+            move (oStandardsArray(self))  to hArray
+            get piOpcodeRow               to iRow
+            get piShadowColor             to iColor
+            //
+            send DisplayTag of oVariableTagBroadcaster hArray iRow iColor
+            send UpdateVariableDisplay
+        End_Procedure
+
+        procedure DoDisplayDefaultValues
+            integer iCounter
+            //
+            for iCounter from 0 to 8
+                send DisplayVariableDefault iCounter
+            loop
+        end_procedure
+
+        Procedure RestoreValues integer iProcessIndex
+            integer iCounter
+            //
+            for iCounter from 0 to 8
+                send DisplayVariableValue iCounter
+                if (iCounter = iProcessIndex) break
+            loop
+            #IFDEF CE_CALC_TEST
+            if (iProcessIndex >= 18) send DisplayCalcUnitsValue
+            if (iProcessIndex >= 19) send DisplayTableValue
+            if (iProcessIndex >= 20) send DisplayProdUnitsValue
+            #ENDIF
+        End_Procedure
+
+        Procedure ClearValues
+            broadcast send ClearValue
+        End_Procedure
+
+        register_function psLinkedTo returns string
+        Procedure DisplayLink
+            string sLinkStandard
+            if (psLinkedTo(self) <> "") get psLinkedTo   to sLinkStandard
+            else                        get psLinkedFrom to sLinkStandard
+            set Value of oLinkStandard                   to sLinkStandard
+        End_Procedure
+
+        #IFDEF CE_CALC_TEST
+        Procedure HighlightVarTag integer iProcessIndex integer bOn
+            if      (iProcessIndex = 0) send HighlightTag of VarTag1 bOn
+            else if (iProcessIndex = 1) send HighlightTag of VarTag2 bOn
+            else if (iProcessIndex = 2) send HighlightTag of VarTag3 bOn
+            else if (iProcessIndex = 3) send HighlightTag of VarTag4 bOn
+            else if (iProcessIndex = 4) send HighlightTag of VarTag5 bOn
+            else if (iProcessIndex = 5) send HighlightTag of VarTag6 bOn
+            else if (iProcessIndex = 6) send HighlightTag of VarTag7 bOn
+            else if (iProcessIndex = 7) send HighlightTag of VarTag8 bOn
+            else                        send HighlightTag of VarTag9 bOn
+        End_Procedure
+        #ENDIF
+
+        procedure DisplaySavingMessage
+            set Value of oCurrentStandard to "Saving item records..."
+            set Value of oLinkStandard    to "please wait..."
+        end_procedure
+
+    End_Object // oVariablesPage
+
+    #IFDEF CE_CALC_TEST
+    Object oConstantsPage IS A cCEWizardPage
+
+        Set ShortTitle To "Constants"
+
+        Send AddWizardPage self
+
+        Object oCurrentStandard Is A Textbox
+            set FontWeight to 600
+            Set GUILocation To 2 0
+            Set GUISize To 20 150
+        End_Object
+
+        Object LineControl1 is a LineControl
+            Set GUILocation TO 18 0
+            Set GUISize     TO 2 520
+        End_Object    // LineControl1
+
+        Object ConTag1 IS A CETagForm
+            Set GUILocation To 25 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con1_desc
+            End_Procedure
+        End_object
+
+        Object ConTag2 IS A CETagForm
+            Set GUILocation To 50 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con2_desc
+            End_Procedure
+        End_object
+
+        Object ConTag3 IS A CETagForm
+            Set GUILocation To 75 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con3_desc
+            End_Procedure
+        End_object
+
+        Object ConTag4 IS A CETagForm
+            Set GUILocation To 100 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con4_desc
+            End_Procedure
+        End_object
+
+        Object ConTag5 IS A CETagForm
+            Set GUILocation To 125 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con5_desc
+            End_Procedure
+        End_object
+
+        Object ConTag6 IS A CETagForm
+            Set GUILocation To 150 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con6_desc
+            End_Procedure
+        End_object
+
+        Object ConTag7 IS A CETagForm
+            Set GUILocation To 175 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con7_desc
+            End_Procedure
+        End_object
+
+        Object ConTag8 IS A CETagForm
+            Set GUILocation To 200 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con8_desc
+            End_Procedure
+        End_object
+
+        Object ConTag9 IS A CETagForm
+            Set GUILocation To 225 0
+            Set GUISize To 20 150
+            Procedure DisplayTag
+                set Value item 0 to Jcoper.Con9_desc
+            End_Procedure
+        End_object
+
+        Object oQuantity1 Is A Textbox
+            set FontWeight to 600
+            Set GUILocation To 2 280
+            Set GUISize To 15 50
+            set Label to "Quantity 1"
+        End_Object
+
+        Object ConValue11 IS A CEValueTestForm
+            Set GUILocation To 25 265
+            Set GUISize     To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (9 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue12 IS A CEValueTestForm
+            Set GUILocation To 50 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (10 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue13 IS A CEValueTestForm
+            Set GUILocation To 75 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (11 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue14 IS A CEValueTestForm
+            Set GUILocation To 100 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (12 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue15 IS A CEValueTestForm
+            Set GUILocation To 125 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (13 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue16 IS A CEValueTestForm
+            Set GUILocation To 150 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (14 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue17 IS A CEValueTestForm
+            Set GUILocation To 175 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (15 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue18 IS A CEValueTestForm
+            Set GUILocation To 200 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (16 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue19 IS A CEValueTestForm
+            Set GUILocation To 225 265
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty1Array(self)) item ;
+                    (17 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object oQuantity2 Is A Textbox
+            set FontWeight  to 600
+            Set GUILocation to 2 360
+            Set GUISize     to 15 50
+            set Label       to "Quantity 2"
+        End_Object
+
+        Object ConValue21 IS A CEValueTestForm
+            Set GUILocation To 25 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (9 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue22 IS A CEValueTestForm
+            Set GUILocation To 50 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (10 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue23 IS A CEValueTestForm
+            Set GUILocation To 75 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (11 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue24 IS A CEValueTestForm
+            Set GUILocation To 100 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (12 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue25 IS A CEValueTestForm
+            Set GUILocation To 125 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                (13 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue26 IS A CEValueTestForm
+            Set GUILocation To 150 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (14 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue27 IS A CEValueTestForm
+            Set GUILocation To 175 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (15 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue28 IS A CEValueTestForm
+            Set GUILocation To 200 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (16 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue29 IS A CEValueTestForm
+            Set GUILocation To 225 345
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty2Array(self)) item ;
+                    (17 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object oQuantity3 Is A Textbox
+            set FontWeight  to 600
+            Set GUILocation to 2 440
+            Set GUISize     to 15 50
+            set Label       to "Quantity 3"
+        End_Object
+
+        Object ConValue31 IS A CEValueTestForm
+            Set GUILocation To 25 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (9 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue32 IS A CEValueTestForm
+            Set GUILocation To 50 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (10 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue33 IS A CEValueTestForm
+            Set GUILocation To 75 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (11 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue34 IS A CEValueTestForm
+            Set GUILocation To 100 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (12 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue35 IS A CEValueTestForm
+            Set GUILocation To 125 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (13 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue36 IS A CEValueTestForm
+            Set GUILocation To 150 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (14 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue37 IS A CEValueTestForm
+            Set GUILocation To 175 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (15 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue38 IS A CEValueTestForm
+            Set GUILocation To 200 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (16 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        Object ConValue39 IS A CEValueTestForm
+            Set GUILocation To 225 425
+            Set GUISize To 20 75
+            Procedure DisplayValue integer iLinkLevel
+                number nValue
+                get Number_Value of (oQty3Array(self)) item ;
+                    (17 + (iLinklevel * 23)) to nValue
+                set Value item 0 to nValue
+            End_Procedure
+        End_object
+
+        // this object is the only focusable object on the page
+        // without it, the program hangs
+        Object FoolTheWizard Is A CETagForm
+            set GUILocation   to 357 0
+            set GUISize       to 20 0
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to TRUE
+            set Color         to clInactiveCaptionText
+        End_Object
+
+        Procedure DisplayConstantValue integer iProcessIndex
+            integer iLinkLevel
+            get piLinkLevel to iLinkLevel
+            if      (iProcessIndex =  9) begin
+                send DisplayValue of ConValue11 iLinkLevel
+                send DisplayValue of ConValue21 iLinkLevel
+                send DisplayValue of ConValue31 iLinkLevel
+            end
+            else if (iProcessIndex = 10) begin
+                send DisplayValue of ConValue12 iLinkLevel
+                send DisplayValue of ConValue22 iLinkLevel
+                send DisplayValue of ConValue32 iLinkLevel
+            end
+            else if (iProcessIndex = 11) begin
+                send DisplayValue of ConValue13 iLinkLevel
+                send DisplayValue of ConValue23 iLinkLevel
+                send DisplayValue of ConValue33 iLinkLevel
+            end
+            else if (iProcessIndex = 12) begin
+                send DisplayValue of ConValue14 iLinkLevel
+                send DisplayValue of ConValue24 iLinkLevel
+                send DisplayValue of ConValue34 iLinkLevel
+            end
+            else if (iProcessIndex = 13) begin
+                send DisplayValue of ConValue15 iLinkLevel
+                send DisplayValue of ConValue25 iLinkLevel
+                send DisplayValue of ConValue35 iLinkLevel
+            end
+            else if (iProcessIndex = 14) begin
+                send DisplayValue of ConValue16 iLinkLevel
+                send DisplayValue of ConValue26 iLinkLevel
+                send DisplayValue of ConValue36 iLinkLevel
+            end
+            else if (iProcessIndex = 15) begin
+                send DisplayValue of ConValue17 iLinkLevel
+                send DisplayValue of ConValue27 iLinkLevel
+                send DisplayValue of ConValue37 iLinkLevel
+            end
+            else if (iProcessIndex = 16) begin
+                send DisplayValue of ConValue18 iLinkLevel
+                send DisplayValue of ConValue28 iLinkLevel
+                send DisplayValue of ConValue38 iLinkLevel
+            end
+            else if (iProcessIndex = 17) begin
+                send DisplayValue of ConValue19 iLinkLevel
+                send DisplayValue of ConValue29 iLinkLevel
+                send DisplayValue of ConValue39 iLinkLevel
+            end
+        End_Procedure
+
+        object oConstantTagBroadcaster is a Broadcaster
+            send Add_Element (ConTag1(self))
+            send Add_Element (ConTag2(self))
+            send Add_Element (ConTag3(self))
+            send Add_Element (ConTag4(self))
+            send Add_Element (ConTag5(self))
+            send Add_Element (ConTag6(self))
+            send Add_Element (ConTag7(self))
+            send Add_Element (ConTag8(self))
+            send Add_Element (ConTag9(self))
+        end_object // oConstantTagBroadcaster
+        set Broadcast_State of oConstantTagBroadcaster to TRUE
+
+        Procedure DisplayTags
+            string sStandard
+            //
+            move (string(Jcoper.Opcode) * Jcoper.Name) to sStandard
+            set Value of oCurrentStandard to sStandard
+            send DisplayTag of oConstantTagBroadcaster
+        End_Procedure
+
+        Procedure RestoreValues
+        End_Procedure
+
+        Procedure ClearValues
+            broadcast send ClearValue
+        End_Procedure
+
+    End_Object // oConstantsPage
+
+    Object oTablePage IS A cCEWizardPage
+
+        Set ShortTitle To "Table Values"
+
+        Send AddWizardPage self
+
+        Object oCurrentStandard Is A Textbox
+            set FontWeight to 600
+            Set GUILocation To 2 0
+            Set GUISize To 20 150
+        End_Object
+
+        Object LineControl1 is a LineControl
+            Set GUILocation TO 18 0
+            Set GUISize     TO 2 520
+        End_Object    // LineControl1
+
+        Object TblDesc IS A Form
+            Set GUILocation              To 25 100
+            Set GUISize                  To 20 95
+            Set Label                    to "Desc"
+            Set Label_Col_Offset         to 2
+            Set Label_Justification_Mode to jMode_Right
+            set Enabled_State            to FALSE
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Table_std_desc
+            End_Procedure
+        End_object
+
+        Object BracketDesc IS A Form
+            Set GUILocation              To 25 260
+            Set GUISize                  To 20 95
+            Set Label                    to "Bracket"
+            Set Label_Col_Offset         to 2
+            Set Label_Justification_Mode to jMode_Right
+            set Enabled_State            to FALSE
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Bracket_desc
+            End_Procedure
+        End_object
+
+        Object LookupDesc IS A Form
+            Set GUILocation              To 50 0
+            Set GUISize                  To 20 95
+            Set Label                    to "Lookup"
+            Set Label_Col_Offset         to -1
+            Set Label_Justification_Mode to jMode_Top
+            set Enabled_State            to FALSE
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup_desc
+            End_Procedure
+        End_object
+
+        Object Bracket1 IS A CETableForm
+            Set GUILocation To 50 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Bracket1_value
+            End_Procedure
+        End_object
+
+        Object Bracket2 IS A CETableForm
+            Set GUILocation To 50 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Bracket2_value
+            End_Procedure
+        End_object
+
+        Object Bracket3 IS A CETableForm
+            Set GUILocation To 50 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Bracket3_value
+            End_Procedure
+        End_object
+
+        Object Bracket4 IS A CETableForm
+            Set GUILocation To 50 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Bracket4_value
+            End_Procedure
+        End_object
+
+        Object Bracket5 IS A CETableForm
+            Set GUILocation To 50 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Bracket5_value
+            End_Procedure
+        End_object
+
+        Object Lookup1 IS A CETableForm
+            Set GUILocation To 75 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup1_value
+            End_Procedure
+        End_object
+
+        Object L1b1 IS A CETableForm
+            Set GUILocation To 75 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L1b1_std
+            End_Procedure
+        End_object
+
+        Object L1b2 IS A CETableForm
+            Set GUILocation To 75 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L1b2_std
+            End_Procedure
+        End_object
+
+        Object L1b3 IS A CETableForm
+            Set GUILocation To 75 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L1b3_std
+            End_Procedure
+        End_object
+
+        Object L1b4 IS A CETableForm
+            Set GUILocation To 75 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L1b4_std
+            End_Procedure
+        End_object
+
+        Object L1b5 IS A CETableForm
+            Set GUILocation To 75 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L1b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup2 IS A CETableForm
+            Set GUILocation To 100 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup2_value
+            End_Procedure
+        End_object
+
+        Object L2b1 IS A CETableForm
+            Set GUILocation To 100 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L2b1_std
+            End_Procedure
+        End_object
+
+        Object L2b2 IS A CETableForm
+            Set GUILocation To 100 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L2b2_std
+            End_Procedure
+        End_object
+
+        Object L2b3 IS A CETableForm
+            Set GUILocation To 100 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L2b3_std
+            End_Procedure
+        End_object
+
+        Object L2b4 IS A CETableForm
+            Set GUILocation To 100 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L2b4_std
+            End_Procedure
+        End_object
+
+        Object L2b5 IS A CETableForm
+            Set GUILocation To 100 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L2b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup3 IS A CETableForm
+            Set GUILocation To 125 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup3_value
+            End_Procedure
+        End_object
+
+        Object L3b1 IS A CETableForm
+            Set GUILocation To 125 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L3b1_std
+            End_Procedure
+        End_object
+
+        Object L3b2 IS A CETableForm
+            Set GUILocation To 125 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L3b2_std
+            End_Procedure
+        End_object
+
+        Object L3b3 IS A CETableForm
+            Set GUILocation To 125 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L3b3_std
+            End_Procedure
+        End_object
+
+        Object L3b4 IS A CETableForm
+            Set GUILocation To 125 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L3b4_std
+            End_Procedure
+        End_object
+
+        Object L3b5 IS A CETableForm
+            Set GUILocation To 125 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L3b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup4 IS A CETableForm
+            Set GUILocation To 150 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup4_value
+            End_Procedure
+        End_object
+
+        Object L4b1 IS A CETableForm
+            Set GUILocation To 150 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L4b1_std
+            End_Procedure
+        End_object
+
+        Object L4b2 IS A CETableForm
+            Set GUILocation To 150 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L4b2_std
+            End_Procedure
+        End_object
+
+        Object L4b3 IS A CETableForm
+            Set GUILocation To 150 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L4b3_std
+            End_Procedure
+        End_object
+
+        Object L4b4 IS A CETableForm
+            Set GUILocation To 150 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L4b4_std
+            End_Procedure
+        End_object
+
+        Object L4b5 IS A CETableForm
+            Set GUILocation To 150 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L4b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup5 IS A CETableForm
+            Set GUILocation To 175 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup5_value
+            End_Procedure
+        End_object
+
+        Object L5b1 IS A CETableForm
+            Set GUILocation To 175 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L5b1_std
+            End_Procedure
+        End_object
+
+        Object L5b2 IS A CETableForm
+            Set GUILocation To 175 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L5b2_std
+            End_Procedure
+        End_object
+
+        Object L5b3 IS A CETableForm
+            Set GUILocation To 175 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L5b3_std
+            End_Procedure
+        End_object
+
+        Object L5b4 IS A CETableForm
+            Set GUILocation To 175 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L5b4_std
+            End_Procedure
+        End_object
+
+        Object L5b5 IS A CETableForm
+            Set GUILocation To 175 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L5b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup6 IS A CETableForm
+            Set GUILocation To 200 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup6_value
+            End_Procedure
+        End_object
+
+        Object L6b1 IS A CETableForm
+            Set GUILocation To 200 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L6b1_std
+            End_Procedure
+        End_object
+
+        Object L6b2 IS A CETableForm
+            Set GUILocation To 200 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L6b2_std
+            End_Procedure
+        End_object
+
+        Object L6b3 IS A CETableForm
+            Set GUILocation To 200 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L6b3_std
+            End_Procedure
+        End_object
+
+        Object L6b4 IS A CETableForm
+            Set GUILocation To 200 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L6b4_std
+            End_Procedure
+        End_object
+
+        Object L6b5 IS A CETableForm
+            Set GUILocation To 200 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L6b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup7 IS A CETableForm
+            Set GUILocation To 225 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup7_value
+            End_Procedure
+        End_object
+
+        Object L7b1 IS A CETableForm
+            Set GUILocation To 225 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L7b1_std
+            End_Procedure
+        End_object
+
+        Object L7b2 IS A CETableForm
+            Set GUILocation To 225 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L7b2_std
+            End_Procedure
+        End_object
+
+        Object L7b3 IS A CETableForm
+            Set GUILocation To 225 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L7b3_std
+            End_Procedure
+        End_object
+
+        Object L7b4 IS A CETableForm
+            Set GUILocation To 225 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L7b4_std
+            End_Procedure
+        End_object
+
+        Object L7b5 IS A CETableForm
+            Set GUILocation To 225 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L7b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup8 IS A CETableForm
+            Set GUILocation To 250 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup8_value
+            End_Procedure
+        End_object
+
+        Object L8b1 IS A CETableForm
+            Set GUILocation To 250 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L8b1_std
+            End_Procedure
+        End_object
+
+        Object L8b2 IS A CETableForm
+            Set GUILocation To 250 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L8b2_std
+            End_Procedure
+        End_object
+
+        Object L8b3 IS A CETableForm
+            Set GUILocation To 250 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L8b3_std
+            End_Procedure
+        End_object
+
+        Object L8b4 IS A CETableForm
+            Set GUILocation To 250 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L8b4_std
+            End_Procedure
+        End_object
+
+        Object L8b5 IS A CETableForm
+            Set GUILocation To 250 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L8b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup9 IS A CETableForm
+            Set GUILocation To 275 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup9_value
+            End_Procedure
+        End_object
+
+        Object L9b1 IS A CETableForm
+            Set GUILocation To 275 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L9b1_std
+            End_Procedure
+        End_object
+
+        Object L9b2 IS A CETableForm
+            Set GUILocation To 275 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L9b2_std
+            End_Procedure
+        End_object
+
+        Object L9b3 IS A CETableForm
+            Set GUILocation To 275 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L9b3_std
+            End_Procedure
+        End_object
+
+        Object L9b4 IS A CETableForm
+            Set GUILocation To 275 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L9b4_std
+            End_Procedure
+        End_object
+
+        Object L9b5 IS A CETableForm
+            Set GUILocation To 275 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L9b5_std
+            End_Procedure
+        End_object
+
+        Object Lookup10 IS A CETableForm
+            Set GUILocation To 300 20
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.Lookup10_value
+            End_Procedure
+        End_object
+
+        Object L10b1 IS A CETableForm
+            Set GUILocation To 300 100
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L10b1_std
+            End_Procedure
+        End_object
+
+        Object L10b2 IS A CETableForm
+            Set GUILocation To 300 180
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L10b2_std
+            End_Procedure
+        End_object
+
+        Object L10b3 IS A CETableForm
+            Set GUILocation To 300 260
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L10b3_std
+            End_Procedure
+        End_object
+
+        Object L10b4 IS A CETableForm
+            Set GUILocation To 300 340
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L10b4_std
+            End_Procedure
+        End_object
+
+        Object L10b5 IS A CETableForm
+            Set GUILocation To 300 420
+            Procedure ShowTableValue
+                set Value item 0 to Jcoper.L10b5_std
+            End_Procedure
+        End_object
+
+        // this object is the only focusable object on the page
+        // without it, the program hangs
+        Object FoolTheWizard Is A CETagForm
+            set GUILocation   to 357 0
+            set GUISize       to 20 0
+            set Form_Border   to BORDER_NONE
+            set Enabled_State to TRUE
+            set Color         to clInactiveCaptionText
+        End_Object
+
+        Procedure DisplayValues
+            string sStandard
+            //
+            move (string(Jcoper.Opcode) * Jcoper.Name) to sStandard
+            set Value of oCurrentStandard to sStandard
+            broadcast send ShowTableValue
+        End_Procedure
+
+    End_Object // oTablePage
+    #ENDIF
+
+    // the following update the wizard display
+    procedure SavingRecordsMessage
+        send DisplaySavingMessage of oVariablesPage
+    end_procedure
+
+    Procedure DisplayTags
+        send DisplayTags of oVariablesPage
+        #IFDEF CE_CALC_TEST
+        send DisplayTags of oConstantsPage
+        #ENDIF
+    End_Procedure
+
+    procedure DisplayDefaults
+        send DoDisplayDefaultValues of oVariablesPage
+    end_procedure
+
+    Procedure RestoreValues integer iLinkLevel integer iProcessIndex
+        send RestoreValues of oVariablesPage iProcessIndex
+        #IFDEF CE_CALC_TEST
+        send RestoreValues of oConstantsPage iProcessIndex
+        #ENDIF
+    End_Procedure
+
+    Procedure ClearValues
+        send ClearValues to oVariablesPage
+        #IFDEF CE_CALC_TEST
+        send ClearValues to oConstantsPage
+        #ENDIF
+    End_Procedure
+
+    Procedure UpdateWizard
+        send ClearValues
+        send DisplayTags
+        send DisplayLinks
+        //BC:12/20/06 added next line to fix clearing of displayed default values after a link was processed
+        send DisplayDefaults
+    End_Procedure
+
+    Procedure DisplayLinks
+        send DisplayLink of oVariablesPage
+    End_Procedure
+
+    Procedure HighlightVarTag integer iProcessIndex integer bOn
+        send HighlightVarTag of oVariablesPage iProcessIndex bOn
+    End_Procedure
+
+    #IFDEF CE_CALC_TEST
+    #ELSE
+    procedure DisplayValues
+        //
+    end_procedure
+    #ENDIF
+
+    procedure DisplayConstantValue integer iIndex
+        #IFDEF CE_CALC_TEXT
+        send DisplayConstantValue of oConstantsPage iIndex
+        #ENDIF
+    end_procedure
+
+    function RetrieveCheckboxValue ;
+        integer iProcessIndex      ;
+        integer iPosIndex          ;
+        string  sStandard          ;
+        string  sPrompt            ;
+        number  nDefault           ;
+        integer iOpcode            ;
+        boolean bAllowBackup       ;
+        returns number
+        //
+        number nValue
+        //
+        //BC: 12/13/06 next 3 lines added to allow autosave to continue after it encounters a default link w/pausebar
+        boolean bAutoSave
+        Get pbAutoSave of (oCalcEngine(self)) to bAutosave
+        if bAutoSave function_return nDefault
+        get RetrieveValue of CheckboxValueDialog ;
+            iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup to nValue
+        function_return nValue
+    end_function
+
+    function RetrieveComboValue ;
+        integer iProcessIndex   ;
+        integer iPosIndex       ;
+        string  sStandard       ;
+        string  sPrompt         ;
+        number  nDefault        ;
+        integer iOpcode         ;
+        boolean bAllowBackup    ;
+        returns number
+        //
+        number nValue
+        //
+        //BC: 12/13/06 next 3 lines added to allow autosave to continue after it encounters a default link w/pausebar
+        boolean bAutoSave
+        Get pbAutoSave of (oCalcEngine(self)) to bAutosave
+        if bAutoSave function_return nDefault
+        get RetrieveValue of ComboValueDialog ;
+            iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup to nValue
+        function_return nValue
+    end_function
+
+    function RetrieveNumericValue ;
+        integer iProcessIndex   ;
+        integer iPosIndex       ;
+        string  sStandard       ;
+        string  sPrompt         ;
+        number  nDefault        ;
+        integer iOpcode         ;
+        boolean bAllowBackup    ;
+        boolean bFormat         ;
+        returns number
+        //
+        number nValue
+        //
+        //BC: 12/13/06 next 3 lines added to allow autosave to continue after it encounters a default link w/pausebar
+        boolean bAutoSave
+        Get pbAutoSave of (oCalcEngine(self)) to bAutosave
+        if bAutoSave function_return nDefault
+        get RetrieveValue of CalcValueDialog ;
+            iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup bFormat to nValue
+        function_return nValue
+    end_function
+
+    function PauseCheckboxValue ;
+        integer iProcessIndex   ;
+        integer iPosIndex       ;
+        string  sStandard       ;
+        string  sPrompt         ;
+        integer iOpcode         ;
+        returns boolean
+        //
+        boolean bIgnore
+        //
+        get PauseValue of CheckboxValueDialog iProcessIndex iPosIndex sStandard sPrompt iOpcode to bIgnore
+        function_return bIgnore
+    end_function
+
+    function PauseComboValue  ;
+        integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        integer iOpcode       ;
+        returns boolean
+        //
+        boolean bIgnore
+        //
+        get PauseValue of ComboValueDialog iProcessIndex iPosIndex sStandard sPrompt iOpcode to bIgnore
+        function_return bIgnore
+    end_function
+
+    function PauseNumericValue ;
+        integer iProcessIndex  ;
+        integer iPosIndex      ;
+        string  sStandard      ;
+        string  sPrompt        ;
+        integer iOpcode        ;
+        boolean bFormat        ;
+        returns boolean
+        //
+        boolean bIgnore
+        //
+        get PauseValue of CalcValueDialog iProcessIndex iPosIndex sStandard sPrompt iOpcode bFormat to bIgnore
+        function_return bIgnore
+    end_function
+
+    procedure DoSelectOpcode string sOptype integer iCC integer iOperation string sListTitle
+        send SelectOpcode of Jcoperce_SL sOptype iCC iOperation sListTitle
+    end_procedure
+
+    procedure DoSelectCostCenter string sCCPickListCode string sListTitle
+        send SelectCC of Jccntrce_SL sCCPickListCode sListTitle False // False = filter code in cclist will be shadowed
+        //send Popup of Jccntrce_SL
+    end_procedure
+
+end_object // oCalcWizard

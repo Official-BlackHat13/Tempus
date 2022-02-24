@@ -1,0 +1,49 @@
+Use GlobalAllEnt.pkg
+//Use Windows.pkg
+//Use cHtmlHelp.pkg
+//Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Location
+Open Contact
+Open Order
+
+Procedure DoCleanup
+    Boolean bCancel
+    Integer iCount
+    //
+    Get Confirm "Do Cleanup?" to bCancel
+    If (bCancel) Procedure_Return
+    //
+    Find ge Order.Recnum
+    While (Found)
+        If (Order.WorkType = "S" and Order.JobCloseDate = 0) Begin
+            Relate Order
+            Reread Order
+            Move Location.Name to Order.LocationName
+            If (Location.PropmgrIdno <> 0) Begin
+                Clear Contact
+                Move Location.PropmgrIdno to Contact.ContactIdno
+                Find eq Contact.ContactIdno
+                If (Found) Begin
+                    Move (Trim(Contact.FirstName) * Trim(Contact.LastName)) to Order.PropertyManager
+                End
+            End
+            Move 1 to Order.ChangedFlag
+            SaveRecord Order
+            Unlock
+            Increment iCount
+        End
+        Find gt Order.Recnum
+    Loop
+    Send Info_Box iCount
+End_Procedure
+
+Send DoCleanup

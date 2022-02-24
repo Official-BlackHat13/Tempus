@@ -1,0 +1,34 @@
+Use cGlblDataDictionary.pkg
+
+Open Ref_Hdr
+Open Ref_Dtl
+Open System
+
+Register_Object Ref_Hdr_sl
+
+Class cRef_HdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Ref_Hdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Client_File to Ref_Dtl.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Ref_Hdr.Ref_Hdr_Idno to File_Field System.CrewId
+        Set Field_Prompt_Object Field Ref_Hdr.Ref_Hdr_Idno to Ref_Hdr_sl
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Ref_Hdr.sl
+#ENDIF

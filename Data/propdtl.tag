@@ -1,0 +1,9 @@
+PropHdr_Idno
+PropDtl_Idno
+SnowDepth
+PlowPrice
+ShovelPrice
+DeicePrice
+SideWalkDeice
+AddService
+AddPrice

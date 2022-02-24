@@ -1,0 +1,39 @@
+Use GlobalAllEnt.pkg
+//Use Windows.pkg
+//Use cHtmlHelp.pkg
+//Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open System
+Open Order
+Open Invhdr
+
+Procedure DoCleanupInvhdr
+    Boolean bCancel
+    Date    dStart
+    //
+    Get Confirm "Show old invoices as posted?" to bCancel
+    If (bCancel) Procedure_Return
+    //
+    Move System.SnowSeasonStart to dStart
+    //
+    Find ge Invhdr.Recnum
+    While (Found)
+        If (Invhdr.InvoiceDate < dStart) Begin
+            Reread Invhdr
+            Move 1 to Invhdr.PostFlag
+            SaveRecord Invhdr
+            Unlock
+        End
+        Find gt Invhdr.Recnum
+    Loop
+End_Procedure
+
+Send DoCleanupInvhdr

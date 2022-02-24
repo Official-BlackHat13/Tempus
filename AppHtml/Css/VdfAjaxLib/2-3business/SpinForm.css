@@ -1,0 +1,86 @@
+/*
+Styles for the vdf.deo.SpinForm component.
+
+Revisions:
+    2011/03/01 Created initial version (HW, DAE)
+*/
+.spinform_next{
+    display: inline;
+    width: 18px;
+    height: 18px;
+    border: none;
+    padding: 2px 8px 2px 8px;
+    text-decoration: none;
+    margin: auto;
+    cursor: pointer;
+    margin-left: 1px;
+    margin-top: 0px;
+    
+    background-image: url('spinform.png');
+    background-position: 0px -80px;
+    background-repeat: no-repeat;
+    font-size: 12px;
+    line-height: 12px;
+    
+}
+
+body.vdf-ie7 .spinform_next, body.vdf-ie7 .spinform_prev, body.vdf-ie6 .spinform_next, body.vdf-ie6 .spinform_prev{
+    vertical-align: bottom;
+}
+
+
+.spinform_prev{
+    display: inline;
+    width: 18px;
+    height: 18px;
+    border: none;
+    padding: 2px 8px 2px 8px;
+    text-decoration: none;
+    margin: auto;
+    cursor: pointer;
+    margin-left: 3px;
+    margin-top: 0px;
+    
+    background-image: url('spinform.png');
+    background-position: 0px 0px;
+    font-size: 12px;
+    line-height: 12px;
+}
+
+.spinform_prev:hover {
+    background-position: 0px -20px;
+    outline: none;
+}
+
+.spinform_prev:focus{
+    outline: none;
+}
+
+.spinform_next:hover{
+    background-position: 0px -100px;
+    outline: none;
+}
+
+.spinform_next:focus{
+    outline: none;
+}
+
+.spinform_prev:active{
+    background-position: 0px -40px;
+}
+
+.spinform_next:active{
+    background-position: 0px -120px;
+    border: none;
+    outline: none;
+}
+
+.spinform_prev[disabled]{
+    background-position: 0px -60px;
+    cursor: default;
+}
+
+.spinform_next[disabled]{
+    background-position: 0px -140px;
+    cursor: default;
+}

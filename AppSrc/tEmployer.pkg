@@ -1,0 +1,15 @@
+// tEmployer.pkg
+
+Struct tEmployer
+    Integer iRecId
+    Integer iIdno
+    String  sName
+    String  sContact
+    String  sAddress1
+    String  sAddress2
+    String  sCity
+    String  sState
+    String  sZip
+    String  sStatus
+    Integer iChangedFlag
+End_Struct

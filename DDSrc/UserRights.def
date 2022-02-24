@@ -1,0 +1,34 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: UserRights (# 221)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:UserRights
+  USER DISPLAY NAME         : UserRights
+  DATAFLEX FILE NAME        : UserRights
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 72        ( USED: 72 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 8 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  EditLevel        NUM   10.0     1  1   
+  2  Discription      ASC     50    12  2   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    EditLevel       NO  NO       0      0       1     ON-LINE
+
+  2    Discription     NO  NO       0      0       2     ON-LINE
+       EditLevel       NO  NO 
+

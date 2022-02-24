@@ -1,0 +1,53 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Parklots (# 30)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:PARKLOTS
+  USER DISPLAY NAME         : Parklots
+  DATAFLEX FILE NAME        : Parklots
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 211       ( USED: 211 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 1178 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ParkingLotId     NUM   10.0     1  1   
+  2  LocationIdno     NUM   10.0    12  2   Location.FIELD_2 (3,2)
+  3  Description      ASC     40    23      
+  4  SqFtTotal        NUM   10.0    63      
+  5  SqFtSidewalks    NUM   10.0    74      
+  6  ParkingStalls    NUM   10.0    85      
+  7  HandicapStalls   NUM    5.0    96      
+  8  HCStencils       NUM    5.0   102      
+  9  SolidLineFeet    NUM   10.0   108      
+ 10  HalfHashMarks    NUM   10.0   119      
+ 11  FullHashMarks    NUM   10.0   130      
+ 12  CurbLinearFeet   NUM   10.0   141      
+ 13  Crosswalks       NUM    5.0   152      
+ 14  Arrows           NUM    5.0   158      
+ 15  Stencils         NUM    5.0   164      
+ 16  SpeedBumps       NUM    5.0   170      
+ 17  StormDrains      NUM    5.0   176      
+ 18  Bollards         NUM    5.0   182      
+ 19  LightPoles       NUM    5.0   188      
+ 20  Islands          NUM    5.0   194      
+ 21  AsphaltStatus    ASC      1   200      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ParkingLotId    NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       ParkingLotId    NO  NO 
+

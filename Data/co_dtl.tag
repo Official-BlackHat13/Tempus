@@ -1,0 +1,6 @@
+CO_Head_ID
+CO_DTL_ID
+Issued
+Instructions
+Estimated_Value
+Initials

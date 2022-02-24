@@ -1,0 +1,102 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Esitem (# 58)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Esitem
+  USER DISPLAY NAME         : Esitem
+  DATAFLEX FILE NAME        : Esitem
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16952     ( USED: 16952 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 7699 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ESTIMATE_ID      NUM   10.0     1  2   
+  2  COMPONENT_ID     NUM   10.0    12  2   Escomp.FIELD_2 (57,2)
+  3  ITEM_ID          NUM   10.0    23  1   
+  4  OPS_RECNUM       NUM   10.0    34      
+  5  OPCODE           NUM   10.0    45  2   Jcoper.FIELD_4 (53,4)
+  6  LINE_NUMBER      NUM    5.0    56  3   
+  7  ESSTDS_RECNUM    NUM   10.0    62      
+  8  ESSTDS_OPCODE    NUM   10.0    73      
+  9  CALC_FLAGS       ASC      6    84      
+ 10  VAR1             NUM    8.4    90      
+ 11  VAR2             NUM    8.4   104      
+ 12  VAR3             NUM    8.4   118      
+ 13  VAR4             NUM    8.4   132      
+ 14  VAR5             NUM    8.4   146      
+ 15  VAR6             NUM    8.4   160      
+ 16  VAR7             NUM    8.4   174      
+ 17  VAR8             NUM    8.4   188      
+ 18  VAR9             NUM    8.4   202      
+ 19  CALC_UNITS1      NUM    8.4   216      
+ 20  CALC_UNITS2      NUM    8.4   230      
+ 21  CALC_UNITS3      NUM    8.4   244      
+ 22  TABLE_STD1       NUM    8.4   258      
+ 23  TABLE_STD2       NUM    8.4   272      
+ 24  TABLE_STD3       NUM    8.4   286      
+ 25  PROD_UNITS1      NUM    8.4   300      
+ 26  PROD_UNITS2      NUM    8.4   314      
+ 27  PROD_UNITS3      NUM    8.4   328      
+ 28  PROD_UNITS_TYPE  ASC      1   342      
+ 29  EST__1           NUM    8.2   343      
+ 30  EST__2           NUM    8.2   355      
+ 31  EST__3           NUM    8.2   367      
+ 32  SELL_1           NUM    8.2   379      
+ 33  SELL_2           NUM    8.2   391      
+ 34  SELL_3           NUM    8.2   403      
+ 35  VAR1_FLAG        ASC      2   415      
+ 36  VAR2_FLAG        ASC      2   417      
+ 37  VAR3_FLAG        ASC      2   419      
+ 38  VAR4_FLAG        ASC      2   421      
+ 39  VAR5_FLAG        ASC      2   423      
+ 40  VAR6_FLAG        ASC      2   425      
+ 41  VAR7_FLAG        ASC      2   427      
+ 42  VAR8_FLAG        ASC      2   429      
+ 43  VAR9_FLAG        ASC      2   431      
+ 44  INITEM_ID        ASC     20   433      
+ 45  VALUE1_PASS      NUM    8.4   453      
+ 46  VALUE2_PASS      NUM    8.4   467      
+ 47  VALUE3_PASS      NUM    8.4   481      
+ 48  MULTI_VAL_FLAG   ASC      1   495      
+ 49  VAL_Q_SYMBOL     ASC      1   496      
+ 50  CON_Q_SYMBOL     ASC      1   497      
+ 51  INSTRUCTION      TEX   1024   498      
+ 52  QuoteDtlReference  NUM   10.0 16881      
+ 53  OrderDtlReference  NUM   10.0 16892      
+ 54  Sequence         NUM    6.2 16903  5   
+ 55  MastOpsIdno      NUM   10.0 16913      
+ 56  TaxRate          NUM    2.4 16924      
+ 57  TaxAmount        NUM    4.4 16932      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ITEM_ID         NO  NO       0      0       1     ON-LINE
+
+  2    ESTIMATE_ID     NO  NO       0      0       3     ON-LINE
+       COMPONENT_ID    NO  NO 
+       OPCODE          NO  NO 
+
+  3    ESTIMATE_ID     NO  NO       0      0       3     ON-LINE
+       COMPONENT_ID    NO  NO 
+       LINE_NUMBER     NO  NO 
+
+  4    COMPONENT_ID    NO  NO       0      0       2     ON-LINE
+       ITEM_ID         NO  NO 
+
+  5    ESTIMATE_ID     NO  NO       0      0       4     ON-LINE
+       COMPONENT_ID    NO  NO 
+       Sequence        NO  NO 
+       ITEM_ID         NO  NO 
+

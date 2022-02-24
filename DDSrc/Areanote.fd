@@ -1,0 +1,10 @@
+#REPLACE FILE29 Areanote
+#REPLACE Areanote.Recnum |FN29,0
+#REPLACE Areanote.AreanoteId |FN29,1
+#REPLACE Areanote.AreaNumber |FN29,2
+#REPLACE Areanote.CreatedDate |FD29,3
+#REPLACE Areanote.CreatedTime |FS29,4
+#REPLACE Areanote.CreatedBy |FN29,5
+#REPLACE Areanote.NoteDate |FD29,6
+#REPLACE Areanote.AreanoteRef |FN29,7
+#REPLACE Areanote.Note |FS29,8

@@ -1,0 +1,180 @@
+// sets properties used by all programs
+//
+// defines DoReassignDfPath procedure
+
+use cGlblApplication.pkg
+
+Class cTempusApplication is a cGlblApplication
+
+    procedure Construct_Object
+        //
+        forward send Construct_Object
+        // used to control creation of debug file output
+        // by the calc engine
+        Property Integer pbDebug
+        // the following property controls whether Preview Links will be suppressed in a batch recalc
+        Property Boolean pbNoPreview
+        //
+        Property Boolean pbReadOnly
+//        // company info
+//        Property String  psCode
+//        Property String  psName
+//        //
+//        property string  psCompanyPath ""
+//        property string  psPpmsPath    ""
+//        property string  psQuotePath   "\ppms40\quotes"
+        // triggers used by Calc engine
+        Property Integer piPriTrigger -1999
+        Property Integer piAltTrigger
+//        // auto remote job jacket program
+//        property boolean pbJobJacket   TRUE
+//        property string  psJobJacket   ""
+//        // used by Scheduling & Order Management
+//        property integer piDayLocation 0
+        // used to toggle close database for maint mode from up1cmp.active_apps value
+        Property Boolean pbMaintMode
+    end_procedure
+
+//    Procedure DoOpenWorkspace String sWorkspace
+//        boolean bMaintMode bWSOpened
+//        string sDataPath sCmpCode
+//        handle hoWorkspace
+//        get phoWorkspace to hoWorkspace
+//        forward send DoOpenWorkspace sWorkspace
+//        #IFDEF SHOP$FLOOR
+//        #ELSE
+//            get psDataPath of hoWorkspace to sDatapath
+//            move (Mid(sDataPath,2,(pos(";",sDataPath)-2))) to sCmpCode
+//            open "\ppms40\up1cmp" as up1cmp
+//            move sCmpCode to up1cmp.code
+//            Find EQ up1cmp.code
+//            Move (up1cmp.active_apps = 99) to bMaintMode
+//            if bMaintMode begin
+//                Send Stop_Box "SYSTEM IS DOWN FOR MAINTENANCE. PLEASE TRY AGAIN LATER."
+//                abort
+//            end
+//        #ENDIF
+//    End_Procedure
+    
+//    function IsNextDayLocation integer iCount returns integer
+//        integer iLocation iRow iCol
+//        //
+//        if (iCount = 0) set piDayLocation to 0
+//        get piDayLocation to iLocation
+//        if (iLocation) begin
+//            move (hi(iLocation))  to iRow
+//            move (low(iLocation)) to iCol
+//        end
+//        //move (iRow + 10) to iRow
+//        //move (iCol + 10) to iCol
+//        set piDayLocation to ((iRow + 10 * 65536) + (iCol + 10))
+//        function_return (piDayLocation(self))
+//    end_function // IsNextDayLocation
+
+//    Procedure DoReassignQuotePath string sCompanyPath string sPpmsPath
+//        string sQuotePath sPathLetter sQuotPathFile
+//    // needed for case when running data & programs on separate volumes
+//    // and if default company is selected as 1st login, 
+//    // files are not closed, reopened and DoReassignDfpath is not sent
+//    // this is a workaround rather than rewrite the whole !#@$ kludge this login logic is
+//    // BC: 02/14/07
+//    // updated to use quotpath.txt file for user-defined spec on quote letter locations
+//        integer bDriveSpeced
+//        handle hoWorkspace
+//        get phoWorkspace to hoWorkspace
+//        Move (left(sPpmsPath,2)) to sPathLetter
+//        move (sPathletter + "\ppms40\quotpath.txt") to sQuotPathFile
+//        Direct_Input sQuotPathFile
+//        if (not(SeqEof)) Readln sQuotePath
+//        if (sQuotePath="") set psQuotePath to "\ppms40\quotes" 
+//        else set psQuotePath to sQuotePath
+//        // next line seems redundant but was original prior to update to read quotpath.txt file
+//        get psQuotePath to sQuotePath
+//        Move (Pos(":",sQuotePath)) to bDriveSpeced
+//        if not bDriveSpeced Begin
+//            move (Insert(sPathLetter,sQuotePath,1)) to sQuotePath
+//            set psQuotePath to sQuotePath
+//        end
+//    End_Procedure
+
+//    procedure DoReassignDfPath string sCompanyPath string sPpmsPath
+//        string sDataPath sBitmapPath sHelpPath sProgramPath sSystemDfPath
+//        string sFilelist sQuotePath sDfPath sPathLetter
+//        integer bDriveSpeced
+//        handle hoWorkspace
+//        //
+//        get phoWorkspace to hoWorkspace
+//        //
+//        Move (left(sPpmsPath,2)) to sPathLetter
+//        Move (Pos(":",sCompanyPath)) to bDriveSpeced
+//        if not bDriveSpeced move (Insert(sPathLetter,sCompanyPath,1)) to sCompanyPath
+//        //
+//        get psQuotePath to sQuotePath
+//        Move (Pos(":",sQuotePath)) to bDriveSpeced
+//        if not bDriveSpeced Begin
+//            move (Insert(sPathLetter,sQuotePath,1)) to sQuotePath
+//            set psQuotePath to sQuotePath
+//        end
+//        move (trim(sCompanyPath) + "\Filelist.cfg")       to sFilelist
+//        move (trim(sCompanyPath) + ";" + trim(sPpmsPath)) to sDataPath
+//        //
+//        get psBitmapPath   of hoWorkspace to sBitmapPath
+//        get psHelpPath     of hoWorkspace to sHelpPath
+//        get psProgramPath  of hoWorkspace to sProgramPath
+//        get psSystemDfPath of hoWorkspace to sSystemDfPath
+//        //
+//        move (sDataPath + ";" + sBitmapPath + ";" + sHelpPath ;
+//            + ";" + sProgramPath + ";" + sSystemDfPath) to sDfPath
+//        //
+//        set psDataPath of hoWorkspace to sDataPath
+//        set psFilelist of hoWorkspace to sFilelist
+//        set psDfPath   of hoWorkspace to sDfPath
+//        //
+//        set_attribute DF_FILELIST_NAME to sFilelist
+//        set_attribute DF_OPEN_PATH     to sDfPath
+//    end_procedure // DoReassignDfPath
+
+//    procedure DoLoginShopFloorUser
+//        integer iPos iLength
+//        string  sDataPath sPpmsPath sCode
+//        handle  hoWorkspace
+//        //
+//        get phoWorkspace to hoWorkspace
+//        //
+//        cmdline sCode
+//        if (sCode = "") Move "PT" to sCode
+//        if (sCode = "") procedure_return
+//        //
+//        open "Up1cmp" as Up1cmp
+//        //
+//        clear Up1cmp
+//        move (uppercase(sCode)) to Up1cmp.Code
+//        find EQ Up1cmp.Code
+//        if (NOT(FOUND)) abort
+//        //
+//        get psDataPath of hoWorkspace to sDataPath
+//        //
+//        move (pos(";",sDataPath)) to iPos
+//        if (up1cmp.active_apps = 99) begin
+//            Send Stop_Box "SELECTED COMPANY DATABASE IS DOWN FOR MAINTENANCE. PLEASE TRY AGAIN LATER."
+//            abort
+//        end
+//        if (Up1cmp.Data_path = "" OR iPos = 0) begin
+//            send Stop_Box "Invalid company path information."
+//            abort
+//        end
+//        //
+//        move (length(sDataPath))                      to iLength
+//        move (mid(sDataPath,(iLength-iPos),(iPos+1))) to sPpmsPath
+//        //
+//        send DoReassignDfPath Up1cmp.Data_path sPpmsPath
+//        //
+//        set pbSecure      to TRUE
+//        set psCode        to Up1cmp.Code
+//        set psName        to Up1cmp.Name
+//        set psCompanyPath to Up1cmp.Data_path
+//        set psPpmsPath    to sPpmsPath
+//        //
+//    end_procedure // DoLoginShopFloorUser
+
+End_Class // cTempusApplication

@@ -1,0 +1,44 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: BudgetHdr (# 67)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:BudgetHdr
+  USER DISPLAY NAME         : BudgetHdr
+  DATAFLEX FILE NAME        : BudgetHdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 148       ( USED: 148 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 3 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Budget_Hdr_Idno  NUM   10.0     1  1   
+  2  Budget_Yr        DAT     10    12  2   
+  3  Budget_Mo        ASC      4    35      
+  4  Snow_TTL         NUM   10.0    39      
+  5  Melt_TTL         NUM   10.0    50      
+  6  Pave_TTL         NUM   10.0    61      
+  7  Concrete_TTL     NUM   10.0    72      
+  8  Excavation_TTL   NUM   10.0    83      
+  9  Sweep_TTL        NUM   10.0    94      
+ 10  Mark_TTL         NUM   10.0   105      
+ 11  Other_TTL        NUM   10.0   116      
+ 12  Grand_TTL        NUM   10.0   127      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Budget_Hdr_Idno NO  NO       0      0       1     ON-LINE
+
+  2    Budget_Yr       NO  NO       0      0       2     ON-LINE
+       Budget_Hdr_Idno NO  NO 
+

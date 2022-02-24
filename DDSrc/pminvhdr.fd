@@ -1,0 +1,17 @@
+#REPLACE FILE42 pminvhdr
+#REPLACE pminvhdr.File_Number |CI42
+#REPLACE pminvhdr.InvoiceNumber |FN42,1
+#REPLACE pminvhdr.JobNumber |FN42,2
+#REPLACE pminvhdr.QuoteHdrID |FN42,3
+#REPLACE pminvhdr.CustomerIdno |FN42,4
+#REPLACE pminvhdr.ContactIdno |FN42,5
+#REPLACE pminvhdr.LocationIdno |FN42,6
+#REPLACE pminvhdr.SlsRepIdno |FN42,7
+#REPLACE pminvhdr.QuoteDate |FD42,8
+#REPLACE pminvhdr.OrderDate |FD42,9
+#REPLACE pminvhdr.QuoteMemo |FS42,10
+#REPLACE pminvhdr.Amount |FN42,11
+#REPLACE pminvhdr.InvoiceDate |FD42,12
+#REPLACE pminvhdr.NextLineNo |FN42,13
+#REPLACE pminvhdr.LineCount |FN42,14
+#REPLACE pminvhdr.PO |FS42,15

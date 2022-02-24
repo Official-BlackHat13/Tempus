@@ -1,0 +1,1454 @@
+// cWStempService.pkg
+// Class:   cWStempService
+// Created: 10/26/2009 1:20:37.218 PM
+// 
+
+Use cClientWebService.pkg
+
+
+// Structs used by web service
+
+Struct tWStNewTransaction
+    integer    iTransIdno
+    integer    iJobNumber
+    integer    iEmployeeIdno
+    integer    iOpersIdno
+    string     sStartTime
+    date       dStartDate
+    integer    iStartHr
+    integer    iStartMin
+    string     sStopTime
+    date       dStopDate
+    integer    iStopHr
+    integer    iStopMin
+    integer    iQuantity
+    string     sEquipmentID
+    integer    iArea
+    integer    iEquipIdno
+End_Struct // tWStNewTransaction
+
+
+Struct tWStCollectedTransaction
+    integer    iTransIdno
+    integer    iTransReference
+End_Struct // tWStCollectedTransaction
+
+
+Struct tWStLocnotes
+    integer    iLocnotesId
+    integer    iJobNumber
+    integer    iLocationIdno
+    date       dCreatedDate
+    string     sCreatedTime
+    integer    iCreatedBy
+    date       dNoteDate
+    integer    iLocnotesRef
+    string     sNote
+End_Struct // tWStLocnotes
+
+
+Struct tWStAreanote
+    integer    iAreanoteId
+    integer    iAreaNumber
+    date       dCreatedDate
+    string     sCreatedTime
+    integer    iCreatedBy
+    date       dNoteDate
+    integer    iAreanoteRef
+    string     sNote
+End_Struct // tWStAreanote
+
+
+Struct tWStMastOps
+    integer    iRecId
+    integer    iMastOpsIdno
+    string     sName
+    decimal    nSellRate
+    decimal    nCostRate
+    string     sCostType
+    string     sCalcBasis
+    string     sActivityType
+    decimal    nStandardHours
+    string     sDescription
+    string     sStatus
+    decimal    nDisplaySequence
+    integer    iChangedFlag
+    decimal    nQtyDivisor
+    string     sQtyDescription
+    string     sReportCategory
+End_Struct // tWStMastOps
+
+
+Struct tWStAreas
+    integer    iRecId
+    integer    iNumber
+    string     sName
+    string     sManager
+    integer    iChangedFlag
+End_Struct // tWStAreas
+
+
+Struct tWStCustomer
+    integer    iRecId
+    integer    iIdno
+    string     sName
+    string     sAddress1
+    string     sAddress2
+    string     sCity
+    string     sState
+    string     sZip
+    string     sStatus
+    integer    iChangedFlag
+End_Struct // tWStCustomer
+
+
+Struct tWStLocation
+    integer    iRecId
+    integer    iCustIdno
+    integer    iLocIdno
+    integer    iLocNbr
+    string     sName
+    string     sAddress1
+    string     sAddress2
+    string     sCity
+    string     sState
+    string     sZip
+    string     sStatus
+    integer    iArea
+    integer    iInvLoc
+    integer    iChangedFlag
+    integer    iContactIdno
+    integer    iPropmgrIdno
+End_Struct // tWStLocation
+
+
+Struct tWStOpers
+    integer    iRecId
+    integer    iOpersIdno
+    integer    iCustIdno
+    integer    iLocIdno
+    integer    iMastOpsIdno
+    string     sName
+    decimal    nSellRate
+    decimal    nCostRate
+    string     sCostType
+    string     sCalcBasis
+    string     sActType
+    integer    iDisplay
+    string     sStatus
+    decimal    nSeq
+    integer    iChangedFlag
+End_Struct // tWStOpers
+
+
+Struct tWStOrder
+    integer    iRecId
+    integer    iJobNumber
+    integer    iCustIdno
+    integer    iLocIdno
+    string     sTitle
+    string     sWorkType
+    string     sPlanner
+    decimal    nEstHrs
+    date       dOpen
+    date       dClose
+    integer    iChangedFlag
+End_Struct // tWStOrder
+
+
+Struct tWStInvhdr
+    integer    iRecId
+    integer    iInvoiceIdno
+    integer    iLocationIdno
+    integer    iCustomerIdno
+    integer    iEventIdno
+    date       dInvoiceDate
+    string     sTerms
+    decimal    nTotalAmount
+    integer    iPrintCount
+    integer    iPostFlag
+    integer    iPrintFlag
+    integer    iJobNumber
+    integer    iEditFlag
+    integer    iVoidFlag
+    integer    iChangedFlag
+End_Struct // tWStInvhdr
+
+
+Struct tWStEmployer
+    integer    iRecId
+    integer    iIdno
+    string     sName
+    string     sContact
+    string     sAddress1
+    string     sAddress2
+    string     sCity
+    string     sState
+    string     sZip
+    string     sStatus
+    integer    iChangedFlag
+End_Struct // tWStEmployer
+
+
+Struct tWStEmployee
+    integer    iRecId
+    integer    iEmployeeIdno
+    integer    iEmployerIdno
+    string     sLast
+    string     sFirst
+    string     sMiddle
+    string     sTitle
+    string     sSuffix
+    string     sAddress1
+    string     sAddress2
+    string     sCity
+    string     sState
+    string     sZip
+    integer    iPIN
+    string     sStatus
+    integer    iChangedFlag
+End_Struct // tWStEmployee
+
+
+Struct tWStEquipmnt
+    integer    iRecId
+    integer    iEquipIdno
+    string     sEquipId
+    string     sDescription
+    integer    iMastOpsIdno
+    integer    iEmployerIdno
+    decimal    nRate
+    decimal    nUsed
+    integer    iChangedFlag
+End_Struct // tWStEquipmnt
+
+
+Struct tWStUser
+    integer    iRecId
+    integer    iUserId
+    string     sLoginName
+    string     sPassword
+    string     sFirstName
+    string     sLastName
+    string     sState
+    string     sEditRights
+    integer    iChangedFlag
+    integer    iCustContactId
+End_Struct // tWStUser
+
+// 
+// Class:   cWStempService
+// 
+// Interface:
+// 
+// Function wsGetNewTransactions Returns tWStNewTransaction[]
+// Function wsUpdateCollectedTransactions tWStCollectedTransaction[] lltTransactions Returns integer
+// Function wsGetNewLocationNotes Returns tWStLocnotes[]
+// Function wsUpdateCollectedLocationNotes tWStLocnotes[] lltNotes Returns integer
+// Function wsGetNewAreaNotes Returns tWStAreanote[]
+// Function wsUpdateCollectedAreaNotes tWStAreanote[] lltNotes Returns integer
+// Function wsUpdateMastOps tWStMastOps[] lltMastOpsUpdate Returns tWStMastOps[]
+// Function wsUpdateAreas tWStAreas[] lltAreasUpdate Returns tWStAreas[]
+// Function wsUpdateCustomer tWStCustomer[] lltCustomerUpdate Returns tWStCustomer[]
+// Function wsUpdateLocation tWStLocation[] lltLocationUpdate Returns tWStLocation[]
+// Function wsUpdateOpers tWStOpers[] lltOpersUpdate Returns tWStOpers[]
+// Function wsUpdateOrder tWStOrder[] lltOrderUpdate Returns tWStOrder[]
+// Function wsUpdateInvhdr tWStInvhdr[] lltInvhdrUpdate Returns tWStInvhdr[]
+// Function wsUpdateEmployer tWStEmployer[] lltEmployerUpdate Returns tWStEmployer[]
+// Function wsUpdateEmployee tWStEmployee[] lltEmployeeUpdate Returns tWStEmployee[]
+// Function wsUpdateEquipmnt tWStEquipmnt[] lltEquipmntUpdate Returns tWStEquipmnt[]
+// Function wsUpdateUser tWStUser[] lltUserUpdate Returns tWStUser[]
+// Function wsGetOpenTransactions Returns tWStNewTransaction[]
+// 
+// 
+
+Class cWStempService is a cClientWebService
+
+    Procedure Construct_object
+        Forward send Construct_object
+        Set psServiceLocation     to 'http://208.79.212.77/ISC/tempService.wso'
+        Set psWSDLLocation        to 'http://208.79.212.77/ISC/tempService.wso?WSDL'
+
+        Object oWStNewTransaction is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tNewTransaction"
+            Send defineParameter xsInteger 1 1 "iTransIdno"
+            Send defineParameter xsInteger 1 1 "iJobNumber"
+            Send defineParameter xsInteger 1 1 "iEmployeeIdno"
+            Send defineParameter xsInteger 1 1 "iOpersIdno"
+            Send defineParameter xsString 1 1 "sStartTime"
+            Send defineParameter xsDate 1 1 "dStartDate"
+            Send defineParameter xsInteger 1 1 "iStartHr"
+            Send defineParameter xsInteger 1 1 "iStartMin"
+            Send defineParameter xsString 1 1 "sStopTime"
+            Send defineParameter xsDate 1 1 "dStopDate"
+            Send defineParameter xsInteger 1 1 "iStopHr"
+            Send defineParameter xsInteger 1 1 "iStopMin"
+            Send defineParameter xsInteger 1 1 "iQuantity"
+            Send defineParameter xsString 1 1 "sEquipmentID"
+            Send defineParameter xsInteger 1 1 "iArea"
+            Send defineParameter xsInteger 1 1 "iEquipIdno"
+        End_Object //oWStNewTransaction
+
+        Object oWSArrayOftNewTransaction is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftNewTransaction"
+            Set piDimensions to 1
+            Send defineStructParameter oWStNewTransaction 0 C_unbounded "tNewTransaction"
+        End_Object //oWSArrayOftNewTransaction
+
+        Object oWStCollectedTransaction is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tCollectedTransaction"
+            Send defineParameter xsInteger 1 1 "iTransIdno"
+            Send defineParameter xsInteger 1 1 "iTransReference"
+        End_Object //oWStCollectedTransaction
+
+        Object oWSArrayOftCollectedTransaction is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftCollectedTransaction"
+            Set piDimensions to 1
+            Send defineStructParameter oWStCollectedTransaction 0 C_unbounded "tCollectedTransaction"
+        End_Object //oWSArrayOftCollectedTransaction
+
+        Object oWStLocnotes is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tLocnotes"
+            Send defineParameter xsInteger 1 1 "iLocnotesId"
+            Send defineParameter xsInteger 1 1 "iJobNumber"
+            Send defineParameter xsInteger 1 1 "iLocationIdno"
+            Send defineParameter xsDate 1 1 "dCreatedDate"
+            Send defineParameter xsString 1 1 "sCreatedTime"
+            Send defineParameter xsInteger 1 1 "iCreatedBy"
+            Send defineParameter xsDate 1 1 "dNoteDate"
+            Send defineParameter xsInteger 1 1 "iLocnotesRef"
+            Send defineParameter xsString 1 1 "sNote"
+        End_Object //oWStLocnotes
+
+        Object oWSArrayOftLocnotes is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftLocnotes"
+            Set piDimensions to 1
+            Send defineStructParameter oWStLocnotes 0 C_unbounded "tLocnotes"
+        End_Object //oWSArrayOftLocnotes
+
+        Object oWStAreanote is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tAreanote"
+            Send defineParameter xsInteger 1 1 "iAreanoteId"
+            Send defineParameter xsInteger 1 1 "iAreaNumber"
+            Send defineParameter xsDate 1 1 "dCreatedDate"
+            Send defineParameter xsString 1 1 "sCreatedTime"
+            Send defineParameter xsInteger 1 1 "iCreatedBy"
+            Send defineParameter xsDate 1 1 "dNoteDate"
+            Send defineParameter xsInteger 1 1 "iAreanoteRef"
+            Send defineParameter xsString 1 1 "sNote"
+        End_Object //oWStAreanote
+
+        Object oWSArrayOftAreanote is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftAreanote"
+            Set piDimensions to 1
+            Send defineStructParameter oWStAreanote 0 C_unbounded "tAreanote"
+        End_Object //oWSArrayOftAreanote
+
+        Object oWStMastOps is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tMastOps"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iMastOpsIdno"
+            Send defineParameter xsString 1 1 "sName"
+            Send defineParameter xsDecimal 1 1 "nSellRate"
+            Send defineParameter xsDecimal 1 1 "nCostRate"
+            Send defineParameter xsString 1 1 "sCostType"
+            Send defineParameter xsString 1 1 "sCalcBasis"
+            Send defineParameter xsString 1 1 "sActivityType"
+            Send defineParameter xsDecimal 1 1 "nStandardHours"
+            Send defineParameter xsString 1 1 "sDescription"
+            Send defineParameter xsString 1 1 "sStatus"
+            Send defineParameter xsDecimal 1 1 "nDisplaySequence"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+            Send defineParameter xsDecimal 1 1 "nQtyDivisor"
+            Send defineParameter xsString 1 1 "sQtyDescription"
+            Send defineParameter xsString 1 1 "sReportCategory"
+        End_Object //oWStMastOps
+
+        Object oWSArrayOftMastOps is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftMastOps"
+            Set piDimensions to 1
+            Send defineStructParameter oWStMastOps 0 C_unbounded "tMastOps"
+        End_Object //oWSArrayOftMastOps
+
+        Object oWStAreas is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tAreas"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iNumber"
+            Send defineParameter xsString 1 1 "sName"
+            Send defineParameter xsString 1 1 "sManager"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStAreas
+
+        Object oWSArrayOftAreas is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftAreas"
+            Set piDimensions to 1
+            Send defineStructParameter oWStAreas 0 C_unbounded "tAreas"
+        End_Object //oWSArrayOftAreas
+
+        Object oWStCustomer is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tCustomer"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iIdno"
+            Send defineParameter xsString 1 1 "sName"
+            Send defineParameter xsString 1 1 "sAddress1"
+            Send defineParameter xsString 1 1 "sAddress2"
+            Send defineParameter xsString 1 1 "sCity"
+            Send defineParameter xsString 1 1 "sState"
+            Send defineParameter xsString 1 1 "sZip"
+            Send defineParameter xsString 1 1 "sStatus"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStCustomer
+
+        Object oWSArrayOftCustomer is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftCustomer"
+            Set piDimensions to 1
+            Send defineStructParameter oWStCustomer 0 C_unbounded "tCustomer"
+        End_Object //oWSArrayOftCustomer
+
+        Object oWStLocation is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tLocation"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iCustIdno"
+            Send defineParameter xsInteger 1 1 "iLocIdno"
+            Send defineParameter xsInteger 1 1 "iLocNbr"
+            Send defineParameter xsString 1 1 "sName"
+            Send defineParameter xsString 1 1 "sAddress1"
+            Send defineParameter xsString 1 1 "sAddress2"
+            Send defineParameter xsString 1 1 "sCity"
+            Send defineParameter xsString 1 1 "sState"
+            Send defineParameter xsString 1 1 "sZip"
+            Send defineParameter xsString 1 1 "sStatus"
+            Send defineParameter xsInteger 1 1 "iArea"
+            Send defineParameter xsInteger 1 1 "iInvLoc"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+            Send defineParameter xsInteger 1 1 "iContactIdno"
+            Send defineParameter xsInteger 1 1 "iPropmgrIdno"
+        End_Object //oWStLocation
+
+        Object oWSArrayOftLocation is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftLocation"
+            Set piDimensions to 1
+            Send defineStructParameter oWStLocation 0 C_unbounded "tLocation"
+        End_Object //oWSArrayOftLocation
+
+        Object oWStOpers is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tOpers"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iOpersIdno"
+            Send defineParameter xsInteger 1 1 "iCustIdno"
+            Send defineParameter xsInteger 1 1 "iLocIdno"
+            Send defineParameter xsInteger 1 1 "iMastOpsIdno"
+            Send defineParameter xsString 1 1 "sName"
+            Send defineParameter xsDecimal 1 1 "nSellRate"
+            Send defineParameter xsDecimal 1 1 "nCostRate"
+            Send defineParameter xsString 1 1 "sCostType"
+            Send defineParameter xsString 1 1 "sCalcBasis"
+            Send defineParameter xsString 1 1 "sActType"
+            Send defineParameter xsInteger 1 1 "iDisplay"
+            Send defineParameter xsString 1 1 "sStatus"
+            Send defineParameter xsDecimal 1 1 "nSeq"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStOpers
+
+        Object oWSArrayOftOpers is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftOpers"
+            Set piDimensions to 1
+            Send defineStructParameter oWStOpers 0 C_unbounded "tOpers"
+        End_Object //oWSArrayOftOpers
+
+        Object oWStOrder is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tOrder"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iJobNumber"
+            Send defineParameter xsInteger 1 1 "iCustIdno"
+            Send defineParameter xsInteger 1 1 "iLocIdno"
+            Send defineParameter xsString 1 1 "sTitle"
+            Send defineParameter xsString 1 1 "sWorkType"
+            Send defineParameter xsString 1 1 "sPlanner"
+            Send defineParameter xsDecimal 1 1 "nEstHrs"
+            Send defineParameter xsDate 1 1 "dOpen"
+            Send defineParameter xsDate 1 1 "dClose"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStOrder
+
+        Object oWSArrayOftOrder is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftOrder"
+            Set piDimensions to 1
+            Send defineStructParameter oWStOrder 0 C_unbounded "tOrder"
+        End_Object //oWSArrayOftOrder
+
+        Object oWStInvhdr is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tInvhdr"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iInvoiceIdno"
+            Send defineParameter xsInteger 1 1 "iLocationIdno"
+            Send defineParameter xsInteger 1 1 "iCustomerIdno"
+            Send defineParameter xsInteger 1 1 "iEventIdno"
+            Send defineParameter xsDate 1 1 "dInvoiceDate"
+            Send defineParameter xsString 1 1 "sTerms"
+            Send defineParameter xsDecimal 1 1 "nTotalAmount"
+            Send defineParameter xsInteger 1 1 "iPrintCount"
+            Send defineParameter xsInteger 1 1 "iPostFlag"
+            Send defineParameter xsInteger 1 1 "iPrintFlag"
+            Send defineParameter xsInteger 1 1 "iJobNumber"
+            Send defineParameter xsInteger 1 1 "iEditFlag"
+            Send defineParameter xsInteger 1 1 "iVoidFlag"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStInvhdr
+
+        Object oWSArrayOftInvhdr is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftInvhdr"
+            Set piDimensions to 1
+            Send defineStructParameter oWStInvhdr 0 C_unbounded "tInvhdr"
+        End_Object //oWSArrayOftInvhdr
+
+        Object oWStEmployer is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tEmployer"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iIdno"
+            Send defineParameter xsString 1 1 "sName"
+            Send defineParameter xsString 1 1 "sContact"
+            Send defineParameter xsString 1 1 "sAddress1"
+            Send defineParameter xsString 1 1 "sAddress2"
+            Send defineParameter xsString 1 1 "sCity"
+            Send defineParameter xsString 1 1 "sState"
+            Send defineParameter xsString 1 1 "sZip"
+            Send defineParameter xsString 1 1 "sStatus"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStEmployer
+
+        Object oWSArrayOftEmployer is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftEmployer"
+            Set piDimensions to 1
+            Send defineStructParameter oWStEmployer 0 C_unbounded "tEmployer"
+        End_Object //oWSArrayOftEmployer
+
+        Object oWStEmployee is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tEmployee"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iEmployeeIdno"
+            Send defineParameter xsInteger 1 1 "iEmployerIdno"
+            Send defineParameter xsString 1 1 "sLast"
+            Send defineParameter xsString 1 1 "sFirst"
+            Send defineParameter xsString 1 1 "sMiddle"
+            Send defineParameter xsString 1 1 "sTitle"
+            Send defineParameter xsString 1 1 "sSuffix"
+            Send defineParameter xsString 1 1 "sAddress1"
+            Send defineParameter xsString 1 1 "sAddress2"
+            Send defineParameter xsString 1 1 "sCity"
+            Send defineParameter xsString 1 1 "sState"
+            Send defineParameter xsString 1 1 "sZip"
+            Send defineParameter xsInteger 1 1 "iPIN"
+            Send defineParameter xsString 1 1 "sStatus"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStEmployee
+
+        Object oWSArrayOftEmployee is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftEmployee"
+            Set piDimensions to 1
+            Send defineStructParameter oWStEmployee 0 C_unbounded "tEmployee"
+        End_Object //oWSArrayOftEmployee
+
+        Object oWStEquipmnt is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tEquipmnt"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iEquipIdno"
+            Send defineParameter xsString 1 1 "sEquipId"
+            Send defineParameter xsString 1 1 "sDescription"
+            Send defineParameter xsInteger 1 1 "iMastOpsIdno"
+            Send defineParameter xsInteger 1 1 "iEmployerIdno"
+            Send defineParameter xsDecimal 1 1 "nRate"
+            Send defineParameter xsDecimal 1 1 "nUsed"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+        End_Object //oWStEquipmnt
+
+        Object oWSArrayOftEquipmnt is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftEquipmnt"
+            Set piDimensions to 1
+            Send defineStructParameter oWStEquipmnt 0 C_unbounded "tEquipmnt"
+        End_Object //oWSArrayOftEquipmnt
+
+        Object oWStUser is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set psDataType to "tUser"
+            Send defineParameter xsInteger 1 1 "iRecId"
+            Send defineParameter xsInteger 1 1 "iUserId"
+            Send defineParameter xsString 1 1 "sLoginName"
+            Send defineParameter xsString 1 1 "sPassword"
+            Send defineParameter xsString 1 1 "sFirstName"
+            Send defineParameter xsString 1 1 "sLastName"
+            Send defineParameter xsString 1 1 "sState"
+            Send defineParameter xsString 1 1 "sEditRights"
+            Send defineParameter xsInteger 1 1 "iChangedFlag"
+            Send defineParameter xsInteger 1 1 "iCustContactId"
+        End_Object //oWStUser
+
+        Object oWSArrayOftUser is a cSoapMetaStruct
+            Set psNameSpace to "http://tempuri.org/"
+            Set peArrayType to C_atArray
+            Set psDataType to "ArrayOftUser"
+            Set piDimensions to 1
+            Send defineStructParameter oWStUser 0 C_unbounded "tUser"
+        End_Object //oWSArrayOftUser
+
+    End_Procedure // Construct_object
+
+    // 
+    // Function wsGetNewTransactions
+    // 
+    // 
+    Function wsGetNewTransactions Returns tWStNewTransaction[]
+        tWStNewTransaction[] llGetNewTransactionsResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "GetNewTransactions"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "GetNewTransactionsResponse"
+        Set pbResponseBare         to false
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftNewTransaction 1 1 "GetNewTransactionsResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llGetNewTransactionsResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llGetNewTransactionsResult
+    End_Function // wsGetNewTransactions
+
+    // 
+    // Function wsUpdateCollectedTransactions
+    // 
+    // 
+    Function wsUpdateCollectedTransactions tWStCollectedTransaction[] lltTransactions Returns integer
+        integer llUpdateCollectedTransactionsResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateCollectedTransactions"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateCollectedTransactionsResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftCollectedTransaction 1 1 "tTransactions" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltTransactions to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineParameter xsInteger 1 1 "UpdateCollectedTransactionsResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateCollectedTransactionsResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateCollectedTransactionsResult
+    End_Function // wsUpdateCollectedTransactions
+
+    // 
+    // Function wsGetNewLocationNotes
+    // 
+    // 
+    Function wsGetNewLocationNotes Returns tWStLocnotes[]
+        tWStLocnotes[] llGetNewLocationNotesResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "GetNewLocationNotes"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "GetNewLocationNotesResponse"
+        Set pbResponseBare         to false
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftLocnotes 1 1 "GetNewLocationNotesResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llGetNewLocationNotesResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llGetNewLocationNotesResult
+    End_Function // wsGetNewLocationNotes
+
+    // 
+    // Function wsUpdateCollectedLocationNotes
+    // 
+    // 
+    Function wsUpdateCollectedLocationNotes tWStLocnotes[] lltNotes Returns integer
+        integer llUpdateCollectedLocationNotesResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateCollectedLocationNotes"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateCollectedLocationNotesResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftLocnotes 1 1 "tNotes" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltNotes to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineParameter xsInteger 1 1 "UpdateCollectedLocationNotesResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateCollectedLocationNotesResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateCollectedLocationNotesResult
+    End_Function // wsUpdateCollectedLocationNotes
+
+    // 
+    // Function wsGetNewAreaNotes
+    // 
+    // 
+    Function wsGetNewAreaNotes Returns tWStAreanote[]
+        tWStAreanote[] llGetNewAreaNotesResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "GetNewAreaNotes"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "GetNewAreaNotesResponse"
+        Set pbResponseBare         to false
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftAreanote 1 1 "GetNewAreaNotesResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llGetNewAreaNotesResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llGetNewAreaNotesResult
+    End_Function // wsGetNewAreaNotes
+
+    // 
+    // Function wsUpdateCollectedAreaNotes
+    // 
+    // 
+    Function wsUpdateCollectedAreaNotes tWStAreanote[] lltNotes Returns integer
+        integer llUpdateCollectedAreaNotesResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateCollectedAreaNotes"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateCollectedAreaNotesResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftAreanote 1 1 "tNotes" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltNotes to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineParameter xsInteger 1 1 "UpdateCollectedAreaNotesResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateCollectedAreaNotesResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateCollectedAreaNotesResult
+    End_Function // wsUpdateCollectedAreaNotes
+
+    // 
+    // Function wsUpdateMastOps
+    // 
+    // Update Master Operations Table
+    // 
+    Function wsUpdateMastOps tWStMastOps[] lltMastOpsUpdate Returns tWStMastOps[]
+        tWStMastOps[] llUpdateMastOpsResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateMastOps"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateMastOpsResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftMastOps 1 1 "tMastOpsUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltMastOpsUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftMastOps 1 1 "UpdateMastOpsResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateMastOpsResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateMastOpsResult
+    End_Function // wsUpdateMastOps
+
+    // 
+    // Function wsUpdateAreas
+    // 
+    // Update Areas Table
+    // 
+    Function wsUpdateAreas tWStAreas[] lltAreasUpdate Returns tWStAreas[]
+        tWStAreas[] llUpdateAreasResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateAreas"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateAreasResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftAreas 1 1 "tAreasUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltAreasUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftAreas 1 1 "UpdateAreasResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateAreasResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateAreasResult
+    End_Function // wsUpdateAreas
+
+    // 
+    // Function wsUpdateCustomer
+    // 
+    // Update Customer Table
+    // 
+    Function wsUpdateCustomer tWStCustomer[] lltCustomerUpdate Returns tWStCustomer[]
+        tWStCustomer[] llUpdateCustomerResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateCustomer"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateCustomerResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftCustomer 1 1 "tCustomerUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltCustomerUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftCustomer 1 1 "UpdateCustomerResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateCustomerResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateCustomerResult
+    End_Function // wsUpdateCustomer
+
+    // 
+    // Function wsUpdateLocation
+    // 
+    // 
+    Function wsUpdateLocation tWStLocation[] lltLocationUpdate Returns tWStLocation[]
+        tWStLocation[] llUpdateLocationResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateLocation"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateLocationResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftLocation 1 1 "tLocationUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltLocationUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftLocation 1 1 "UpdateLocationResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateLocationResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateLocationResult
+    End_Function // wsUpdateLocation
+
+    // 
+    // Function wsUpdateOpers
+    // 
+    // 
+    Function wsUpdateOpers tWStOpers[] lltOpersUpdate Returns tWStOpers[]
+        tWStOpers[] llUpdateOpersResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateOpers"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateOpersResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftOpers 1 1 "tOpersUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltOpersUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftOpers 1 1 "UpdateOpersResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateOpersResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateOpersResult
+    End_Function // wsUpdateOpers
+
+    // 
+    // Function wsUpdateOrder
+    // 
+    // 
+    Function wsUpdateOrder tWStOrder[] lltOrderUpdate Returns tWStOrder[]
+        tWStOrder[] llUpdateOrderResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateOrder"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateOrderResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftOrder 1 1 "tOrderUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltOrderUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftOrder 1 1 "UpdateOrderResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateOrderResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateOrderResult
+    End_Function // wsUpdateOrder
+
+    // 
+    // Function wsUpdateInvhdr
+    // 
+    // 
+    Function wsUpdateInvhdr tWStInvhdr[] lltInvhdrUpdate Returns tWStInvhdr[]
+        tWStInvhdr[] llUpdateInvhdrResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateInvhdr"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateInvhdrResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftInvhdr 1 1 "tInvhdrUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltInvhdrUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftInvhdr 1 1 "UpdateInvhdrResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateInvhdrResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateInvhdrResult
+    End_Function // wsUpdateInvhdr
+
+    // 
+    // Function wsUpdateEmployer
+    // 
+    // 
+    Function wsUpdateEmployer tWStEmployer[] lltEmployerUpdate Returns tWStEmployer[]
+        tWStEmployer[] llUpdateEmployerResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateEmployer"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateEmployerResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftEmployer 1 1 "tEmployerUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltEmployerUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftEmployer 1 1 "UpdateEmployerResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateEmployerResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateEmployerResult
+    End_Function // wsUpdateEmployer
+
+    // 
+    // Function wsUpdateEmployee
+    // 
+    // 
+    Function wsUpdateEmployee tWStEmployee[] lltEmployeeUpdate Returns tWStEmployee[]
+        tWStEmployee[] llUpdateEmployeeResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateEmployee"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateEmployeeResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftEmployee 1 1 "tEmployeeUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltEmployeeUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftEmployee 1 1 "UpdateEmployeeResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateEmployeeResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateEmployeeResult
+    End_Function // wsUpdateEmployee
+
+    // 
+    // Function wsUpdateEquipmnt
+    // 
+    // 
+    Function wsUpdateEquipmnt tWStEquipmnt[] lltEquipmntUpdate Returns tWStEquipmnt[]
+        tWStEquipmnt[] llUpdateEquipmntResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateEquipmnt"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateEquipmntResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftEquipmnt 1 1 "tEquipmntUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltEquipmntUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftEquipmnt 1 1 "UpdateEquipmntResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateEquipmntResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateEquipmntResult
+    End_Function // wsUpdateEquipmnt
+
+    // 
+    // Function wsUpdateUser
+    // 
+    // 
+    Function wsUpdateUser tWStUser[] lltUserUpdate Returns tWStUser[]
+        tWStUser[] llUpdateUserResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "UpdateUser"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "UpdateUserResponse"
+        Set pbResponseBare         to false
+
+        // Parameter 0
+        Get DefineStructParameter oWSArrayOftUser 1 1 "tUserUpdate" "http://tempuri.org/" to spParameters[0].SoapParamDef 
+        ValueTreeSerializeParameter lltUserUpdate to spParameters[0].ValueTree
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftUser 1 1 "UpdateUserResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llUpdateUserResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llUpdateUserResult
+    End_Function // wsUpdateUser
+
+    // 
+    // Function wsGetOpenTransactions
+    // 
+    // 
+    Function wsGetOpenTransactions Returns tWStNewTransaction[]
+        tWStNewTransaction[] llGetOpenTransactionsResult
+        tSoapParameter[] spParameters
+        tSoapParameter[] spReturnParameters
+        integer eStatus
+
+        Send Reset
+        Set psSOAPAction           to ""
+        Set peSoapStyle            to ssDocument
+
+        Set psRequestNSURI         to "http://tempuri.org/"
+        Set peSoapEncoding         to seLiteral
+        Set psMethodRequest        to "GetOpenTransactions"
+        Set pbRequestBare          to false
+
+        Set psResponseNSURI        to "http://tempuri.org/"
+        Set peResponseSoapEncoding to seLiteral
+        Set psMethodResponse       to "GetOpenTransactionsResponse"
+        Set pbResponseBare         to false
+
+        Set pspParameters to spParameters
+
+        // Return Parameter
+        Get DefineStructParameter oWSArrayOftNewTransaction 1 1 "GetOpenTransactionsResult" "http://tempuri.org/" to spReturnParameters[0].SoapParamDef
+        Set pspReturnParameters to spReturnParameters
+
+        Get DoInvokeService to eStatus
+        If (eStatus=wssOK) Begin
+            Get pspReturnParameters   to spReturnParameters
+            ValueTreeDeserializeParameter spReturnParameters[0].ValueTree to llGetOpenTransactionsResult
+        end
+        Else Begin
+            Send LastError
+        end
+
+        Function_return llGetOpenTransactionsResult
+    End_Function // wsGetOpenTransactions
+
+End_Class // cWStempService
+

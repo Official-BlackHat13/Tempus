@@ -1,0 +1,49 @@
+Use DataDict.pkg
+
+Open ViewAccess
+
+Object ApplicationList is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Tempus" "Tempus - Windows Application"
+        Send Add_Table_Value "Tempus Field" "Tempus Field - Time Tracking Web Application"
+        Send Add_Table_Value "Tempus Mobile" "Contractor Billing - Web Application"
+        Send Add_Table_Value "My Properties" "Customer Portal - Web Application"
+    End_Procedure
+End_Object
+
+Register_Function ValidateRightsEntry Integer iColumn String sValue Returns Boolean
+
+Class cViewAccessDataDictionary is a DataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to ViewAccess.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field ViewAccess.ViewName DD_REQUIRED to True
+
+        Set Field_Option Field ViewAccess.Application DD_REQUIRED to True
+        Set Field_Value_Table Field ViewAccess.Application to ApplicationList
+
+        Set Field_Validate_msg Field ViewAccess.Full to get_ValidateRightsEntry
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to ViewAccess.ChangedFlag //mark record as altered
+        End
+    End_Procedure
+
+    Function ValidateRightsEntry Integer iColumn String sValue Returns Boolean
+        //Can only contain numeric values, separated by a comma.
+        
+    End_Function
+
+End_Class

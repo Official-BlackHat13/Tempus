@@ -1,0 +1,47 @@
+Use cGlblDataDictionary.pkg
+
+Open ProdNote
+Open Order
+Open SalesRep
+Open System
+
+Register_Object ProdNote_sl
+
+Class cProdNoteGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to ProdNote.File_Number
+
+        Set Add_Server_File to Order.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Prompt_Object Field ProdNote.ProdNoteIdno to ProdNote_sl
+        Set Field_Auto_Increment Field ProdNote.ProdNoteIdno to File_Field System.LastProdNote
+
+    End_Procedure
+
+    Procedure Creating
+        Forward Send Creating
+        Date dNow
+        Sysdate dNow
+        #IFDEF Is$WebApp
+        Move (HtmlEncode(psEmployeeName(ghoWebSessionManager))) to ProdNote.CreatedBy
+        #ELSE
+        Move gsUserFullName to ProdNote.CreatedBy
+        #ENDIF
+        Move dNow to ProdNote.CreatedDate
+    End_Procedure
+    
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use ProdNote.sl
+#ENDIF

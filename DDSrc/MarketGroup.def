@@ -1,0 +1,34 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: MarketGroup (# 71)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:MarketGroup
+  USER DISPLAY NAME         : MarketGroup
+  DATAFLEX FILE NAME        : MarketGroup
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 62        ( USED: 62 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 40 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  MktGroupIdno     NUM   10.0     1  1   
+  2  GroupName        ASC     40    12  2   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    MktGroupIdno    NO  NO       0      0       1     ON-LINE
+
+  2    GroupName       NO  NO       0      0       2     ON-LINE
+       MktGroupIdno    NO  NO 
+

@@ -1,0 +1,33 @@
+Use cGlblDataDictionary.pkg
+
+Open CO_DTL
+Open CO_Head
+Open System
+
+Class cCO_DTLGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to CO_DTL.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to CO_Head.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field CO_DTL.CO_DTL_ID to File_Field System.CO_Detail
+
+        Set Field_Option Field CO_DTL.Issued DD_REQUIRED to True
+
+        Set Field_Class_Name Field CO_DTL.Instructions to "cDbTextEdit"
+
+        Set Field_Option Field CO_DTL.Initials DD_CAPSLOCK to True
+        Set Field_Option Field CO_DTL.Initials DD_REQUIRED to True
+
+    End_Procedure
+
+End_Class

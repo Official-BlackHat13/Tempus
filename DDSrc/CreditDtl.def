@@ -1,0 +1,44 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: CreditDtl (# 70)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CreditDtl
+  USER DISPLAY NAME         : CreditDtl
+  DATAFLEX FILE NAME        : CreditDtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16494     ( USED: 16494 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 25 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  DetailIdno       NUM   10.0     1  1   
+  2  CreditIdno       NUM   10.0    12  2   CreditHdr.FIELD_1 (69,1)
+  3  Sequence         NUM    4.2    23  2   
+  4  MastOpsIdno      NUM   10.0    31      MastOps.FIELD_1 (11,1)
+  5  OpersIdno        NUM   10.0    42      
+  6  Description      TEX    512    53      
+  7  Quantity         NUM    6.2 16436      
+  8  Price            NUM    6.2 16446      
+  9  Total            NUM    6.2 16456      
+ 10  TaxRate          NUM    2.4 16466      
+ 11  TaxAmount        NUM    4.4 16474      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    DetailIdno      NO  NO       0      0       1     ON-LINE
+
+  2    CreditIdno      NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       DetailIdno      NO  NO 
+

@@ -1,0 +1,1431 @@
+// QuoteWizard.dg
+
+//register_object    oProgress
+//register_procedure DoDisplayNewClient integer iRecnum
+
+Use cGlblDbWizard.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use SalesRep.DD
+Use Contact.DD
+Use cQuotehdrDataDictionary.dd
+Use cParklotsDataDictionary.dd
+Use cLotaccesDataDictionary.dd
+Use cSnowrepDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cGlblDbForm.pkg
+Use cGlblDbComboForm.pkg
+Use Windows.pkg
+Use szcalendar.pkg
+Use cSzTime.pkg
+Use dfTable.pkg
+
+
+Register_Function  IsNextState Returns Boolean
+Register_Procedure EnableNext Boolean bState
+
+Class cWizardDbForm is a cGlblDbForm
+    Procedure Prompt
+        Boolean bState
+        //
+        Forward Send Prompt
+        //
+        Get IsNextState to bState
+        Send EnableNext    bState
+    End_Procedure
+
+    Procedure Request_Find Integer iMode Integer iFlag
+        Boolean bState
+        //
+        Forward Send Request_Find iMode iFlag
+        //
+        Get IsNextState to bState
+        Send EnableNext    bState
+    End_Procedure
+
+    Procedure Next
+        Boolean bState
+        //
+        Get IsNextState to bState
+        Send EnableNext    bState
+        //
+        Forward Send Next
+    End_Procedure
+End_Class
+
+Object oQuoteWizardPanel is a cGlblDbWizardPanel
+
+    Property Integer piRecId
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSnowrep_DD is a cSnowrepDataDictionary
+    End_Object
+
+    Object oSalesrep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+        Procedure OnConstrain
+            Constrain Customer.Status eq "A"
+        End_Procedure
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oSnowrep_DD
+        Set DDO_Server to oSalesrep_DD
+        Set DDO_Server to oCustomer_DD
+        Set Constrain_file to Customer.File_number
+        Set Field_Auto_Increment Field Contact.Contactidno to File_Field System.Lastcontact
+
+        Procedure OnConstrain
+            Constrain Contact.Status eq "A"
+        End_Procedure
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+
+        Procedure OnConstrain
+            Constrain Location.Status eq "A"
+        End_Procedure
+    End_Object
+
+    Object oParklots_DD is a cParklotsDataDictionary
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oLotacces_DD is a cLotaccesDataDictionary
+        Set Constrain_file to Parklots.File_number
+        Set DDO_Server to oParklots_DD
+    End_Object
+
+    Object oQuotehdr_DD is a cQuotehdrDataDictionary
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oSalesrep_DD
+        Set DDO_Server to oLocation_DD
+
+        Procedure Field_Defaults
+            Forward Send Field_Defaults
+            //
+            Set Field_Changed_Value Field Quotehdr.WorkType to "P"
+        End_Procedure
+    End_Object
+
+    Set Main_DD to oCustomer_DD
+    Set Server to oCustomer_DD
+
+    Set Label to "Quote Wizard"
+    Set Locate_Mode to Center_On_Panel
+    Set Location to 6 36
+    Set Size to 205 378
+    Set piMinSize to 205 378
+
+    Object oBitmapBox is a cGlblWizardBitmapBox
+        Set Size to 138 83
+        Set Location to 10 5
+        Set Bitmap to "GlblWizard.bmp"
+        Set peAnchors to anTopLeft
+        Set Border_Style to Border_None
+        Set Focus_Mode        to NonFocusable
+        Set Client_Area_State to False
+    End_Object    // oBitmapBox
+
+    Object oWizardPageContainer is a cGlblDbWizardPageContainer
+        Set Size to 163 275
+        Set Location to 0 94
+
+        Object oCustomerWizardPage is a cGlblDbWizardPage
+            Set Size to 163 275
+            Set Verify_Data_Loss_Msg to get_No_Confirmation
+            Set Auto_Clear_DEO_State to False
+
+            Object oCustomer_CustomerIdno is a cWizardDbForm
+                Entry_Item Customer.CustomerIdno
+                Set Location to 30 48
+                Set Size to 13 54
+                Set Label to "ID:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oCustomer_Name is a cWizardDbForm
+                Entry_Item Customer.Name
+                Set Location to 45 48
+                Set Size to 13 200
+                Set Label to "Name:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Color to clYellow
+            End_Object
+
+            Object oCustomer_Address1 is a cWizardDbForm
+                Entry_Item Customer.Address1
+                Set Location to 60 48
+                Set Size to 13 200
+                Set Label to "Address:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oCustomer_Address2 is a cWizardDbForm
+                Entry_Item Customer.Address2
+                Set Location to 75 48
+                Set Size to 13 200
+            End_Object
+
+            Object oCustomer_City is a cWizardDbForm
+                Entry_Item Customer.City
+                Set Location to 90 48
+                Set Size to 13 110
+                Set Label to "City ST Zip:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oCustomer_State is a cWizardDbForm
+                Entry_Item Customer.State
+                Set Location to 90 162
+                Set Size to 13 24
+            End_Object
+
+            Object oCustomer_Zip is a cWizardDbForm
+                Entry_Item Customer.Zip
+                Set Location to 90 192
+                Set Size to 13 56
+            End_Object
+
+            Object oCustomerPhone1 is a cWizardDbForm
+                Entry_Item Customer.Phone1
+                Set Size to 13 66
+                Set Location to 105 48
+                Set peAnchors to anLeftRight
+                Set Label to "Phones:"
+                Set Label_Justification_mode to jMode_right
+                Set Label_Col_Offset to 3
+                Set Label_row_Offset to 0
+            End_Object // oCustomerPhone_1
+
+            Object oCustomer_PhoneExt1 is a cWizardDbForm
+                Entry_Item Customer.PhoneExt1
+                Set Location to 105 136
+                Set Size to 13 42
+                Set Label to "Ext:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oCustomer_PhoneType1 is a cGlblDbComboForm
+                Entry_Item Customer.PhoneType1
+                Set Location to 105 208
+                Set Size to 13 52
+                Set Label to "Types:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oCustomerPhone2 is a cWizardDbForm
+                Entry_Item Customer.Phone2
+                Set Size to 13 66
+                Set Location to 120 48
+                Set peAnchors to anLeftRight
+                Set Label_Justification_mode to jMode_right
+                Set Label_Col_Offset to 3
+                Set Label_row_Offset to 0
+            End_Object // oCustomerPhone_2
+
+            Object oCustomer_PhoneExt2 is a cWizardDbForm
+                Entry_Item Customer.PhoneExt2
+                Set Location to 120 136
+                Set Size to 13 42
+            End_Object
+
+            Object oCustomer_PhoneType2 is a cGlblDbComboForm
+                Entry_Item Customer.PhoneType2
+                Set Location to 120 208
+                Set Size to 13 52
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oCustomer_Phone3 is a cWizardDbForm
+                Entry_Item Customer.Phone3
+                Set Location to 135 48
+                Set Size to 13 66
+            End_Object
+
+            Object oCustomer_PhoneExt3 is a cWizardDbForm
+                Entry_Item Customer.PhoneExt3
+                Set Location to 135 136
+                Set Size to 13 42
+            End_Object
+
+            Object oCustomer_PhoneType3 is a cGlblDbComboForm
+                Entry_Item Customer.PhoneType3
+                Set Location to 135 208
+                Set Size to 13 52
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oCustomer_BusinessType is a cGlblDbComboForm
+                Entry_Item Customer.BusinessType
+                Set Location to 150 48
+                Set Size to 13 66
+                Set Label to "Type:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oOrganizationTextBox is a TextBox
+                Set Auto_Size_State to False
+                Set Size to 10 130
+                Set Location to 30 110
+                Set Label to "Find or Create an Organization record"
+                Set FontWeight to 800
+                Set Transparent_State to True
+                Set TextColor to clRed
+            End_Object
+
+            Set Title to "Organization"
+
+            Send AddWizardPage Self
+
+            Function IsNextState Returns Boolean
+                Boolean bFail
+                Integer hoDD
+                String  sName
+                //
+                Get Server                                          to hoDD
+                Get Field_Current_Value of hoDD Field Customer.Name to sName
+                If (sName <> "" and Changed_State(hoDD)) Begin
+                    Get Request_Validate of hoDD to bFail
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD
+                    End
+                End
+                Function_Return (HasRecord(hoDD))
+            End_Function
+
+            Procedure OnEnter Integer fromObj
+                Boolean bState
+                //
+                Forward Send OnEnter fromObj
+                //
+                Get IsNextState to bState
+                //
+                Send EnableNext bState
+            End_Procedure
+
+            Procedure OnNext
+                Send Request_Save of oCustomer_DD
+            End_Procedure
+
+        End_Object
+
+        Object oContactWizardPage is a cGlblDbWizardPage
+            Set Server to oContact_DD
+            Set Size to 163 275
+            set Verify_Data_Loss_Msg to get_No_Confirmation
+            Set Auto_Clear_DEO_State to False
+
+            Object oContact_ContactIdno is a cWizardDbForm
+                Entry_Item Contact.ContactIdno
+                Set Location to 15 48
+                Set Size to 13 54
+                Set Label to "ID:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Prompt
+                    Boolean bSelected
+                    Handle  hoServer
+                    RowID   riContact riCustomer
+                    //
+                    Get Server                            to hoServer
+                    Move (GetRowID(Contact.File_Number )) to riContact
+                    Move (GetRowId(Customer.File_Number)) to riCustomer
+                    //
+                    Get IsSelectedContact of Contact_sl (&riContact) (&riCustomer) to bSelected
+                    //
+                    If  (bSelected and not(IsNullRowId(riContact))) Begin
+                        Send FindByRowId of hoServer Contact.File_Number riContact
+                    End
+                End_Procedure
+
+//                Procedure Prompt_Callback Integer hPrompt
+//                    Set Auto_Server_State of hPrompt to True
+//                End_Procedure
+            End_Object
+
+            Object oSalesRep_RepIdno is a cWizardDbForm
+                Entry_Item SalesRep.RepIdno
+                Set Location to 30 48
+                Set Size to 13 54
+                Set Label to "Sales Rep:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Color to clYellow
+            End_Object
+
+            Object oSalesRep_LastName is a cWizardDbForm
+                Entry_Item SalesRep.LastName
+                Set Location to 30 106
+                Set Size to 13 78
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Enabled_State to False
+                Set Prompt_Button_Mode to PB_PromptOff
+            End_Object
+
+            Object oSalesRep_FirstName is a cWizardDbForm
+                Entry_Item SalesRep.FirstName
+                Set Location to 30 188
+                Set Size to 13 60
+                Set Enabled_State to False
+            End_Object
+
+            Object oContact_LastName is a cWizardDbForm
+                Entry_Item Contact.LastName
+                Set Location to 45 48
+                Set Size to 13 72
+                Set Label to "Last, First MI:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Color to clYellow
+                Set Status_Help to "Last name"
+
+                Procedure Prompt
+                    Boolean bSelected
+                    Handle  hoServer
+                    RowID   riContact riCustomer
+                    //
+                    Get Server                            to hoServer
+                    Move (GetRowID(Contact.File_Number )) to riContact
+                    Move (GetRowId(Customer.File_Number)) to riCustomer
+                    //
+                    Get IsSelectedContact of Contact_sl (&riContact) (&riCustomer) to bSelected
+                    //
+                    If  (bSelected and not(IsNullRowId(riContact))) Begin
+                        Send FindByRowId of hoServer Contact.File_Number riContact
+                    End
+                End_Procedure
+
+//                Procedure Prompt_Callback Integer hPrompt
+//                    Set Auto_Server_State of hPrompt to True
+//                End_Procedure
+            End_Object
+
+            Object oContact_TermOfAddress is a cWizardDbForm
+                Entry_Item Contact.TermOfAddress
+                Set Location to 45 124
+                Set Size to 13 30
+                Set Status_Help to "Term of address: Mr., "
+            End_Object
+
+            Object oContact_FirstName is a cWizardDbForm
+                Entry_Item Contact.FirstName
+                Set Location to 45 158
+                Set Size to 13 66
+                Set Color to clYellow
+            End_Object
+
+            Object oContact_MiddleInitial is a cWizardDbForm
+                Entry_Item Contact.MiddleInitial
+                Set Location to 45 228
+                Set Size to 13 15
+            End_Object
+
+            Object oContact_NameSuffix is a cWizardDbForm
+                Entry_Item Contact.NameSuffix
+                Set Location to 45 247
+                Set Size to 13 25
+            End_Object
+
+            Object oContact_Address1 is a cWizardDbForm
+                Entry_Item Contact.Address1
+                Set Location to 60 48
+                Set Size to 13 212
+                Set Label to "Address:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Prompt_Button_Mode to PB_PromptOn
+
+                Procedure Prompt
+                    Integer hoDD
+                    //
+                    Get Server                                             to hoDD
+                    Send Refind_Records     of hoDD
+                    Set Field_Changed_Value of hoDD Field Contact.Address1 to Customer.Address1
+                    Set Field_Changed_Value of hoDD Field Contact.Address2 to Customer.Address2
+                    Set Field_Changed_Value of hoDD Field Contact.City     to Customer.City
+                    Set Field_Changed_Value of hoDD Field Contact.State    to Customer.State
+                    Set Field_Changed_Value of hoDD Field Contact.Zip      to Customer.zip
+                End_Procedure
+            End_Object
+
+            Object oContact_Address2 is a cWizardDbForm
+                Entry_Item Contact.Address2
+                Set Location to 75 48
+                Set Size to 13 200
+            End_Object
+
+            Object oContact_City is a cWizardDbForm
+                Entry_Item Contact.City
+                Set Location to 90 48
+                Set Size to 13 110
+                Set Label to "City ST Zip:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oContact_State is a cWizardDbForm
+                Entry_Item Contact.State
+                Set Location to 90 162
+                Set Size to 13 24
+            End_Object
+
+            Object oContact_Zip is a cWizardDbForm
+                Entry_Item Contact.Zip
+                Set Location to 90 192
+                Set Size to 13 56
+            End_Object
+
+            Object oContact_Phone1 is a cWizardDbForm
+                Entry_Item Contact.Phone1
+                Set Location to 105 48
+                Set Size to 13 62
+                Set Label to "Phones:"
+                Set Label_Justification_Mode to JMode_Right
+                Set Label_Col_Offset to 3
+            End_Object
+
+            Object oContact_PhoneExt1 is a cWizardDbForm
+                Entry_Item Contact.PhoneExt1
+                Set Location to 105 136
+                Set Size to 13 42
+                Set Label to "Ext:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oContact_PhoneType1 is a cGlblDbComboForm
+                Entry_Item Contact.PhoneType1
+                Set Location to 105 208
+                Set Size to 13 52
+                Set Label to "Types:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oContact_Phone2 is a cWizardDbForm
+                Entry_Item Contact.Phone2
+                Set Location to 120 48
+                Set Size to 13 62
+                Set Label_Justification_Mode to JMode_Right
+                Set Label_Col_Offset to 3
+            End_Object
+
+            Object oContact_PhoneExt2 is a cWizardDbForm
+                Entry_Item Contact.PhoneExt2
+                Set Location to 120 136
+                Set Size to 13 42
+            End_Object
+
+            Object oContact_PhoneType2 is a cGlblDbComboForm
+                Entry_Item Contact.PhoneType2
+                Set Location to 120 208
+                Set Size to 13 52
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oContact_Phone3 is a cWizardDbForm
+                Entry_Item Contact.Phone3
+                Set Location to 135 48
+                Set Size to 13 62
+                Set Label_Justification_Mode to JMode_Right
+                Set Label_Col_Offset to 3
+            End_Object
+
+            Object oContact_PhoneExt3 is a cWizardDbForm
+                Entry_Item Contact.PhoneExt3
+                Set Location to 135 136
+                Set Size to 13 42
+            End_Object
+
+            Object oContact_PhoneType3 is a cGlblDbComboForm
+                Entry_Item Contact.PhoneType3
+                Set Location to 135 208
+                Set Size to 13 52
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oContact_EmailAddress is a cWizardDbForm
+                Entry_Item Contact.EmailAddress
+                Set Location to 150 48
+                Set Size to 13 148
+                Set Label to "Email:"
+                Set Label_Justification_Mode to JMode_Right
+                Set Label_Col_Offset to 3
+            End_Object
+
+            Object oContactTextBox is a TextBox
+                Set Auto_Size_State to False
+                Set Size to 10 130
+                Set Location to 15 110
+                Set Label to "Find or Create a Contact record"
+                Set FontWeight to 800
+                Set Transparent_State to True
+                Set TextColor to clRed
+            End_Object
+
+            Set Title to "Contact"
+
+            Send AddWizardPage Self
+
+            Function IsNextState Returns Boolean
+                Boolean bHasRep bFail
+                Integer hoDD
+                String  sFirst sLast
+                //
+                Get HasRecord           of oSalesrep_DD                 to bHasRep
+                Get Server                                              to hoDD
+                Get Field_Current_Value of hoDD Field Contact.FirstName to sFirst
+                Get Field_Current_Value of hoDD Field Contact.LastName  to sLast
+                If ((sFirst <> "" and sLast <> "") and Changed_State(hoDD)) Begin
+                    Get Request_Validate of hoDD to bFail
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD
+                    End
+                End
+                Function_Return ((bHasRep) and HasRecord(hoDD))
+            End_Function
+
+            Procedure OnEnter Integer fromObj
+                Boolean bState
+                Integer iRecId
+                //
+                Forward Send OnEnter fromObj
+                //
+                If (not(HasRecord(oContact_DD))) Begin
+                    Get Current_Record  of oCustomer_DD to iRecId
+                    Send Find_By_Recnum of oContact_DD Customer.File_Number iRecId
+                End
+                //
+                Get IsNextState to bState
+                //
+                Send EnableNext bState
+            End_Procedure
+
+            Procedure OnNext
+                Send Request_Save of oContact_DD
+            End_Procedure
+
+        End_Object
+
+        Object oLocationWizardPage is a cGlblDbWizardPage
+            Set Server to oLocation_DD
+            Set Size to 163 275
+            set Verify_Data_Loss_Msg to get_No_Confirmation
+
+            Object oLocation_LocationIdno is a cWizardDbForm
+                Entry_Item Location.LocationIdno
+                Set Location to 30 48
+                Set Size to 13 42
+                Set Label to "Number:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+//                Procedure Prompt
+//                    Integer iCustomerRecId iContactIdno iRecId
+//                    //
+//                    Get Current_Record      of oCustomer_DD                          to iCustomerRecId
+//                    Get Field_Current_Value of oContact_DD Field Contact.ContactIdno to iContactIdno
+//                    //
+//                    Get IsQuoteLocation of Location_sl iCustomerRecId iContactIdno to iRecId
+//                    If (iRecId > 0) Begin
+//                        Send Find_By_Recnum of oLocation_DD Location.File_Number iRecId
+//                    End
+//                End_Procedure
+
+                Procedure Prompt_Callback Integer hPrompt
+                    Set Auto_Server_State of hPrompt to True
+                End_Procedure
+            End_Object
+
+            Object oLocation_Name is a cWizardDbForm
+                Entry_Item Location.Name
+                Set Location to 45 48
+                Set Size to 13 200
+                Set Label to "Name:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Color to clYellow
+
+//                Procedure Prompt
+//                    Integer iCustomerRecId iContactIdno iRecId
+//                    //
+//                    Get Current_Record      of oCustomer_DD                          to iCustomerRecId
+//                    Get Field_Current_Value of oContact_DD Field Contact.ContactIdno to iContactIdno
+//                    //
+//                    Get IsQuoteLocation of Location_sl iCustomerRecId iContactIdno to iRecId
+//                    If (iRecId > 0) Begin
+//                        Send Find_By_Recnum of oLocation_DD Location.File_Number iRecId
+//                    End
+//                End_Procedure
+
+                Procedure Prompt_Callback Integer hPrompt
+                    Set Auto_Server_State of hPrompt to True
+                End_Procedure
+            End_Object
+
+            Object oLocation_Address1 is a cWizardDbForm
+                Entry_Item Location.Address1
+                Set Location to 60 48
+                Set Size to 13 212
+                Set Label to "Address:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Prompt_Button_Mode to PB_PromptOn
+
+                Procedure Prompt
+                    Integer hoDD
+                    //
+                    Get Server                                              to hoDD
+                    Send Refind_Records     of hoDD
+                    Set Field_Changed_Value of hoDD Field Location.Address1 to Customer.Address1
+                    Set Field_Changed_Value of hoDD Field Location.Address2 to Customer.Address2
+                    Set Field_Changed_Value of hoDD Field Location.City     to Customer.City
+                    Set Field_Changed_Value of hoDD Field Location.State    to Customer.State
+                    Set Field_Changed_Value of hoDD Field Location.Zip      to Customer.zip
+                End_Procedure
+
+                Procedure Prompt_Callback Integer hPrompt
+                    Set Auto_Server_State of hPrompt to True
+                End_Procedure
+            End_Object
+
+            Object oLocation_Address2 is a cWizardDbForm
+                Entry_Item Location.Address2
+                Set Location to 75 48
+                Set Size to 13 200
+            End_Object
+
+            Object oLocation_City is a cWizardDbForm
+                Entry_Item Location.City
+                Set Location to 90 48
+                Set Size to 13 110
+                Set Label to "City ST Zip:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oLocation_State is a cWizardDbForm
+                Entry_Item Location.State
+                Set Location to 90 162
+                Set Size to 13 24
+            End_Object
+
+            Object oLocation_Zip is a cWizardDbForm
+                Entry_Item Location.Zip
+                Set Location to 90 192
+                Set Size to 13 56
+            End_Object
+
+            Object oLocation_Phone1 is a cWizardDbForm
+                Entry_Item Location.Phone1
+                Set Location to 105 48
+                Set Size to 13 66
+                Set Label to "Phones:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oLocation_PhoneExt1 is a cWizardDbForm
+                Entry_Item Location.PhoneExt1
+                Set Location to 105 136
+                Set Size to 13 42
+                Set Label to "Ext:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+            End_Object
+
+            Object oLocation_PhoneType1 is a cGlblDbComboForm
+                Entry_Item Location.PhoneType1
+                Set Location to 105 208
+                Set Size to 13 52
+                Set Label to "Types:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oLocation_Phone2 is a cWizardDbForm
+                Entry_Item Location.Phone2
+                Set Location to 120 48
+                Set Size to 13 66
+            End_Object
+
+            Object oLocation_PhoneExt2 is a cWizardDbForm
+                Entry_Item Location.PhoneExt2
+                Set Location to 120 136
+                Set Size to 13 42
+            End_Object
+
+            Object oLocation_PhoneType2 is a cGlblDbComboForm
+                Entry_Item Location.PhoneType2
+                Set Location to 120 208
+                Set Size to 13 52
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oLocation_Phone3 is a cWizardDbForm
+                Entry_Item Location.Phone3
+                Set Location to 135 48
+                Set Size to 13 66
+            End_Object
+
+            Object oLocation_PhoneExt3 is a cWizardDbForm
+                Entry_Item Location.PhoneExt3
+                Set Location to 135 136
+                Set Size to 13 42
+            End_Object
+
+            Object oLocation_PhoneType3 is a cGlblDbComboForm
+                Entry_Item Location.PhoneType3
+                Set Location to 135 208
+                Set Size to 13 52
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oLocation_StartTime is a cSzdbTimeForm
+                Entry_Item Location.StartTime
+                Set Location to 150 136
+                Set Size to 13 42
+                Set Label to "Hours of Operation - Open:"
+                Set piTimeDisplayMode to SZTIME_DISPLAY_AMPM
+                Set pbDisplaySeconds to False
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oLocation_StopTime is a cSzdbTimeForm
+                Entry_Item Location.StopTime
+                Set Location to 150 208
+                Set Size to 13 42
+                Set Label to "Close:"
+                Set piTimeDisplayMode to SZTIME_DISPLAY_AMPM
+                Set pbDisplaySeconds to False
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oLocationTextBox is a TextBox
+                Set Auto_Size_State to False
+                Set Size to 10 120
+                Set Location to 30 110
+                Set Label to "Find or Create a Location record"
+                Set FontWeight to 800
+                Set Transparent_State to True
+                Set TextColor to clRed
+            End_Object
+
+            Set Title to "Location"
+
+            Send AddWizardPage Self
+
+            Function IsNextState Returns Boolean
+                Boolean bFail
+                Integer hoDD
+                String  sName
+                //
+                Get Server                                          to hoDD
+                Get Field_Current_Value of hoDD Field Location.Name to sName
+                If (sName <> "" and Changed_State(hoDD)) Begin
+                    Get Request_Validate of hoDD to bFail
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD
+                    End
+                End
+                Function_Return (HasRecord(hoDD))
+            End_Function
+
+            Procedure OnEnter Integer fromObj
+                Boolean bState
+                Integer iRecId
+                //
+                Forward Send OnEnter fromObj
+                //
+                If (not(HasRecord(oLocation_DD))) Begin
+                    Get Current_Record  of oCustomer_DD to iRecId
+                    Send Find_By_Recnum of oLocation_DD Customer.File_Number iRecId
+                End
+                //
+                Get IsNextState to bState
+                Send EnableNext    bState
+            End_Procedure
+
+            Procedure OnNext
+                Integer iContactId
+                //
+                Get Field_Current_Value of oContact_DD  Field Contact.ContactIdno  to iContactId
+                Set Field_Changed_Value of oLocation_DD Field Location.ContactIdno to iContactId
+                Send Request_Save       of oLocation_DD
+            End_Procedure
+
+        End_Object    // oLocationWizardPage
+
+//        Object oParkingLotWizardPage is a cGlblDbWizardPage
+//            Set Server               to oParklots_DD
+//            Set Size to 163 275
+//            Set Verify_Data_Loss_Msg to get_No_Confirmation
+//
+//            Object oParkingLotTextBox is a TextBox
+//                Set Auto_Size_State to False
+//                Set Size to 10 120
+//                Set Location to 15 110
+//                Set Label to "Find or Create a Parking Lot record"
+//                Set FontWeight to 800
+//                Set Transparent_State to True
+//                Set TextColor to clRed
+//            End_Object
+//
+//            Set Title to "Parking Lot Specifications"
+//
+//            Object oParklots_ParkingLotId is a cWizardDbForm
+//                Entry_Item Parklots.ParkingLotId
+//                Set Location to 15 56
+//                Set Size to 13 42
+//                Set Label to "Lot ID:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_Description is a cWizardDbForm
+//                Entry_Item Parklots.Description
+//                Set Location to 30 56
+//                Set Size to 13 210
+//                Set Label to "Description:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//                Set Color to clYellow
+//            End_Object
+//
+//            Object oParklots_SqFtTotal is a cWizardDbForm
+//                Entry_Item Parklots.SqFtTotal
+//                Set Location to 45 56
+//                Set Size to 13 30
+//                Set Label to "Total Sq Ft:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_SqFtSidewalks is a cWizardDbForm
+//                Entry_Item Parklots.SqFtSidewalks
+//                Set Location to 60 56
+//                Set Size to 13 30
+//                Set Label to "Sidewalks:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_ParkingStalls is a cWizardDbForm
+//                Entry_Item Parklots.ParkingStalls
+//                Set Location to 75 56
+//                Set Size to 13 30
+//                Set Label to "Parking Stalls:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_HandicapStalls is a cWizardDbForm
+//                Entry_Item Parklots.HandicapStalls
+//                Set Location to 90 56
+//                Set Size to 13 30
+//                Set Label to "Handicap Stalls:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_HCStencils is a cWizardDbForm
+//                Entry_Item Parklots.HCStencils
+//                Set Location to 105 56
+//                Set Size to 13 30
+//                Set Label to "HC Stencils:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_SolidLineFeet is a cWizardDbForm
+//                Entry_Item Parklots.SolidLineFeet
+//                Set Location to 120 56
+//                Set Size to 13 30
+//                Set Label to "Solid Line Ft:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_HalfHashMarks is a cWizardDbForm
+//                Entry_Item Parklots.HalfHashMarks
+//                Set Location to 135 56
+//                Set Size to 13 30
+//                Set Label to "1/2 Hash Mrks:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_FullHashMarks is a cWizardDbForm
+//                Entry_Item Parklots.FullHashMarks
+//                Set Location to 45 145
+//                Set Size to 13 30
+//                Set Label to "Full Hash Mrks:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_CurbLinearFeet is a cWizardDbForm
+//                Entry_Item Parklots.CurbLinearFeet
+//                Set Location to 60 145
+//                Set Size to 13 30
+//                Set Label to "Curb Linear Ft:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_Arrows is a cWizardDbForm
+//                Entry_Item Parklots.Arrows
+//                Set Location to 75 145
+//                Set Size to 13 30
+//                Set Label to "Arrows:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_Stencils is a cWizardDbForm
+//                Entry_Item Parklots.Stencils
+//                Set Location to 90 145
+//                Set Size to 13 30
+//                Set Label to "Stencils:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_SpeedBumps is a cWizardDbForm
+//                Entry_Item Parklots.SpeedBumps
+//                Set Location to 105 145
+//                Set Size to 13 30
+//                Set Label to "Speed Bumps:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_StormDrains is a cWizardDbForm
+//                Entry_Item Parklots.StormDrains
+//                Set Location to 120 145
+//                Set Size to 13 30
+//                Set Label to "Storm Drains:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_Bollards is a cWizardDbForm
+//                Entry_Item Parklots.Bollards
+//                Set Location to 135 145
+//                Set Size to 13 30
+//                Set Label to "Bollards:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_LightPoles is a cWizardDbForm
+//                Entry_Item Parklots.LightPoles
+//                Set Location to 45 236
+//                Set Size to 13 30
+//                Set Label to "Light Poles:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_Crosswalks is a cWizardDbForm
+//                Entry_Item Parklots.Crosswalks
+//                Set Location to 60 236
+//                Set Size to 13 30
+//                Set Label to "Crosswalks:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_Islands is a cWizardDbForm
+//                Entry_Item Parklots.Islands
+//                Set Location to 75 236
+//                Set Size to 13 30
+//                Set Label to "Islands:"
+//                Set Label_Col_Offset to 2
+//                Set Label_Justification_Mode to JMode_Right
+//            End_Object
+//
+//            Object oParklots_AsphaltStatus is a cGlblDbComboForm
+//                Entry_Item Parklots.AsphaltStatus
+//                Set Location to 100 214
+//                Set Size to 13 52
+//                Set Label to "Asphalt Status:"
+//                Set Label_Col_Offset to 0
+//                Set Label_Justification_Mode to JMode_Top
+//
+//                Procedure Next
+//                    Boolean bState
+//                    //
+//                    Get IsNextState to bState
+//                    Send EnableNext    bState
+//                    //
+//                    Forward Send Next
+//                End_Procedure
+//            End_Object
+//
+//            Send AddWizardPage Self
+//
+//            Function IsNextState Returns Boolean
+//                Boolean bFail
+//                Integer hoDD
+//                String  sDescription
+//                //
+//                Get Server                                                 to hoDD
+//                Get Field_Current_Value of hoDD Field Parklots.Description to sDescription
+//                If (sDescription <> "" and Changed_State(hoDD)) Begin
+//                    Get Request_Validate of hoDD to bFail
+//                    If (not(bFail)) Begin
+//                        Send Request_Save of hoDD
+//                    End
+//                End
+//                Function_Return (HasRecord(hoDD))
+//            End_Function
+//
+//            Procedure OnEnter Integer fromObj
+//                Boolean bState
+//                Integer iRecId
+//                //
+//                Forward Send OnEnter fromObj
+//                //
+//                If (not(HasRecord(oParklots_DD))) Begin
+//                    Get Current_Record  of oLocation_DD to iRecId
+//                    Send Find_By_Recnum of oParklots_DD Location.File_Number iRecId
+//                End
+//                //
+//                Get IsNextState to bState
+//                Send EnableNext    bState
+//            End_Procedure
+//
+//        End_Object    // oParkingLotWizardPage
+//
+//        Object oAccessoryWizardPage is a cGlblDbWizardPage
+//            Set Server               to oLotacces_DD
+//            Set Size to 163 275
+//            Set Verify_Data_Loss_Msg to get_No_Confirmation
+//
+//            Object oAccessoriesTextBox is a TextBox
+//                Set Auto_Size_State to False
+//                Set Size to 10 130
+//                Set Location to 30 110
+//                Set Label to "Add or Edit Crosswalk && Island records"
+//                Set FontWeight to 800
+//                Set Transparent_State to True
+//                Set TextColor to clRed
+//            End_Object
+//
+//            Set Title to "Crosswalks & Islands"
+//
+//            Object oAccessoryGrid is a dbGrid
+//                Set Size to 94 259
+//                Set Location to 50 5
+//
+//                Begin_Row
+//                    Entry_Item Lotacces.LotAccessoryId
+//                    Entry_Item Lotacces.AccessoryType
+//                    Entry_Item Lotacces.Description
+//                    Entry_Item Lotacces.Length
+//                    Entry_Item Lotacces.Width
+//                End_Row
+//
+//                Set Main_File to Lotacces.File_number
+//
+//                Set Header_Label 0 to "LotAccessoryId"
+//                Set Form_Width 0 to 0
+//                Set Column_Shadow_State 0 to True
+//
+//                Set Form_Width 1 to 50
+//                Set Header_Label 1 to "Type"
+//                Set Column_Combo_State 1 to True
+//
+//                Set Form_Width 2 to 132
+//                Set Header_Label 2 to "Description"
+//
+//                Set Form_Width 3 to 34
+//                Set Header_Label 3 to "Length"
+//                Set Header_Justification_Mode 3 to JMode_Right
+//
+//                Set Form_Width 4 to 34
+//                Set Header_Label 4 to "Width"
+//                Set Header_Justification_Mode 4 to JMode_Right
+//                Set Wrap_State to True
+//            End_Object
+//
+//            Send AddWizardPage Self
+//
+////            Function IsNextState Returns Boolean
+////                Integer hoDD
+////                String  sName
+////                //
+////                Get Server                                          to hoDD
+////                Get Field_Current_Value of hoDD Field Location.Name to sName
+////                If (sName <> "" and Changed_State(hoDD)) Begin
+////                    Send Request_Save   of hoDD
+////                End
+////                Function_Return (HasRecord(hoDD))
+////            End_Function
+//
+//            Procedure OnEnter Integer fromObj
+//                Boolean bState
+//                Integer iRecId
+//                //
+//                Forward Send OnEnter fromObj
+//                //
+//                If (not(HasRecord(oLotacces_DD))) Begin
+//                    Get Current_Record  of oParklots_DD to iRecId
+//                    Send Find_By_Recnum of oLotacces_DD Parklots.File_Number iRecId
+//                End
+//                //
+//                Send EnableNext True
+//            End_Procedure
+//
+//        End_Object
+
+        Object oFinishWizardPage is a cGlblDbWizardPage
+            Set Server               to oQuotehdr_DD
+            Set Size to 163 275
+            Set Verify_Data_Loss_Msg to get_No_Confirmation
+
+            Object oQuoteDateTextBox is a TextBox
+                Set Auto_Size_State to False
+                Set Size to 10 120
+                Set Location to 30 110
+                Set Label to "Enter a date and click Finish"
+                Set FontWeight to 800
+                Set Transparent_State to True
+                Set TextColor to clRed
+            End_Object
+
+            Object oQuotehdr_QuoteDate is a cdbszDatePicker
+                Entry_Item Quotehdr.QuoteDate
+                Set Location to 75 48
+                Set Size to 13 60
+                Set Label to "Date:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+
+                Procedure Next
+                    Boolean bState
+                    //
+                    Get IsNextState to bState
+                    Send EnableNext    bState
+                    //
+                    Forward Send Next
+                End_Procedure
+            End_Object
+
+            Object oQuotehdr_WorkType is a cGlblDbComboForm
+                Entry_Item Quotehdr.WorkType
+                Set Location to 90 48
+                Set Size to 13 96
+                Set Label to "Work Type:"
+                Set Label_Col_Offset to 3
+                Set Label_Justification_Mode to JMode_Right
+                Set Enabled_State to False
+            End_Object
+
+            Set Title to "Quote Header"
+
+            Send AddWizardPage Self
+
+            Function IsNextState Returns Boolean
+                Function_Return (HasRecord(oLocation_DD))
+            End_Function
+
+            Procedure OnEnter Integer fromObj
+                Boolean bState
+                Integer iRecId
+                //
+                Forward Send OnEnter fromObj
+                //
+                //
+                If (not(HasRecord(oQuotehdr_DD))) Begin
+                    Get Current_Record  of oLocation_DD to iRecId
+                    Send Find_By_Recnum of oQuotehdr_DD Location.File_Number iRecId
+                End
+                //
+                Get IsNextState to bState
+                //
+                Send EnableNext bState
+            End_Procedure
+
+        End_Object
+
+    End_Object    // oWizardPageContainer
+
+    Object oLineControl is a LineControl
+        Set Size to 2 352
+        Set Location to 170 5
+        Set peAnchors to anBottomLeftRight
+    End_Object    // oLineControl
+
+    Object oBackButton is a cGlblWizardBackButton
+        Set Label to "&Back"
+        Set Location to 180 185
+        Set peAnchors to anBottomRight
+    End_Object    // oBackButton
+
+    Object oNextButton is a cGlblWizardNextButton
+        Set Label to "&Next"
+        Set Location to 180 240
+        Set peAnchors to anBottomRight
+    End_Object    // oNextButton
+
+    Object oCancelButton is a cGlblWizardCloseButton
+        Set Label to "&Cancel"
+        Set Location to 180 305
+        Set peAnchors to anBottomRight
+    End_Object    // oCancelButton
+
+
+    //AB-StoreStart
+    set Verify_Data_Loss_Msg to get_No_Confirmation
+
+    Function DoQuoteWizard Returns Integer
+        Set piRecId to 0
+        Send Clear_All of oCustomer_DD
+        Send Popup_Modal
+        Function_Return (piRecId(Self))
+    End_Function
+
+    Procedure DoFinish
+        boolean bFail
+        Integer hoDD
+        //
+        Move oQuotehdr_DD             to hoDD
+        Get Request_Validate  of hoDD to bFail
+        If (not(bFail)) Begin
+            Send Request_Save of hoDD
+            Set piRecId to Quotehdr.Recnum
+            Send Close_Panel
+        End
+    End_Procedure
+
+End_Object    // oQuoteWizardPanel

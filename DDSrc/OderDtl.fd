@@ -1,0 +1,17 @@
+#REPLACE FILE60 OderDtl
+#REPLACE OderDtl.Recnum |FN60,0
+#REPLACE OderDtl.OrderDtlIdno |FN60,1
+#REPLACE OderDtl.JobNumber |FN60,2
+#REPLACE OderDtl.MastOpsIdno |FN60,3
+#REPLACE OderDtl.OpersIdno |FN60,4
+#REPLACE OderDtl.Quantity |FN60,5
+#REPLACE OderDtl.Price |FN60,6
+#REPLACE OderDtl.TaxRate |FN60,7
+#REPLACE OderDtl.TaxAmount |FN60,8
+#REPLACE OderDtl.Amount |FN60,9
+#REPLACE OderDtl.Description |FS60,10
+#REPLACE OderDtl.Sequence |FN60,11
+#REPLACE OderDtl.CreatedOn |FM60,12
+#REPLACE OderDtl.LastModifyedOn |FM60,13
+#REPLACE OderDtl.RecordOwner |FN60,14
+#REPLACE OderDtl.QuoteDtlIdno |FN60,15

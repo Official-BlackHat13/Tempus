@@ -1,0 +1,543 @@
+Use cGlblDataDictionary.pkg
+Use Dates.nui
+
+Open Jccntr
+Open Jcdept
+Open Syslog
+
+Register_Object Jccntr_SL
+
+Register_Function CCPicklistCodeValidation Integer iField String sCode Returns Integer
+
+Class cJccntrDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Jccntr.File_Number
+
+        Set Add_System_File to Syslog.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Jcdept.File_Number
+        Set Cascade_Delete_State to False
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Status_Help Field Jccntr.IDNO to "Unique 1-4 digit I.D. #; #'s -1,0,99 are reserved by the system"
+        Set Field_Label_Long Field Jccntr.IDNO to "Cost Center ID Number"
+        Set Field_Label_Short Field Jccntr.IDNO to "C.C. I.D."
+        Set Field_Option Field Jccntr.IDNO DD_AUTOFIND to True
+        Set Field_Option Field Jccntr.IDNO DD_REQUIRED to True
+        Set Key_Field_State Field Jccntr.IDNO to True
+        Set Field_Prompt_Object Field Jccntr.IDNO to Jccntr_SL
+        Set Field_Value_Range Field Jccntr.IDNO to -999 9999
+        Set Field_Mask_Type Field Jccntr.IDNO to Mask_Numeric_Window
+        Set Field_Mask Field Jccntr.IDNO to "###"
+
+        Set Field_Option Field Jccntr.NAME DD_CAPSLOCK to True
+        Set Field_Option Field Jccntr.NAME DD_REQUIRED to True
+        Set Status_Help Field Jccntr.NAME to "24-character description"
+
+        Set Field_Option Field Jccntr.NICKNAME DD_REQUIRED to True
+        Set Field_Option Field Jccntr.NICKNAME DD_CAPSLOCK to True
+
+        Set Field_Value_Range Field Jccntr.WEEKDAYS to 0 7
+        Set Status_Help Field Jccntr.WEEKDAYS to "Number of days in standard work week"
+
+        Set Field_Value_Range Field Jccntr.SHIFTS to 0 4
+
+        Set Field_Value_Range Field Jccntr.SHIFTHRS to 0 24
+
+        Set Field_Option Field Jccntr.EFFGOAL DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.COUNT DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q1_AVLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q1_CHGHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q1_NCHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q1_ALTHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q1_SPLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q2_AVLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q2_CHGHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q2_NCHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q2_ALTHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q2_SPLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q3_AVLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q3_CHGHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q3_NCHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q3_ALTHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q3_SPLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q4_AVLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q4_CHGHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q4_NCHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q4_ALTHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.Q4_SPLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.PREVYR_AVLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.PREVYR_CHGHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.PREVYR_NCHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.PREVYR_ALTHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.PREVYR_SPLHRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.BACKLOG_JOBS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.BACKLOG_HRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.BACKLOG_DAYS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.CURRENT_JOBS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.CURRENT_HRS DD_NOENTER to True
+
+        Set Field_Option Field Jccntr.CURRENT_DAYS DD_NOENTER to True
+
+        Set Field_Checkbox_Values Field Jccntr.BNOSHOPFLOOR to "1" "0"
+
+        Set Field_Option Field Jccntr.PICKLIST_CODE DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jccntr.PICKLIST_CODE to get_CCPicklistCodeValidation
+        Set Status_Help Field Jccntr.Picklist_Code to "User-assigned code for constraining cost center picklists in calc engine."
+
+        set piLogFile to Syslog.File_number
+        // when TRUE this property initiates
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to False
+        // when TRUE logging does not occur
+        // on the creation of the record
+        Set pbNoLogOnCreate   to True
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // Idno
+//        Set piKey2 to 0 //
+//        Set piKey3 to 0 //
+        //
+        Send DoInitializeWatchedFields
+    End_Procedure
+
+    Procedure DoInitializeWatchedFields
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move oWatchedFieldsArray to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   2 // NAME
+        Send DoAddArrayValue hArray   3 // NICKNAME
+        Send DoAddArrayValue hArray   5 // DEPT_IDNO
+        Send DoAddArrayValue hArray   6 // WEEKDAYS
+        Send DoAddArrayValue hArray   7 // SHIFTS
+        Send DoAddArrayValue hArray   8 // SHIFTHRS
+        Send DoAddArrayValue hArray   9 // SHIFTUNITS
+        Send DoAddArrayValue hArray  10 // UTILGOAL
+        Send DoAddArrayValue hArray  11 // EFFGOAL
+        Send DoAddArrayValue hArray  12 // FULLRATE
+        Send DoAddArrayValue hArray  13 // DIRECTRATE
+        Send DoAddArrayValue hArray  14 // MARKUP
+        Send DoAddArrayValue hArray  55 // SELL_RATE
+        Send DoAddArrayValue hArray  57 // JOBSKEJ_MAXHRS
+        Send DoAddArrayValue hArray  58 // STARTUP_TIME
+    End_Procedure // DoInitializeWatchedFields
+
+    // PicklistCodeValidation:
+    Function CCPicklistCodeValidation Integer iField String sCode Returns Integer
+        // only validate when editing the standards record
+        If (Operation_Origin <> Self) Function_Return
+        //
+        If ("~@!#$%^&*<>?+-DE" contains sCode) Begin
+            Error 900 "Invalid filter code"
+            Function_Return 1
+        End
+    End_Function   // PicklistCodeValidation
+
+
+    Procedure Update
+        Number nCapacity
+        Forward Send Update
+        Move (JCCNTR.current_hrs /(JCCNTR.shifts *JCCNTR.shifthrs *JCCNTR.shiftunits *JCCNTR.utilgoal) ) ;
+            to JCCNTR.current_days
+        Move (JCCNTR.backlog_hrs /(JCCNTR.shifts *JCCNTR.shifthrs *JCCNTR.shiftunits *JCCNTR.utilgoal) ) ;
+            to JCCNTR.backlog_days
+    
+        Move (Jccntr.Weekdays * Jccntr.Shifts * Jccntr.Shifthrs * Jccntr.Shiftunits) to nCapacity
+        Move (nCapacity * Jccntr.UtilGoal * 13) to nCapacity
+        Move nCapacity to Jccntr.Q1_Avlhrs
+        Move nCapacity to Jccntr.Q2_Avlhrs
+        Move nCapacity to Jccntr.Q3_Avlhrs
+        Move nCapacity to Jccntr.Q4_Avlhrs
+
+
+        //
+    End_Procedure
+
+    Procedure Deleting
+        Forward Send Deleting
+        //
+        Subtract 1 from Jcdept.Count
+        //
+    End_Procedure
+
+    Procedure Creating
+        Forward Send Creating
+        //
+        Add 1 to Jcdept.Count
+        //
+    End_Procedure
+
+    // Logic to determine quarterly and YTD available hours to today's actual date.
+    // Will need to write add'l functions to consolidate code needed to display
+    // all the fields in JCCNTR_Utilization tab page
+    // 1) determine which calendar quarter todays date is in
+    // 2) Determine the year for use in creating quarterly begin dates
+    // 3) Determine the decimal fraction today's date is of a calenday qtr
+    // 4) Determine the CC's number of workdays in a year based on JCCNTR.Weekdays
+    // 5) Determine how many workdays are available to date in the current quarter
+    // 6) Determine how many hours are available to date in the current quarter
+    // 7) If today's date is not in a particular quarter then the field value JCCNTR.Q#_AvlHrs
+    //    can be used for that quarter, ELSE prorated # should be used.
+    // 8) YTD available hours is then simply the sum of the 4 quarters.
+
+    Function JccntrQ1_AvlHrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Integer Current_Qtr
+        Number AvlHrs
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr ne 1 Move Jccntr.Q1_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 1 to AvlHrs
+        Function_Return AvlHrs
+    End_Function
+
+    Function JccntrQ2_AvlHrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Integer Current_Qtr
+        Number AvlHrs
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 2 Function_Return
+        If Current_Qtr ne 2 Move Jccntr.Q2_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 2 to AvlHrs
+        Function_Return AvlHrs
+    End_Function
+
+    Function JccntrQ3_AvlHrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Integer Current_Qtr
+        Number AvlHrs
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 3 Function_Return
+        If Current_Qtr ne 3 Move Jccntr.Q3_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 3 to AvlHrs
+        Function_Return AvlHrs
+    End_Function
+
+    Function JccntrQ4_AvlHrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Integer Current_Qtr
+        Number AvlHrs
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 4 Function_Return
+        Get JccntrProrate_AvlHrs 4 to AvlHrs
+        Function_Return AvlHrs
+    End_Function
+
+    Function JccntrYTD_AvlHrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Function_Return (JccntrQ1_AvlHrs(Self) ;
+            + JccntrQ2_AvlHrs(Self) + JccntrQ3_AvlHrs(Self) ;
+            + JccntrQ4_AvlHrs(Self))
+    End_Function
+
+    /// determine which quarter today is in
+    Function QuarterInDate Returns Integer
+        Integer iMonth iQtr
+        Date    dToday
+        //
+        Sysdate dToday
+        //If dToday GT 12/31/99 Move (dToday -693975) to dToday
+        //Move (Get_Month(dToday)) to iMonth
+        Move (VDFQ_DateSegment(dToday,DS_MONTH)) to iMonth
+        If iMonth LT 4 Move 1 to iQtr
+        If ( (iMonth GE 4) and (iMonth LE 6) ) Move 2 to iQtr
+        If ( (iMonth GE 7) and (iMonth LE 9) ) Move 3 to iQtr
+        If iMonth GT 9 Move 4 to iQtr
+        Function_Return iQtr
+    End_Function
+
+    Function JccntrProrate_AvlHrs Integer Current_Qtr Returns Number
+
+        //this function calculates the available hours in the quarter based
+        //on the defined cost center capacity and how far into the current
+        //quarter today's date is.
+        //for year-to-date total all four quarters are added up
+        // question for Dan: this function will get executed 5X for each jccntr record
+        // displayed - Is this okay, or is there a more efficient way?
+
+        Integer iQtr  iMonth  iYear  Work_Days_to_Date
+        Number  CC_Weekdays CC_Shifthrs CC_Shifts CC_ShiftUnits CC_UtilGoal
+        Number  Prorated_Qtr_AvlHrs  QPct
+        Date    dToday dQtr_Begin_Date
+        String  sQtr_Begin_Date
+
+        Get Field_Current_Value Field JCCNTR.WeekDays to CC_WeekDays
+        Get Field_Current_Value Field JCCNTR.ShiftHrs to CC_ShiftHrs
+        Get Field_Current_Value Field JCCNTR.Shifts to CC_Shifts
+        Get Field_Current_Value Field JCCNTR.ShiftUnits to CC_ShiftUnits
+        Get Field_Current_Value Field JCCNTR.UtilGoal to CC_UtilGoal
+
+        // determine decimal factor today is from the beginning date of current qtr
+        //Move (Get_Month(dToday)) to iMonth
+        Sysdate dToday
+        //If dToday GT 12/31/99 Move (dToday -693975) to dToday
+        //Move (Get_Year(dToday)) to iYear
+        Move (VDFQ_DateSegment(dToday,DS_YEAR)) to iYear
+        If Current_Qtr EQ 1 Move "0101" to sQtr_Begin_Date
+        If Current_Qtr EQ 2 Move "0401" to sQtr_Begin_Date
+        If Current_Qtr EQ 3 Move "0701" to sQtr_Begin_Date
+        If Current_Qtr EQ 4 Move "1001" to sQtr_Begin_Date
+        Append sQtr_Begin_Date iYear
+        Move sQtr_Begin_Date to dQtr_Begin_Date
+        Move ((dToday -(dQtr_Begin_Date-1))/91.315) to QPct
+
+        // apply decimal factor to determine prorated days and hours in current qtr.
+        Move ( (CC_Weekdays *52.18 /4) *QPct) to Work_Days_to_Date  // integer insures whole days
+        Move (Work_Days_to_Date *CC_Shifthrs *CC_Shifts *CC_Shiftunits *CC_Utilgoal) ;
+            to Prorated_Qtr_AvlHrs
+
+        Function_Return Prorated_Qtr_AvlHrs
+
+    End_Function
+
+    Function JccntrQ1_Act_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get Field_Current_Value Field JCCNTR.Q1_ChgHrs to ChgHrs
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr gt 1 Move Jccntr.Q1_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 1 to AvlHrs
+        Function_Return (ChgHrs /AvlHrs *100)
+    End_Function
+
+    Function JccntrQ2_Act_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 2 Function_Return
+        Get Field_Current_Value Field JCCNTR.Q2_ChgHrs to ChgHrs
+        If Current_Qtr ne 2 Move Jccntr.Q2_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 2 to AvlHrs
+        Function_Return (ChgHrs /AvlHrs *100)
+    End_Function
+
+    Function JccntrQ3_Act_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 3 Function_Return
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to ChgHrs
+        If Current_Qtr ne 3 Move Jccntr.Q3_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 3 to AvlHrs
+        Function_Return (ChgHrs /AvlHrs *100)
+    End_Function
+
+    Function JccntrQ4_Act_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 4 Function_Return
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to ChgHrs
+        Get JccntrProrate_AvlHrs 4 to AvlHrs
+        Function_Return (ChgHrs /AvlHrs *100)
+    End_Function
+
+    Function JccntrYTD_Act_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number Q1_AvlHrs Q2_AvlHrs Q3_AvlHrs Q4_AvlHrs
+        Number Q1_ChgHrs Q2_ChgHrs Q3_ChgHrs Q4_ChgHrs
+        Number AvlHrs ChgHrs
+        Get JccntrQ1_AvlHrs to Q1_AvlHrs
+        Get JccntrQ2_AvlHrs to Q2_AvlHrs
+        Get JccntrQ3_AvlHrs to Q3_AvlHrs
+        Get JccntrQ4_AvlHrs to Q4_AvlHrs
+        Get Field_Current_Value Field JCCNTR.Q1_ChgHrs to Q1_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q2_ChgHrs to Q2_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to Q3_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q4_ChgHrs to Q4_ChgHrs
+        Move (Q1_AvlHrs +Q2_AvlHrs +Q3_AvlHrs +Q4_AvlHrs) to AvlHrs
+        Move (Q1_ChgHrs +Q2_ChgHrs +Q3_ChgHrs +Q4_ChgHrs) to ChgHrs
+        Function_Return (ChgHrs /AvlHrs *100)
+    End_Function
+
+    Function JccntrPrevYr_Act_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Get Field_Current_Value Field JCCNTR.Prevyr_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Prevyr_AvlHrs to AvlHrs
+        Function_Return (ChgHrs /AvlHrs *100)
+    End_Function
+
+    Function JccntrQ1_Adj_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number ChgHrs NcHrs
+        Get Field_Current_Value Field JCCNTR.Q1_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q1_NcHrs  to NcHrs
+        Function_Return (ChgHrs /(ChgHrs +NcHrs) *100)
+    End_Function
+
+    Function JccntrQ2_Adj_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number ChgHrs NcHrs
+        Get Field_Current_Value Field JCCNTR.Q2_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q2_NcHrs  to NcHrs
+        Function_Return (ChgHrs /(ChgHrs +NcHrs) *100)
+    End_Function
+
+    Function JccntrQ3_Adj_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number ChgHrs NcHrs
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q3_NcHrs  to NcHrs
+        Function_Return (ChgHrs /(ChgHrs +NcHrs) *100)
+    End_Function
+
+    Function JccntrQ4_Adj_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number ChgHrs NcHrs
+        Get Field_Current_Value Field JCCNTR.Q4_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q4_NcHrs  to NcHrs
+        Function_Return (ChgHrs /(ChgHrs +NcHrs) *100)
+    End_Function
+
+    Function JccntrYTD_Adj_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number Q1_NcHrs Q2_NcHrs Q3_NcHrs Q4_NcHrs
+        Number Q1_ChgHrs Q2_ChgHrs Q3_ChgHrs Q4_ChgHrs
+        Number NcHrs ChgHrs
+        Get Field_Current_Value Field Jccntr.Q1_NcHrs to Q1_NcHrs
+        Get Field_Current_Value Field Jccntr.Q2_NcHrs to Q2_NcHrs
+        Get Field_Current_Value Field Jccntr.Q3_NcHrs to Q3_NcHrs
+        Get Field_Current_Value Field Jccntr.Q4_NcHrs to Q4_NcHrs
+        Get Field_Current_Value Field JCCNTR.Q1_ChgHrs to Q1_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q2_ChgHrs to Q2_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to Q3_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q4_ChgHrs to Q4_ChgHrs
+        Move (Q1_NcHrs +Q2_NcHrs +Q3_NcHrs +Q4_NcHrs) to NcHrs
+        Move (Q1_ChgHrs +Q2_ChgHrs +Q3_ChgHrs +Q4_ChgHrs) to ChgHrs
+        Function_Return (ChgHrs /(ChgHrs +NcHrs) *100)
+    End_Function
+
+    Function JccntrPrevYr_Adj_Util Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number ChgHrs NcHrs
+        Get Field_Current_Value Field JCCNTR.Prevyr_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Prevyr_NcHrs  to NcHrs
+        Function_Return (ChgHrs /(ChgHrs +NcHrs) *100)
+    End_Function
+
+    Function JccntrQ1_Lost_Hrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get Field_Current_Value Field JCCNTR.Q1_ChgHrs to ChgHrs
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr gt 1 Move Jccntr.Q1_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 1 to AvlHrs
+        Function_Return (AvlHrs -ChgHrs)
+    End_Function
+
+    Function JccntrQ2_Lost_Hrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 2 Function_Return
+        Get Field_Current_Value Field JCCNTR.Q2_ChgHrs to ChgHrs
+        If Current_Qtr ne 2 Move Jccntr.Q2_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 2 to AvlHrs
+        Function_Return (AvlHrs -ChgHrs)
+    End_Function
+
+    Function JccntrQ3_Lost_Hrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 3 Function_Return
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to ChgHrs
+        If Current_Qtr ne 3 Move Jccntr.Q3_AvlHrs to AvlHrs
+        Else Get JccntrProrate_AvlHrs 3 to AvlHrs
+        Function_Return (AvlHrs -ChgHrs)
+    End_Function
+
+    Function JccntrQ4_Lost_Hrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Integer Current_Qtr
+        Get QuarterInDate to Current_Qtr
+        If Current_Qtr lt 4 Function_Return
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to ChgHrs
+        Get JccntrProrate_AvlHrs 4 to AvlHrs
+        Function_Return (AvlHrs -ChgHrs)
+    End_Function
+
+    Function JccntrYTD_Lost_Hrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number Q1_AvlHrs Q2_AvlHrs Q3_AvlHrs Q4_AvlHrs
+        Number Q1_ChgHrs Q2_ChgHrs Q3_ChgHrs Q4_ChgHrs
+        Number AvlHrs ChgHrs
+        Get JccntrQ1_AvlHrs to Q1_AvlHrs
+        Get JccntrQ2_AvlHrs to Q2_AvlHrs
+        Get JccntrQ3_AvlHrs to Q3_AvlHrs
+        Get JccntrQ4_AvlHrs to Q4_AvlHrs
+        Get Field_Current_Value Field JCCNTR.Q1_ChgHrs to Q1_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q2_ChgHrs to Q2_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q3_ChgHrs to Q3_ChgHrs
+        Get Field_Current_Value Field JCCNTR.Q4_ChgHrs to Q4_ChgHrs
+        Move (Q1_AvlHrs +Q2_AvlHrs +Q3_AvlHrs +Q4_AvlHrs) to AvlHrs
+        Move (Q1_ChgHrs +Q2_ChgHrs +Q3_ChgHrs +Q4_ChgHrs) to ChgHrs
+        Function_Return (AvlHrs -ChgHrs)
+    End_Function
+
+    Function JccntrPrevYr_Lost_Hrs Returns Number
+        If not (Current_Record(Self)) Function_Return
+        Number AvlHrs ChgHrs
+        Get Field_Current_Value Field JCCNTR.Prevyr_ChgHrs to ChgHrs
+        Get Field_Current_Value Field JCCNTR.Prevyr_AvlHrs to AvlHrs
+        Function_Return (AvlHrs -ChgHrs)
+    End_Function
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use JCCNTR.SL
+#ENDIF

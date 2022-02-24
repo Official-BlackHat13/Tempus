@@ -1,0 +1,17 @@
+#REPLACE FILE21 Weblog
+#REPLACE Weblog.Recnum |FN21,0
+#REPLACE Weblog.WeblogIdno |FN21,1
+#REPLACE Weblog.HitDate |FD21,2
+#REPLACE Weblog.HitHr |FN21,3
+#REPLACE Weblog.HitMin |FN21,4
+#REPLACE Weblog.HitSec |FN21,5
+#REPLACE Weblog.Success |FN21,6
+#REPLACE Weblog.EmployeeIdno |FN21,7
+#REPLACE Weblog.PIN |FN21,8
+#REPLACE Weblog.TransType |FN21,9
+#REPLACE Weblog.JobNumber1 |FS21,10
+#REPLACE Weblog.EquipmentIdno |FS21,11
+#REPLACE Weblog.JobNumber2 |FS21,12
+#REPLACE Weblog.MaterialIdno |FS21,13
+#REPLACE Weblog.MaterialQty |FS21,14
+#REPLACE Weblog.CallerId |FS21,15

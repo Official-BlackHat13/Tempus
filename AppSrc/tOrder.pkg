@@ -1,0 +1,53 @@
+// tOrder.pkg
+Use tOrderDtl.pkg
+
+Struct tOrder
+    integer    iRecId
+    Integer    iJobNumber
+    Integer    iCustIdno
+    Integer    iLocIdno
+    String     sTitle
+    String     sWorkType
+    String     sPlanner
+    Decimal    nEstHrs
+    Date       dOpen
+    Date       dClose
+    Date       dScheduledOpen
+    Date       dScheduledClose
+    String     sDescription
+    String     sSpecification
+    Integer    iChangedFlag
+    Integer    iQuoteReference
+    Number     nQuoteAmount
+    String     sOrganization
+    Integer    iProjectId
+    Integer    iPO_Flag
+    String     sPONumber    
+    String     sLocationName
+    String     sPropertyManager
+    Integer    iRoundingExempt
+    Date       dSalesInvoiceOK
+    Date       dOpsCostOK
+    Date       dPromiseDate
+    Integer    iRepIdno
+    String     sBillingType
+    String     Division
+    Integer    iInvoiceOnly
+    Integer    iCEPM_JobNumber
+    String     sStatus
+    Number     nOrderSubTotal
+    Number     nOrderTaxTotal
+    Number     nOrderTotalAmount
+    Integer    iLockedFlag
+    Integer    iEsheadReference
+    Number     nEsheadAmount
+    Number     nEstHoursTotal
+    Integer    iOpsCostOkFlag
+    Integer    iSalesInvoiceOkFlag
+    Integer    iDistrFlag
+    Integer    iLineItemCount
+    Integer    iLineItemReqCount
+    Integer    iLineItemCompCount
+    Integer    iWriteOffFlag
+    tOrderDtl[] tOrderDtl
+End_Struct

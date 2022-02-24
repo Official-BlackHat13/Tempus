@@ -1,0 +1,46 @@
+// Class Name: System_DataDictionary
+// Revision  : 17
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open System
+
+
+Class System_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To System.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Field-based properties.......................
+
+
+        Set Field_Option Field System.State DD_CAPSLOCK to True
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // System_DataDictionary
+

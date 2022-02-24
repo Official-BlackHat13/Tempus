@@ -1,0 +1,68 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Employer (# 4)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Employer
+  USER DISPLAY NAME         : Employer
+  DATAFLEX FILE NAME        : Employer
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16966     ( USED: 16966 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 196 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  EmployerIdno     NUM   10.0     1  1   
+  2  Name             ASC     60    12  2   
+  3  Main_contact     ASC     40    72      
+  4  Address1         ASC     50   112      
+  5  Address2         ASC     50   162      
+  6  City             ASC     35   212      
+  7  State            ASC      2   247      
+  8  Zip              ASC     10   249      
+  9  Phone1           ASC     14   259      
+ 10  PhoneType1       ASC      1   273      
+ 11  Phone2           ASC     14   274      
+ 12  PhoneType2       ASC      1   288      
+ 13  Phone3           ASC     14   289      
+ 14  PhoneType3       ASC      1   303      
+ 15  EmailAddress     ASC     50   304      
+ 16  URL              ASC     50   354      
+ 17  PhoneExt1        ASC      6   404      
+ 18  PhoneExt2        ASC      6   410      
+ 19  PhoneExt3        ASC      6   416      
+ 20  Status           ASC      1   422      
+ 21  ChangedFlag      NUM    5.0   423  3   
+ 22  ManagedBy        NUM   10.0   429      
+ 23  RecordOwner      NUM   10.0   440      
+ 24  GLInsExpDate     DAT     10   451      
+ 25  AutoInsExpDate   DAT     10   474      
+ 26  WorkCompInsDate  DAT     10   497      
+ 27  ContractSignedFlag  NUM    5.0   520      
+ 28  NotifyFlag       NUM    5.0   526      
+ 29  LastTimeNotifyed  DAT     10   532      
+ 30  Notes            TEX    512   555      
+ 31  W9Flag           NUM    5.0 16938      
+ 32  VerificationFlag  NUM    5.0 16944      
+ 33  TruckingOnlyFlag  NUM    5.0 16950      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    EmployerIdno    NO  NO       0      0       1     ON-LINE
+
+  2    Name            NO  NO       0      0       2     ON-LINE
+       EmployerIdno    NO  NO 
+
+  3    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       EmployerIdno    NO  NO 
+

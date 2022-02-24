@@ -1,0 +1,27 @@
+Use cGlblDataDictionary.pkg
+
+Open Prospect
+Open System
+Open SalesRep
+
+Class cProspectGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to Prospect.File_Number
+
+        Set Add_Client_File to SalesRep.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Field_Auto_Increment Field Prospect.Prospect_Idno to File_Field System.LastProspect
+
+        Set Field_Option Field Prospect.State DD_CAPSLOCK to True
+
+        Set Field_Mask Field Prospect.OfficePhone to " "
+
+        Set Field_Mask Field Prospect.MobilePhone to " "
+
+    End_Procedure
+
+End_Class

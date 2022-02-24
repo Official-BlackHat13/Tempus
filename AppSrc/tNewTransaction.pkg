@@ -1,0 +1,35 @@
+// tNewTransaction.pkg
+
+Struct tNewTransaction
+    Integer iTransIdno
+    Integer iJobNumber
+    Integer iEmployeeIdno
+    Integer iOpersIdno
+    String  sStartTime
+    Date    dStartDate
+    Integer iStartHr
+    Integer iStartMin
+    String  sStopTime
+    Date    dStopDate
+    Integer iStopHr
+    Integer iStopMin
+    Integer iQuantity
+    String  sEquipmentID
+    Integer iArea
+    Integer iEquipIdno
+    String  sCallerId
+    String  sCallerId_Out
+    String  sGPSLat_In
+    String  sGPSLong_In
+    String  sGPSLat_Out
+    String  sGPSLong_Out
+    Integer iEmployerIdno
+    Number  nCurrentLaborRate
+    Number  nCurrentContractorRate
+    Number  nCurrentSellRate
+    Integer iAttachEquipIdno
+    Number  nCurrAttachContrRate
+    Integer iAttachOpersIdno
+    Integer iAttachMastOpsIdno
+    String sComment
+End_Struct

@@ -1,0 +1,256 @@
+Use Windows.pkg
+Use cGlblReportView.pkg
+Use File_Dlg.Pkg
+Use cGlblForm.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblRadio.pkg
+Use cTextEdit.pkg
+Use cGlblButton.pkg
+Use cDRReport.pkg
+Use DRModalPreview.dg
+Use DRStatuspanel.dg
+
+Use Equipmnt.DD
+
+ACTIVATE_VIEW Activate_oEquipmentListReportView FOR oEquipmentListReportView
+
+Object oEquipmentListReportView Is A cGlblReportView
+    Set Label to "EquipmentList"
+    Set Border_Style to Border_Thick
+
+    Property Integer piEmplrIdno
+    Property String psEquipStatus
+    Property String  psFilePath
+    Property String  psFileName
+
+    Object oEQUIPMNT_DD is a Equipmnt_DataDictionary
+    End_Object
+
+    Object oReport is a cDRReport
+        Set pePreviewStyle to C_DRPREVIEW_MODAL
+        Set phoPreviewContainer to oDRModalPreview
+        Set pbShowStatusPanel to True
+        Set phoStatusPanel to oDRStatusPanel
+
+        Set psReportName to "EquipmentList.dr"
+
+        Procedure OnInitializeReport
+            String sReportId sEmplrIdno sEquipStatus
+            Integer eOutputDeviceMode
+
+            Forward Send OnInitializeReport
+            Get piEmplrIdno to sEmplrIdno
+            Get psEquipStatus to sEquipStatus
+            // Convert from the ReportView Output_Device_Mode to peOutputDestination
+            Get Output_Device_Mode to eOutputDeviceMode
+            Set peOutputDestination to eOutputDeviceMode
+            Set psFilePath to (psHome(phoWorkspace(ghoApplication))+'Reports\Cache\')
+            Set psFileName to ("Emplr#"+sEmplrIdno+"-EquipmentList.pdf")
+            Set psExportFileName to (psFilePath(Self)+psFileName(Self))
+            Set peExportType to C_drPDF
+
+            Get psReportId to sReportId
+
+            Send ChangeODBCDataSource sReportId
+            Send SetFunctions
+            Send SetFilters
+            Send SetSortFields
+            Send SetParameters
+        End_Procedure
+
+        Procedure SetFunctions
+            String sFunctionBody sReportId sSubReportId
+
+            Get psReportId to sReportId
+
+            Get psFunction sReportId "EquipmentStatus" to sFunctionBody
+            // ToDo:  Write code to set the function body (return etc) for function "EquipmentStatus"
+            Set psFunction sReportId "EquipmentStatus" to sFunctionBody
+        End_Procedure
+
+
+        // Activate the code inside this method if you want to change the database connection
+        Procedure ChangeODBCDataSource String sReportId
+            String sConnectionString sDSN sSubReportId
+            Integer iSubReports iSubReport
+
+            Get psDatabaseConnection sReportId to sConnectionString
+            Get psDatabaseName sReportId to sDSN
+            // ToDo: Change the contents of sDSN and/or sConnectionString
+            Set psDatabaseConnection sReportId to sConnectionString
+            Set psDatabaseName sReportId to sDSN
+
+            Get SubReportCount sReportId to iSubReports
+            Decrement iSubReports
+            For iSubReport from 0 to iSubReports
+                Get SubReportId sReportId iSubReport to sSubReportId
+                Send ChangeODBCDataSource sSubReportId
+            Loop
+        End_Procedure
+
+
+        // In this routine we find the code that sets the parameter values. The values
+        // for the parameters can be retrieved from an input control or from own coding.
+        Procedure SetParameters
+            String sReportId
+            Integer iParameter
+            String sEmployerIdno
+            String sEquipmentStatus
+
+            Get Value of oEmployerIdnoParameterForm to sEmployerIdno
+            If (piEmplrIdno(Self)<>0) Begin
+                Get piEmplrIdno to sEmployerIdno
+            End
+            Get psReportId to sReportId
+            Get ParameterIdByName sReportId "EmployerIdno" to iParameter
+            Set psParameterValue sReportId iParameter to sEmployerIdno
+
+            Get Value of oEquipmentStatusParameterForm to sEquipmentStatus
+            If (Length(Trim(psEquipStatus(Self)))>0) Begin
+                Get psEquipStatus to sEquipmentStatus
+            End
+            Get psReportId to sReportId
+            Get ParameterIdByName sReportId "EquipmentStatus" to iParameter
+            Set psParameterValue sReportId iParameter to sEquipmentStatus
+        End_Procedure
+
+        Procedure SetFilters
+            String sReportId
+            // You can use the method AddFilter to add a filter or set the filter via psFilterFunction
+
+            Get psReportId to sReportId
+        End_Procedure
+
+        Procedure SetSortFields
+
+        End_Procedure
+    End_Object
+
+    Object oParametersGroup Is A cGlblGroup
+        Set Label to "Parameters"
+        Set Location to 5 5
+
+        Object oEmployerIdnoParameterForm Is A cGlblForm
+            Set Size to 13 76
+            Set Location to 10 66
+            Set Label_Justification_Mode to jMode_Left
+            Set Label_Col_Offset to 60
+            Set Label to "EmployerIdno"
+            Set psToolTip to "Select EmployerIdno"
+            Set Status_Help to 'Parameter Field "EmployerIdno" Value'
+            Set Numeric_Mask 0 to 10 0
+            Set piMaxSize to 13 70
+            Set piMinSize to 13 20
+        End_Object
+
+        Object oEquipmentStatusParameterForm Is A cGlblForm
+            Set Size to 13 13
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Left
+            Set Label_Col_Offset to 60
+            Set Label to "Equipment Status"
+            Set psToolTip to "Select EquipmentStatus"
+            Set Status_Help to 'Parameter Field "Equipment Status" Value'
+            Set Form_Margin to 1
+            Set piMaxSize to 13 7
+            Set piMinSize to 13 2
+            Set Form_Datatype to Ascii_Window
+        End_Object
+        Set Size to 44 147
+    End_Object
+
+
+    Object oDestinationGroup Is A cGlblRadioGroup
+        Set Label to "Output destination"
+        Set Location to 54 5
+        Set Size to 46 77
+        Set peAnchors to anBottomLeft
+
+        Object oScreenRadio Is A cGlblRadio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object
+
+        Object oPrinterRadio Is A cGlblRadio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object
+
+        Object oExportRadio Is A cGlblRadio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file (PDF, CSV, Image, HTML, Excel, RTF)"
+        End_Object
+
+        Procedure Notify_Select_State Integer iNewItem Integer iOldItem
+            Forward Send Notify_Select_State iNewItem iOldItem
+
+            Case Begin
+                Case (iNewItem = 0)
+                    Set Output_Device_Mode to PRINT_TO_WINDOW
+                    Case Break
+                Case (iNewItem = 1)
+                    Set Output_Device_Mode to PRINT_TO_PRINTER
+                    Case Break
+                Case (iNewItem = 2)
+                    Set Output_Device_Mode to PRINT_TO_FILE
+                    Case Break
+            Case End
+        End_Procedure
+    End_Object
+
+    Object oPrintButton Is A cGlblButton
+        Set Label to "&Print"
+        Set Status_Help to "Print the report"
+        Set Size to 14 50
+        Set Location to 105 47
+        Set Default_State to True
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send RunReport Of oReport
+        End_Procedure
+    End_Object
+
+    Object oCancelButton Is A cGlblButton
+        Set Label to "&Cancel"
+        Set Size to 14 50
+        Set Location to 105 102
+        Set Status_Help to "Cancel this Panel"
+        Set peAnchors to anBottomRight
+
+        // This procedure closes the report view.
+        Procedure OnClick
+            Send Request_Cancel
+        End_Procedure
+    End_Object
+
+    Procedure DoExportReport Integer iEmplrIdno String sStatus String ByRef sFilePath String ByRef sExportFileName Boolean bOpen
+        Set piEmplrIdno to iEmplrIdno
+        Set psEquipStatus to sStatus
+        Set Output_Device_Mode to PRINT_TO_FILE
+        Send RunReport of oReport
+        Set piEmplrIdno to 0
+        Set psEquipStatus to ''
+        //
+        Get psFilePath to sFilePath
+        Get psFileName to sExportFileName
+        // Open?
+        If (bOpen) Begin
+            //Get psExportFileName of oReport to sExportFileName
+            Runprogram Shell Background (sFilePath+sExportFileName)
+        End
+    End_Procedure
+
+    On_Key Key_Alt+Key_C Send KeyAction of oCancelButton
+    On_Key Key_Alt+Key_P Send KeyAction of oPrintButton
+
+    Set Location to 6 6
+    Set Size to 122 157
+    Set piMinSize to 122 157
+End_Object

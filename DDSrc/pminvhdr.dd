@@ -1,0 +1,76 @@
+Use cGlblDataDictionary.pkg
+
+Open pminvhdr
+Open pminvdtl
+Open Order
+Open System
+Open Quotehdr
+Open Contact
+
+Register_Object pminvhdr_sl
+
+Class pminvhdr_DataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to pminvhdr.File_Number
+
+        Set Add_Server_File to Order.File_Number
+        Set Add_Server_File to Contact.File_Number
+
+        Set Add_Client_File to pminvdtl.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_New_Save
+        Set Add_System_File to Quotehdr.File_Number DD_Lock_On_New_Save
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_DISPLAYONLY to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_DISPLAYONLY to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field pminvhdr.InvoiceNumber to File_Field System.LastInvoiceHdr
+        Set Field_Option Field pminvhdr.InvoiceNumber DD_AUTOFIND to True
+        Set Field_Prompt_Object Field pminvhdr.InvoiceNumber to pminvhdr_sl
+        Set Key_Field_State Field pminvhdr.InvoiceNumber to True
+
+        Set Field_Prompt_Object Field pminvhdr.JobNumber to pminvhdr_sl
+        Set Key_Field_State Field pminvhdr.JobNumber to True
+
+        Set Field_Prompt_Object Field pminvhdr.QuoteHdrID to pminvhdr_sl
+
+        Set Field_Option Field pminvhdr.QuoteDate DD_DISPLAYONLY to True
+
+        Set Field_Option Field pminvhdr.OrderDate DD_DISPLAYONLY to True
+
+        Set Field_Option Field pminvhdr.Amount DD_DISPLAYONLY to True
+
+        Set Field_Option Field pminvhdr.NextLineNo DD_DISPLAYONLY to True
+
+        Set Field_Option Field pminvhdr.LineCount DD_DISPLAYONLY to True
+
+    End_Procedure
+
+    Procedure Creating
+        Date dToday
+        Forward Send Creating
+        Sysdate dToday 
+        Move dToday to pminvhdr.InvoiceDate
+    End_Procedure
+
+//    Procedure Update
+//        Forward Send Update
+//        Move Location.CustomerIdno    to pminvhdr.CustomerIdno
+//        Move Location.LocationIdno    to pminvhdr.LocationIdno
+//    End_Procedure   // Update
+
+End_Class
+
+
+#IFDEF Is$WebApp
+#ELSE
+Use pminvhdr.sl
+#ENDIF

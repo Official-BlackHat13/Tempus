@@ -1,0 +1,7 @@
+#REPLACE FILE135 Zip_Long_Lat1
+#REPLACE Zip_Long_Lat1.Recnum |FN135,0
+#REPLACE Zip_Long_Lat1.ZipCode |FN135,1
+#REPLACE Zip_Long_Lat1.City |FS135,2
+#REPLACE Zip_Long_Lat1.State |FS135,3
+#REPLACE Zip_Long_Lat1.Longitude |FN135,4
+#REPLACE Zip_Long_Lat1.Latitude |FN135,5

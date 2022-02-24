@@ -1,0 +1,13 @@
+#REPLACE FILE83 Terms
+#REPLACE Terms.Recnum |FN83,0
+#REPLACE Terms.Terms |FS83,1
+#REPLACE Terms.DueDays |FN83,2
+#REPLACE Terms.DiscountDay |FN83,3
+#REPLACE Terms.DiscountPercent |FN83,4
+#REPLACE Terms.DayOfMonthDue |FN83,5
+#REPLACE Terms.DueNextMonthDays |FN83,6
+#REPLACE Terms.DiscountDayOfMonth |FN83,7
+#REPLACE Terms.DiscountPercentOfMonth |FN83,8
+#REPLACE Terms.Status |FS83,9
+#REPLACE Terms.QBTermsRefListId |FS83,10
+#REPLACE Terms.ChangedFlag |FN83,11

@@ -1,0 +1,39 @@
+Use cWebService.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+
+Object oValidateLocation is a cWebService
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Set Main_DD to oLocation_DD
+    
+    // psDocumentation provides high level documentation of your web service. 
+    // Clients using this service will see and use this documentation. 
+    Set psDocumentation to "Location Validation Web Service"
+
+    { Published = True  }
+    { Description = "Location Validation"  }
+    Function IsValidLocation Integer iLocationIdno Returns Boolean
+        Integer hoDD
+        //
+        Get Main_DD to hoDD
+        Send Clear of hoDD
+        Move iLocationIdno to Location.LocationIdno
+        Send Find of hoDD EQ 1
+        Function_Return (Found)
+    End_Function
+
+End_Object
+
+

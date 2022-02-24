@@ -1,0 +1,61 @@
+/*------------------------------
+    LOOKUP STYLE
+-------------------------------*/	
+
+.VdfLookup {
+    border: 1px solid #ccc;
+    }
+
+.VdfLookup th{
+    border: 1px solid white;
+    color: #466381;
+    background: #cee3ef;
+    }
+	
+.VdfLookup .VdfHeaderIndex {
+    text-decoration: underline;
+    cursor: pointer;
+    } 
+
+.VdfLookup .VdfHeaderSelected {
+	text-decoration: underline; 
+	cursor: pointer; 
+	color: #466381; 
+	background: #cee3ef; 
+	font-style: italic;
+}
+
+.VdfLookup .VdfHeaderSelected.ReverseSort {
+	text-decoration: underline; 
+	cursor: pointer; 
+	color: #ffffff; 
+	background: #cee3ef; 
+	font-style: italic;
+}
+
+.VdfLookup td{
+    cursor: pointer;
+}
+	
+.VdfLookup .VdfRowMouseOver {
+    background: #66FFFF;
+}
+	
+.VdfLookup .VdfRowEven{
+    background-color: #f0f0ff;
+}
+
+.VdfLookup .VdfRowOdd{
+}
+
+.VdfLookup .VdfRowSelected {
+    background: #466381;
+    color: #efefef;
+}
+
+.VdfLookupJumper {
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+}

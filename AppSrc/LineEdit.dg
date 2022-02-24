@@ -1,0 +1,86 @@
+// LineEdit.DG
+Use GlobalAllEnt.pkg
+
+Object LineNumberDialog is a ModalPanel
+
+    property integer piLineNumber 0
+
+    Set Minimize_Icon to FALSE
+    Set Label to "Editing line number . . ."
+    Set Location to 26 79
+    Set Size to 69 151
+    Set Locate_Mode to CENTER_ON_PANEL
+
+    Object LineNumberPrompt is a cGlblTextbox
+        Set Label to "Enter a new number"
+        Set FontSize to 4 0
+        Set Size to 10 66
+        Set Location to 10 51
+    End_Object    // LineNumberPrompt
+
+    Object LineNumberForm is a cGlblForm
+
+        //AB-StoreTopStart
+        on_key kEnter  send AcceptOk
+        on_key kCancel send Close_Panel
+        //AB-StoreTopEnd
+
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Size to 13 40
+        Set Location to 28 56
+
+        //AB-StoreStart
+        Set numeric_mask item 0 to 6 0 "*,"
+
+        procedure LineNumberValue
+            local integer iLineNumber
+            get Value item 0 to iLineNumber
+            set piLineNumber to iLineNumber
+        end_procedure
+
+        procedure AcceptOk
+            delegate send AcceptOk
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // LineNumberForm
+
+    Object oOK_bn is a cGlblButton
+
+        //AB-StoreTopStart
+
+        //AB-StoreTopEnd
+
+        Set Label to "&OK"
+        Set Location to 49 51
+
+        //AB-StoreStart
+        procedure OnClick
+            send AcceptOk
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oOK_bn
+
+
+    //AB-StoreStart
+    procedure AcceptOk
+        send LineNumberValue of LineNumberForm
+        send Close_Panel
+    end_procedure
+
+    function NewLineNumber integer iOldline returns integer
+        //
+        integer iLineNumber
+        //
+        set piLineNumber to iOldline
+        set Value of (LineNumberForm(self)) item 0 to iOldline
+        send Popup_Modal
+        get piLineNumber to iLineNumber
+        function_return iLineNumber
+    end_function
+    //AB-StoreEnd
+
+End_Object    // LineNumberDialog
+

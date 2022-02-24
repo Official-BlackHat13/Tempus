@@ -1,0 +1,928 @@
+// ItemDialog.dg
+
+// Register all objects
+Register_Object CloseButton
+Register_Object oItemContainer
+Register_Object Escomp_DD
+Register_Object Eshead_DD
+Register_Object oItemDialog
+Register_Object Item_Calc_Flags
+Register_Object Item_Line_Number
+Register_Object Item_Calc_Units1
+Register_Object Item_Calc_Units2
+Register_Object Item_Calc_Units3
+Register_Object Item_DD
+Register_Object Item_Est_$1
+Register_Object Item_Est_$2
+Register_Object Item_Est_$3
+Register_Object Item_Sell_1
+Register_Object Item_Sell_2
+Register_Object Item_Sell_3
+Register_Object Item_Prod_Units1
+Register_Object Item_Prod_Units2
+Register_Object Item_Prod_Units3
+Register_Object Item_Table_Std1
+Register_Object Item_Table_Std2
+Register_Object Item_Table_Std3
+Register_Object Jccntr_DD
+Register_Object Jccntr_Fullrate
+Register_Object Jccntr_Sell_Rate
+Register_Object Jcdept_DD
+Register_Object Jcoper_Calc_Std_Desc
+Register_Object Jcoper_Calc_Units_Desc
+Register_Object Jcoper_DD
+Register_Object Jcoper_Table_Std_Desc
+Register_Object TableButton
+Register_Object VariableButton
+
+Use DFAllEnt.pkg
+
+Use CLCENGIN.PKG
+Use VariablesDialog.dg
+use TableDialog.dg
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use Jcoper.dd
+// Order Maintenence
+#IFDEF CE_PRODUCTION
+Use Jcreps.dd
+Use Jccust.dd
+Use Jccrep.dd
+Use Jcorep.dd
+Use Jccntc.dd
+Use Jcprod.dd
+Use Jcjobs.dd
+Use Esjcmp.dd
+Use Esjitm.dd
+#ENDIF // #IFDEF CE_PRODUCTION
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+Use Eshead.dd
+Use Escomp.dd
+Use Esitem.dd
+#ENDIF // #IFDEF CE_CALC_ESTIMATE
+// component library
+#IFDEF CE_CALC_LIBRARY
+Use Esctyp.dd
+Use Esclib.dd
+Use Eslitm.dd
+#ENDIF // #IFDEF CE_CALC_LIBRARY
+
+//AB-IgnoreEnd
+
+object oItemDialog is a dbModalPanel
+
+    //AB-StoreTopStart
+    property integer phItemDD      0
+    property integer piItemFile    0
+    property integer piOpcodeField 0
+    //
+    property boolean pbLocked      FALSE
+    property boolean pbReadOnly    FALSE
+
+    set Locate_Mode to CENTER_ON_PANEL
+    //AB-StoreTopEnd
+
+    Set Label to "Item Calculations"
+    // Visual DataFlex 14.0 Client Size Adjuster, modified May 23, 2008: 14:36:01
+//    Set Size to 143 368
+    Set Size to 127 363
+    Set Location to 7 11
+
+    //AB-DDOStart
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(Current_Object))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to (Jccntr_DD(Current_Object))
+
+        //AB-StoreStart
+        Procedure InitializeEstimatingStandard
+            set Field_Changed_Value field Jcoper.Est_std to "Y"
+        End_Procedure
+        //AB-StoreEnd
+
+    End_Object    // Jcoper_DD
+
+    // Order Maintenance
+    #IFDEF CE_PRODUCTION
+
+    Object Jcreps_DD is a Jcreps_DataDictionary
+    End_Object    // Jcreps_DD
+
+    Object Jccust_DD is a Jccust_DataDictionary
+        Set DDO_Server to (Jcreps_DD(self))
+    End_Object    // Jccust_DD
+
+    Object Jccrep_DD is a Jccrep_DataDictionary
+    End_Object    // Jccrep_DD
+
+    Object Jcorep_DD is a Jcorep_DataDictionary
+    End_Object    // Jcorep_DD
+
+    Object Jccntc_DD is a Jccntc_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jccrep_DD(self))
+    End_Object    // Jccntc_DD
+
+    Object Jcprod_DD is a Jcprod_DataDictionary
+    End_Object    // Jcprod_DD
+
+    Object Jcjobs_DD is a Jcjobs_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jcprod_DD(self))
+        Set DDO_Server to (Jcorep_DD(self))
+        Set DDO_Server to (Jccntc_DD(self))
+    End_Object    // Jcjobs_DD
+
+    Object Esjcmp_DD is a Esjcmp_DataDictionary
+        set DDO_Server to (Jcjobs_DD(self))
+    End_Object    // Esjcmp_DD
+
+    Object Esjitm_DD is a Esjitm_DataDictionary
+
+        //AB-StoreTopStart
+        //AB-StoreTopEnd
+
+        Set DDO_Server to (Esjcmp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+
+        //AB-StoreStart
+        procedure End_Construct_Object
+            integer iField
+            //
+            forward send End_Construct_Object
+            //
+            Get_FieldNumber Esjitm.Opcode to iField
+            //
+            set piItemFile    to Esjitm.File_number
+            set piOpcodeField to iField
+            set phItemDD      to self
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Esjitm_DD
+
+    Set Main_DD to (Esjitm_DD(self))
+    Set Server to (Esjitm_DD(self))
+
+    #ENDIF // #IFDEF CE_PRODUCTION
+    // Estimating
+    #IFDEF CE_CALC_ESTIMATE
+    
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object // oSalesTaxGroup_DD
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oCustomer_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oSalesTaxGroup_DD
+    End_Object // oLocation_DD
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object // oSalesRep_DD
+
+    Object oSnowrep_DD is a cSnowrepDataDictionary
+    End_Object // oSnowrep_DD
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oSnowrep_DD
+        Set DDO_Server to oSalesrep_DD
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oCustomer_DD
+    End_Object
+    
+    Object Eshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oLocation_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oSalesRep_DD
+        // this lets you save a new parent DD from within child DD
+        //Set Allow_Foreign_New_Save_State to True
+    End_Object    // Eshead_DD
+
+    Object Escomp_DD is a Escomp_DataDictionary
+        Set DDO_Server to (Eshead_DD(self))
+    End_Object    // Escomp_DD
+
+    Object Esitem_DD is a Esitem_DataDictionary
+        Set DDO_Server to (Escomp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+
+        procedure End_Construct_Object
+            integer iField
+            //
+            forward send End_Construct_Object
+            //
+            Get_FieldNumber Esitem.Opcode to iField
+            //
+            set piItemFile    to Esitem.File_number
+            set piOpcodeField to iField
+            set phItemDD      to self
+        end_procedure
+
+    End_Object    // Esitem_DD
+
+    Set Main_DD to (Esitem_DD(self))
+    Set Server to (Esitem_DD(self))
+    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+    // component library
+    #IFDEF CE_CALC_LIBRARY
+
+    Object Esctyp_DD is a Esctyp_DataDictionary
+    End_Object    // Esctyp_DD
+
+    Object Esclib_DD is a Esclib_DataDictionary
+        Set DDO_Server to (Esctyp_DD(self))
+    End_Object    // Esclib_DD
+
+    Object Eslitm_DD is a Eslitm_DataDictionary
+
+        //AB-StoreTopStart
+        //AB-StoreTopEnd
+
+        Set DDO_Server to (Esclib_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+
+        //AB-StoreStart
+        procedure End_Construct_Object
+            integer iField
+            //
+            forward send End_Construct_Object
+            //
+            Get_FieldNumber Eslitm.Opcode to iField
+            //
+            set piItemFile    to Eslitm.File_number
+            set piOpcodeField to iField
+            set phItemDD      to self
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Eslitm_DD
+
+    Set Main_DD to (Eslitm_DD(self))
+    Set Server to (Eslitm_DD(self))
+
+    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+    //AB-DDOEnd
+
+    Object oItemContainer is a dbGroup
+
+        Set Size to 105 356
+        Set Location to 0 5
+
+        Object Jccntr_Fullrate is a dbForm
+            Entry_Item Jccntr.Fullrate
+            Set Label to "CC Rates: Cost"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 35
+            Set Location to 10 140
+        End_Object    // Jccntr_Fullrate
+
+        Object Jccntr_Sell_rate is a dbForm
+            Entry_Item Jccntr.Sell_Rate
+            Set Label to "Sell"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 35
+            Set Location to 10 195
+        End_Object    // Jccntr_Sell_rate
+
+        Object Item_Calc_Flags is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Calc_flags
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Calc_flags
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Calc_flags
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label to "Flags"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 30
+            Set Location to 10 260
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Calc_Flags
+
+        Object Item_Line_Number is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Line_number
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Line_number
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Line_number
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            set label to "Line #"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 26
+            Set Location to 10 320
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Line_Number
+
+        Object Jcoper_Calc_Units_Desc is a dbForm
+            Entry_Item Jcoper.Calc_units_desc
+            Set Label to "Calc Units ="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 80
+            Set Location to 25 50
+        End_Object    // Jcoper_Calc_Units_Desc
+
+        Object Item_Calc_Units1 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Calc_units1
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Calc_units1
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Calc_units1
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 25 140
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Calc_Units1
+
+        Object Item_Calc_Units2 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Calc_units2
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Calc_units2
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Calc_units2
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 25 210
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Calc_Units2
+
+        Object Item_Calc_Units3 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Calc_units3
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Calc_units3
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Calc_units3
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 25 280
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Calc_Units3
+
+        Object Jcoper_Table_Std_Desc is a dbForm
+            Entry_Item Jcoper.Table_std_desc
+            Set Label to "Table Std ="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 80
+            Set Location to 40 50
+        End_Object    // Jcoper_Table_Std_Desc
+
+        Object Item_Table_Std1 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Table_std1
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Table_std1
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Table_std1
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 140
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Table_Std1
+
+        Object Item_Table_Std2 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Table_std2
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Table_std2
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Table_std2
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 210
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Table_Std2
+
+        Object Item_Table_Std3 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Table_std3
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Table_std3
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Table_std3
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 40 280
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Table_Std3
+
+        Object Jcoper_Calc_Std_Desc is a dbForm
+            Entry_Item Jcoper.Calc_std_desc
+            Set Label to "Prod Units ="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 80
+            Set Location to 55 50
+        End_Object    // Jcoper_Calc_Std_Desc
+
+        Object Item_Prod_Units1 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Prod_units1
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Prod_units1
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Prod_units1
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 140
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Prod_Units1
+
+        Object Item_Prod_Units2 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Prod_units2
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Prod_units2
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Prod_units2
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 210
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Prod_Units2
+
+        Object Item_Prod_Units3 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Prod_units3
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Prod_units3
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Prod_units3
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 55 280
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Prod_Units3
+
+        Object Item_Est_$1 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Est_$1
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Est_$1
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Est_$1
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label to "Base Cost $ ="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 140
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Est_$1
+
+        Object Item_Est_$2 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Est_$2
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Est_$2
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Est_$2
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 210
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Est_$2
+
+        Object Item_Est_$3 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Est_$3
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Est_$3
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Est_$3
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 70 280
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Est_$3
+
+        Object Item_Sell_$1 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Sell_1
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Sell_1
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Sell_1
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label to "Base Sell $ ="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 140
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Sell_1
+
+        Object Item_Sell_$2 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Sell_2
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Sell_2
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Sell_2
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 210
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Sell_2
+
+        Object Item_Sell_3 is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Sell_3
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Sell_3
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Sell_3
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 66
+            Set Location to 85 280
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Esitem_Sell_3
+
+    End_Object    // oItemContainer
+
+    Object VariableButton is a Button
+        //AB-StoreTopStart
+        on_key kCancel send Close_Panel
+        //AB-StoreTopEnd
+        Set Label to "&Vars/Cons"
+        Set Size to 14 67
+        Set Location to 110 143
+        //AB-StoreStart
+        procedure OnClick
+            send DoVariables
+        end_procedure
+        //AB-StoreEnd
+    End_Object    // VariableButton
+
+    Object TableButton is a Button
+        //AB-StoreTopStart
+        on_key kCancel send Close_Panel
+        //AB-StoreTopEnd
+        Set Label to "&Table Values"
+        Set Size to 14 67
+        Set Location to 110 215
+        //AB-StoreStart
+        procedure OnClick
+            send DoTable
+        end_procedure
+        //AB-StoreEnd
+    End_Object    // TableButton
+
+    Object CloseButton is a Button
+        //AB-StoreTopStart
+        on_key kCancel send Close_Panel
+        //AB-StoreTopEnd
+        Set Label to "&Close"
+        Set Size to 14 67
+        Set Location to 110 286
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+    End_Object    // CloseButton
+
+
+    //AB-StoreStart
+    procedure DoVariables
+        integer iItemRec
+        //
+        get Current_Record of (Server(self)) to iItemRec
+        send DoDisplayVariables of oVariablesDialog iItemRec (pbLocked(self) or (pbReadOnly(self)))
+        //send SetDdoStructure to (EsitemDt(self)) iItemRec
+        //send Popup_Modal to (EsitemDt(self))
+    end_procedure
+
+    procedure DoTable
+        integer iOperRec
+        //
+        get Current_Record  of (Jcoper_DD(self)) to iOperRec
+        send DoDisplayTable of oTableDialog iOperRec
+        //send SetDdoStructure to (JcoperTable(self)) iOperRec
+        //send Popup_Modal to (JcoperTable(self))
+    end_procedure
+
+    //Procedure SetDdoStructure integer iItemRec
+    Procedure DoItemDetails integer iItemRec boolean bLocked
+        boolean bReadOnly
+        integer hDD iOpcode iFile iField
+        string  sLabel sCenter sDescription
+        //
+        set pbLocked to bLocked
+        get pbReadOnly of ghoApplication to bReadOnly
+        set pbReadOnly to bReadOnly
+        //
+        get piItemFile    to iFile
+        get piOpcodeField to iField
+        //
+        get Server          to hDD
+        send Clear          of hDD
+        send Find_By_Recnum of hDD iFile iItemRec
+        //
+        get Field_Current_Value      of hDD iField                     to iOpcode
+        get File_Field_Current_Value of hDD file_field Jccntr.Nickname to sCenter
+        get File_Field_Current_Value of hDD file_field Jcoper.Name     to sDescription
+        move (string(iOpcode) * "-" * sCenter * "-" * sDescription)    to sLabel
+        set Label                                                      to sLabel
+        //
+        send Popup_Modal
+    End_Procedure // SetDdoStructure
+
+    on_key Key_Alt+Key_V send KeyAction of VariableButton
+    on_key Key_Alt+Key_T send KeyAction of TableButton
+    on_key Key_Alt+Key_C send KeyAction to CloseButton
+    //AB-StoreEnd
+
+End_Object    // oItemDialog
+
+//AB/ End_Object    // prj
+

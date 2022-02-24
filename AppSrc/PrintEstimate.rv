@@ -1,0 +1,388 @@
+//PrintEstimate
+
+// Register all objects
+Register_Object oPrintEstimate
+Register_Object oEsheadEstimateIdGroup
+Register_Object oFromEsheadEstimateId
+Register_Object oToEsheadEstimateId
+Register_Object oDestinationGroup
+Register_Object oScreenRadio
+Register_Object oPrinterRadio
+Register_Object oFileRadio
+Register_Object oDetailsGroup
+Register_Object oDetailRadio
+Register_Object oSummaryRadio
+Register_Object oPrintButton
+Register_Object oCancelButton
+Register_Object oCrystalPrintEstimate
+
+
+
+
+
+Use DFAllEnt.pkg
+Use cCrystal.pkg
+
+Activate_View Activate_oPrintEstimate for oPrintEstimate
+
+Object oPrintEstimate is a ReportView
+    Set Label To "PrintEstimate"
+    
+    Property Integer piStart
+    Property Integer piStop
+    
+    
+    Object oEsheadEstimateIdGroup is a Group
+        Set Label to "Select Estimate Id"
+        Set Location to 5 5
+        
+        Object oFromEsheadEstimateId is a Form
+            Set Size to 13 67
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+            Set Prompt_Button_Mode to pb_PromptOn
+            Set Prompt_Object to oEstimate_sl
+            
+            // This procedure is called if Move_Value_Out_state is true, we use the SelectBestColumn
+            // function to retrieve the column for the passed file and field number. After retrieving
+            // the column we setup the list.
+            
+            Procedure Prompt_CallBack Integer hPrompt
+                Integer iColumn
+                // 56 and 1 are the file and field numbers for Eshead.ESTIMATE_ID
+                Get SelectBestColumn of hPrompt 56 1 to iColumn
+                Set peUpdateMode of hPrompt to umPromptValue
+                Set piUpdateColumn of hPrompt to iColumn
+                Set piInitialColumn of hPrompt to iColumn
+            End_Procedure // Prompt_CallBack
+            
+            
+        End_Object // FromEsheadEstimateId
+        
+        Object oToEsheadEstimateId is a Form
+            Set Size to 13 67
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+            Set Prompt_Button_Mode to pb_PromptOn
+            Set Prompt_Object to oEstimate_sl
+            
+            // This procedure is called if Move_Value_Out_state is true, we use the SelectBestColumn
+            // function to retrieve the column for the passed file and field number. After retrieving
+            // the column we setup the list.
+            
+            Procedure Prompt_CallBack Integer hPrompt
+                Integer iColumn
+                // 56 and 1 are the file and field numbers for Eshead.ESTIMATE_ID
+                Get SelectBestColumn of hPrompt 56 1 to iColumn
+                Set peUpdateMode of hPrompt to umPromptValue
+                Set piUpdateColumn of hPrompt to iColumn
+                Set piInitialColumn of hPrompt to iColumn
+            End_Procedure // Prompt_CallBack
+            
+            
+        End_Object // ToEsheadEstimateId
+        
+        Set Size to 43 138
+    
+    End_Object // EsheadEstimateIdGroup
+    
+    Object oDestinationGroup is a RadioGroup
+        Set Label to "Output destination"
+        Set Location to 53 5
+        Set Size to 46 77
+        
+        Object oScreenRadio is a Radio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object // oScreenRadio
+        
+        Object oPrinterRadio is a Radio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object // oPrinterRadio
+        
+        Object oFileRadio is a Radio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file, application or email"
+        End_Object // oFileRadio
+        
+        
+        // This function returns the output destination constant.
+        
+        Function PrintDestination Returns Integer
+            Integer iCurrentRadio eDestination
+            Get Current_Radio to iCurrentRadio
+            If (iCurrentRadio=0)  Move PRINT_TO_WINDOW  to eDestination
+            If (iCurrentRadio=1)  Move PRINT_TO_PRINTER to eDestination
+            If (iCurrentRadio=2)  Move PRINT_TO_FILE    to eDestination
+            Function_Return eDestination
+        End_Function // PrintDestination
+        
+    End_Object // oDestinationGroup
+    
+    Object oDetailsGroup is a RadioGroup
+        Set Label to "Report detail"
+        Set Location to 53 87
+        Set Size to 46 77
+        
+        Object oDetailRadio is a Radio
+            Set Label to "Show detail"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Show detailed report"
+        End_Object // oDetailRadio
+        
+        Object oSummaryRadio is a Radio
+            Set Label to "Show summary"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Show summary report"
+        End_Object // oSummaryRadio
+        
+        
+        // This function returns true if the Show Detail radio is checked,
+        // false if the Show Summary radio is checked.
+        
+        Function IsDetail Returns Integer
+            Integer iCurrentRadio
+            Get Current_Radio to iCurrentRadio
+            Function_Return (iCurrentRadio=0)
+        End_Function // IsDetail
+        
+        
+    End_Object // oDetailsGroup
+    
+    Object oPrintButton is a Button
+        Set Label to "Print"
+        Set Size to 14 50
+        Set Location to 104 64
+        Set Status_Help to "Print the report"
+        Set Default_State to True
+        
+        // This procedure outputs the report by sending RunReport.
+        
+        Procedure OnClick
+            Send DoStartReport
+        End_Procedure // OnClick
+        
+    End_Object // oPrintButton
+    
+    Object oCancelButton is a Button
+        Set Label to "Cancel"
+        Set Size to 14 50
+        Set Location to 104 119
+        Set Status_Help to "Cancel this Panel"
+        
+        // This procedure closes the view.
+        
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure // OnClick
+        
+    End_Object // oCancelButton
+    
+    
+    Object oCrystalPrintEstimate is a cCrystal
+        Set psReportName to "Estimate Review.rpt"
+        
+        
+        // This event is sent when the report is run and the cCrystalReport COM object has been created.
+        Procedure OnInitializeReport handle hoReport
+            Integer eDestination
+            String  sSelection
+            Integer iFromEsheadEstimateId iToEsheadEstimateId
+            Boolean bDetail
+            
+            Forward Send OnInitializeReport hoReport
+            
+            // Set the print destination.
+            
+            Get PrintDestination of oDestinationGroup to eDestination
+            Set peOutputDestination to eDestination
+            
+            // Create the selection formula string.
+            
+            Get piStart to iFromEsheadEstimateId
+            Get piStop to iToEsheadEstimateId
+            If (iFromEsheadEstimateId<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{ESHEAD.ESTIMATE_ID} >= "+(String(iFromEsheadEstimateId))) to sSelection
+            End
+            If (iToEsheadEstimateId<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{ESHEAD.ESTIMATE_ID} <= "+(String(iToEsheadEstimateId))) to sSelection
+            End
+            // Custom Selection formula
+            Move (sSelection + " and ('J' in {JCOPER.PRINT_FLAGS} or 'L' in {JCOPER.PRINT_FLAGS})") to sSelection
+            
+            // Set the selection formula.
+            Set ComRecordSelectionFormula of hoReport to sSelection
+
+        End_Procedure // OnInitializeReport
+        
+        
+        // Event is called when report is sent to previewer
+        Procedure OnDisplayReport Handle hoReport
+            Handle hoViewer
+            
+            Forward Send OnDisplayReport hoReport
+            
+            // Viewer options can be customized by setting properties of the active/x viewer object
+            //Get ActiveXReportViewerObject of hoReport to hoViewer // handle of active/x viewer
+            
+            //Set ComDisplayToolbar           of hoViewer to True
+            //Set ComDisplayTabs              of hoViewer to False
+            //Set ComDisplayGroupTree         of hoViewer to False
+            //Set ComEnableGroupTree          of hoViewer to False
+            //Set ComEnablePrintButton        of hoViewer to True
+            //Set ComEnableCloseButton        of hoViewer to False
+            //Set ComEnableRefreshButton      of hoViewer to False
+            //Set ComEnableExportButton       of hoViewer to True
+            //Set ComEnableSearchExpertButton of hoViewer to True
+            //Set ComEnableHelpButton         of hoViewer to False
+            //Set ComEnableZoomControl        of hoViewer to True
+            //Set ComEnableProgressControl    of hoViewer to True
+            //Set ComEnableSearchControl      of hoViewer to True
+            //Set ComEnableNavigationControls of hoViewer to True
+            //Set ComEnableDrillDown          of hoViewer to False
+            //Set ComEnableAnimationCtrl      of hoViewer to True
+            //Set ComEnableSelectExpertButton of hoViewer to False
+            //Set ComLaunchHTTPHyperlinksInNewBrowser of hoViewer to True
+            
+        End_Procedure // OnDisplayReport
+        
+        
+        // Event is called when report is sent to Export
+        Procedure OnExportReport Handle hoReport
+            Handle hoExport
+            
+            Forward Send OnExportReport hoReport
+            
+            // By default Export options will be prompted when report is run.
+            
+            // Or, Export can be set up within the program
+            //Set pbExportPrompt of hoReport to False // suppress prompt for all export information
+            //Get ExportObject of hoReport to hoExport
+            
+            // Sample for export to disk file (word)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport to "Report.dat"
+            
+            // Sample for export to disk file (XML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTXML
+            //Set ComXMLFileName     of hoExport to "Report.xml"
+            
+            // Sample for export to disk file (HTML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTHTML40
+            //Set ComHTMLFileName    of hoExport to "Report.html"
+            
+            // Sample for export to mapi
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTEMailMAPI
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport to "Report.dat"
+            //Set ComMailToList      of hoExport to "Add-name@name.net"
+            //Set ComMailSubject     of hoExport to "Add-Subject"
+            //Set ComMailMessage     of hoExport to "Add-Message"
+            //Set ComMailBccList     of hoExport to "Add-name@name.net"
+            
+            // Sample for export to application (Word)
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTApplication
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            
+        End_Procedure // OnExportReport
+        
+        
+        // procedure is called when report is sent to printer
+        Procedure OnPrintReport Handle hoReport
+            
+            Forward Send OnPrintReport hoReport
+            
+            Set pbPrinterPrompt of hoReport to True // will prompt to set-up printer
+            
+            // Or... printer can be set up within the program
+            //Send ComSelectPrinter of hoReport "sDriverName" "sPrinterName" "sPortName"
+            //Set piPrinterCopies   of hoReport to 1
+            //Set pbPrinterCollate  of hoReport to True
+            
+        End_Procedure // OnPrintReport
+        
+        
+        // Mark all section of passed type as hidden
+        Procedure MakeSectionsInvisible integer eSectionType
+            Handle  hoReport
+            Handle  hoAreas hoArea
+            Variant vAreas  vArea
+            Integer iAreas  iArea iKind
+            
+            Get ReportObject to hoReport
+            
+            Get Create of hoReport U_cCrystalAreas to hoAreas // areas collection
+            Get Create of hoReport U_cCrystalArea  to hoArea  // area object
+            
+            Get ComAreas of hoReport to vAreas // areas dispatch
+            Set pvComObject of hoAreas to vAreas // attach dispatch to object
+            Get ComCount of hoAreas to iAreas
+            For iArea from 1 to iAreas
+                Get ComItem of hoAreas iArea to vArea
+                Set pvComObject of hoArea to vArea // attach area dispatch to object
+                Get ComKind of hoArea to iKind // is it the right kind, if so, suppress
+                If (iKind=eSectionType) Begin
+                    Set ComSuppress of hoArea to True
+                End
+            Loop
+            Send Destroy of hoArea //destroy objects used
+            Send Destroy of hoAreas
+        End_Procedure // MakeSectionsInvisible
+        
+    
+    End_Object // oCrystalPrintEstimate
+
+    Procedure DoStartReport
+        Integer iStart iStop
+        //
+        Get Value of oFromEsheadEstimateId to iStart
+        Get Value of oToEsheadEstimateId   to iStop
+        //
+        Set piStart to iStart
+        Set piStop  to iStop
+        //
+        Send RunReport of oCrystalPrintEstimate
+    End_Procedure
+
+    Procedure DoJumpStartReport Integer iQuote
+        Set piStart to iQuote
+        Set piStop  to iQuote
+        Send RunReport of oCrystalPrintEstimate
+    End_Procedure
+
+    
+    Set Location to 6 6
+    Set Size to 138 174
+    
+End_Object // PrintEstimate
+

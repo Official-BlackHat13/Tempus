@@ -1,0 +1,65 @@
+// Factor.DG
+USE DFAllEnt.pkg
+
+Object FactorDialog is a ModalPanel
+
+    property string pnFactor public 0
+
+    Set Minimize_Icon to FALSE
+    Set Label to "Table Factor"
+    Set Location to 26 79
+    Set Size to 69 151
+    Set Locate_Mode to CENTER_ON_PANEL
+
+    Object FactorPrompt is a Textbox
+        Set Label to "Enter a factor"
+        Set FontSize to 4 0
+        Set Size to 10 66
+        Set Location to 10 51
+    End_Object    // FactorPrompt
+
+    Object FactorForm is a Form
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Size to 13 50
+        Set Location to 28 51
+        Set Status_Help to "Enter a factor."
+        Set numeric_mask item 0 to 4 4 "*,"
+        
+        procedure FactorValue
+            local number nFactor
+            get Value item 0 to nFactor
+            set pnFactor to nFactor
+        end_procedure
+        
+        procedure AcceptOk
+            delegate send AcceptOk
+        end_procedure
+
+        On_Key kEnter Send AcceptOk
+
+    End_Object    // FactorForm
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Location to 49 51
+
+        procedure OnClick
+            send AcceptOk
+        end_procedure
+    End_Object    // oOK_bn
+
+    procedure AcceptOk
+        send FactorValue to (FactorForm(self))
+        send Close_Panel
+    end_procedure
+    
+    function TableFactor returns number
+        local string nFactor
+        set pnFactor to 0
+        send Popup_Modal
+        get pnFactor to nFactor
+        function_return nFactor
+    end_function
+
+End_Object    // FactorDialog

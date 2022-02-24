@@ -1,0 +1,210 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use MastOps.DD
+Use Opers.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+
+Object oOperationsProcess is a BusinessProcess
+
+    Property Boolean pbError
+    Property Boolean pbFromQuote
+    Property Integer piLocationIdno
+    Property Integer piMastopsIdno
+    Property Integer piQuotedtlRecId
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+        Set Validate_Foreign_File_State to False
+        Send DefineAllExtendedFields
+    End_Object
+
+    Set Main_DD to oOpers_DD
+    Set Display_Error_State to True
+
+    Procedure OnProcess
+        Boolean bFail
+        Integer hoDD iLocationIdno iMastopsIdno iQuotedtlRecId
+        //
+        Get Main_DD         to hoDD
+        Get piLocationIdno  to iLocationIdno
+        Get piMastopsIdno   to iMastopsIdno
+        Get piQuotedtlRecId to iQuotedtlRecId
+        //
+        Send Clear        of hoDD
+        Move iLocationIdno to Location.LocationIdno
+        Send Request_Find of hoDD eq Location.File_Number 1
+        If (not(Found)) Begin
+            Set pbError to True
+            Procedure_Return
+        End
+        Move iMastopsIdno to MastOps.MastOpsIdno
+        Send Request_Find of hoDD EQ MastOps.File_Number 1
+        If (not(Found)) Begin
+            Set pbError to True
+            Procedure_Return
+        End
+        If (pbFromQuote(Self) and Quotedtl.Recnum <> iQuotedtlRecId) Begin
+            Clear Quotedtl
+            Move iQuotedtlRecId to Quotedtl.Recnum
+            Find eq Quotedtl.Recnum
+        End
+        Set Field_Changed_Value of hoDD Field Opers.Name            to MastOps.Name
+        Set Field_Changed_Value of hoDD Field Opers.SellRate        to MastOps.SellRate
+        Set Field_Changed_Value of hoDD Field Opers.CostRate        to MastOps.CostRate
+        Set Field_Changed_Value of hoDD Field Opers.CostType        to MastOps.CostType
+        Set Field_Changed_Value of hoDD Field Opers.CalcBasis       to MastOps.CalcBasis
+        Set Field_Changed_Value of hoDD Field Opers.ActivityType    to MastOps.ActivityType
+        Set Field_Changed_Value of hoDD Field Opers.Description     to MastOps.Description
+        Set Field_Changed_Value of hoDD Field Opers.Status          to MastOps.Status
+        Set Field_Changed_Value of hoDD Field Opers.DisplaySequence to MastOps.DisplaySequence
+        Get Request_Validate    of hoDD                             to bFail
+        If (bFail) Begin
+            Set pbError to True
+        End
+        Else Begin
+            Send Request_Save   of hoDD
+            If (Changed_State(hoDD)) Begin
+                Set pbError to True
+                Showln "Following MastOps " iMastopsIdno " failed to add to Location " iLocationIdno
+            End
+        End
+    End_Procedure
+
+    Function DoMaintainOpersFromQuote Integer iLocationIdno Integer iQuotehdrID Returns Integer
+        Set pbFromQuote    to True
+        Set piLocationIdno to iLocationIdno
+        Clear Quotedtl
+        Move iQuotehdrID to Quotedtl.QuotehdrID
+        Find ge Quotedtl.QuotehdrID
+        While ((Found) and Quotedtl.QuotehdrID = iQuotehdrID)
+            Clear Opers
+            Move iLocationIdno        to Opers.LocationIdno
+            Move Quotedtl.MastOpsIdno to Opers.MastOpsIdno
+            Find eq Opers by Index.4
+            If (not(Found)) Begin
+                Set piMastOpsIdno   to Quotedtl.MastOpsIdno
+                Set piQuotedtlRecId to Quotedtl.Recnum
+                Send DoProcess
+            End
+            Find gt Quotedtl.QuotehdrID
+        Loop
+    End_Function
+
+    Function DoAddOperationToAllLocations Integer iMastOpsIdno Integer ByRef iErrors Returns Integer
+        Integer iJobNumber iLocIdno iRecId iCreated
+        //
+        Set pbFromQuote        to False
+        Set Status_Panel_State to False
+        //
+        Clear Order
+        Move "O" to Order.Status
+        Find GE Order by Index.12
+        While ((Found) and Order.Status = "O")
+            If (Order.WorkType<>"SL") Begin
+                Move Order.JobNumber to iJobNumber
+                Move Order.LocationIdno to iLocIdno
+                Clear Opers
+                Move iLocIdno              to Opers.LocationIdno
+                Move iMastOpsIdno          to Opers.MastOpsIdno
+                Find eq Opers by Index.4
+                If (not(Found)) Begin
+                    Move Location.Recnum to iRecId
+                    Set pbError          to False
+                    Set piLocationIdno   to iLocIdno
+                    Set piMastOpsIdno    to iMastOpsIdno
+                    Send DoProcess
+                    If (pbError(Self)) Begin
+                        Increment iErrors
+                    End
+                    Else Begin
+                        Increment iCreated
+                        Showln ("Adding MastOps#:"*String(iMastOpsIdno)*"to Location#"*String(iLocIdno)*"- created.")
+                    End
+                    If (Location.LocationIdno <> iLocIdno) Begin
+                        Clear Location
+                        Move iLocIdno to Location.LocationIdno
+                        Find eq Location.LocationIdno
+                    End
+                End
+                Else If (Found) Begin
+                    //Does Exsist, Ignore!
+                    Showln ("MastOps#:"*String(iMastOpsIdno)*"exsists at Location#"*String(iLocIdno)*"- skipped.")
+                End
+            End
+            Find GT Order by Index.12
+        Loop
+        Function_Return iCreated        
+    End_Function
+
+    Function DoAddUniversalMastOpsToLocation Integer iLocationIdno String sWorkType Integer ByRef iErrors Returns Integer
+        Integer iRecId iCreated
+        //
+        Set pbFromQuote        to False
+        Set Status_Panel_State to False
+        //
+        Clear MastOps
+        Move 1 to MastOps.IsUniversal
+        Find ge MastOps.IsUniversal
+        While ((Found) and MastOps.IsUniversal = 1)
+            If (MastOps.ActivityType) Begin
+                Clear Opers
+                Move iLocationIdno       to Opers.LocationIdno
+                Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                Find eq Opers by Index.4
+                If (not(Found)) Begin
+                    Move MastOps.Recnum to iRecId
+                    Set pbError         to False
+                    Set piLocationIdno  to iLocationIdno
+                    Set piMastOpsIdno   to MastOps.MastOpsIdno
+                    Send DoProcess
+                    If (pbError(Self)) Begin
+                        Increment iErrors
+                    End
+                    Else Begin
+                        Increment iCreated
+                    End
+                    If (MastOps.Recnum <> iRecId) Begin
+                        Clear MastOps
+                        Move iRecId to MastOps.Recnum
+                        Find eq MastOps.Recnum
+                    End
+                End
+            End
+            Find gt MastOps.IsUniversal
+        Loop
+        Function_Return iCreated
+    End_Function
+
+End_Object
+

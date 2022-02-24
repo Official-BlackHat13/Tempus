@@ -1,0 +1,56 @@
+Use TempusTimePrecompile.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cGlblApplication
+    Set peHelpType to htHtmlHelp
+    Set pbEnterKeyAsTabKey to True
+End_Object
+
+Object oMain is a cGlblPanel
+    Set Label to "Tempus - Time Card"
+    Set Size to 293 450
+    Set piMinSize to 293 450
+    Set Caption_Bar to False
+    Set Locate_Mode to Center_On_Panel
+    Set View_Mode to ViewMode_Zoom
+
+    Object oClientArea is a cGlblClientArea
+        Set Color to clLtGray
+
+        Use cWSTransactionService.pkg
+        Use StdAbout.pkg
+        Use GlobalVariables.pkg
+        
+        Use TimeClock.vw
+        Use TimeCard.rv
+        Use TimeCard.vw
+        Use LoadingPopup.vw
+        Use LoadingPopup.dg
+        //
+        Object oWSTransactionService is a cWSTransactionService
+            //
+        End_Object
+
+        Procedure Activate_About
+            Send DoAbout "" "" "" "" ""
+        End_Procedure
+
+        Procedure Activating
+            Forward Send Activating
+            //Set View_Mode of oClientArea to Viewmode_Zoom
+        End_Procedure
+
+        //On_Key Key_Ctrl+Key_1 Send Activate_oEmployeeTime
+
+    End_Object
+
+    Procedure Activating
+        Forward Send Activating
+    End_Procedure
+
+End_Object
+
+Send Activate_oTimeClock of (oClientArea(oMain))
+Start_UI

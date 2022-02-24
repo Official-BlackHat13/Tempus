@@ -1,0 +1,87 @@
+Use cGlblDataDictionary.pkg
+
+Open Crmember
+Open Crews
+Open System
+Open Employee
+
+Register_Function CrewChiefFlagValidation Integer iField Integer iValue Returns Boolean
+
+Class cCrmemberDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Crmember.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Crews.File_Number
+        Set Add_Server_File to Employee.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Key_Field_State Field Crmember.CrewMemberId to True
+        Set Field_Option Field Crmember.CrewMemberId DD_AUTOFIND to True
+        Set Field_Auto_Increment Field Crmember.CrewMemberId to File_Field System.CrewMemberId
+
+        Set Field_Validate_msg Field Crmember.CrewChiefFlag to get_CrewChiefFlagValidation
+
+    End_Procedure
+
+    Function CrewChiefFlagValidation Integer iField Integer iValue Returns Boolean
+        Boolean bState
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Send Refind_Records
+            If (Employee.EmployeeIdno = Crews.CrewChiefId) Break
+            If (iValue + Crews.ChiefCount > 1) Begin
+                Send UserError "Only 1 crew chief allowed" "Validation Error"
+                Set Field_Current_Value iField to 0
+                Function_Return 1
+            End
+        End
+    End_Function
+
+    Procedure Backout
+        Forward Send Backout
+        //
+        Subtract 1 from Crews.CrewCount
+        //
+        If (Crmember.CrewChiefFlag) Begin
+            Subtract 1 from Crews.ChiefCount
+        End
+    End_Procedure
+
+    Procedure Update
+        String sName
+        //
+        Forward Send Update
+        //
+        Add 1 to Crews.CrewCount
+        //
+        If (Crmember.CrewChiefFlag) Begin
+            Add 1                                        to Crews.ChiefCount
+            Move Employee.EmployeeIdno                   to Crews.CrewChiefId
+            Move (Trim(Employee.FirstName))              to sName
+            If (Employee.MiddleName <> "") Begin
+                Move (sName * Trim(Employee.MiddleName)) to sName
+            End
+            Move (sName * Trim(Employee.LastName))       to sName
+            If (Employee.Suffix <> "") Begin
+                Move (sName * Trim(Employee.Suffix))     to sName
+            End
+            Move sName                                   to Crews.Description
+        End
+    End_Procedure
+
+    Procedure Creating
+        Forward Send Creating
+        //
+        Move Crews.CrewDate to Crmember.CrewDate
+    End_Procedure
+
+End_Class

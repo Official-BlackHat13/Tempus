@@ -1,0 +1,204 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use cReqtypesDataDictionary.dd
+Use cLocnotesDataDictionary.dd
+
+Object oCollectLocationNotesProcess is a BusinessProcess
+    Object oReqtypes_DD is a cReqtypesDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oLocnotes_DD is a cLocnotesDataDictionary
+        Set DDO_Server to oReqtypes_DD
+        Set DDO_Server to oOrder_DD
+        //Send DefineAllExtendedFields
+    End_Object
+
+    Set Main_DD to oLocnotes_DD
+
+    Property tWStLocnotes[] ptNotes
+    //Set Display_Error_State to True
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        tWStLocnotes[] tCollected tProcessed
+        //
+        Boolean bFound bFail
+        Integer hoDD iItems iItem iCount eStatus
+        String  sStatus
+        //
+        Get Main_DD                    to hoDD
+        Get ptNotes                    to tCollected
+        Move (SizeOfArray(tCollected)) to iItems
+        //
+        For iItem from 0 to (iItems - 1)
+            Move False to bFound
+            Send Clear of hoDD
+//            If (tCollected[iItem].iLocnotesRef <> 0) Begin
+//                Move tCollected[iItem].iLocnotesRef to Locnotes.LocnotesId
+//                Send Find of hoDD EQ 1
+//                Move (Found) to bFound
+//            End
+            Move tCollected[iItem].iLocnotesId to Locnotes.LocnotesId
+            Send Find of hoDD EQ 1
+            Move (Found) to bFound
+            If (not(bFound)) Begin
+                Move tCollected[iItem].iJobNumber to Order.JobNumber
+                Send Request_Find of hoDD EQ Order.File_Number 1
+                If (Found) Begin
+                    Move tCollected[iItem].sReqtypesCode to Reqtypes.ReqtypesCode
+                    Send Request_Find of hoDD EQ Reqtypes.File_Number 1
+                    Move (Found) to bFound
+                End
+            End
+            If (bFound) Begin
+                Move (Trim(tCollected[iItem].sStatus)) to sStatus
+                If (sStatus = "") Begin
+                    Move "1-OPEN" to sStatus
+                End
+                Set Field_Changed_Value of hoDD Field Locnotes.LocnotesId           to tCollected[iItem].iLocnotesId
+                Set Field_Changed_Value of hoDD Field Locnotes.CreatedDate          to tCollected[iItem].dCreatedDate
+                Set Field_Changed_Value of hoDD Field Locnotes.CreatedTime          to tCollected[iItem].sCreatedTime
+                Set Field_Changed_Value of hoDD Field Locnotes.CreatedBy            to tCollected[iItem].sCreatedBy
+                Set Field_Changed_Value of hoDD Field Locnotes.NoteDate             to tCollected[iItem].dNoteDate
+                Set Field_Changed_Value of hoDD Field Locnotes.LocnotesRef          to tCollected[iItem].iLocnotesId
+                Set Field_Changed_Value of hoDD Field Locnotes.Note                 to tCollected[iItem].sNote
+                Set Field_Changed_Value of hoDD Field Locnotes.IsEmail              to tCollected[iItem].iIsEmail
+                Set Field_Changed_Value of hoDD Field Locnotes.Status               to sStatus
+                Set Field_Changed_Value of hoDD Field Locnotes.AssignedTo           to tCollected[iItem].sAssignedTo
+                Set Field_Changed_Value of hoDD Field Locnotes.AssignedDate         to tCollected[iItem].dAssignedDate
+                Set Field_Changed_Value of hoDD Field Locnotes.AssignedTime         to tCollected[iItem].sAssignedTime
+                Set Field_Changed_Value of hoDD Field Locnotes.AssignedBy           to tCollected[iItem].sAssignedBy
+                Set Field_Changed_Value of hoDD Field Locnotes.ResolvedDate         to tCollected[iItem].dResolvedDate
+                Set Field_Changed_Value of hoDD Field Locnotes.ResolvedTime         to tCollected[iItem].sResolvedTime
+                Set Field_Changed_Value of hoDD Field Locnotes.ResolvedBy           to tCollected[iItem].sResolvedBy
+                Set Field_Changed_Value of hoDD Field Locnotes.ClosedDate           to tCollected[iItem].dClosedDate
+                Set Field_Changed_Value of hoDD Field Locnotes.ClosedTime           to tCollected[iItem].sClosedTime
+                Set Field_Changed_Value of hoDD Field Locnotes.ClosedBy             to tCollected[iItem].sClosedBy
+                Set Field_Changed_Value of hoDD Field Locnotes.Resolution           to tCollected[iItem].sResolution
+                Set Field_Changed_Value of hoDD Field Locnotes.ChangedFlag          to 0
+                Set Field_Changed_Value of hoDD Field Locnotes.CallerName           to tCollected[iItem].sCallerName
+                Set Field_Changed_Value of hoDD Field Locnotes.CallerPhone          to tCollected[iItem].sCallerPhone
+                Set Field_Changed_Value of hoDD Field Locnotes.RecordOwner          to tCollected[iItem].iRecordOwner
+                Set Field_Changed_Value of hoDD Field Locnotes.CallerEmail          to tCollected[iItem].sCallerEmail
+                Set Field_Changed_Value of hoDD Field Locnotes.EmailReply           to tCollected[iItem].sEmailReply
+                Set Field_Changed_Value of hoDD Field Locnotes.EmailSubject         to tCollected[iItem].sEmailSubject
+                Set Field_Changed_Value of hoDD Field Locnotes.EmailReply           to tCollected[iItem].sEmailReply
+                Set Field_Changed_Value of hoDD Field Locnotes.MgrFirstName         to tCollected[iItem].sMgrFirstName
+                Set Field_Changed_Value of hoDD Field Locnotes.MgrLastName          to tCollected[iItem].sMgrLastName
+                Set Field_Changed_Value of hoDD Field Locnotes.MgrEmailAddress      to tCollected[iItem].sMgrEmailAddress
+                Set Field_Changed_Value of hoDD Field Locnotes.AssignmentNote       to tCollected[iItem].sAssignmentNote
+                Set Field_Changed_Value of hoDD Field Locnotes.DocumentationFlag    to tCollected[iItem].iDocumentationFlag
+                Get Request_Validate    of hoDD                             to bFail
+                If (bFail) Break
+                //Showln ("LocnotesID:" + String(tCollected[iItem].iLocnotesId))
+                Send Request_Save       of hoDD
+                //Showln ("Saved")
+                //
+                Get_Attribute DF_FILE_STATUS of Locnotes.File_Number to eStatus
+                If (eStatus = DF_FILE_ACTIVE) Begin
+                    Move tCollected[iItem].iLocnotesId to tProcessed[iCount].iLocnotesId
+                    Move Locnotes.LocnotesId           to tProcessed[iCount].iLocnotesRef
+                    Increment iCount
+                End
+            End
+        Loop
+        Set ptNotes to tProcessed
+    End_Procedure
+
+    Function DoCollectAndProcessLocationNotes String ByRef sError Returns Integer
+        tWStLocnotes[] tNotes
+        //
+        Integer iItems iProcessed iUpdated eTransferStatus
+        //
+        Get wsGetNewLocationNotes of oWSTransactionService to tNotes
+        Get peTransferStatus      of oWSTransactionService to eTransferStatus
+        If (not(eTransferStatus = wssOK)) Begin
+            // Handle soap fault errors in a special way. Report all others as errors.
+            If (eTransferStatus=wssSoapFault) Begin
+                Get TransferErrorDescription of oWSTransactionService to sError
+                Function_Return
+            End
+            Else Begin
+                Send LastError of oWSTransactionService // this will generate an error
+            End
+        End
+        Move (SizeOfArray(tNotes))                         to iItems
+        If (iItems > 0) Begin
+            Set ptNotes                                    to tNotes
+            Send DoProcess
+            Get ptNotes                                    to tNotes
+            Move (SizeOfArray(tNotes))                     to iProcessed
+            If (iProcessed <> iItems) Begin
+                #IFDEF TEMPUS_LINK
+                #ELSE
+                Send Info_Box ("Not all" * String(iItems) * "collected notes were processed." * String(iItems - iProcessed) * "error(s).")
+                #ENDIF
+            End
+            If (iProcessed > 0) Begin
+                Get wsUpdateCollectedLocationNotes of oWSTransactionService tNotes to iUpdated
+                Get peTransferStatus               of oWSTransactionService        to eTransferStatus
+                If (not(eTransferStatus = wssOK)) Begin
+                    // Handle soap fault errors in a special way. Report all others as errors.
+                    If (eTransferStatus=wssSoapFault) Begin
+                        Get TransferErrorDescription of oWSTransactionService to sError
+                        Function_Return
+                    End
+                    Else Begin
+                        Send LastError of oWSTransactionService // this will generate an error
+                    End
+                End
+                If (iUpdated <> iProcessed) Begin
+                    #IFDEF TEMPUS_LINK
+                    #ELSE
+                    Send Info_Box ("Not all" * String(iProcessed) * "processed notes were updated." * String(iProcessed - iUpdated) * "error(s).")
+                    #ENDIF
+                End
+                Else Begin
+                    #IFDEF TEMPUS_LINK
+                    #ELSE
+                    Send Info_Box (String(iProcessed) * "notes were collected and saved.")
+                    #ENDIF
+                End
+            End
+        End
+        Function_Return iProcessed
+    End_Function
+
+End_Object
+

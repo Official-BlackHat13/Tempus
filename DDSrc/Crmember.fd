@@ -1,0 +1,7 @@
+#REPLACE FILE33 Crmember
+#REPLACE Crmember.Recnum |FN33,0
+#REPLACE Crmember.CrewMemberId |FN33,1
+#REPLACE Crmember.CrewId |FN33,2
+#REPLACE Crmember.CrewDate |FD33,3
+#REPLACE Crmember.EmployeeId |FN33,4
+#REPLACE Crmember.CrewChiefFlag |FN33,5

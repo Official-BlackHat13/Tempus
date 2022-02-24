@@ -1,0 +1,99 @@
+Use DFClient.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use Employer.DD
+Use Employee.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+
+Object oTimeCard is a dbModalPanel
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oEmployee_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+    Set Server to oTrans_DD
+
+    Set Label to "Change this 'Label' property..."
+    Set Size to 89 211
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style to Border_Thick
+
+    Object oOK_btn is a Button
+        Set Label    to "&OK"
+        Set Location to 71 102
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+           Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_btn is a Button
+        Set Size to 14 50
+        Set Label    to "&Cancel"
+        Set Location to 71 157
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+           Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_btn
+
+End_Object

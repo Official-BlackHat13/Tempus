@@ -1,0 +1,11 @@
+#REPLACE FILE35 Project
+#REPLACE Project.Recnum |FN35,0
+#REPLACE Project.ProjectId |FN35,1
+#REPLACE Project.CustomerIdno |FN35,2
+#REPLACE Project.RepIdno |FN35,3
+#REPLACE Project.Description |FS35,4
+#REPLACE Project.CreatedDate |FD35,5
+#REPLACE Project.CreatedBy |FS35,6
+#REPLACE Project.LockedFlag |FN35,7
+#REPLACE Project.LockedDate |FD35,8
+#REPLACE Project.LockedBy |FS35,9

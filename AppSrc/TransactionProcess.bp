@@ -1,0 +1,170 @@
+Use Batchdd.pkg
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Object oTransactionProcess is a BusinessProcess
+
+    Property Boolean pbSuccess
+    Property Integer piTransIdno
+    Property Integer piJobNumber
+    Property Integer piEmployeeIdno
+    Property Integer piOpersIdno
+
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oEmployee_DD
+
+//        Procedure Creating
+//            Integer iEquipIdno
+//            String  sEquipmentID
+//            //
+//            Forward Send Creating
+//            //
+//            Get piEquipIdno   to iEquipIdno
+//            Get psEquipmentID to sEquipmentID
+//            Move iEquipIdno   to Trans.EquipIdno
+//            Move sEquipmentID to Trans.EquipmentID
+//        End_Procedure
+
+        Procedure Update
+            Forward Send Update
+            //
+            If (Trans.StopDate = 0) Begin
+                Move Trans.TransIdno to Employee.ActiveTrans
+            End
+            Else Begin
+                Move 0               to Employee.ActiveTrans
+            End
+        End_Procedure
+    End_Object
+
+    Set Main_DD to oTrans_DD
+    Set Status_Panel_State to False
+    Set Display_Error_State to True
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        Boolean bFail
+        Integer iTransIdno iJobNumber iEmployeeIdno iOpersIdno
+        Integer hoDD iHr iMin iSec eStatus
+        String  sTime
+        Date    dToday
+        //
+        Get Main_DD to hoDD
+        //
+        Sysdate dToday iHr iMin iSec
+        Get IsTimeString of hoDD iHr iMin iSec to sTime
+        Move (Left(sTime,5))                   to sTime
+        //
+        Get piTransIdno    to iTransIdno
+        Get piJobNumber    to iJobNumber
+        Get piEmployeeIdno to iEmployeeIdno
+        Get piOpersIdno    to iOpersIdno
+        //
+        If (iTransIdno) Begin
+            Send Clear              of hoDD
+            Move iTransIdno                                      to Trans.TransIdno
+            Send Find               of hoDD EQ 1
+            Set Field_Changed_Value of hoDD Field Trans.StopTime to sTime
+            Set Field_Changed_Value of hoDD Field Trans.StopDate to dToday
+            Set Field_Changed_Value of hoDD Field Trans.StopHr   to iHr
+            Set Field_Changed_Value of hoDD Field Trans.StopMin  to iMin
+            Get Request_Validate    of hoDD                      to bFail
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+            End
+        End
+        //
+        If (iJobNumber) Begin
+            Send Clear              of hoDD
+            Move iJobNumber                                       to Order.JobNumber
+            Send Request_Find       of hoDD EQ Order.File_Number 1
+            Move iEmployeeIdno                                    to Employee.EmployeeIdno
+            Send Request_Find       of hoDD EQ Employee.File_Number 1
+            Move iOpersIdno                                       to Opers.OpersIdno
+            Send Request_Find       of hoDD EQ Opers.File_Number 1
+            Set Field_Changed_Value of hoDD Field Trans.StartTime to sTime
+            Set Field_Changed_Value of hoDD Field Trans.StartDate to dToday
+            Set Field_Changed_Value of hoDD Field Trans.StartHr   to iHr
+            Set Field_Changed_Value of hoDD Field Trans.StartMin  to iMin
+            Get Request_Validate    of hoDD                       to bFail
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+            End
+        End
+        //
+        Get_Attribute DF_FILE_STATUS of Trans.File_Number to eStatus
+        Set pbSuccess                                     to (eStatus = DF_FILE_ACTIVE)
+    End_Procedure
+
+    Function DoProcessTransaction Integer iTransIdno Integer iJobnumber Integer iEmployeeIdno Integer iOpersIdno Returns Boolean
+        Boolean bSuccess
+        //
+        Set pbSuccess      to False
+        Set piTransIdno    to iTransIdno
+        Set piJobNumber    to iJobnumber
+        Set piEmployeeIdno to iEmployeeIdno
+        Set piOpersIdno    to iOpersIdno
+        //
+        Send DoProcess
+        //
+        Function_Return (pbSuccess(Self))
+    End_Function
+
+End_Object

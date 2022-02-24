@@ -1,0 +1,134 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use cJobcostsDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+
+Object oJobCostMassDistribution is a BusinessProcess
+    
+    Property Integer piJobNumber
+    Property Integer piMastOpsIdno
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+    
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oJobcosts_DD is a cJobcostsDataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oJobcosts_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+
+    End_Procedure
+
+    Function DoMassDistributeJobCost Integer iJobNumber Integer iMastOpsIdno Integer iSqft Integer iTotalSqft Number nCostRate Date dCostDate String ByRef sErrMsg Returns Boolean
+        Handle hoDD
+        Number nUnitCost
+        Boolean bFail bSuccess
+                
+                        
+        Set Main_DD to oJobcosts_DD
+        Move oJobcosts_DD to hoDD
+        
+        Send Clear_All of hoDD
+        
+        Move iJobNumber to Order.JobNumber
+        Send Request_Find       of hoDD EQ Order.File_Number 1
+        If (not(Found)) Begin
+            Move ("Could not Find Job#:"*String(iJobNumber)) to sErrMsg
+            Function_Return False
+        End
+        Move iMastOpsIdno to MastOps.MastOpsIdno
+        Send Request_Find of hoDD EQ MastOps.File_Number 1
+        If (not(Found)) Begin
+            Move ("Could not find MastOpsIdno#:"*String(iMastOpsIdno)) to sErrMsg
+            Function_Return False
+        End
+        // Do the calculation
+        Move ((nCostRate/iTotalSqft)*iSqft/6) to nUnitCost
+        //
+        Set Field_Changed_Value of hoDD Field Jobcosts.WorkDate to dCostDate
+        Set Field_Changed_Value of hoDD Field Jobcosts.CostType to (Uppercase(Trim(MastOps.CostType)))
+        Set Field_Changed_Value of hoDD Field Jobcosts.Quantity to 1
+        Set Field_Changed_Value of hoDD Field Jobcosts.UnitCost to nUnitCost
+        Set Field_Changed_Value of hoDD Field Jobcosts.Notes to ("($"*String(nCostRate)*"/"*String(iTotalSqft)*"sqft) x "*String(iSqft)*"sqft / 6 months = $"*String(nUnitCost))
+        Get Request_Validate    of hoDD                                     to bFail
+        If (bFail) Begin
+            Move "Validation error"                                         to sErrMsg
+            Function_Return False
+        End
+        Send Request_Save       of hoDD
+        //
+        Move "Success" to sErrMsg
+        Function_Return True
+    End_Function
+    
+    Function DoMassRemoveJobCost Integer iJobNumber Integer iMastOpsIdno Date dCostDate String ByRef sErrMsg Returns Boolean
+        Boolean bFail
+        Handle hoDD
+        
+        Set Main_DD to oJobcosts_DD
+        Move oJobcosts_DD to hoDD
+        Send Clear of hoDD
+        //
+        Move iJobNumber to Jobcosts.JobNumber
+        Send Find of hoDD GE 2
+        While ((Found) and iJobNumber = Jobcosts.JobNumber)
+            If (Jobcosts.MastOpsIdno = iMastOpsIdno and Jobcosts.WorkDate = dCostDate) Begin
+                Send Request_Delete of hoDD
+            End
+            Send Find of hoDD GT 2
+        Loop
+        
+    End_Function
+
+End_Object
+

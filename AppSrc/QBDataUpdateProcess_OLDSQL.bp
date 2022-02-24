@@ -1,0 +1,75 @@
+Use Batchdd.pkg
+Use sqlold.pkg
+Use Strings.nui
+Use gFormatNumbers.pkg
+
+Object oQBDataUpdateProcess is a BusinessProcess
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+    
+    Function DoUpdateSalesTax Returns Boolean
+        Boolean bSuccess
+        Integer iFail
+        Handle hDbc hStmt
+        String sQuery
+        //
+        Send EstablishSQLConnection of oQBDataUpdateProcess (&hDbc)
+        If (hDbc) Begin
+            Showln "Connection to QuickBooks established"
+            Get Confirm "Close Connection?" to iFail
+            If not (iFail) Begin
+                SQLOpen hDbc to hStmt
+//                //
+//                SELECT ItemSalesTaxGroup.ListID, ItemSalesTaxGroup.Name, SUM(ItemSalesTax.TaxRate)
+//                from (ItemSalesTaxGroup INNER JOIN ItemSalesTaxGroupLine ON ItemSalesTaxGroup.ListID = ItemSalesTaxGroupLine.ListID)
+//                INNER JOIN ItemSalesTax ON ItemSalesTaxGroupLine.ItemSalesTaxRefListID = ItemSalesTax.ListID
+//                WHERE ItemSalesTaxGroup.IsActive = 1
+//                GROUP by ItemSalesTaxGroup.ListID, ItemSalesTaxGroup.Name
+//                //
+                Move (  "SELECT ItemSalesTaxGroup.ListID, ItemSalesTaxGroup.Name, SUM(ItemSalesTax.TaxRate)"*;
+                        "FROM (ItemSalesTaxGroup INNER JOIN ItemSalesTaxGroupLine ON ItemSalesTaxGroup.ListID = ItemSalesTaxGroupLine.ListID)"*;
+                        "INNER JOIN ItemSalesTax ON ItemSalesTaxGroupLine.ItemSalesTaxRefListID = ItemSalesTax.ListID"*;
+                        "WHERE ItemSalesTaxGroup.IsActive = 1"*;
+                        "GROUP by ItemSalesTaxGroup.ListID, ItemSalesTaxGroup.Name")  to sQuery    
+                //
+                Send DisconnectSQLConnection hDbc
+                Showln "Connection Disconnected"                
+            End 
+            //
+            Function_Return True            
+        End
+    End_Function
+
+    Procedure EstablishSQLConnection Handle ByRef hDbc
+        //
+        Send Start_Process   // does all process init
+        Send Update_Status "Connecting to QuickBooks"
+        // make the connections to the ODBC driver and the DSN that you set up with the
+        // QODBC Administrator
+        SQLConnect "ODBC_DRV" ("DSN=QuickBooks Data") to hDbc
+        If (not(hDbc)) Begin
+            Send Stop_Box "Unable to connect to data source."
+            Send End_Process     // does all close down
+            Procedure_Return
+        End
+        //
+        Set phDbc to hDbc
+    End_Procedure
+
+    Procedure DisconnectSQLConnection Handle hDbc
+        Send End_Process
+        Send SQLDisconnect hDbc
+    End_Procedure
+
+End_Object
+

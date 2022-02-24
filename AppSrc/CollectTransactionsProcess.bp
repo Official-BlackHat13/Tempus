@@ -1,0 +1,2100 @@
+Use Batchdd.pkg
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use SalesRep.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+Use cWebAppUserDataDictionary.dd
+Use cViewAccessDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+
+Use DataAttr.pkg
+
+Use cWSTransactionService.pkg
+Use tNewTransaction.pkg
+Use tCollectedTransaction.pkg
+Use cSeqFileHelper.pkg
+Use cCharTranslate.pkg
+
+
+//Object oWSTransactionService is a cWSTransactionService
+//    //
+//End_Object
+/TransactionCollectionHeader
+Transaction Collection Report
+
+ Trans ID     Job#  Empl ID  OpersID   Start Date/Time    Stop Date/Time  Result
+/TransactionCollectionBody
+_______.  _______. _______. _______.  __/__/____ _____  __/__/____ _____  _______________________
+/*
+
+Object oCollectTransactionsProcess is a BusinessProcess
+
+    Property tWStNewTransaction[]       ptTransactions
+    Property tWStCollectedTransaction[] ptCollected
+    //
+    Property String psFilename
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oViewAccess_DD is a cViewAccessDataDictionary
+    End_Object
+
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oWebAppUser_DD is a cWebAppUserDataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oEmployee_DD
+    End_Object
+
+    Object oCharTranslate is a cCharTranslate
+    End_Object
+
+    Object oSeqFileHelper1 is a cSeqFileHelper
+    End_Object
+
+    Procedure Base64EncodeFile String sSourcePath String sFileName Integer ByRef iEncodeBinSize UChar[] ByRef ucEncodeString
+        Address aEncodeBuffer 
+        // ENCODE
+        Get ReadBinFileToBuffer of oSeqFileHelper1 (sSourcePath+sFileName) (&iEncodeBinSize) to aEncodeBuffer
+        //Writeln ("ImageName:"*sFileName*"| FileSize:"*String(iEncodeBinSize))
+        //Set_Argument_Size (iEncodeBinSize*2)
+        Set_Argument_Size 5242880 // 5MB
+        //Writeln ("Set ArgSize to:"*String(iEncodeBinSize*2))
+        //Get Base64EncodeToStr of oCharTranslate aEncodeBuffer iEncodeBinSize to ucEncodeString
+        //Move (StringToUCharArray(Base64EncodeToStr(oCharTranslate,aEncodeBuffer,iEncodeBinSize))) to ucEncodeString
+        //Get Base64EncodeToVariantStr of oCharTranslate aEncodeBuffer iEncodeBinSize to vVariant
+        Move (StringToUCharArray(Base64EncodeToStr(oCharTranslate, aEncodeBuffer, iEncodeBinSize))) to ucEncodeString
+    End_Procedure
+
+    Set Main_DD to oTrans_DD
+    Set Display_Error_State to True
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        tWStNewTransaction[]       tTransactions
+        tWStCollectedTransaction[] tCollected
+        //
+        Boolean bFail
+        Integer hoDD iItems iItem iCount iValue
+        String  sPath sFilename sResult
+        //
+        #IFDEF TEMPUS_LINK
+        #ELSE        
+        //#IFDEF TRANS_DATA_DUMP
+        Get psDataPath of (phoWorkspace(ghoApplication)) to sPath
+        Move (Trim(sPath))                               to sPath
+        If (not(Right(sPath,1) = "\")) Begin
+            Move (sPath + "\")                           to sPath
+        End
+        Move (sPath + "TransactionCollectionErrors.txt") to sFilename
+        Set psFileName                                   to sFilename
+        //
+        Direct_Output sFilename
+        Output TransactionCollectionHeader
+        Close_Output
+        #ENDIF
+        //
+        Get Main_DD                       to hoDD
+        Get ptTransactions                to tTransactions
+        Move (SizeOfArray(tTransactions)) to iItems
+        //
+        For iItem from 0 to (iItems - 1)
+            Move ""      to sResult
+            Move False   to bFail
+            Send Clear of hoDD
+            // did we process before?
+            Move tTransactions[iItem].iTransIdno to Trans.TransReference
+            Find ge Trans.TransReference
+            Move ((Found) and Trans.TransReference = tTransactions[iItem].iTransIdno) to bFail
+            If (bFail) Begin
+                Move "Previously processed" to sResult
+                //Showln sResult
+            End
+            Clear Trans
+            //
+            If (not(bFail)) Begin
+                Move tTransactions[iItem].iEmployeeIdno   to iValue
+                Move iValue                               to Employee.EmployeeIdno
+                Send Request_Find of hoDD EQ Employee.File_Number 1
+                Move (not(Found))                         to bFail
+                If (bFail) Begin
+                    Move "Employee record not found"      to sResult
+                    Move (String(iValue) * sResult)       to sResult
+                End
+                Else Begin
+                    Move tTransactions[iItem].iJobNumber  to iValue
+                    Move iValue                           to Order.JobNumber
+                    Send Request_Find of hoDD EQ Order.File_Number 1
+                    Move (not(Found))                     to bFail
+                    If (bFail) Begin 
+                        Move "Job record not found"       to sResult
+                        Move (String(iValue) * sResult)   to sResult
+                    End
+                    If (bFail) Break
+                    Move tTransactions[iItem].iOpersIdno  to iValue
+                    Move iValue                           to Opers.OpersIdno
+                    Send Request_Find of hoDD EQ Opers.File_Number 1
+                    Move (not(Found))                     to bFail
+                    If (bFail) Begin
+                        Move "Operation record not found" to sResult
+                        Move (String(iValue) * sResult)   to sResult
+                    End
+                    If (bFail) Break
+                    Set Field_Changed_Value of hoDD Field Trans.StartTime               to tTransactions[iItem].sStartTime
+                    Set Field_Changed_Value of hoDD Field Trans.StartDate               to tTransactions[iItem].dStartDate
+                    Set Field_Changed_Value of hoDD Field Trans.StartHr                 to tTransactions[iItem].iStartHr
+                    Set Field_Changed_Value of hoDD Field Trans.StartMin                to tTransactions[iItem].iStartMin
+                    Set Field_Changed_Value of hoDD Field Trans.StopTime                to tTransactions[iItem].sStopTime
+                    Set Field_Changed_Value of hoDD Field Trans.StopDate                to tTransactions[iItem].dStopDate
+                    Set Field_Changed_Value of hoDD Field Trans.StopHr                  to tTransactions[iItem].iStopHr
+                    Set Field_Changed_Value of hoDD Field Trans.StopMin                 to tTransactions[iItem].iStopMin
+                    Set Field_Changed_Value of hoDD Field Trans.Quantity                to tTransactions[iItem].iQuantity
+                    Set Field_Changed_Value of hoDD Field Trans.EquipmentID             to tTransactions[iItem].sEquipmentID
+                    Set Field_Changed_Value of hoDD Field Trans.TransReference          to tTransactions[iItem].iTransIdno
+                    Set Field_Changed_Value of hoDD Field Trans.EquipIdno               to tTransactions[iItem].iEquipIdno
+                    Set Field_Changed_Value of hoDD Field Trans.CallerId                to tTransactions[iItem].sCallerId
+                    Set Field_Changed_Value of hoDD Field Trans.CallerId_Out            to tTransactions[iItem].sCallerId_Out
+                    Set Field_Changed_Value of hoDD Field Trans.GPSLat_In               to tTransactions[iItem].sGPSLat_In
+                    Set Field_Changed_Value of hoDD Field Trans.GPSLong_In              to tTransactions[iItem].sGPSLong_In
+                    Set Field_Changed_Value of hoDD Field Trans.GPSLat_Out              to tTransactions[iItem].sGPSLat_Out
+                    Set Field_Changed_Value of hoDD Field Trans.GPSLong_Out             to tTransactions[iItem].sGPSLong_Out
+                    Set Field_Changed_Value of hoDD Field Trans.EmployerIdno            to tTransactions[iItem].iEmployerIdno
+                    Set Field_Changed_Value of hoDD Field Trans.CurrentLaborRate        to tTransactions[iItem].nCurrentLaborRate
+                    Set Field_Changed_Value of hoDD Field Trans.CurrentContractorRate   to tTransactions[iItem].nCurrentContractorRate
+                    Set Field_Changed_Value of hoDD Field Trans.CurrentSellRate         to tTransactions[iItem].nCurrentSellRate
+                    Set Field_Changed_Value of hoDD Field Trans.AttachEquipIdno         to tTransactions[iItem].iAttachEquipIdno
+                    Set Field_Changed_Value of hoDD Field Trans.CurrAttachContrRate     to tTransactions[iItem].nCurrAttachContrRate
+                    Set Field_Changed_Value of hoDD Field Trans.AttachOpersIdno         to tTransactions[iItem].iAttachOpersIdno
+                    Set Field_Changed_Value of hoDD Field Trans.AttachMastOpsIdno       to tTransactions[iItem].iAttachMastOpsIdno
+                    Set Field_Changed_Value of hoDD Field Trans.AttachEquipOwner        to tTransactions[iItem].iAttachEquipOwner
+                    Set Field_Changed_Value of hoDD Field Trans.EquipOwner              to tTransactions[iItem].iEquipOwner
+                    Set Field_Changed_Value of hoDD Field Trans.Comment                 to tTransactions[iItem].sComment
+                    Get Request_Validate    of hoDD                                     to bFail
+                    If (bFail) Begin
+                        Move "Validation error"                                         to sResult
+                    End
+                    If (bFail) Break
+                    Send Request_Save       of hoDD
+                    Move (not(Trans.Recnum <> 0))                                       to bFail
+                    If (bFail) Begin
+                        Move "Save error"                                               to sResult
+                    End
+                    Else Begin
+                        Move Trans.TransReference to tCollected[iCount].iTransIdno
+                        Move Trans.TransIdno      to tCollected[iCount].iTransReference
+                        Move Trans.TransIdno      to sResult
+                        Increment iCount
+                    End
+                End
+            End
+            If ((bFail) and sResult = "") Begin
+                Move "Failed" to sResult
+            End
+            //Showln sResult
+            #IFDEF TEMPUS_LINK
+            #ELSE   
+            //#IFDEF TRANS_DATA_DUMP
+            Append_Output sFilename
+            autopage TransactionCollectionBody
+            Print tTransactions[iItem].iTransIdno
+            Print tTransactions[iItem].iJobNumber
+            Print tTransactions[iItem].iEmployeeIdno
+            Print tTransactions[iItem].iOpersIdno
+            Print tTransactions[iItem].dStartDate
+            Print tTransactions[iItem].sStartTime
+            Print tTransactions[iItem].dStopDate
+            Print tTransactions[iItem].sStopTime
+            Print sResult
+            Output TransactionCollectionBody
+            Close_Output
+            #ENDIF
+        Loop
+        Set ptCollected to tCollected
+    End_Procedure // OnProcess
+
+    Function DoCollectAndProcessTransactions String ByRef sError Integer ByRef iCollected Returns Integer
+        tWStNewTransaction[]       tTransactions
+        tWStCollectedTransaction[] tCollected
+        //
+        Integer iItems iProcessed iUpdated eTransferStatus
+        //
+        Get wsGetNewTransactions of oWSTransactionService to tTransactions
+        Get peTransferStatus     of oWSTransactionService to eTransferStatus
+        If (not(eTransferStatus = wssOK)) Begin
+            // Handle soap fault errors in a special way. Report all others as errors.
+            If (eTransferStatus=wssSoapFault) Begin
+                Get TransferErrorDescription of oWSTransactionService to sError
+                Function_Return
+            End
+            Else Begin
+                Send LastError of oWSTransactionService // this will generate an error
+            End
+        End
+        Move (SizeOfArray(tTransactions))                 to iItems
+        Move iItems                                       to iCollected
+        //Showln ("Items collected" * String(iItems))
+        If (iItems > 0) Begin
+            Set ptTransactions                            to tTransactions
+            Send DoProcess
+            Get ptCollected                               to tCollected
+            Move (SizeOfArray(tCollected))                to iProcessed
+        //Showln ("Items processed" * String(iProcessed))
+            If (iProcessed <> iItems) Begin
+                #IFDEF TEMPUS_LINK
+                #ELSE
+                Send Info_Box ("Not all" * String(iItems) * "collected transactions were processed." * String(iItems - iProcessed) * "error(s).")
+                #ENDIF
+            End
+            If (iProcessed > 0) Begin
+                Get wsUpdateCollectedTransactions of oWSTransactionService tCollected to iUpdated
+                Get peTransferStatus              of oWSTransactionService            to eTransferStatus
+                If (not(eTransferStatus = wssOK)) Begin
+                    // Handle soap fault errors in a special way. Report all others as errors.
+                    If (eTransferStatus=wssSoapFault) Begin
+                        Get TransferErrorDescription of oWSTransactionService to sError
+                        Function_Return
+                    End
+                    Else Begin
+                        Send LastError of oWSTransactionService // this will generate an error
+                    End
+                End
+                If (iUpdated <> iProcessed) Begin
+                    #IFDEF TEMPUS_LINK
+                    #ELSE
+                    Send Info_Box ("Not all" * String(iProcessed) * "processed transactions were updated." * String(iProcessed - iUpdated) * "error(s).")
+                    #ENDIF
+                End
+            End
+            #IFDEF TEMPUS_LINK
+            #ELSE
+            Send DoStartDocument "OPEN" (psFileName(Self)) ""
+            #ENDIF
+        End
+        Function_Return iProcessed
+    End_Function
+
+    Function DoUpdateMastOps String ByRef sError Returns String
+        tWStMastOps[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear MastOps
+        Move 1 to MastOps.ChangedFlag
+        Find ge MastOps.ChangedFlag
+        While ((Found) and MastOps.ChangedFlag = 1)
+            Move MastOps.Recnum             to tUpdate[iItems].iRecId
+            Move MastOps.MastOpsIdno        to tUpdate[iItems].iMastOpsIdno
+            Move MastOps.Name               to tUpdate[iItems].sName
+            Move MastOps.SellRate           to tUpdate[iItems].nSellRate
+            Move MastOps.CostRate           to tUpdate[iItems].nCostRate
+            Move MastOps.CostType           to tUpdate[iItems].sCostType
+            Move MastOps.CalcBasis          to tUpdate[iItems].sCalcBasis
+            Move MastOps.ActivityType       to tUpdate[iItems].sActivityType
+            Move MastOps.StandardHours      to tUpdate[iItems].nStandardHours
+            Move MastOps.Description        to tUpdate[iItems].sDescription
+            Move MastOps.Status             to tUpdate[iItems].sStatus
+            Move MastOps.DisplaySequence    to tUpdate[iItems].nDisplaySequence
+            Move MastOps.ChangedFlag        to tUpdate[iItems].iChangedFlag
+            Move MastOps.QtyDivisor         to tUpdate[iItems].nQtyDivisor
+            Move MastOps.QtyDescription     to tUpdate[iItems].sQtyDescription
+            Move MastOps.ReportCategory     to tUpdate[iItems].sReportCategory
+            Move MastOps.IsAttachment       to tUpdate[iItems].sIsAttachment
+            Move MastOps.NeedsAttachment    to tUpdate[iItems].sNeedsAttachment
+            Increment iItems
+            Find gt MastOps.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateMastOps  of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of MastOps.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear MastOps
+                    Move tUpdate[iItem].iRecId to MastOps.Recnum
+                    Find eq MastOps.Recnum
+                    If (Found) Begin
+                        Reread MastOps
+                        Move 0 to MastOps.ChangedFlag
+                        SaveRecord MastOps
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("MastOps:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No MastOps records to update"
+        End
+    End_Function
+
+//    Function DoCloseExpiredLocNote String ByRef sError Returns String
+//        tWStLocnotes[] tUpdate
+//        //
+//        Integer iItems iItem iProcessed eTransferStatus
+//        // collect changed items
+//        Clear Locnotes
+//        Move 1 to Locnotes.ChangedFlag
+//        Find ge Locnotes.ChangedFlag
+//        While ((Found) and Locnotes.ChangedFlag = 1)
+//            If (Locnotes.Status = "4-CLOSED") Begin
+//                Move Locnotes.LocnotesId                    to tUpdate[iItems].iLocnotesId
+//                Move Locnotes.JobNumber                     to tUpdate[iItems].iJobNumber
+//                Move Locnotes.LocationIdno                  to tUpdate[iItems].iLocationIdno
+//                Move Locnotes.CreatedDate                   to tUpdate[iItems].dCreatedDate
+//                Move Locnotes.CreatedTime                   to tUpdate[iItems].sCreatedTime
+//                Move Locnotes.CreatedBy                     to tUpdate[iItems].sCreatedBy
+//                Move Locnotes.NoteDate                      to tUpdate[iItems].dNoteDate
+//                Move Locnotes.LocnotesRef                   to tUpdate[iItems].iLocnotesRef
+//                Move Locnotes.Note                          to tUpdate[iItems].sNote
+//                Move Locnotes.IsEmail                       to tUpdate[iItems].iIsEmail
+//                Move Locnotes.ReqtypesCode                  to tUpdate[iItems].sReqtypesCode
+//                Move Locnotes.Status                        to tUpdate[iItems].sStatus
+//                Move Locnotes.AssignedTo                    to tUpdate[iItems].sAssignedTo
+//                Move Locnotes.AssignedDate                  to tUpdate[iItems].dAssignedDate
+//                Move Locnotes.AssignedTime                  to tUpdate[iItems].sAssignedTime
+//                Move Locnotes.AssignedBy                    to tUpdate[iItems].sAssignedBy
+//                Move Locnotes.ResolvedDate                  to tUpdate[iItems].dResolvedDate
+//                Move Locnotes.ResolvedTime                  to tUpdate[iItems].sResolvedTime
+//                Move Locnotes.ResolvedBy                    to tUpdate[iItems].sResolvedBy
+//                Move Locnotes.ClosedDate                    to tUpdate[iItems].dClosedDate
+//                Move Locnotes.ClosedTime                    to tUpdate[iItems].sClosedTime
+//                Move Locnotes.ClosedBy                      to tUpdate[iItems].sClosedBy
+//                Move Locnotes.Resolution                    to tUpdate[iItems].sResolution
+//                Move Locnotes.ChangedFlag                   to tUpdate[iItems].iChangedFlag
+//                Move Locnotes.CallerName                    to tUpdate[iItems].sCallerName
+//                Move Locnotes.CallerPhone                   to tUpdate[iItems].sCallerPhone
+//                Move Locnotes.RecordOwner                   to tUpdate[iItems].iRecordOwner
+//                Move Locnotes.CallerEmail                   to tUpdate[iItems].sCallerEmail
+//                Move Locnotes.EmailReply                    to tUpdate[iItems].sEmailReply
+//                Move Locnotes.EmailSubject                  to tUpdate[iItems].sEmailSubject
+//                Move Locnotes.EmailReplyBy                  to tUpdate[iItems].iEmailReplyBy
+//                Move Locnotes.MgrFirstName                  to tUpdate[iItems].sMgrFirstName
+//                Move Locnotes.MgrLastName                   to tUpdate[iItems].sMgrLastName
+//                Move Locnotes.MgrEmailAddress               to tUpdate[iItems].sMgrEmailAddress
+//                Move Locnotes.AssignmentNote                to tUpdate[iItems].sAssignmentNote
+//                Move Locnotes.DocumentationFlag             to tUpdate[iItems].iDocumentationFlag
+//                //
+//                Increment iItems
+//            End
+//            Find gt Locnotes.ChangedFlag
+//        Loop
+//        If (iItems > 0) Begin
+//            // call remote update
+//            Get wsUpdateLocNotes of oWSTransactionService tUpdate to tUpdate
+//            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+//            If (not(eTransferStatus = wssOK)) Begin
+//                // Handle soap fault errors in a special way. Report all others as errors.
+//                If (eTransferStatus=wssSoapFault) Begin
+//                    Get TransferErrorDescription of oWSTransactionService to sError
+//                    Function_Return
+//                End
+//                Else Begin
+//                    Send LastError of oWSTransactionService // this will generate an error
+//                End
+//            End
+//            //
+//            Move (SizeOfArray(tUpdate)) to iItems
+//            Decrement                      iItems
+//            Send ChangeAllFileModes DF_Filemode_ReadOnly
+//            Set_Attribute DF_File_Mode of Locnotes.File_Number to DF_Filemode_Default
+//            For iItem from 0 to iItems
+//                If (tUpdate[iItem].iChangedFlag = 0) Begin
+//                    Clear Locnotes
+//                    Move tUpdate[iItem].iLocnotesId to Locnotes.LocnotesId
+//                    Find eq Locnotes.LocnotesId
+//                    If (Found) Begin
+//                        Reread Locnotes
+//                        Move 0 to Locnotes.ChangedFlag
+//                        SaveRecord Locnotes
+//                        Unlock
+//                        Increment iProcessed
+//                    End
+//                End
+//            Loop
+//            Send ChangeAllFileModes DF_Filemode_Default
+//            Function_Return ("Locnotes:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+//        End
+//        Else Begin
+//            Function_Return "No Locnotes records to update"
+//        End
+//    End_Function
+//
+
+    Function DoUpdateAreas String ByRef sError Returns String
+        tWStAreas[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Areas
+        Move 1 to Areas.ChangedFlag
+        Find ge Areas.ChangedFlag
+        While ((Found) and Areas.ChangedFlag = 1)
+            Move Areas.Recnum          to tUpdate[iItems].iRecId
+            Move Areas.AreaNumber      to tUpdate[iItems].iNumber
+            Move Areas.Name            to tUpdate[iItems].sName
+            Move Areas.Manager         to tUpdate[iItems].sManager
+            Move Areas.ChangedFlag     to tUpdate[iItems].iChangedFlag
+            Move Areas.EmployeeIdno    to tUpdate[iItems].iEmployeeIdno
+            Increment iItems
+            Find gt Areas.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateAreas    of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Areas.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Areas
+                    Move tUpdate[iItem].iRecId to Areas.Recnum
+                    Find eq Areas.Recnum
+                    If (Found) Begin
+                        Reread Areas
+                        Move 0 to Areas.ChangedFlag
+                        SaveRecord Areas
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Areas:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Areas records to update"
+        End
+    End_Function
+
+    Function DoUpdateCustomer String ByRef sError Returns String
+        tWStCustomer[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Customer
+        Move 1 to Customer.ChangedFlag
+        Find ge Customer.ChangedFlag
+        While ((Found) and Customer.ChangedFlag = 1)
+            Move Customer.Recnum       to tUpdate[iItems].iRecId
+            Move Customer.CustomerIdno to tUpdate[iItems].iIdno
+            Move Customer.Name         to tUpdate[iItems].sName
+            Move Customer.Address1     to tUpdate[iItems].sAddress1
+            Move Customer.Address2     to tUpdate[iItems].sAddress2
+            Move Customer.City         to tUpdate[iItems].sCity
+            Move Customer.State        to tUpdate[iItems].sState
+            Move Customer.Zip          to tUpdate[iItems].sZip
+            Move Customer.Status       to tUpdate[iItems].sStatus
+            Move Customer.ChangedFlag  to tUpdate[iItems].iChangedFlag
+            Move Customer.Terms        to tUpdate[iItems].sTerms
+            Increment iItems
+            Find gt Customer.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateCustomer of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Customer.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Customer
+                    Move tUpdate[iItem].iRecId to Customer.Recnum
+                    Find eq Customer.Recnum
+                    If (Found) Begin
+                        Reread Customer
+                        Move 0 to Customer.ChangedFlag
+                        SaveRecord Customer
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Customer:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Customer records to update"
+        End
+    End_Function
+    //
+    Function DoUpdateTerms String ByRef sError Returns String
+        tWStTerms [] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Terms
+        Move 1 to Terms.ChangedFlag
+        Find ge Terms.ChangedFlag
+        While ((Found) and Terms.ChangedFlag = 1)
+            Move Terms.Recnum                   to tUpdate[iItems].iRecId
+            Move Terms.Terms                    to tUpdate[iItems].sTerms
+            Move Terms.DueDays                  to tUpdate[iItems].iDueDays
+            Move Terms.DiscountDay              to tUpdate[iItems].iDiscountDay
+            Move Terms.DiscountPercent          to tUpdate[iItems].nDiscountPercent
+            Move Terms.DayOfMonthDue            to tUpdate[iItems].iDayOfMonthDue
+            Move Terms.DueNextMonthDays         to tUpdate[iItems].iDueNextMonthDays
+            Move Terms.DiscountDayOfMonth       to tUpdate[iItems].iDiscountDayOfMonth
+            Move Terms.DiscountPercentOfMonth   to tUpdate[iItems].nDiscountPercentOfMonth
+            Move Terms.Status                   to tUpdate[iItems].sStatus
+            Move Terms.QBTermsRefListId         to tUpdate[iItems].sQBTermsRefListId
+            Move Terms.ChangedFlag              to tUpdate[iItems].iChangedFlag
+            Increment iItems
+            Find gt Terms.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateTerms of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Terms.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Terms
+                    Move tUpdate[iItem].iRecId to Terms.Recnum
+                    Find eq Terms.Recnum
+                    If (Found) Begin
+                        Reread Terms
+                        Move 0 to Terms.ChangedFlag
+                        SaveRecord Terms
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Terms:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Terms records to update"
+        End
+    End_Function
+    //
+    Function DoUpdateSalesTaxGroup String ByRef sError Returns String
+        tWStSalesTaxGroup [] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear SalesTaxGroup
+        Move 1 to SalesTaxGroup.ChangedFlag
+        Find ge SalesTaxGroup.ChangedFlag
+        While ((Found) and SalesTaxGroup.ChangedFlag = 1)
+            Move SalesTaxGroup.Recnum        to tUpdate[iItems].iRecId
+            Move SalesTaxGroup.SalesTaxIdno  to tUpdate[iItems].iSalesTaxIdno
+            Move SalesTaxGroup.Name          to tUpdate[iItems].sName
+            Move SalesTaxGroup.Rate          to tUpdate[iItems].sRate
+            Move SalesTaxGroup.ChangedFlag   to tUpdate[iItems].iChangedFlag
+            Increment iItems
+            Find gt SalesTaxGroup.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateSalesTaxGroup of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of SalesTaxGroup.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear SalesTaxGroup
+                    Move tUpdate[iItem].iRecId to SalesTaxGroup.Recnum
+                    Find eq SalesTaxGroup.Recnum
+                    If (Found) Begin
+                        Reread SalesTaxGroup
+                        Unlock
+                        Move 0 to SalesTaxGroup.ChangedFlag
+                        SaveRecord SalesTaxGroup
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("SalesTaxGroup:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No SalesTaxGroup records to update"
+        End
+    End_Function
+    //
+
+    Function DoUpdateLocation String ByRef sError Returns String
+        tWStLocation[] tUpdate
+        //
+        Integer iItems iItem iDItem iProcessed eTransferStatus iLoopCount iPrevArrayEnd
+        Move 1 to iPrevArrayEnd
+        // collect changed items
+        Clear Location
+        Move 1 to Location.ChangedFlag
+        Find ge Location.ChangedFlag
+        While ((Found) and Location.ChangedFlag = 1)
+            Move Location.Recnum                to tUpdate[iItems].iRecId
+            Move Location.CustomerIdno          to tUpdate[iItems].iCustIdno
+            Move Location.LocationIdno          to tUpdate[iItems].iLocIdno
+            Move Location.LocationNbr           to tUpdate[iItems].iLocNbr
+            Move Location.Name                  to tUpdate[iItems].sName
+            Move Location.Address1              to tUpdate[iItems].sAddress1
+            Move Location.Address2              to tUpdate[iItems].sAddress2
+            Move Location.City                  to tUpdate[iItems].sCity
+            Move Location.State                 to tUpdate[iItems].sState
+            Move Location.Zip                   to tUpdate[iItems].sZip
+            Move Location.Phone1                to tUpdate[iItems].sPhone1
+            Move Location.PhoneType1            to tUpdate[iItems].sPhoneType1
+            Move Location.Phone2                to tUpdate[iItems].sPhone2
+            Move Location.PhoneType2            to tUpdate[iItems].sPhoneType2
+            Move Location.Phone3                to tUpdate[iItems].sPhone3
+            Move Location.PhoneType3            to tUpdate[iItems].sPhoneType3
+            Move Location.ContactName           to tUpdate[iItems].sContactName
+            Move Location.ContactPhone1         to tUpdate[iItems].sContactPhone1
+            Move Location.ContactPhnType1       to tUpdate[iItems].sContactPhoneType1
+            Move Location.ContactPhone2         to tUpdate[iItems].sContactPhone2
+            Move Location.ContactPhnType2       to tUpdate[iItems].sContactPhoneType2
+            Move Location.PhoneExt1             to tUpdate[iItems].sPhoneExt1
+            Move Location.PhoneExt2             to tUpdate[iItems].sPhoneExt2
+            Move Location.PhoneExt3             to tUpdate[iItems].sPhoneExt3
+            Move Location.ContactPhnExt1        to tUpdate[iItems].sContactPhoneExt1
+            Move Location.ContactPhnExt2        to tUpdate[iItems].sContactPhoneExt2
+            Move Location.ContactPhnExt3        to tUpdate[iItems].sContactPhoneExt3
+            Move Location.ContactEmail          to tUpdate[iItems].sContactEmail
+            Move Location.ContactComment        to tUpdate[iItems].sContactComment
+            Move Location.Status                to tUpdate[iItems].sStatus
+            Move Location.AreaNumber            to tUpdate[iItems].iArea
+            Move Location.InvoiceLocation       to tUpdate[iItems].iInvLoc
+            Move Location.ChangedFlag           to tUpdate[iItems].iChangedFlag
+            Move Location.ContactIdno           to tUpdate[iItems].iContactIdno
+            Move Location.BillingName           to tUpdate[iItems].sBillingName
+            Move Location.BillingAddress1       to tUpdate[iItems].sBillingAddress1
+            Move Location.BillingAddress2       to tUpdate[iItems].sBillingAddress2
+            Move Location.BillingCity           to tUpdate[iItems].sBillingCity
+            Move Location.BillingState          to tUpdate[iItems].sBillingState
+            Move Location.BillingZip            to tUpdate[iItems].sBillingZip
+            Move Location.BillingAttn           to tUpdate[iItems].sBillingAttn
+            Move Location.PropmgrIdno           to tUpdate[iItems].iPropmgrIdno
+            Move Location.ListID                to tUpdate[iItems].sListId
+            Move Location.BillingAddress        to tUpdate[iItems].sBillingAddress
+            Move Location.Header                to tUpdate[iItems].sHeader
+            Move Location.Openup                to tUpdate[iItems].sOpenUp
+            Move Location.FullPlow              to tUpdate[iItems].sFullPlow
+            Move Location.AreaMgr               to tUpdate[iItems].sAreaMgr
+            Move Location.AreaMgrPhn            to tUpdate[iItems].sAreaMgrPhn
+            Move Location.BuildingType          to tUpdate[iItems].sBuildingType
+            Move Location.MajTenant             to tUpdate[iItems].sMajorTenant
+            Move Location.PlowTrigger           to tUpdate[iItems].sPlowTrigger
+            Move Location.ParkSqFeet            to tUpdate[iItems].iParkSqft
+            Move Location.SWTrigger             to tUpdate[iItems].sSWTrigger
+            Move Location.SWSqFeet              to tUpdate[iItems].iSwSqft
+            Move Location.Hauling               to tUpdate[iItems].sHauling
+            Move Location.Parking_Stalls        to tUpdate[iItems].iParkingStalls
+            Move Location.Melting               to tUpdate[iItems].sMelting
+            Move Location.Awnings               to tUpdate[iItems].sAwnings
+            Move Location.SpcEquipment          to tUpdate[iItems].sSpecialEquip
+            Move Location.Special               to tUpdate[iItems].sSpecialInst
+            Move Location.CityWalks             to tUpdate[iItems].sCityWalks
+            Move Location.DeIcing               to tUpdate[iItems].sDeIcing
+            Move Location.Image1                to tUpdate[iItems].sImage1
+            Move Location.Image2                to tUpdate[iItems].sImage2
+            Move Location.Image3                to tUpdate[iItems].sImage3
+            Move Location.Image4                to tUpdate[iItems].sImage4
+            Move Location.Image5                to tUpdate[iItems].sImage5
+            Move Location.Latitude              to tUpdate[iItems].sLatitude
+            Move Location.Longitude             to tUpdate[iItems].sLongitude
+            Move Location.SalesTaxIdno          to tUpdate[iItems].iSalesTaxIdno
+            Move Location.RecordOwner           to tUpdate[iItems].iRecordOwner
+            Move Location.AntBulkUsage          to tUpdate[iItems].nAntBulkUsage
+            Move Location.BulkManualFlag        to tUpdate[iItems].iBulkManFlag
+            Move Location.AntBagUsage           to tUpdate[iItems].nAntBagUsage
+            Move Location.BagManualFlag         to tUpdate[iItems].iBagManFlag
+            Move Location.PreTreatWalk          to tUpdate[iItems].sPreTreatWalk
+            Move Location.PreTreatWalkSqft      to tUpdate[iItems].nPreTreatWalkSqft
+            Move Location.PreTreatLot           to tUpdate[iItems].sPreTreatLot
+            Move Location.PreTreatLotSqft       to tUpdate[iItems].nPreTreatLotSqft
+            Move Location.GeoFenceRadius        to tUpdate[iItems].nGeoFenceRadius
+            Move Location.GeoRelevance          to tUpdate[iItems].nGeoRelevance
+            Move Location.Geo1ManualFlag        to tUpdate[iItems].iGeoManualFlag
+            Move Location.Latitude2             to tUpdate[iItems].sLatitude2
+            Move Location.Longitude2            to tUpdate[iItems].sLongitude2
+            Move Location.GeoFenceRadius2       to tUpdate[iItems].nGeoFenceRadius2
+            
+//            /////////////////////////////////////////////////////////////////////////
+//            Integer iFileCount iArraySize iArgSize
+//            String sHomePath sLogPath sSourcePath
+//            DateTime dtNow
+//            //
+//            If (Length(Trim(Location.Image1))>=1) Begin
+//                Increment iDItem
+//                Move (Trim(Location.Image1)) to tUpdate[iItems].tLocImages[iDItem].sFileName
+//            End
+//             If (Length(Trim(Location.Image2))>=1) Begin
+//                Increment iDItem
+//                Move (Trim(Location.Image2)) to tUpdate[iItems].tLocImages[iDItem].sFileName
+//            End                       
+//            If (Length(Trim(Location.Image3))>=1) Begin
+//                Increment iDItem
+//                Move (Trim(Location.Image3)) to tUpdate[iItems].tLocImages[iDItem].sFileName
+//            End
+//            If (Length(Trim(Location.Image4))>=1) Begin
+//                Increment iDItem
+//                Move (Trim(Location.Image4)) to tUpdate[iItems].tLocImages[iDItem].sFileName
+//            End
+//            If (Length(Trim(Location.Image5))>=1) Begin
+//                Increment iDItem
+//                Move (Trim(Location.Image5)) to tUpdate[iItems].tLocImages[iDItem].sFileName
+//            End
+//            //
+//            Get psHome of (phoWorkspace(ghoApplication)) to sHomePath
+//            Move (sHomePath+"Bitmaps\Snowbooks\") to sSourcePath
+//            Move (sHomePath+"Document\Log\SnowbookImg.log") to sLogPath
+//            Move (CurrentDateTime()) to dtNow
+//            //Append_Output sLogPath
+//            Showln ("Started:"*String(dtNow))
+//            Showln ("LocationIdno:"*String(Location.LocationIdno))
+//            Get_Argument_Size to iArgSize
+//            //
+//            Move (SizeOfArray(tUpdate[iItems].tLocImages)-1) to iArraySize
+//            Showln ("ArraySize:"*String(iArraySize))
+//            Showln ("iItems: "*String(iItems)*" - iDItem: "*String(iDItem))
+//            Showln ("iLoopCount: "*String(iLoopCount))
+//            If (iArraySize>=1) Begin
+//                For iLoopCount from 1 to iDItem
+//                    Showln ("Encoding file:"*tUpdate[iItems].tLocImages[iLoopCount].sFileName)
+//                    Send Base64EncodeFile sSourcePath tUpdate[iItems].tLocImages[iLoopCount].sFileName (&tUpdate[iItems].tLocImages[iLoopCount].iEncodeBinSize) (&tUpdate[iItems].tLocImages[iLoopCount].ucEncodeString)
+//                Loop
+//            End
+//            Move 0 to iDItem
+//            Move iArraySize to iPrevArrayEnd
+//            Set_Argument_Size iArgSize
+//            Showln ("Completed")
+//            //Close_Output
+//            /////////////////////////////////////////////////////////////////////////            
+            Increment iItems
+            Find gt Location.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateLocation of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Location.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Location
+                    Move tUpdate[iItem].iRecId to Location.Recnum
+                    Find eq Location.Recnum
+                    If (Found) Begin
+                        Reread Location
+                        Move 0 to Location.ChangedFlag
+                        SaveRecord Location
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+//            Set_Argument_Size iArgSize
+            Function_Return ("Location:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Location records to update"
+        End
+    End_Function
+
+    Function DoUpdateOpers String ByRef sError Returns String
+        tWStOpers[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Opers
+        Move 1 to Opers.ChangedFlag
+        Find ge Opers.ChangedFlag
+        While ((Found) and Opers.ChangedFlag = 1)
+            Move Opers.Recnum          to tUpdate[iItems].iRecId
+            Move Opers.OpersIdno       to tUpdate[iItems].iOpersIdno
+            Move Opers.CustomerIdno    to tUpdate[iItems].iCustIdno
+            Move Opers.LocationIdno    to tUpdate[iItems].iLocIdno
+            Move Opers.MastOpsIdno     to tUpdate[iItems].iMastOpsIdno
+            Move Opers.Name            to tUpdate[iItems].sName
+            Move Opers.SellRate        to tUpdate[iItems].nSellRate
+            Move Opers.CostRate        to tUpdate[iItems].nCostRate
+            Move Opers.CostType        to tUpdate[iItems].sCostType
+            Move Opers.CalcBasis       to tUpdate[iItems].sCalcBasis
+            Move Opers.ActivityType    to tUpdate[iItems].sActType
+            Move Opers.Display         to tUpdate[iItems].iDisplay
+            Move Opers.Status          to tUpdate[iItems].sStatus
+            Move Opers.DisplaySequence to tUpdate[iItems].nSeq
+            Move Opers.ChangedFlag     to tUpdate[iItems].iChangedFlag
+            Increment iItems
+            Find gt Opers.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateOpers    of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Opers.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Opers
+                    Move tUpdate[iItem].iRecId to Opers.Recnum
+                    Find eq Opers.Recnum
+                    If (Found) Begin
+                        Reread Opers
+                        Move 0 to Opers.ChangedFlag
+                        SaveRecord Opers
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Opers:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Opers records to update"
+        End
+    End_Function
+
+    Function DoUpdateOrder String ByRef sError Returns String
+        tWStOrder[] tUpdate
+        //
+        Integer iItems iItem iDItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Order
+        Move 1 to Order.ChangedFlag
+        Find ge Order.ChangedFlag
+        While ((Found) and Order.ChangedFlag = 1)
+            //Showln ("Order.JobNumber: "*String(Order.JobNumber))
+            Move 0                      to iDItem
+            Move Order.Recnum          to tUpdate[iItems].iRecId
+            Move Order.JobNumber       to tUpdate[iItems].iJobNumber
+            Move Order.CustomerIdno    to tUpdate[iItems].iCustIdno
+            Move Order.LocationIdno    to tUpdate[iItems].iLocIdno
+            Move Order.Title           to tUpdate[iItems].sTitle
+            Move Order.WorkType        to tUpdate[iItems].sWorkType
+            Move Order.Planner         to tUpdate[iItems].sPlanner
+            Move Order.EstimatedHours  to tUpdate[iItems].nEstHrs
+            Move Order.JobOpenDate     to tUpdate[iItems].dOpen
+            Move Order.JobCloseDate    to tUpdate[iItems].dClose
+            Move Order.ChangedFlag     to tUpdate[iItems].iChangedFlag
+            Move Order.QuoteReference  to tUpdate[iItems].iQuoteReference
+            Move Order.QuoteAmount     to tUpdate[iItems].nQuoteAmount
+            Move Order.Organization    to tUpdate[iItems].sOrganization
+            Move Order.InvoiceOnly     to tUpdate[iItems].iInvoiceOnly
+            Move Order.ProjectId       to tUpdate[iItems].iProjectId
+            Move Order.PO_Number       to tUpdate[iItems].sPONumber
+            Move Order.LocationName    to tUpdate[iItems].sLocationName
+            Move Order.BillingType     to tUpdate[iItems].sBillingType
+            Move Order.PropertyManager to tUpdate[iItems].sPropertyManager
+            Move Order.RepIdno         to tUpdate[iItems].iRepIdno
+            Move Order.Status          to tUpdate[iItems].sStatus
+            Move Order.CEPM_JobNumber  to tUpdate[iItems].iCEPM_JobNumber
+            Move Order.GEOExclusion    to tUpdate[iItems].iGeoExclusionFlag
+            ////////////////////////////////////////////////
+            Clear OrderDtl
+            Move Order.JobNumber            to OrderDtl.JobNumber
+            Find ge OrderDtl.JobNumber
+            While ((Found) and OrderDtl.JobNumber = Order.JobNumber)
+                Move OrderDtl.OrderDtlIdno              to tUpdate[iItems].tDetail[iDItem].iOrdDtlIdno
+                Move OrderDtl.JobNumber                 to tUpdate[iItems].tDetail[iDItem].iJobNumber
+                Move OrderDtl.MastOpsIdno               to tUpdate[iItems].tDetail[iDItem].iMastOpsIdno
+                Move OrderDtl.OpersIdno                 to tUpdate[iItems].tDetail[iDItem].iOpersIdno
+                Move OrderDtl.Sequence                  to tUpdate[iItems].tDetail[iDItem].nSequence
+                Move OrderDtl.Quantity                  to tUpdate[iItems].tDetail[iDItem].nQty
+                Move OrderDtl.Price                     to tUpdate[iItems].tDetail[iDItem].nPrice
+                Move OrderDtl.TaxRate                   to tUpdate[iItems].tDetail[iDItem].nTaxRate
+                Move OrderDtl.TaxAmount                 to tUpdate[iItems].tDetail[iDItem].nTaxAmount
+                Move OrderDtl.Amount                    to tUpdate[iItems].tDetail[iDItem].nAmount
+                Move OrderDtl.InvoiceDescription        to tUpdate[iItems].tDetail[iDItem].sDescription
+                Move OrderDtl.Instructions              to tUpdate[iItems].tDetail[iDItem].sInstructions
+                Move OrderDtl.CreatedOn                 to tUpdate[iItems].tDetail[iDItem].dCreatedOn
+                Move OrderDtl.LastModifyedOn            to tUpdate[iItems].tDetail[iDItem].dLastModifyedOn
+                Move OrderDtl.RecordOwner               to tUpdate[iItems].tDetail[iDItem].iRecordOwner
+                Move OrderDtl.EsItemIdno                to tUpdate[iItems].tDetail[iDItem].iEsItemIdno
+                Move OrderDtl.Sqft                      to tUpdate[iItems].tDetail[iDItem].nSqft
+                Move OrderDtl.Lnft                      to tUpdate[iItems].tDetail[iDItem].nLnft
+                Move OrderDtl.MatQuantity               to tUpdate[iItems].tDetail[iDItem].nMatQty
+                Move OrderDtl.TotalManHours             to tUpdate[iItems].tDetail[iDItem].nTotalManHrs
+                // Following two field were not present in DB on remote server when this was put in place. Update to follow.
+                //Move OrderDtl.OSCost                    to tUpdate[iItems].tDetail[iDItem].nOSCost
+                //Move OrderDtl.MatCost                   to tUpdate[iItems].tDetail[iDItem].nMatCost
+                //Showln ("OrderDtl.JobNumber: "* String(OrderDtl.JobNumber) *" - OrderDtl.OrderDtlIdno: "*String(OrderDtl.OrderDtlIdno) * " - tUpdate["+String(iItems)+"].tDetail["+String(iDItem)+"].iOrdDtlIdno: "*String(tUpdate[iItems].tDetail[iDItem].iOrdDtlIdno))
+                Increment iDItem
+                Find gt OrderDtl.JobNumber
+            Loop
+            ////////////////////////////////////////////////////////////
+            Increment iItems
+            Find gt Order.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateOrder    of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Order.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Order
+                    Move tUpdate[iItem].iRecId to Order.Recnum
+                    Find eq Order.Recnum
+                    If (Found) Begin
+                        Reread Order
+                        Move 0 to Order.ChangedFlag
+                        SaveRecord Order
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Order:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Order records to update"
+        End
+    End_Function
+
+    Function DoUpdateInvoice String ByRef sError Returns String
+        tWStInvhdr[] tUpdate
+//        tWStInvdtl[]
+        //
+        Integer iItems iItem iDItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Invhdr
+        Move 1 to Invhdr.ChangedFlag
+        Find ge Invhdr.ChangedFlag
+        While ((Found) and Invhdr.ChangedFlag = 1)
+            If (Invhdr.PostFlag = 1) Begin
+                Move 0                      to iDItem
+                Move Invhdr.Recnum          to tUpdate[iItems].iRecId
+                Move Invhdr.InvoiceIdno     to tUpdate[iItems].iInvoiceIdno
+                Move Invhdr.LocationIdno    to tUpdate[iItems].iLocationIdno
+                Move Invhdr.CustomerIdno    to tUpdate[iItems].iCustomerIdno
+                Move Invhdr.EventIdno       to tUpdate[iItems].iEventIdno
+                Move Invhdr.InvoiceDate     to tUpdate[iItems].dInvoiceDate
+                Move Invhdr.CreatedDate     to tUpdate[iItems].dCreatedDate
+                Move Invhdr.CreatedTime     to tUpdate[iItems].sCreatedTime
+                Move Invhdr.Terms           to tUpdate[iItems].sTerms
+                Move Invhdr.InvoiceType     to tUpdate[iItems].sInvoiceType
+                Move Invhdr.SalesInitials   to tUpdate[iItems].sSalesInitials
+                Move Invhdr.TaxTotal        to tUpdate[iItems].nTaxTotal
+                Move Invhdr.SubTotal        to tUpdate[iItems].nSubTotal
+                Move Invhdr.TotalAmount     to tUpdate[iItems].nTotalAmount
+                Move Invhdr.PrintCount      to tUpdate[iItems].iPrintCount
+                Move Invhdr.PostFlag        to tUpdate[iItems].iPostFlag
+                Move Invhdr.PrintFlag       to tUpdate[iItems].iPrintFlag
+                Move Invhdr.JobNumber       to tUpdate[iItems].iJobNumber
+                Move Invhdr.EditFlag        to tUpdate[iItems].iEditFlag
+                Move Invhdr.InvEditorFlag   to tUpdate[iItems].sInvEditorFlag
+                Move Invhdr.VoidFlag        to tUpdate[iItems].iVoidFlag
+                Move Invhdr.QBInvoiceNumber to tUpdate[iItems].iQBInvNumber
+                Move Invhdr.QBPaidFlag      to tUpdate[iItems].iQBPaidFlag
+                Move Invhdr.QBPaidDate      to tUpdate[iItems].dQBInvPaidDate
+                Move Invhdr.StartDateRange  to tUpdate[iItems].dStartDateRange
+                Move Invhdr.StopDateRange   to tUpdate[iItems].dStopDateRange
+                Move Invhdr.ChangedFlag     to tUpdate[iItems].iChangedFlag
+                Clear Invdtl
+                Move Invhdr.InvoiceIdno     to Invdtl.InvoiceIdno
+                Find ge Invdtl.InvoiceIdno
+                While ((Found) and Invdtl.InvoiceIdno = Invhdr.InvoiceIdno)
+                    Move Invdtl.DetailIdno              to tUpdate[iItems].tDetail[iDItem].iDetailIdno
+                    Move Invdtl.InvoiceIdno             to tUpdate[iItems].tDetail[iDItem].iInvoiceIdno
+                    Move Invdtl.TransIdno               to tUpdate[iItems].tDetail[iDItem].iTransIdno
+                    Move Invdtl.JobNumber               to tUpdate[iItems].tDetail[iDItem].iJobNumber
+                    Move Invdtl.AreaNumber              to tUpdate[iItems].tDetail[iDItem].iAreaNumber
+                    Move Invdtl.EmployeeIdno            to tUpdate[iItems].tDetail[iDItem].iEmployeeIdno
+                    Move Invdtl.OpersIdno               to tUpdate[iItems].tDetail[iDItem].iOpersIdno
+                    Move Invdtl.MastOpsIdno             to tUpdate[iItems].tDetail[iDItem].iMastOpsIdno
+                    Move Invdtl.StartTime               to tUpdate[iItems].tDetail[iDItem].sStartTime
+                    Move Invdtl.StartDate               to tUpdate[iItems].tDetail[iDItem].dStartDate
+                    Move Invdtl.StartHr                 to tUpdate[iItems].tDetail[iDItem].iStartHr
+                    Move Invdtl.StartMin                to tUpdate[iItems].tDetail[iDItem].iStartMin
+                    Move Invdtl.StopTime                to tUpdate[iItems].tDetail[iDItem].sStopTime
+                    Move Invdtl.StopDate                to tUpdate[iItems].tDetail[iDItem].dStopDate
+                    Move Invdtl.StopHr                  to tUpdate[iItems].tDetail[iDItem].iStopHr
+                    Move Invdtl.StopMin                 to tUpdate[iItems].tDetail[iDItem].iStopMin
+                    Move Invdtl.ElapsedMinutes          to tUpdate[iItems].tDetail[iDItem].iElapsedMinutes
+                    Move Invdtl.Quantity                to tUpdate[iItems].tDetail[iDItem].nQuantity
+                    Move Invdtl.Price                   to tUpdate[iItems].tDetail[iDItem].nPrice
+                    Move Invdtl.TaxRate                 to tUpdate[iItems].tDetail[iDItem].nTaxRate
+                    Move Invdtl.TaxAmount               to tUpdate[iItems].tDetail[iDItem].nTaxAmount
+                    Move Invdtl.Total                   to tUpdate[iItems].tDetail[iDItem].nTotal
+                    Move Invdtl.Comment                 to tUpdate[iItems].tDetail[iDItem].sComment
+                    Move Invdtl.AttachOpersIdno         to tUpdate[iItems].tDetail[iDItem].iAttachOpersIdno
+                    Move Invdtl.AttachMastOpsIdno       to tUpdate[iItems].tDetail[iDItem].iAttachMastOpsIdno
+                    Move Invdtl.AttachOpersName         to tUpdate[iItems].tDetail[iDItem].sAttachOpersName
+                    Move Invdtl.AttachOpersDescription  to tUpdate[iItems].tDetail[iDItem].sAttachOpersDescription
+                    Move Invdtl.AttachPrice             to tUpdate[iItems].tDetail[iDItem].nAttachPrice
+                    Move Invdtl.ClearToInvoice          to tUpdate[iItems].tDetail[iDItem].iClearToInvoice
+                    Move Invdtl.Description             to tUpdate[iItems].tDetail[iDItem].sDescription
+                    Move Invdtl.Sequence                to tUpdate[iItems].tDetail[iDItem].nSequence
+                    Increment iDItem
+                    Find gt Invdtl.InvoiceIdno
+                Loop
+                Increment iItems
+            End
+            Find gt Invhdr.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateInvhdr   of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Invhdr.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Invhdr
+                    Move tUpdate[iItem].iRecId to Invhdr.Recnum
+                    Find eq Invhdr.Recnum
+                    If (Found) Begin
+                        Reread Invhdr
+                        Move 0 to Invhdr.ChangedFlag
+                        SaveRecord Invhdr
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Invhdr:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Invoice header records to update"
+        End
+    End_Function
+
+    Function DoUpdateEmployer String ByRef sError Returns String
+        tWStEmployer[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Employer
+        Move 1 to Employer.ChangedFlag
+        Find ge Employer.ChangedFlag
+        While ((Found) and Employer.ChangedFlag = 1)
+            Move Employer.Recnum            to tUpdate[iItems].iRecId
+            Move Employer.EmployerIdno      to tUpdate[iItems].iIdno
+            Move Employer.Name              to tUpdate[iItems].sName
+            Move Employer.Main_contact      to tUpdate[iItems].sContact
+            Move Employer.Address1          to tUpdate[iItems].sAddress1
+            Move Employer.Address2          to tUpdate[iItems].sAddress2
+            Move Employer.City              to tUpdate[iItems].sCity
+            Move Employer.State             to tUpdate[iItems].sState
+            Move Employer.Zip               to tUpdate[iItems].sZip
+            Move Employer.Phone1            to tUpdate[iItems].sPhone1
+            Move Employer.PhoneType1        to tUpdate[iItems].sPhone1Type
+            Move Employer.Phone2            to tUpdate[iItems].sPhone2
+            Move Employer.PhoneType2        to tUpdate[iItems].sPhone2Type
+            Move Employer.Phone3            to tUpdate[iItems].sPhone3
+            Move Employer.PhoneType3        to tUpdate[iItems].sPhone3Type
+            Move Employer.EmailAddress      to tUpdate[iItems].sEmailAddress
+            Move Employer.Status            to tUpdate[iItems].sStatus
+            Move Employer.Terms             to tUpdate[iItems].sTerms
+            Move Employer.ChangedFlag       to tUpdate[iItems].iChangedFlag
+            Move Employer.GEOExclusionFlag  to tUpdate[iItems].iGeoExclusionFlag
+            Increment iItems
+            Find gt Employer.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateEmployer of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Employer.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Employer
+                    Move tUpdate[iItem].iRecId to Employer.Recnum
+                    Find eq Employer.Recnum
+                    If (Found) Begin
+                        Reread Employer
+                        Move 0 to Employer.ChangedFlag
+                        SaveRecord Employer
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Employer:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Employer records to update"
+        End
+    End_Function
+
+    Function DoUpdateEmployee String ByRef sError Returns String
+        tWStEmployee[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Employee
+        Move 1 to Employee.ChangedFlag
+        Find ge Employee.ChangedFlag
+        While ((Found) and Employee.ChangedFlag = 1)
+            Move Employee.Recnum          to tUpdate[iItems].iRecId
+            Move Employee.EmployeeIdno    to tUpdate[iItems].iEmployeeIdno
+            Move Employee.EmployerIdno    to tUpdate[iItems].iEmployerIdno
+            Move Employee.LastName        to tUpdate[iItems].sLast
+            Move Employee.FirstName       to tUpdate[iItems].sFirst
+            Move Employee.MiddleName      to tUpdate[iItems].sMiddle
+            Move Employee.Title           to tUpdate[iItems].sTitle
+            Move Employee.Suffix          to tUpdate[iItems].sSuffix
+            Move Employee.Address1        to tUpdate[iItems].sAddress1
+            Move Employee.Address2        to tUpdate[iItems].sAddress2
+            Move Employee.City            to tUpdate[iItems].sCity
+            Move Employee.State           to tUpdate[iItems].sState
+            Move Employee.Zip             to tUpdate[iItems].sZip
+            Move Employee.Phone1          to tUpdate[iItems].sPhone1
+            Move Employee.PhoneType1      to tUpdate[iItems].sPhone1Type
+            Move Employee.Phone2          to tUpdate[iItems].sPhone2
+            Move Employee.PhoneType2      to tUpdate[iItems].sPhone2Type
+            Move Employee.PIN             to tUpdate[iItems].iPIN
+            Move Employee.Status          to tUpdate[iItems].sStatus
+            Move Employee.ChangedFlag     to tUpdate[iItems].iChangedFlag
+            Move Employee.CallCenterFlag  to tUpdate[iItems].iCallCenterFlag
+            Move Employee.EmailAddress    to tUpdate[iItems].sEmailAddress
+            Move Employee.CEPM_EmployeeIdno to tUpdate[iItems].iCEPM_EmployeeIdno
+            Move Employee.CallCenterNSIFlag to tUpdate[iItems].iCallCenterNSIFlag
+            Move Employee.WebAppUserRights to tUpdate[iItems].iWebAppUserRights
+            Move Employee.GEOExclusionFlag  to tUpdate[iItems].iGeoExclusionFlag
+            Increment iItems
+            Find gt Employee.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateEmployee of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Employee.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Employee
+                    Move tUpdate[iItem].iRecId to Employee.Recnum
+                    Find eq Employee.Recnum
+                    If (Found) Begin
+                        Reread Employee
+                        Move 0 to Employee.ChangedFlag
+                        SaveRecord Employee
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Employee:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Employee records to update"
+        End
+    End_Function
+
+
+    Function DoUpdateEquipmnt String ByRef sError Returns String
+        tWStEquipmnt[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Equipmnt
+        Move 1 to Equipmnt.ChangedFlag
+        Find ge Equipmnt.ChangedFlag
+        While ((Found) and Equipmnt.ChangedFlag = 1)
+            Move Equipmnt.Recnum                to tUpdate[iItems].iRecId
+            Move Equipmnt.EquipIdno             to tUpdate[iItems].iEquipIdno
+            Move Equipmnt.EquipmentID           to tUpdate[iItems].sEquipId
+            Move Equipmnt.Description           to tUpdate[iItems].sDescription
+            Move Equipmnt.MastOpsIdno           to tUpdate[iItems].iMastOpsIdno
+            Move Equipmnt.OperatedBy            to tUpdate[iItems].iEmployerIdno
+            Move Equipmnt.ContractorRate        to tUpdate[iItems].nRate
+            Move Equipmnt.HoursUsed             to tUpdate[iItems].nUsed
+            Move Equipmnt.ChangedFlag           to tUpdate[iItems].iChangedFlag
+            Move Equipmnt.Status                to tUpdate[iItems].sStatus
+            Move Equipmnt.CEPM_EquipIdno        to tUpdate[iItems].iCEPM_EquipIdno
+            Increment iItems
+            Find gt Equipmnt.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateEquipmnt of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Equipmnt.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Equipmnt
+                    Move tUpdate[iItem].iRecId to Equipmnt.Recnum
+                    Find eq Equipmnt.Recnum
+                    If (Found) Begin
+                        Reread Equipmnt
+                        Move 0 to Equipmnt.ChangedFlag
+                        SaveRecord Equipmnt
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Equipmnt:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Equipmnt records to update"
+        End
+    End_Function
+
+    Function DoUpdateLocEquip String ByRef sError Returns String
+        tWStLocEquip[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Locequip
+        Move 1 to Locequip.ChangedFlag
+        Find ge Locequip.ChangedFlag
+        While ((Found) and Locequip.ChangedFlag = 1)
+            Move Locequip.Recnum                to tUpdate[iItems].iRecId
+            Move Locequip.LocequipIdno          to tUpdate[iItems].iLocequipIdno
+            Move Locequip.LocationIdno          to tUpdate[iItems].iLocationIdno
+            Move Locequip.Description           to tUpdate[iItems].sDescription
+            Move Locequip.Quantity              to tUpdate[iItems].nQty
+            Move Locequip.EmployerIdno          to tUpdate[iItems].iEmployerIdno
+            Move Locequip.ChangedFlag           to tUpdate[iItems].iChangedFlag
+            Move Locequip.DeleteFlag            to tUpdate[iItems].iDeleteFlag
+            Increment iItems
+            Find gt Locequip.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateLocEquip of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Locequip.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    // ToDo: Check if tUpdate[iItem].iDeleteFlag = 1, if true then delete
+                    Clear Locequip
+                    Move tUpdate[iItem].iRecId to Locequip.Recnum
+                    Find eq Locequip.Recnum
+                    If (Found) Begin
+                        Reread Locequip
+                        Unlock
+                        Move 0 to Locequip.ChangedFlag
+                        SaveRecord Locequip
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("LocEquip:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No LocEquip records to update"
+        End
+    End_Function
+    
+    Function DoUpdateSalesRep String ByRef sError Returns String
+        tWStSalesRep [] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear SalesRep
+        Move 1 to SalesRep.ChangedFlag
+        Find ge SalesRep.ChangedFlag
+        While ((Found) and SalesRep.ChangedFlag = 1)
+            Move SalesRep.Recnum        to tUpdate[iItems].iRecId
+            Move SalesRep.RepIdno       to tUpdate[iItems].iRepIdno
+            Move SalesRep.FirstName     to tUpdate[iItems].sFirstName
+            Move SalesRep.LastName      to tUpdate[iItems].sLastName
+            Move SalesRep.Address1      to tUpdate[iItems].sAddress1
+            Move SalesRep.City          to tUpdate[iItems].sCity           
+            Move SalesRep.State         to tUpdate[iItems].sState
+            Move SalesRep.Zip           to tUpdate[iItems].sZip
+            Move SalesRep.Phone1        to tUpdate[iItems].sPhone1
+            Move SalesRep.Phone2        to tUpdate[iItems].sPhone2
+            Move SalesRep.EmailAddress  to tUpdate[iItems].sEmailAddress
+            Move SalesRep.Status        to tUpdate[iItems].sStatus
+            Move SalesRep.ChangedFlag   to tUpdate[iItems].iChangedFlag
+            Increment iItems
+            Find gt SalesRep.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateSalesRep of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of SalesRep.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear SalesRep
+                    Move tUpdate[iItem].iRecId to SalesRep.Recnum
+                    Find eq SalesRep.Recnum
+                    If (Found) Begin
+                        Reread SalesRep
+                        Unlock
+                        Move 0 to SalesRep.ChangedFlag
+                        SaveRecord SalesRep
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("SalesRep:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No SalesRep records to update"
+        End
+    End_Function
+    //
+    Function DoUpdateWorkType String ByRef sError Returns String
+        tWStWorkType [] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear WorkType
+        Move 1 to WorkType.ChangedFlag
+        Find ge WorkType.ChangedFlag
+        While ((Found) and WorkType.ChangedFlag = 1)
+            Move WorkType.Recnum        to tUpdate[iItems].iRecId
+            Move WorkType.WorkTypeId    to tUpdate[iItems].sWorkTypeIdno
+            Move WorkType.Description   to tUpdate[iItems].sDescription
+            Move WorkType.ManagedBy     to tUpdate[iItems].iManagedBy
+            Move WorkType.ChangedFlag   to tUpdate[iItems].iChangedFlag
+            Move WorkType.HourlyCost    to tUpdate[iItems].sHourlyCost
+            Increment iItems
+            Find gt WorkType.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateWorkType of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of WorkType.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear WorkType
+                    Move tUpdate[iItem].iRecId to WorkType.Recnum
+                    Find eq WorkType.Recnum
+                    If (Found) Begin
+                        Reread WorkType
+                        Unlock
+                        Move 0 to WorkType.ChangedFlag
+                        SaveRecord WorkType
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("WorkType:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No WorkType records to update"
+        End
+    End_Function
+    //
+    
+    Function DoUpdateUser String ByRef sError Returns String
+        tWStUser[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear User
+        Move 1 to User.ChangedFlag
+        Find ge User.ChangedFlag
+        While ((Found) and User.ChangedFlag = 1)
+            Move User.Recnum          to tUpdate[iItems].iRecId
+            Move User.UserId          to tUpdate[iItems].iUserId
+            Move User.LoginName       to tUpdate[iItems].sLoginName
+            Move User.Password        to tUpdate[iItems].sPassword
+            Move User.FirstName       to tUpdate[iItems].sFirstName
+            Move User.LastName        to tUpdate[iItems].sLastName
+            Move User.State           to tUpdate[iItems].sState
+            Move User.EditRights      to tUpdate[iItems].sEditRights
+            Move User.ChangedFlag     to tUpdate[iItems].iChangedFlag
+            Move User.CustContactId   to tUpdate[iItems].iCustContactId
+            Increment iItems
+            Find gt User.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateUser     of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of User.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear User
+                    Move tUpdate[iItem].iRecId to User.Recnum
+                    Find eq User.Recnum
+                    If (Found) Begin
+                        Reread User
+                        Move 0 to User.ChangedFlag
+                        SaveRecord User
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("User:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No User records to update"
+        End
+    End_Function
+    
+    Function DoUpdateWebAppUserRights String ByRef sError Returns String
+        tWStWebAppUserRights[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear WebAppUserRights
+        Move 1 to WebAppUserRights.ChangedFlag
+        Find ge WebAppUserRights.ChangedFlag
+        While ((Found) and WebAppUserRights.ChangedFlag = 1)            
+            Move WebAppUserRights.Recnum        to tUpdate[iItems].iRecId
+            Move WebAppUserRights.RightLevel    to tUpdate[iItems].iRightsLevel
+            Move WebAppUserRights.Description   to tUpdate[iItems].sDescription
+            Move WebAppUserRights.ChangedFlag   to tUpdate[iItems].iChangedFlag
+            Increment iItems
+            Find gt WebAppUserRights.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateWebAppUserRights of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of WebAppUserRights.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear WebAppUserRights
+                    Move tUpdate[iItem].iRecId to WebAppUserRights.Recnum
+                    Find eq WebAppUserRights.Recnum
+                    If (Found) Begin
+                        Reread WebAppUserRights
+                        Move 0 to WebAppUserRights.ChangedFlag
+                        SaveRecord WebAppUserRights
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("WebAppUserRights:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No WebAppUserRights records to update"
+        End
+    End_Function
+    
+    Function DoUpdateWebAppUser String ByRef sError Returns String
+        tWStWebAppUser[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear WebAppUser
+        Move 1 to WebAppUser.ChangedFlag
+        Find ge WebAppUser.ChangedFlag
+        While ((Found) and WebAppUser.ChangedFlag = 1)            
+            Move WebAppUser.Recnum              to tUpdate[iItems].iRecId
+            Move WebAppUser.LoginName           to tUpdate[iItems].sLoginName
+            Move WebAppUser.Password            to tUpdate[iItems].sPassword
+            Move WebAppUser.FullName            to tUpdate[iItems].sFullName
+            Move WebAppUser.LastLogin           to tUpdate[iItems].dLastLogin
+            Move WebAppUser.Rights              to tUpdate[iItems].iRights
+            Move WebAppUser.EmployerIdno        to tUpdate[iItems].iEmployerIdno
+            Move WebAppUser.EmployeeIdno        to tUpdate[iItems].iEmployeeIdno
+            Move WebAppUser.ChangedFlag         to tUpdate[iItems].iChangedFlag
+            Move WebAppUser.Status              to tUpdate[iItems].sStatus
+            Move WebAppUser.BillingAccessFlag   to tUpdate[iItems].iBillingAccessFlag
+            Move WebAppUser.PropertyMgrIdno     to tUpdate[iItems].iPropertyMgrIdno
+            Increment iItems
+            Find gt WebAppUser.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateWebAppUser of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of WebAppUser.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear WebAppUser
+                    Move tUpdate[iItem].iRecId to WebAppUser.Recnum
+                    Find eq WebAppUser.Recnum
+                    If (Found) Begin
+                        Reread WebAppUser
+                        Move 0 to WebAppUser.ChangedFlag
+                        SaveRecord WebAppUser
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("WebAppUser:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No WebAppUser records to update"
+        End
+    End_Function
+    
+    Function DoUpdateContact String ByRef sError Returns String
+        tWStContact[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Contact
+        Move 1 to Contact.ChangedFlag
+        Find ge Contact.ChangedFlag
+        While ((Found) and Contact.ChangedFlag = 1)
+            Move Contact.Recnum         to tUpdate[iItems].iRecId
+            Move Contact.CustomerIdno   to tUpdate[iItems].iCustomerIdno
+            Move Contact.ContactIdno    to tUpdate[iItems].iContactIdno
+            Move Contact.LastName       to tUpdate[iItems].sLastName
+            Move Contact.FirstName      to tUpdate[iItems].sFirstName
+            Move Contact.Address1       to tUpdate[iItems].sAddress1
+            Move Contact.Address2       to tUpdate[iItems].sAddress2
+            Move Contact.City           to tUpdate[iItems].sCity
+            Move Contact.State          to tUpdate[iItems].sState
+            Move Contact.Zip            to tUpdate[iItems].sZip
+            Move Contact.Phone1         to tUpdate[iItems].sPhone1
+            Move Contact.Phone2         to tUpdate[iItems].sPhone2
+            Move Contact.EmailAddress   to tUpdate[iItems].sEmailAddress
+            Move Contact.Status         to tUpdate[iItems].sStatus
+            Move Contact.ChangedFlag    to tUpdate[iItems].iChangedFlag
+
+            Increment iItems
+            Find gt Contact.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateContact     of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Contact.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Contact
+                    Move tUpdate[iItem].iRecId to Contact.Recnum
+                    Find eq Contact.Recnum
+                    If (Found) Begin
+                        Reread Contact
+                        Move 0 to Contact.ChangedFlag
+                        SaveRecord Contact
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Contact:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Contact records to update"
+        End
+    End_Function //DoUpdateContact
+
+    Function DoUpdateReqtypes String ByRef sError Returns String
+        tWStReqtypes[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear Reqtypes
+        Move 1 to Reqtypes.ChangedFlag
+        Find ge Reqtypes.ChangedFlag
+        While ((Found) and Reqtypes.ChangedFlag = 1)
+            Move Reqtypes.ReqtypesCode to tUpdate[iItems].sCode
+            Move Reqtypes.Description  to tUpdate[iItems].sDescription
+            Move Reqtypes.ChangedFlag  to tUpdate[iItems].iChangedFlag
+            Increment iItems
+            Find gt Reqtypes.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateReqtypes of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of Reqtypes.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear Reqtypes
+                    Move tUpdate[iItem].sCode to Reqtypes.ReqtypesCode
+                    Find eq Reqtypes.ReqtypesCode
+                    If (Found) Begin
+                        Reread Reqtypes
+                        Move 0 to Reqtypes.ChangedFlag
+                        SaveRecord Reqtypes
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("Reqtypes:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No Reqtypes records to update"
+        End
+    End_Function
+    
+    Function DoUpdateViewAccess String ByRef sError Returns String
+        tWStViewAccess[] tUpdate
+        //
+        Integer iItems iItem iProcessed eTransferStatus
+        // collect changed items
+        Clear ViewAccess
+        Move 1 to ViewAccess.ChangedFlag
+        Find ge ViewAccess.ChangedFlag
+        While ((Found) and ViewAccess.ChangedFlag = 1)
+            Move ViewAccess.ViewName            to tUpdate[iItems].sViewName
+            Move ViewAccess.Application         to tUpdate[iItems].sApplication
+            Move ViewAccess.Full                to tUpdate[iItems].sFullRights
+            Move ViewAccess.Modify              to tUpdate[iItems].sModifyRights
+            Move ViewAccess.ReadOnly            to tUpdate[iItems].sReadOnlyRights
+            Move ViewAccess.ChangedFlag         to tUpdate[iItems].iChangedFlag
+            Move ViewAccess.Sequence            to tUpdate[iItems].nSeq
+            Increment iItems
+            Find gt ViewAccess.ChangedFlag
+        Loop
+        If (iItems > 0) Begin
+            // call remote update
+            Get wsUpdateViewAccess of oWSTransactionService tUpdate to tUpdate
+            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+            If (not(eTransferStatus = wssOK)) Begin
+                // Handle soap fault errors in a special way. Report all others as errors.
+                If (eTransferStatus=wssSoapFault) Begin
+                    Get TransferErrorDescription of oWSTransactionService to sError
+                    Function_Return
+                End
+                Else Begin
+                    Send LastError of oWSTransactionService // this will generate an error
+                End
+            End
+            //
+            Move (SizeOfArray(tUpdate)) to iItems
+            Decrement                      iItems
+            Send ChangeAllFileModes DF_Filemode_ReadOnly
+            Set_Attribute DF_File_Mode of ViewAccess.File_Number to DF_Filemode_Default
+            For iItem from 0 to iItems
+                If (tUpdate[iItem].iChangedFlag = 0) Begin
+                    Clear ViewAccess
+                    Move tUpdate[iItem].sViewName to ViewAccess.ViewName
+                    Move tUpdate[iItem].sApplication to ViewAccess.Application
+                    Find eq ViewAccess by 1
+                    If ((Found) and tUpdate[iItem].sViewName= ViewAccess.ViewName and tUpdate[iItem].sApplication=ViewAccess.Application) Begin
+                        Reread ViewAccess
+                        Move 0 to ViewAccess.ChangedFlag
+                        SaveRecord ViewAccess
+                        Unlock
+                        Increment iProcessed
+                    End
+                End
+            Loop
+            Send ChangeAllFileModes DF_Filemode_Default
+            Function_Return ("ViewAccess:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+        End
+        Else Begin
+            Function_Return "No ViewAccess records to update"
+        End
+    End_Function
+
+//    //Transaction Detail Expansion
+//    Function DoUpdateSystem String ByRef sError Returns String
+//        tWStSystem[] tUpdate
+//        //
+//        Integer iItems iItem iProcessed eTransferStatus
+//        // collect changed items
+//        If (System.ChangedFlag = 1) Begin
+//            Showln "System ChangeFlag: " System.ChangedFlag
+//            Move System.CompanyName     to tUpdate[iItems].sCompanyName
+//            Move System.Address1        to tUpdate[iItems].sCompanyAddress
+//            Move System.City            to tUpdate[iItems].sCompanyCity
+//            Move System.State           to tUpdate[iItems].sCompanyState
+//            Move System.Zip             to tUpdate[iItems].sCompanyZip
+//            Move System.SMTP_Server     to tUpdate[iItems].sSMTP_Server
+//            Move System.Labor_Rate      to tUpdate[iItems].iLaborRate
+//            Move System.ChangedFlag     to tUpdate[iItems].iChangedFlag
+//            Increment iItems
+//        End
+//
+//        If (iItems > 0) Begin
+////            // call remote update
+////            Get wsUpdateSystem     of oWSTransactionService tUpdate to tUpdate
+////            Get peTransferStatus of oWSTransactionService         to eTransferStatus
+////            If (not(eTransferStatus = wssOK)) Begin
+////                // Handle soap fault errors in a special way. Report all others as errors.
+////                If (eTransferStatus=wssSoapFault) Begin
+////                    Get TransferErrorDescription of oWSTransactionService to sError
+////                    Function_Return
+////                End
+////                Else Begin
+////                    Send LastError of oWSTransactionService // this will generate an error
+////                End
+////            End
+////            //
+////            Move (SizeOfArray(tUpdate)) to iItems
+////            Decrement                      iItems
+////            Send ChangeAllFileModes DF_Filemode_ReadOnly
+////            Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+////            For iItem from 0 to iItems
+////                If (tUpdate[iItem].iChangedFlag = 0) Begin
+////                    Clear System
+////                    Move tUpdate[iItem].iChangedFlag to System.ChangedFlag
+////                    Find eq System.ChangedFlag
+////                    If (Found) Begin
+////                        Reread System
+////                        Move 0 to System.ChangedFlag
+////                        SaveRecord System
+////                        Unlock
+////                        Increment iProcessed
+////                    End
+////                End
+////            Loop
+////            Send ChangeAllFileModes DF_Filemode_Default
+//            For iItem from 0 to iItems
+//                Move 0 to System.ChangedFlag
+//                SaveRecord System
+//                Unlock
+//                Increment iProcessed
+//                Decrement iItems
+//            Loop
+//            Function_Return ("System:" * String(iItems+1) * "records changed," * String(iProcessed) * "records updated at the remote site.")
+//        End
+//        Else Begin
+//            Function_Return "No System records to update"
+//        End
+//    End_Function
+
+
+
+End_Object
+

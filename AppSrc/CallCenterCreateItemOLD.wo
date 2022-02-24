@@ -1,0 +1,238 @@
+// C:\VDF15.0 Workspaces\Tempus\AppSrc\CallCenterCreateItem.wo
+// Call Center Item Creation
+//
+
+Use cAjaxWebBusinessProcess.pkg
+Use cComChilkatMailMan2.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use cReqtypesDataDictionary.dd
+Use cLocnotesDataDictionary.dd
+Use SalesRep.DD
+Use cSnowrepDataDictionary.dd
+Use Contact.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Open Contact
+
+Object oCallCenterCreateItem Is A cAjaxWebBusinessProcess
+    Set psDescription to "Call Center Item Creation"
+    Set pbClearAfterSave to False
+
+    Object oChilkatMailMan2 is a cComChilkatMailMan2
+    
+       Function InitMail Returns Integer
+            Boolean bIsComObjectCreated
+            Integer isUnlocked
+    
+            // Test to see If we are already connected. If we are connected,
+            // then the IsComObjectCreated Returns True.
+            Get IsComObjectCreated to bIsComObjectCreated
+            If (not(bIsComObjectCreated)) Begin
+                // Connect the VDF Automation Wrapper to the Automation Object.
+                Send CreateComObject
+            End
+            //Get ComUnlockComponent "UDanWalMAIL_QhhTebQQNHKL" to isUnlocked
+            Get ComUnlockComponent "INTERSMAILQ_EtgQk9ew6R0M" to isUnlocked
+            Function_Return isUnlocked
+        End_Function
+    
+    End_Object
+    
+    Object oChilkatEmail2 is a cComChilkatEmail2
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSnowrep_DD is a cSnowrepDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOENTER to True
+    End_Object // oCustomer_DD
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oSnowrep_DD
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oCustomer_DD
+        Set DDO_Server to oAreas_DD
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOENTER to True
+    End_Object // oLocation_DD
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+        
+        Procedure OnConstrain
+            Constrain Order.WorkType     eq "S"
+            Constrain Order.Status       eq "O"
+        End_Procedure
+    End_Object // oOrder_DD
+
+    Object oReqtypes_DD is a cReqtypesDataDictionary
+    End_Object // oReqtypes_DD
+
+    Object oLocnotes_DD is a cLocnotesDataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oReqtypes_DD
+        Set pbInheritConstraints to False
+
+        Function DoSendEmail Returns Integer
+            Integer iSuccess iVoid iIsOk iRetval iErr iCurrentId iPos
+            Integer iLocnotesId iAreaEmployee
+            Variant vNewMail
+            Handle  hSmtpObj hMailObj hoDD
+            String  sSubject sMessage sHTML_Message sTo sFrom sErrorText sProgramPath sErrorLog sServer
+            String  sCC
+            //
+            Move oChilkatMailMan2 to hSmtpObj
+            Move oChilkatEmail2   to hMailObj
+            //
+            Get Main_DD to hoDD
+            Send Refind_Records of hoDD
+            // create reference
+            Clear Contact
+            Move Location.PropmgrIdno to Contact.ContactIdno
+            Find eq Contact.ContactIdno
+            Move "New Call Center Note:"                    to sSubject
+            Move (sSubject * Trim(Location.Name))           to sSubject
+            Move Locnotes.LocnotesId                        to iLocnotesId
+            Move (trim(Locnotes.Note))                      to sMessage
+            //
+            Move Areas.EmployeeIdno                         to iAreaEmployee
+            Clear Employee
+            Move iAreaEmployee                              to Employee.EmployeeIdno
+            Find eq Employee.EmployeeIdno
+            Move (Trim(Employee.EmailAddress))              to sTo
+            Move (Trim(System.SMTP_MailFrom))               to sFrom            
+            //
+            Get psProgramPath of (phoWorkspace(ghoApplication)) to sProgramPath
+            Move (sProgramPath + "\ChilkatErrorLog.txt")        to sErrorLog
+            //
+            Get InitMail of hSmtpObj to iIsOk
+            If (iIsOk) Begin
+                Move (Trim(System.SMTP_Server)) to sServer
+                Set ComSmtpHost     of hSmtpObj to sServer // "mail.interstatepm.com" // "smtp.prodigy.net.mx" // "mail.bellsouth.net"
+                // email to staff
+                Get ComNewEmail of hSmtpObj to vNewMail
+                If (not(IsNullComObject(vNewMail))) Begin
+                    Set pvComObject       of hMailObj                              to vNewMail
+                    Get ComAddTo          of hMailObj "" sTo                       to iRetval
+                    //         
+                    If (Areas.AreaNumber = 12) Begin
+                        //Salt Routes Area
+                        Clear Employee
+                        Move 1 to Employee.CallCenterNSIFlag
+                        Find ge Employee.CallCenterNSIFlag
+                        While ((Found) and Employee.CallCenterNSIFlag = 1)
+                            If (Employee.EmployeeIdno <> iAreaEmployee and Employee.Status = "A") Begin
+                                Move (Trim(Employee.EmailAddress)) to sCC
+                                Get ComAddCC  of hMailObj "" sCC   to iRetval
+                            End
+                            Find gt Employee.CallCenterNSIFlag
+                        Loop   
+                    End
+                    Else Begin
+                        //All other Areas
+                        Clear Employee
+                        Move 1 to Employee.CallCenterFlag
+                        Find ge Employee.CallCenterFlag
+                        While ((Found) and Employee.CallCenterFlag = 1)
+                            If (Employee.EmployeeIdno <> iAreaEmployee and Employee.Status = "A") Begin
+                                Move (Trim(Employee.EmailAddress)) to sCC
+                                Get ComAddCC  of hMailObj "" sCC   to iRetval
+                            End
+                            Find gt Employee.CallCenterFlag
+                        Loop                        
+                    End
+                    //
+                    Set ComFrom           of hMailObj         to sFrom                  //From Email
+                    Set ComSubject        of hMailObj         to sSubject               //Email's Subject
+                    
+                    // BEN - Transfering the message into an HTML form
+                    Move "<html><body>" to sHTML_Message
+                    Append sHTML_Message ("<b>Entered Message: </b>" * sMessage * "<br><br>")
+                    Append sHTML_Message ("------------------------------------------------------------------------------------------ <br>")
+                    Append sHTML_Message ("<b>Service Location: </b> - (Job#: <b>" * trim(Order.JobNumber) * "</b>) <br>")
+                    Append sHTML_Message ( trim(Location.Name) * "<br>" )
+                    Append sHTML_Message ( trim(Location.Address1) * "<br>" )
+                    Append sHTML_Message ( trim(Location.City) + "," * trim(Location.State) *  trim(Location.Zip)* "<br><br>" )
+                    
+                    Append sHTML_Message ("<b>Property Manager Name: </b>" * (trim(Contact.FirstName) * trim(Contact.LastName))* "<br>")
+                    Append sHTML_Message ("<b>Property Manager Email: </b><a href='mailto:" * (Trim(Contact.EmailAddress)) * "'>" * (Trim(Contact.EmailAddress)) * "</a><br>")
+                    Append sHTML_Message ("<b>Property Manager Phone: </b>" * (Trim(Contact.Phone1))* "<br> <br>")
+                    Append sHTML_Message ("<b>Entered Caller: </b>" * (Trim(Locnotes.CallerName)) * "<br>")
+                    Append sHTML_Message ("<b>Entered Phone #: </b>" * (Trim(Locnotes.CallerPhone)) * "<br>")
+                    Append sHTML_Message ("<b>Entered Email: </b> <a href='mailto:" * (Trim(Locnotes.CallerEmail)) * "'>" * (Trim(Locnotes.CallerEmail)) * "</a><br>")
+                    Append sHTML_Message ("<b>Entered By: </b>" * (Trim(User.FirstName)) * (Trim(User.LastName)) * "<br>")
+                    Append sHTML_Message "</body></html>"
+                    
+                    Send ComSetHtmlBody   of hMailObj sHTML_Message
+                    //Set comBody           of hMailObj         to sMessage
+        
+                    Get ComSendEmail of hSmtpObj vNewMail to iSuccess           //Send it (finally)
+                    Get ComLastErrorText of hSmtpObj      to sErrorText
+                    Move (not(iSuccess))                  to iErr
+                    //
+                    Append_Output sErrorLog
+                    Writeln ("Locnotes ID" * String(iLocnotesId))
+                    Writeln sErrorText
+                    Close_Output
+                End
+            End
+            //
+            Function_Return iErr
+        End_Function
+
+        Procedure Request_Save
+            Integer iErr
+            //Add Property Manager Information
+            Clear Contact
+            Move Location.PropmgrIdno to Contact.ContactIdno
+            Find eq Contact.ContactIdno   
+            Set Field_Changed_Value of oLocnotes_DD Field Locnotes.MgrFirstName to Contact.FirstName
+            Set Field_Changed_Value of oLocnotes_DD Field Locnotes.MgrLastName to Contact.LastName
+            Set Field_Changed_Value of oLocnotes_DD Field Locnotes.MgrEmailAddress to Contact.EmailAddress
+            //
+            Forward Send Request_Save
+            //
+            If (HasRecord(Self)) Begin
+                Get DoSendEmail to iErr
+            End
+        End_Procedure
+    End_Object // oLocnotes_DD
+
+    Set Main_DD to oLocnotes_DD
+
+
+    Send RegisterStandardInterface
+    //Send RegisterDebugInterface
+    //Send RegisterFullErrorInterface
+    //Send RegisterAutoEntryInterface
+
+    Procedure OnAjaxRequestStart TAjaxRequestData ByRef tRequestData
+        Integer iUserId
+        //
+        Forward Send OnAjaxRequestStart (&tRequestData)
+        //
+        Get GetAjaxRequestUserData "sUserId" to iUserId
+        Set piUserId of oLocnotes_DD         to iUserId
+    End_Procedure
+
+End_Object // oCallCenterCreateItem

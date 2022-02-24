@@ -1,0 +1,57 @@
+Use GlobalAllEnt.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open System
+Open Contact
+Open Maillist
+Open Listlink
+
+Procedure DoCreatePMQuoteList
+    Boolean bContact bMaillist
+    Integer iId iCount
+    String  sHome sPath sListId
+    //
+    Get psHome of (phoWorkspace(ghoApplication)) to sHome
+    Move (sHome + "Document")                    to sPath
+    Move (sPath + "\pmquoteUpdate.csv")          to sPath
+    //
+    Direct_Input sPath
+    If (not(SeqEof)) Begin
+        Repeat
+            Read iId
+            Read sListId
+            Readln
+            If (iId <> 0 and sListId <> "") Begin
+                Clear Contact Maillist
+                Move iId to Contact.ContactIdno
+                Find eq Contact.ContactIdno
+                Move (Found) to bContact
+                Move sListId to Maillist.ListCode
+                Find eq Maillist.ListCode
+                Move (Found) to bMaillist
+                If (bContact and bMaillist) Begin
+                    Clear Listlink
+                    Reread System
+                    Add 1 to System.ListlinkID
+                    SaveRecord System
+                    Move System.ListlinkID to Listlink.ListlinkID
+                    Move iId               to Listlink.ContactIdno
+                    Move sListId           to Listlink.ListCode
+                    SaveRecord Listlink
+                    Unlock
+                    Increment iCount
+                End
+            End
+        Until (SeqEof)
+    End
+    Send Info_Box iCount
+End_Procedure
+
+Send DoCreatePMQuoteList

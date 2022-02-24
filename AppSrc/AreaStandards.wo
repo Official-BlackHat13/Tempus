@@ -1,0 +1,30 @@
+// AreaStandards.wo
+// Area Standards Maintenance
+Use cAjaxWebBusinessProcess.pkg
+
+Use Areas.DD
+
+Object oAreaStandards Is A cAjaxWebBusinessProcess
+    Set psDescription To "Area Standards Maintenance"
+    Set pbClearAfterSave To False
+
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Set Main_DD To oAreas_DD
+
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew To True
+    Set pbAllowSaveEdit To True
+    Set pbAllowDelete To True
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+
+End_Object // oAreaStandards

@@ -1,0 +1,35 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Jcdept (# 51)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Jcdept
+  USER DISPLAY NAME         : Jcdept
+  DATAFLEX FILE NAME        : Jcdept
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 103       ( USED: 103 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 3 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  IDNO             NUM    5.0     1  1   
+  2  NAME             ASC     40     7      
+  3  NICKNAME         ASC     10    47      
+  4  DEPTHEAD         ASC     24    57      
+  5  MARKUP           NUM    2.2    81      
+  6  COUNT            NUM    5.0    87      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    IDNO            NO  NO       0      0       1     ON-LINE
+

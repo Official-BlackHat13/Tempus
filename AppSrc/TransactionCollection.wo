@@ -1,0 +1,1630 @@
+Use cWebService.pkg
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use Invhdr.DD
+Use cLocnotesDataDictionary.dd
+Use SalesRep.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use Areanote.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Open Invhdr
+Open Invdtl
+
+Use DataAttr.pkg
+Use tNewTransaction.pkg
+Use tCollectedTransaction.pkg
+Use tMastops.pkg
+Use tAreas.pkg
+Use tCustomer.pkg
+Use tSalesTaxGroup.pkg
+Use tLocation.pkg
+Use tOpers.pkg
+Use tOrder.pkg
+Use tEmployer.pkg
+Use tEmployee.pkg
+Use tEquipmnt.pkg
+Use tLocEquip.pkg
+Use tSalesRep.pkg
+Use tWorkType.pkg
+Use tUser.pkg
+Use tWebAppUser.pkg
+Use tContact.pkg
+Use tLocnotes.pkg
+Use tAreanote.pkg
+Use tInvhdr.pkg
+Use tReqtypes.pkg
+
+
+Object oTransactionCollection is a cWebService
+
+    Property Boolean pbTimeClockTransaction
+    Property Boolean pbSaveActiveTransaction
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oOrder_DD
+        Set DDO_Server to oEmployee_DD
+
+        Procedure Update
+            Forward Send Update
+            //
+            If (pbTimeClockTransaction(Self)) Begin
+                If (pbSaveActiveTransaction(Self)) Begin
+                    Move Trans.TransIdno to Employee.ActiveTrans
+                End
+                Else Begin
+                    Move 0               to Employee.ActiveTrans
+                End
+            End
+        End_Procedure
+    End_Object
+
+    Set Main_DD to oTrans_DD
+    
+    // psDocumentation provides high level documentation of your web service. 
+    // Clients using this service will see and use this documentation. 
+    Set psDocumentation to "Transaction Collection and Table Maintenance"
+    Set pbAllErrorsToEventLog to True
+    Set psServiceName to "TransactionService"
+
+    Function IsJobValid Integer iJobNumber Returns Integer
+        Clear Order
+        Move iJobNumber to Order.JobNumber
+        Find eq Order.JobNumber
+        If ((Found) and Order.JobCloseDate = 0) Begin
+            Function_Return Order.LocationIdno
+        End
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function DoCreateIdleTransaction Integer iEmployeeIdno Integer iJobNumber Integer iOpersIdno Returns Boolean
+        Boolean bFail
+        Integer iLocationIdno hoDD iHr iMin iSec iActive
+        String  sTime
+        Date    dToday
+        //
+        Get IsJobValid iJobNumber to iLocationIdno
+        If (iLocationIdno = 0) Begin
+            Append_Output "debug.txt"
+            Writeln "Employee" iEmployeeIdno
+            Writeln "JobNumber" iJobNumber
+            Writeln "Invalid Location ID"
+            Close_Output
+            Function_Return
+        End
+        //
+        Sysdate dToday iHr iMin iSec
+        // midnight's a show-stopper
+        If (not(iHr + iMin)) Begin
+            Move 1 to iMin
+        End
+        //
+        Set pbTimeClockTransaction             to True
+        Set pbSaveActiveTransaction            to True
+        Get Main_DD                            to hoDD
+        Get IsTimeString of hoDD iHr iMin iSec to sTime
+        Move (Left(sTime,5))                   to sTime
+        //
+        Clear Employee
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        Move Employee.ActiveTrans to iActive
+        Send Clear of hoDD
+        If (iActive <> 0) Begin
+            Move iActive to Trans.TransIdno
+            Send Find of hoDD EQ 1
+            If (Found) Begin
+                Set Field_Changed_Value of hoDD Field Trans.StopTime to sTime
+                Set Field_Changed_Value of hoDD Field Trans.StopDate to dToday
+                Set Field_Changed_Value of hoDD Field Trans.StopHr   to iHr
+                Set Field_Changed_Value of hoDD Field Trans.StopMin  to iMin
+                Get Request_Validate    of hoDD                      to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of hoDD
+                End
+                Else Begin
+                    Append_Output "debug.txt"
+                    Writeln "Validation error closing"
+                    Close_Output
+                End
+                Send Clear of hoDD
+            End
+        End
+        // create new transaction
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Send Request_Find of hoDD EQ Employee.File_Number 1
+        If (not(Found)) Begin
+            Append_Output "debug.txt"
+            Writeln "Employee not found"
+            Close_Output
+            Function_Return
+        End
+        Move iJobNumber to Order.JobNumber
+        Send Request_Find of hoDD EQ Order.File_Number 1
+        If (not(Found)) Begin
+            Append_Output "debug.txt"
+            Writeln "Order not found"
+            Close_Output
+            Function_Return
+        End
+        Move iOpersIdno to Opers.OpersIdno
+        Send Request_Find of hoDD EQ Opers.File_Number 1
+        If (not(Found)) Begin
+            Append_Output "debug.txt"
+            Writeln "Operation not found"
+            Close_Output
+            Function_Return
+        End
+        //
+        Set Field_Changed_Value of hoDD Field Trans.StartTime to sTime
+        Set Field_Changed_Value of hoDD Field Trans.StartDate to dToday
+        Set Field_Changed_Value of hoDD Field Trans.StartHr   to iHr
+        Set Field_Changed_Value of hoDD Field Trans.StartMin  to iMin
+        Get Request_Validate    of hoDD                       to bFail
+        If (not(bFail)) Begin
+            Send Request_Save   of hoDD
+        End
+        Else Begin
+            Append_Output "debug.txt"
+            Writeln "Validation error creating"
+            Close_Output
+        End
+        //
+        Set pbTimeClockTransaction to False
+        //
+        Function_Return (Current_Record(hoDD) <> 0)
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function DoEndShift Integer iEmployeeIdno Returns Boolean
+        Boolean bFail
+        Integer hoDD iHr iMin iSec iActive
+        String  sTime
+        Date    dToday
+        //
+        Set pbTimeClockTransaction  to True
+        Set pbSaveActiveTransaction to False
+        //
+        Sysdate dToday iHr iMin iSec
+        Get Main_DD                            to hoDD
+        Get IsTimeString of hoDD iHr iMin iSec to sTime
+        Move (Left(sTime,5))                   to sTime
+        //
+        Clear Employee
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        Move Employee.ActiveTrans to iActive
+        Send Clear of hoDD
+        If (iActive <> 0) Begin
+            Move iActive to Trans.TransIdno
+            Send Find of hoDD EQ 1
+            If (Found) Begin
+                Set Field_Changed_Value of hoDD Field Trans.StopTime   to sTime
+                Set Field_Changed_Value of hoDD Field Trans.StopDate   to dToday
+                Set Field_Changed_Value of hoDD Field Trans.StopHr     to iHr
+                Set Field_Changed_Value of hoDD Field Trans.StopMin    to iMin
+                Get Request_Validate    of hoDD                        to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of hoDD
+                End
+            End
+        End
+        //
+        Set pbTimeClockTransaction to False
+        //
+        Function_Return (Employee.ActiveTrans = 0)
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function GetNewTransactions Returns tNewTransaction[]
+        tNewTransaction[] tTransactions
+        //
+        Integer iItem
+        //
+        Date dSysdate
+        Sysdate dSysdate
+        Send LogEvent 10 ("GetNewTransactions - Start")
+        //
+        Clear Trans
+        Find ge Trans by Index.5
+        Send LogEvent 10 ("GetNewTransactions - Found Transactions")
+        While ((Found) and Trans.InvoicedFlag = 0)
+            If (Trans.StopTime <> "" or Trans.Quantity <> 0) Begin
+                Move Trans.TransIdno                to tTransactions[iItem].iTransIdno
+                Move Trans.JobNumber                to tTransactions[iItem].iJobNumber
+                Move Trans.EmployeeIdno             to tTransactions[iItem].iEmployeeIdno
+                Move Trans.OpersIdno                to tTransactions[iItem].iOpersIdno
+                Move Trans.StartTime                to tTransactions[iItem].sStartTime
+                Move Trans.StartDate                to tTransactions[iItem].dStartDate
+                Move Trans.StartHr                  to tTransactions[iItem].iStartHr
+                Move Trans.StartMin                 to tTransactions[iItem].iStartMin
+                Move Trans.StopTime                 to tTransactions[iItem].sStopTime
+                Move Trans.StopDate                 to tTransactions[iItem].dStopDate
+                Move Trans.StopHr                   to tTransactions[iItem].iStopHr
+                Move Trans.StopMin                  to tTransactions[iItem].iStopMin
+                Move Trans.Quantity                 to tTransactions[iItem].iQuantity
+                Move Trans.EquipmentID              to tTransactions[iItem].sEquipmentID
+                Move Trans.EquipIdno                to tTransactions[iItem].iEquipIdno
+                Move Trans.CallerId                 to tTransactions[iItem].sCallerId
+                Move Trans.CallerId_Out             to tTransactions[iItem].sCallerId_Out
+                Move Trans.GPSLat_In                to tTransactions[iItem].sGPSLat_In
+                Move Trans.GPSLong_In               to tTransactions[iItem].sGPSLong_In
+                Move Trans.GPSLat_Out               to tTransactions[iItem].sGPSLat_out
+                Move Trans.GPSLong_Out              to tTransactions[iItem].sGPSLong_Out
+                Move Trans.EmployerIdno             to tTransactions[iItem].iEmployerIdno
+                Move Trans.CurrentLaborRate         to tTransactions[iItem].nCurrentLaborRate
+                Move Trans.CurrentContractorRate    to tTransactions[iItem].nCurrentContractorRate
+                Move Trans.CurrentSellRate          to tTransactions[iItem].nCurrentSellRate
+                Move Trans.AttachEquipIdno          to tTransactions[iItem].iAttachEquipIdno
+                Move Trans.CurrAttachContrRate      to tTransactions[iItem].nCurrAttachContrRate
+                Move Trans.AttachOpersIdno          to tTransactions[iItem].iAttachOpersIdno
+                Move Trans.AttachMastOpsIdno        to tTransactions[iItem].iAttachMastOpsIdno
+                Move Trans.Comment                  to tTransactions[iItem].sComment
+                Increment iItem
+            End
+            Find gt Trans by Index.5
+        Loop
+        Send LogEvent 10 ("GetNewTransactions - Complete")
+        Close_Output
+        Function_Return tTransactions
+    End_Function // GetNewTransactions Returns tNewTransaction[]
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateCollectedTransactions tCollectedTransaction[] tTransactions Returns Integer
+        Boolean bFail
+        Integer hoDD iItems iItem iCount
+        //
+        Set pbTimeClockTransaction        to False
+        Get Main_DD                       to hoDD
+        Move (SizeOfArray(tTransactions)) to iItems
+        For iItem from 0 to (iItems - 1)
+            Send Clear of hoDD
+            Move tTransactions[iItem].iTransIdno to Trans.TransIdno
+            Send Find  of hoDD EQ 1
+            If (Found) Begin
+                Set Field_Changed_Value of hoDD Field Trans.InvoicedFlag   to 1
+                Set Field_Changed_Value of hoDD Field Trans.TransReference to tTransactions[iItem].iTransReference
+                Get Request_Validate    of hoDD                            to bFail
+                If (not(bFail)) Begin
+                    Send Request_Save   of hoDD
+                    Increment iCount
+                End
+            End
+        Loop
+        Function_Return iCount
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function GetNewLocationNotes Returns tLocnotes[]
+        tLocnotes[] tNotes
+        //
+        Integer iItem
+        //
+        Send LogEvent 24 ("GetNewLocationNotes - Start")
+        Clear Locnotes
+        Move 1 to Locnotes.ChangedFlag
+        Find ge Locnotes.ChangedFlag
+        While ((Found) and Locnotes.ChangedFlag = 1)
+            Send LogEvent 24 ("New Locnote" + String(Locnotes.LocnotesId) + "Job# " +String(Locnotes.JobNumber))
+            Move Locnotes.LocnotesId   to tNotes[iItem].iLocnotesId
+            Move Locnotes.JobNumber    to tNotes[iItem].iJobNumber
+            Move Locnotes.LocationIdno to tNotes[iItem].iLocationIdno
+            Move Locnotes.CreatedDate  to tNotes[iItem].dCreatedDate
+            Move Locnotes.CreatedTime  to tNotes[iItem].sCreatedTime
+            Move Locnotes.CreatedBy    to tNotes[iItem].iCreatedBy
+            Move Locnotes.NoteDate     to tNotes[iItem].dNoteDate
+            Move Locnotes.Note         to tNotes[iItem].sNote
+            Move Locnotes.IsEmail      to tNotes[iItem].iIsEmail
+            Move Locnotes.ReqtypesCode to tNotes[iItem].sReqtypesCode
+            Move Locnotes.Status       to tNotes[iItem].sStatus
+            Move Locnotes.AssignedTo   to tNotes[iItem].sAssignedTo
+            Move Locnotes.AssignedDate to tNotes[iItem].dAssignedDate
+            Move Locnotes.AssignedTime to tNotes[iItem].sAssignedTime
+            Move Locnotes.AssignedBy   to tNotes[iItem].iAssignedBy
+            Move Locnotes.ResolvedDate to tNotes[iItem].dResolvedDate
+            Move Locnotes.ResolvedTime to tNotes[iItem].sResolvedTime
+            Move Locnotes.ResolvedBy   to tNotes[iItem].iResolvedBy
+            Move Locnotes.ClosedDate   to tNotes[iItem].dClosedDate
+            Move Locnotes.ClosedTime   to tNotes[iItem].sClosedTime
+            Move Locnotes.ClosedBy     to tNotes[iItem].iClosedBy
+            Move Locnotes.Resolution   to tNotes[iItem].sResolution
+            Move Locnotes.ChangedFlag  to tNotes[iItem].iChangedFlag
+            Move Locnotes.CallerName   to tNotes[iItem].sCallerName
+            Move Locnotes.CallerPhone  to tNotes[iItem].sCallerPhone
+            Increment iItem
+            Find gt Locnotes.ChangedFlag
+        Loop
+        Send LogEvent 24 ("GetNewLocationNotes - Complete")
+        Function_Return tNotes
+    End_Function // GetNewLocationNotes Returns tLocnotes[]
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateCollectedLocationNotes tLocnotes[] tNotes Returns Integer
+        Boolean bFail
+        Integer iItems iItem iCount eStatus
+        //
+        Send LogEvent 24 ("UpdateCollectedLocationNotes - Start")
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Locnotes.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tNotes)) to iItems
+        For iItem from 0 to (iItems - 1)
+            Clear Locnotes
+            Move tNotes[iItem].iLocnotesId to Locnotes.LocnotesId
+            Find eq Locnotes.LocnotesId
+            If (Found) Begin
+                Send LogEvent 24 ("Update Locnote" + String(Locnotes.LocnotesId))
+                Reread Locnotes
+                Move tNotes[iItem].iLocnotesRef to Locnotes.LocnotesRef
+                Move 0                          to Locnotes.ChangedFlag
+                SaveRecord Locnotes
+                Unlock
+                Get_Attribute DF_FILE_STATUS of Locnotes.File_Number to eStatus
+                If (eStatus = DF_FILE_ACTIVE) Begin
+                    Increment iCount
+                End
+            End
+        Loop
+        Send LogEvent 24 ("UpdateCollectedLocationNotes - Complete")
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return iCount
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function GetSelectedLocationNotes Integer iJobNumber Date dNoteDate Date dNoteStopDate Returns tLocnotes[]
+        tLocnotes[] tNotes
+        //
+        Integer iItem
+        String  sRowId
+        RowID   riRowId
+        //
+        Clear Locnotes
+//        Move iJobNumber to Locnotes.JobNumber
+//        Move dNoteDate  to Locnotes.NoteDate
+//        Find ge Locnotes by Index.2
+        Constraint_Set 1
+        Constrain Locnotes.JobNumber eq iJobNumber
+        Constrain Locnotes.NoteDate Between dNoteDate and dNoteStopDate
+        Constrained_Find First Locnotes by 2
+        While ((Found) and Locnotes.JobNumber = iJobNumber and Locnotes.NoteDate ge dNoteDate)
+            Move (GetRowId(Locnotes.File_Number)) to riRowId
+            Move (SerializeRowID(riRowId))        to sRowId
+            Move sRowId                           to tNotes[iItem].sRowId
+            Move Locnotes.LocnotesId              to tNotes[iItem].iLocnotesId
+            Move Locnotes.JobNumber               to tNotes[iItem].iJobNumber
+            Move Locnotes.LocationIdno            to tNotes[iItem].iLocationIdno
+            Move Locnotes.CreatedDate             to tNotes[iItem].dCreatedDate
+            Move Locnotes.CreatedTime             to tNotes[iItem].sCreatedTime
+            Move Locnotes.CreatedBy               to tNotes[iItem].iCreatedBy
+            Move Locnotes.NoteDate                to tNotes[iItem].dNoteDate
+            Move Locnotes.Note                    to tNotes[iItem].sNote
+            Move Locnotes.IsEmail                 to tNotes[iItem].iIsEmail
+            Move Locnotes.ReqtypesCode            to tNotes[iItem].sReqtypesCode
+            Move Locnotes.Status                  to tNotes[iItem].sStatus
+            Move Locnotes.AssignedTo              to tNotes[iItem].sAssignedTo
+            Move Locnotes.AssignedDate            to tNotes[iItem].dAssignedDate
+            Move Locnotes.AssignedTime            to tNotes[iItem].sAssignedTime
+            Move Locnotes.AssignedBy              to tNotes[iItem].iAssignedBy
+            Move Locnotes.ResolvedDate            to tNotes[iItem].dResolvedDate
+            Move Locnotes.ResolvedTime            to tNotes[iItem].sResolvedTime
+            Move Locnotes.ResolvedBy              to tNotes[iItem].iResolvedBy
+            Move Locnotes.ClosedDate              to tNotes[iItem].dClosedDate
+            Move Locnotes.ClosedTime              to tNotes[iItem].sClosedTime
+            Move Locnotes.ClosedBy                to tNotes[iItem].iClosedBy
+            Move Locnotes.Resolution              to tNotes[iItem].sResolution
+            Move Locnotes.ChangedFlag             to tNotes[iItem].iChangedFlag
+            Move Locnotes.CallerName              to tNotes[iItem].sCallerName
+            Move Locnotes.CallerPhone             to tNotes[iItem].sCallerPhone
+            Increment iItem
+//            Find gt Locnotes by Index.2
+            Constrained_Find Next
+        Loop
+        Constraint_Set 1 Delete
+        Function_Return tNotes
+    End_Function // GetSelectedLocationNotes Returns tLocnotes[]
+
+    { Published = True  }
+    { Description = ""  }
+    Function GetNewAreaNotes Returns tAreanote[]
+        tAreanote[] tNotes
+        //
+        Integer iItem
+        //
+        Clear Areanote
+        Find ge Areanote by Index.3
+        While ((Found) and Areanote.AreanoteRef = 0)
+            Move Areanote.AreanoteId   to tNotes[iItem].iAreanoteId
+            Move Areanote.AreaNumber   to tNotes[iItem].iAreaNumber
+            Move Areanote.CreatedDate  to tNotes[iItem].dCreatedDate
+            Move Areanote.CreatedTime  to tNotes[iItem].sCreatedTime
+            Move Areanote.CreatedBy    to tNotes[iItem].iCreatedBy
+            Move Areanote.NoteDate     to tNotes[iItem].dNoteDate
+            Move Areanote.Note         to tNotes[iItem].sNote
+            Increment iItem
+            Find gt Areanote by Index.3
+        Loop
+        Function_Return tNotes
+    End_Function // GetNewAreaNotes Returns tAreanote[]
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateCollectedAreaNotes tAreanote[] tNotes Returns Integer
+        Boolean bFail
+        Integer iItems iItem iCount eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Areanote.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tNotes)) to iItems
+        For iItem from 0 to (iItems - 1)
+            Clear Areanote
+            Move tNotes[iItem].iAreanoteId to Areanote.AreanoteId
+            Find eq Areanote.AreanoteId
+            If (Found) Begin
+                Reread Areanote
+                Move tNotes[iItem].iAreanoteRef to Areanote.AreanoteRef
+                SaveRecord Areanote
+                Unlock
+                Get_Attribute DF_FILE_STATUS of Areanote.File_Number to eStatus
+                If (eStatus = DF_FILE_ACTIVE) Begin
+                    Increment iCount
+                End
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return iCount
+    End_Function
+
+
+    // the following functions keep the remote parent tables of the transaction up-to-date
+
+    { Published = True  }
+    { Description = "Update Master Operations Table"  }
+    Function UpdateMastOps tMastOps[] tMastOpsUpdate Returns tMastOps[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of MastOps.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number  to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tMastOpsUpdate)) to iItems
+        Decrement                             iItems
+        //
+        For iItem from 0 to iItems
+            Clear MastOps
+            Move tMastOpsUpdate[iItem].iMastOpsIdno     to iIdno
+            Move iIdno                                  to MastOps.MastOpsIdno
+            Find eq MastOps.MastOpsIdno
+            Reread MastOps
+            Move tMastOpsUpdate[iItem].iMastOpsIdno         to MastOps.MastOpsIdno
+            Move tMastOpsUpdate[iItem].sName                to MastOps.Name
+            Move tMastOpsUpdate[iItem].nSellRate            to MastOps.SellRate
+            Move tMastOpsUpdate[iItem].nCostRate            to MastOps.CostRate
+            Move tMastOpsUpdate[iItem].sCostType            to MastOps.CostType
+            Move tMastOpsUpdate[iItem].sCalcBasis           to MastOps.CalcBasis
+            Move tMastOpsUpdate[iItem].sActivityType        to MastOps.ActivityType
+            Move tMastOpsUpdate[iItem].nStandardHours       to MastOps.StandardHours
+            Move tMastOpsUpdate[iItem].sDescription         to MastOps.Description
+            Move tMastOpsUpdate[iItem].sStatus              to MastOps.Status
+            Move tMastOpsUpdate[iItem].nDisplaySequence     to MastOps.DisplaySequence
+            Move tMastOpsUpdate[iItem].nQtyDivisor          to MastOps.QtyDivisor
+            Move tMastOpsUpdate[iItem].sQtyDescription      to MastOps.QtyDescription
+            Move tMastOpsUpdate[iItem].sReportCategory      to MastOps.ReportCategory
+            Move tMastOpsUpdate[iItem].sIsAttachment        to MastOps.IsAttachment
+            Move tMastOpsUpdate[iItem].sNeedsAttachment     to MastOps.NeedsAttachment
+            SaveRecord MastOps
+            Unlock
+            Get_Attribute DF_FILE_STATUS of MastOps.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tMastOpsUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure MastOps" * String(iIdno))
+            End
+            If (MastOps.MastOpsIdno > System.LastMastOps) Begin
+                Reread System
+                Move MastOps.MastOpsIdno to System.LastMastOps
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tMastOpsUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = "Update Areas Table"  }
+    Function UpdateAreas tAreas[] tAreasUpdate Returns tAreas[]
+        Integer iItems iItem iNumber eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Areas.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tAreasUpdate)) to iItems
+        Decrement                           iItems
+        //
+        For iItem from 0 to iItems
+            Clear Areas
+            Move tAreasUpdate[iItem].iNumber     to iNumber
+            Move iNumber                         to Areas.AreaNumber
+            Find eq Areas.AreaNumber
+            Reread Areas
+            Move tAreasUpdate[iItem].iNumber        to Areas.AreaNumber
+            Move tAreasUpdate[iItem].sName          to Areas.Name
+            Move tAreasUpdate[iItem].sManager       to Areas.Manager
+            Move tAreasUpdate[iItem].iEmployeeIdno  to Areas.EmployeeIdno
+            SaveRecord Areas
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Areas.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tAreasUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Areas" * String(iNumber))
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tAreasUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = "Update Customer Table"  }
+    Function UpdateCustomer tCustomer[] tCustomerUpdate Returns tCustomer[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Customer.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tCustomerUpdate)) to iItems
+        Decrement                              iItems
+        //
+        For iItem from 0 to iItems
+            Clear Customer
+            Move tCustomerUpdate[iItem].iIdno     to iIdno
+            Move iIdno                            to Customer.CustomerIdno
+            Find eq Customer.CustomerIdno
+            Reread Customer
+            Move tCustomerUpdate[iItem].iIdno     to Customer.CustomerIdno
+            Move tCustomerUpdate[iItem].sName     to Customer.Name
+            Move tCustomerUpdate[iItem].sAddress1 to Customer.Address1
+            Move tCustomerUpdate[iItem].sAddress2 to Customer.Address2
+            Move tCustomerUpdate[iItem].sCity     to Customer.City
+            Move tCustomerUpdate[iItem].sState    to Customer.State
+            Move tCustomerUpdate[iItem].sZip      to Customer.Zip
+            Move tCustomerUpdate[iItem].sStatus   to Customer.Status
+            Move tCustomerUpdate[iItem].sTerms    to Customer.Terms
+            SaveRecord Customer
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Customer.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tCustomerUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Customer" * String(iIdno))
+            End
+            If (Customer.CustomerIdno > System.LastCustomer) Begin
+                Reread System
+                Move Customer.CustomerIdno to System.LastCustomer
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tCustomerUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateSalesTaxGroup tSalesTaxGroup[] tSalesTaxGroupUpdate Returns tSalesTaxGroup[]
+        Integer iItems iItem eStatus
+        String iSalesTaxIdno
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of SalesTaxGroup.File_Number   to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tSalesTaxGroupUpdate)) to iItems
+        Decrement                          iItems
+        //
+        For iItem from 0 to iItems
+            Clear SalesTaxGroup
+            Move tSalesTaxGroupUpdate[iItem].iSalesTaxIdno      to iSalesTaxIdno
+            Move iSalesTaxIdno                                  to SalesTaxGroup.SalesTaxIdno
+            Find eq SalesTaxGroup.SalesTaxIdno
+            Reread SalesTaxGroup
+                Move tSalesTaxGroupUpdate[iItem].iSalesTaxIdno   to SalesTaxGroup.SalesTaxIdno
+                Move tSalesTaxGroupUpdate[iItem].sName           to SalesTaxGroup.Name
+                Move tSalesTaxGroupUpdate[iItem].sRate           to SalesTaxGroup.Rate
+                Move tSalesTaxGroupUpdate[iItem].iChangedFlag    to SalesTaxGroup.ChangedFlag
+                SaveRecord SalesTaxGroup
+            Unlock
+            Get_Attribute DF_FILE_STATUS of SalesTaxGroup.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tSalesTaxGroupUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure SalesTaxGroupId: " * String(iSalesTaxIdno))
+            End
+            //
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tSalesTaxGroupUpdate
+    End_Function 
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateLocation tLocation[] tLocationUpdate Returns tLocation[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Location.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tLocationUpdate)) to iItems
+        Decrement                              iItems
+        //
+        For iItem from 0 to iItems
+            Clear Location
+            Move tLocationUpdate[iItem].iLocIdno     to iIdno
+            Move iIdno                               to Location.LocationIdno
+            Find eq Location.LocationIdno
+            Reread Location
+            Move tLocationUpdate[iItem].iLocIdno     to Location.LocationIdno
+            Move tLocationUpdate[iItem].iCustIdno    to Location.CustomerIdno
+            Move tLocationUpdate[iItem].iLocNbr      to Location.LocationNbr
+            Move tLocationUpdate[iItem].sName        to Location.Name
+            Move tLocationUpdate[iItem].sAddress1    to Location.Address1
+            Move tLocationUpdate[iItem].sAddress2    to Location.Address2
+            Move tLocationUpdate[iItem].sCity        to Location.City
+            Move tLocationUpdate[iItem].sState       to Location.State
+            Move tLocationUpdate[iItem].sZip         to Location.Zip
+            Move tLocationUpdate[iItem].sStatus      to Location.Status
+            Move tLocationUpdate[iItem].iArea        to Location.AreaNumber
+            Move tLocationUpdate[iItem].iInvLoc      to Location.InvoiceLocation
+            Move tLocationUpdate[iItem].iContactIdno to Location.ContactIdno
+            Move tLocationUpdate[iItem].iPropmgrIdno to Location.PropmgrIdno
+            SaveRecord Location
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Location.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tLocationUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Location" * String(iIdno))
+            End
+            If (Location.LocationIdno > System.LastLocation) Begin
+                Reread System
+                Move Location.LocationIdno to System.LastLocation
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tLocationUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateOpers tOpers[] tOpersUpdate Returns tOpers[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Opers.File_Number  to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tOpersUpdate)) to iItems
+        Decrement                           iItems
+        //
+        For iItem from 0 to iItems
+            Clear Opers
+            Move tOpersUpdate[iItem].iOpersIdno   to iIdno
+            Move tOpersUpdate[iItem].iLocIdno     to Opers.LocationIdno
+            Move tOpersUpdate[iItem].iMastOpsIdno to Opers.MastOpsIdno
+            Find eq Opers by Index.4
+            Reread Opers
+            Move tOpersUpdate[iItem].iOpersIdno   to Opers.OpersIdno
+            Move tOpersUpdate[iItem].iCustIdno    to Opers.CustomerIdno
+            Move tOpersUpdate[iItem].iLocIdno     to Opers.LocationIdno
+            Move tOpersUpdate[iItem].iMastOpsIdno to Opers.MastOpsIdno
+            Move tOpersUpdate[iItem].sName        to Opers.Name
+            Move tOpersUpdate[iItem].nSellRate    to Opers.SellRate
+            Move tOpersUpdate[iItem].nCostRate    to Opers.CostRate
+            Move tOpersUpdate[iItem].sCostType    to Opers.CostType
+            Move tOpersUpdate[iItem].sCalcBasis   to Opers.CalcBasis
+            Move tOpersUpdate[iItem].sActType     to Opers.ActivityType
+            Move tOpersUpdate[iItem].iDisplay     to Opers.Display
+            Move tOpersUpdate[iItem].sStatus      to Opers.Status
+            Move tOpersUpdate[iItem].nSeq         to Opers.DisplaySequence
+            SaveRecord Opers
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Opers.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tOpersUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Opers" * String(iIdno))
+            End
+            If (Opers.OpersIdno > System.LastOpers) Begin
+                Reread System
+                Move Opers.OpersIdno to System.LastOpers
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tOpersUpdate
+    End_Function
+    
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateOrder tOrder[] tOrderUpdate Returns tOrder[]
+        Integer iItems iItem iJobNumber eStatus
+        //
+        Date dSysdate
+        Sysdate dSysdate
+        Send LogEvent 8 ("Successful update of Order"* String(iJobNumber))
+        //
+        Send IgnoreError of Error_Object_Id 25
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Order.File_Number  to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tOrderUpdate)) to iItems
+
+        Decrement                           iItems
+        //
+        For iItem from 0 to iItems
+            Send LogEvent 10 ("Inside For Loop - Orders")
+            Clear Order
+            Move tOrderUpdate[iItem].iJobNumber       to iJobNumber
+            Move iJobNumber                           to Order.JobNumber
+            Find eq Order.JobNumber
+            Reread Order
+            Move tOrderUpdate[iItem].iJobNumber       to Order.JobNumber
+            Move tOrderUpdate[iItem].iCustIdno        to Order.CustomerIdno
+            Move tOrderUpdate[iItem].iLocIdno         to Order.LocationIdno
+            Move tOrderUpdate[iItem].sTitle           to Order.Title
+            Move tOrderUpdate[iItem].sWorkType        to Order.WorkType
+            Move tOrderUpdate[iItem].sPlanner         to Order.Planner
+            Move tOrderUpdate[iItem].nEstHrs          to Order.EstimatedHours
+            Move tOrderUpdate[iItem].dOpen            to Order.JobOpenDate
+            Move tOrderUpdate[iItem].dClose           to Order.JobCloseDate
+            Move tOrderUpdate[iItem].iQuoteReference  to Order.QuoteReference
+            Move tOrderUpdate[iItem].nQuoteAmount     to Order.QuoteAmount
+            Move tOrderUpdate[iItem].sOrganization    to Order.Organization
+            Move tOrderUpdate[iItem].iProjectId       to Order.ProjectId
+            Move tOrderUpdate[iItem].sPONumber        to Order.PO_Number
+            Move tOrderUpdate[iItem].sLocationName    to Order.LocationName
+            Move tOrderUpdate[iItem].sBillingType     to Order.BillingType
+            Move tOrderUpdate[iItem].sPropertyManager to Order.PropertyManager
+            Move tOrderUpdate[iItem].iRepIdno         to Order.RepIdno
+            Move tOrderUpdate[iItem].sStatus          to Order.Status
+            Move tOrderUpdate[iItem].iCEPM_JobNumber  to Order.CEPM_JobNumber
+            SaveRecord Order
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Order.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tOrderUpdate[iItem].iChangedFlag
+                Send LogEvent 5 ("Successful update of Order"* String(iJobNumber))
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Order" * String(iJobNumber))
+            End
+            //
+            If (Order.JobNumber > System.LastJob) Begin
+                Reread System
+                Move Order.JobNumber to System.LastJob
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Send TrapError of Error_Object_Id 25
+        //
+        Function_Return tOrderUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateInvhdr tInvhdr[] tInvhdrUpdate Returns tInvhdr[]
+        tInvdtl[] tDetail
+        //
+        Integer iItems iItem iDItem iDItems iIdno eStatus iErrs
+        //
+//        Send Ignore_Error of Error_Object_Id 25
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Invhdr.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of Invdtl.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tInvhdrUpdate)) to iItems
+        Decrement                            iItems
+        //
+        For iItem from 0 to iItems
+            Clear Invhdr
+            Move tInvhdrUpdate[iItem].iInvoiceIdno  to iIdno
+            Send LogEvent 5 ("Invhdr.InvoiceIdno" * String(iIdno))
+            Move iIdno                              to Invhdr.InvoiceIdno
+            Find eq Invhdr.InvoiceIdno
+            Reread Invhdr
+            Move tInvhdrUpdate[iItem].iInvoiceIdno  to Invhdr.InvoiceIdno
+            Move tInvhdrUpdate[iItem].iLocationIdno to Invhdr.LocationIdno
+            Move tInvhdrUpdate[iItem].iCustomerIdno to Invhdr.CustomerIdno
+            Move tInvhdrUpdate[iItem].iEventIdno    to Invhdr.EventIdno
+            Move tInvhdrUpdate[iItem].dInvoiceDate  to Invhdr.InvoiceDate
+            Move tInvhdrUpdate[iItem].sTerms        to Invhdr.Terms
+            Move tInvhdrUpdate[iItem].nTotalAmount  to Invhdr.TotalAmount
+            Move tInvhdrUpdate[iItem].iPrintCount   to Invhdr.PrintCount
+            Move tInvhdrUpdate[iItem].iPostFlag     to Invhdr.PostFlag
+            Move tInvhdrUpdate[iItem].iPrintFlag    to Invhdr.PrintFlag
+            Move tInvhdrUpdate[iItem].iJobNumber    to Invhdr.JobNumber
+            Move tInvhdrUpdate[iItem].iEditFlag     to Invhdr.EditFlag
+            Move tInvhdrUpdate[iItem].iVoidFlag     to Invhdr.VoidFlag
+            Move tInvhdrUpdate[iItem].iChangedFlag  to Invhdr.ChangedFlag
+            SaveRecord Invhdr
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Invhdr.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                Move 0                            to iErrs
+                Move tInvhdrUpdate[iItem].tDetail to tDetail
+                Move (SizeOfArray(tDetail))       to iDItems
+                If (iDItems) Begin
+                    Decrement iDItems
+                    For iDItem from 0 to iDItems
+                        Clear Invdtl
+                        Move tDetail[iDItem].iDetailIdno     to Invdtl.DetailIdno
+                        Find eq Invdtl.DetailIdno
+                        Reread Invdtl
+                        Move tDetail[iDItem].iDetailIdno     to Invdtl.DetailIdno
+                        Move tDetail[iDItem].iInvoiceIdno    to Invdtl.InvoiceIdno
+                        Move tDetail[iDItem].iTransIdno      to Invdtl.TransIdno
+                        Move tDetail[iDItem].iJobNumber      to Invdtl.JobNumber
+                        Move tDetail[iDItem].iAreaNumber     to Invdtl.AreaNumber
+                        Move tDetail[iDItem].iEmployeeIdno   to Invdtl.EmployeeIdno
+                        Move tDetail[iDItem].iOpersIdno      to Invdtl.OpersIdno
+                        Move tDetail[iDItem].sStartTime      to Invdtl.StartTime
+                        Move tDetail[iDItem].dStartDate      to Invdtl.StartDate
+                        Move tDetail[iDItem].iStartHr        to Invdtl.StartHr
+                        Move tDetail[iDItem].iStartMin       to Invdtl.StartMin
+                        Move tDetail[iDItem].sStopTime       to Invdtl.StopTime
+                        Move tDetail[iDItem].dStopDate       to Invdtl.StopDate
+                        Move tDetail[iDItem].iStopHr         to Invdtl.StopHr
+                        Move tDetail[iDItem].iStopMin        to Invdtl.StopMin
+                        Move tDetail[iDItem].iElapsedMinutes to Invdtl.ElapsedMinutes
+                        Move tDetail[iDItem].nQuantity       to Invdtl.Quantity
+                        Move tDetail[iDItem].nPrice          to Invdtl.Price
+                        Move tDetail[iDItem].nTotal          to Invdtl.Total
+                        Move tDetail[iDItem].sComment        to Invdtl.Comment
+                        Move tDetail[iDItem].iClearToInvoice to Invdtl.ClearToInvoice
+                        Move tDetail[iDItem].sDescription    to Invdtl.Description
+                        Move tDetail[iDItem].nSequence       to Invdtl.Sequence
+                        SaveRecord Invdtl
+                        Unlock
+                        Get_Attribute DF_FILE_STATUS of Invdtl.File_Number to eStatus
+                        If (not(eStatus = DF_FILE_ACTIVE)) Begin
+                            Increment iErrs
+                        End
+                        Else Begin
+                            If (Invdtl.DetailIdno > System.LastInvoiceDtl) Begin
+                                Reread System
+                                Move Invdtl.DetailIdno to System.LastInvoiceDtl
+                                SaveRecord System
+                                Unlock
+                            End
+                        End
+                        If (iErrs) Break
+                    Loop
+                End
+                // show as updated
+                If (not(iErrs)) Begin
+                    Move 0 to tInvhdrUpdate[iItem].iChangedFlag
+                End
+                Else Begin
+                    Send LogEvent 5 ("Update Failure Invhdr" * String(iIdno))
+                End
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Invhdr" * String(iIdno))
+            End
+            //
+            If (Invhdr.InvoiceIdno > System.LastInvoiceHdr) Begin
+                Reread System
+                Move Invhdr.InvoiceIdno to System.LastInvoiceHdr
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+//        Send Trap_Error of Error_Object_Id 25
+        //
+        Function_Return tInvhdrUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateEmployer tEmployer[] tEmployerUpdate Returns tEmployer[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Employer.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tEmployerUpdate)) to iItems
+        Decrement                              iItems
+        //
+        For iItem from 0 to iItems
+            Clear Employer
+            Move tEmployerUpdate[iItem].iIdno     to iIdno
+            Move iIdno                            to Employer.EmployerIdno
+            Find eq Employer.EmployerIdno
+            Reread Employer
+            Move tEmployerUpdate[iItem].iIdno     to Employer.EmployerIdno
+            Move tEmployerUpdate[iItem].sName     to Employer.Name
+            Move tEmployerUpdate[iItem].sContact  to Employer.Main_contact
+            Move tEmployerUpdate[iItem].sAddress1 to Employer.Address1
+            Move tEmployerUpdate[iItem].sAddress2 to Employer.Address2
+            Move tEmployerUpdate[iItem].sCity     to Employer.City
+            Move tEmployerUpdate[iItem].sState    to Employer.State
+            Move tEmployerUpdate[iItem].sZip      to Employer.Zip
+            Move tEmployerUpdate[iItem].sStatus   to Employer.Status
+            SaveRecord Employer
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Employer.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tEmployerUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Employer" * String(iIdno))
+            End
+            //
+            If (Employer.EmployerIdno > System.LastEmployer) Begin
+                Reread System
+                Move Employer.EmployerIdno to System.LastEmployer
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tEmployerUpdate
+    End_Function
+    
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateEmployee tEmployee[] tEmployeeUpdate Returns tEmployee[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Employee.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tEmployeeUpdate)) to iItems
+        Decrement                              iItems
+        //
+        For iItem from 0 to iItems
+            Clear Employee
+            Move tEmployeeUpdate[iItem].iEmployeeIdno   to iIdno
+            Move iIdno                                  to Employee.EmployeeIdno
+            Find eq Employee.EmployeeIdno
+            Reread Employee
+            Move tEmployeeUpdate[iItem].iEmployeeIdno       to Employee.EmployeeIdno
+            Move tEmployeeUpdate[iItem].iEmployerIdno       to Employee.EmployerIdno
+            Move tEmployeeUpdate[iItem].sLast               to Employee.LastName
+            Move tEmployeeUpdate[iItem].sFirst              to Employee.FirstName
+            Move tEmployeeUpdate[iItem].sMiddle             to Employee.MiddleName
+            Move tEmployeeUpdate[iItem].sTitle              to Employee.Title
+            Move tEmployeeUpdate[iItem].sSuffix             to Employee.Suffix
+            Move tEmployeeUpdate[iItem].sAddress1           to Employee.Address1
+            Move tEmployeeUpdate[iItem].sAddress2           to Employee.Address2
+            Move tEmployeeUpdate[iItem].sCity               to Employee.City
+            Move tEmployeeUpdate[iItem].sState              to Employee.State
+            Move tEmployeeUpdate[iItem].sZip                to Employee.Zip
+            Move tEmployeeUpdate[iItem].iPIN                to Employee.PIN
+            Move tEmployeeUpdate[iItem].sStatus             to Employee.Status
+            Move tEmployeeUpdate[iItem].iCallCenterFlag     to Employee.CallCenterFlag
+            Move tEmployeeUpdate[iItem].sEmailAddress       to Employee.EmailAddress
+            Move tEmployeeUpdate[iItem].iCEPM_EmployeeIdno  to Employee.CEPM_EmployeeIdno
+            Move tEmployeeUpdate[iItem].iCallCenterNSIFlag  to Employee.CallCenterNSIFlag
+            SaveRecord Employee
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Employee.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tEmployeeUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Employee" * String(iIdno))
+            End
+            //
+            If (Employee.EmployeeIdno > System.LastEmployee) Begin
+                Reread System
+                Move Employee.EmployeeIdno to System.LastEmployee
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tEmployeeUpdate
+    End_Function
+    
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateEquipmnt tEquipmnt[] tEquipmntUpdate Returns tEquipmnt[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Equipmnt.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tEquipmntUpdate)) to iItems
+        Decrement                              iItems
+        //
+        For iItem from 0 to iItems
+            Clear Equipmnt
+            Move tEquipmntUpdate[iItem].iEquipIdno    to iIdno
+            Move iIdno                                to Equipmnt.EquipIdno
+            Find eq Equipmnt.EquipIdno
+            Reread Equipmnt
+            Move tEquipmntUpdate[iItem].iEquipIdno      to Equipmnt.EquipIdno
+            Move tEquipmntUpdate[iItem].sEquipId        to Equipmnt.EquipmentID
+            Move tEquipmntUpdate[iItem].sDescription    to Equipmnt.Description
+            Move tEquipmntUpdate[iItem].iMastOpsIdno    to Equipmnt.MastOpsIdno
+            Move tEquipmntUpdate[iItem].iEmployerIdno   to Equipmnt.OperatedBy
+            Move tEquipmntUpdate[iItem].nRate           to Equipmnt.ContractorRate
+            Move tEquipmntUpdate[iItem].nUsed           to Equipmnt.HoursUsed
+            Move tEquipmntUpdate[iItem].iChangedFlag    to Equipmnt.ChangedFlag
+            Move tEquipmntUpdate[iItem].sStatus         to Equipmnt.Status
+            Move tEquipmntUpdate[iItem].iCEPM_EquipIdno to Equipmnt.CEPM_EquipIdno
+            SaveRecord Equipmnt
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Equipmnt.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tEquipmntUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Equipmnt" * String(iIdno))
+            End
+            //
+            If (Equipmnt.EquipIdno > System.LastEquipmnt) Begin
+                Reread System
+                Move Equipmnt.EquipIdno to System.LastEquipmnt
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tEquipmntUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateLocEquip tLocEquip[] tLocEquipUpdate Returns tLocEquip[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of LocEquip.File_Number to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tLocEquipUpdate)) to iItems
+        Decrement                              iItems
+        //
+        For iItem from 0 to iItems
+            Clear LocEquip
+            Move tLocEquipUpdate[iItem].iLocequipIdno to iIdno
+            Move iIdno                                to LocEquip.LocequipIdno
+            Find eq LocEquip.LocequipIdno
+            Reread LocEquip
+            Move tLocEquipUpdate[iItem].iLocequipIdno   to LocEquip.LocequipIdno
+            Move tLocEquipUpdate[iItem].iLocationIdno   to LocEquip.LocationIdno
+            Move tLocEquipUpdate[iItem].sDescription    to LocEquip.Description
+            Move tLocEquipUpdate[iItem].nQty            to LocEquip.Quantity
+            Move tLocEquipUpdate[iItem].iEmployerIdno   to LocEquip.EmployerIdno
+            Move tLocEquipUpdate[iItem].iChangedFlag    to LocEquip.ChangedFlag
+            SaveRecord LocEquip
+            Unlock
+            Get_Attribute DF_FILE_STATUS of LocEquip.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tLocEquipUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 40 ("Update Failure LocEquip" * String(iIdno))
+            End
+            //
+            If (LocEquip.LocequipIdno > System.LocequipIdno) Begin
+                Reread System
+                Move LocEquip.LocequipIdno to System.LocequipIdno
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tLocEquipUpdate
+    End_Function
+ 
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateSalesRep tSalesRep[] tSalesRepUpdate Returns tSalesRep[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of SalesRep.File_Number   to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tSalesRepUpdate)) to iItems
+        Decrement                          iItems
+        //
+        For iItem from 0 to iItems
+            Clear SalesRep
+            Move tSalesRepUpdate[iItem].iRepIdno        to iIdno
+            Move iIdno                                  to SalesRep.RepIdno
+            Find eq SalesRep.RepIdno
+            Reread SalesRep
+            Move tSalesRepUpdate[iItem].iRepIdno        to SalesRep.RepIdno
+            Move tSalesRepUpdate[iItem].sFirstName      to SalesRep.FirstName
+            Move tSalesRepUpdate[iItem].sLastName       to SalesRep.LastName
+            Move tSalesRepUpdate[iItem].sAddress1       to SalesRep.Address1
+            Move tSalesRepUpdate[iItem].sCity           to SalesRep.City
+            Move tSalesRepUpdate[iItem].sState          to SalesRep.State
+            Move tSalesRepUpdate[iItem].sZip            to SalesRep.Zip
+            Move tSalesRepUpdate[iItem].sPhone1         to SalesRep.Phone1
+            Move tSalesRepUpdate[iItem].sPhone2         to SalesRep.Phone2
+            Move tSalesRepUpdate[iItem].sEmailAddress   to SalesRep.EmailAddress
+            Move tSalesRepUpdate[iItem].sStatus         to SalesRep.Status
+            Move tSalesRepUpdate[iItem].iChangedFlag    to SalesRep.ChangedFlag
+            SaveRecord SalesRep
+            Unlock
+            Get_Attribute DF_FILE_STATUS of SalesRep.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tSalesRepUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure SalesRep" * String(iIdno))
+            End
+            //
+            If (SalesRep.RepIdno > System.LastSalesRep) Begin
+                Reread System
+                Move SalesRep.RepIdno to System.LastSalesRep
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tSalesRepUpdate
+    End_Function 
+    
+    
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateWorkType tWorkType[] tWorkTypeUpdate Returns tWorkType[]
+        Integer iItems iItem eStatus
+        String sWorkTypeId
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of WorkType.File_Number   to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tWorkTypeUpdate)) to iItems
+        Decrement                          iItems
+        //
+        For iItem from 0 to iItems
+            Clear WorkType
+            Move tWorkTypeUpdate[iItem].sWorkTypeIdno   to sWorkTypeId
+            Move sWorkTypeId                            to WorkType.WorkTypeId
+            Find eq WorkType.WorkTypeId
+            Reread WorkType
+            Move tWorkTypeUpdate[iItem].sWorkTypeIdno   to WorkType.WorkTypeId
+            Move tWorkTypeUpdate[iItem].sDescription    to WorkType.Description
+            Move tWorkTypeUpdate[iItem].iManagedBy      to WorkType.ManagedBy
+            Move tWorkTypeUpdate[iItem].iChangedFlag    to WorkType.ChangedFlag
+            Move tWorkTypeUpdate[iItem].sHourlyCost     to WorkType.HourlyCost
+            SaveRecord WorkType
+            Unlock
+            Get_Attribute DF_FILE_STATUS of WorkType.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tWorkTypeUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure WorkType: " * sWorkTypeId)
+            End
+            //
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tWorkTypeUpdate
+    End_Function 
+    
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateUser tUser[] tUserUpdate Returns tUser[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of User.File_Number   to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tUserUpdate)) to iItems
+        Decrement                          iItems
+        //
+        For iItem from 0 to iItems
+            Clear User
+            Move tUserUpdate[iItem].iUserId        to iIdno
+            Move iIdno                             to User.UserId
+            Find eq User.UserId
+            Reread User
+            Move tUserUpdate[iItem].iUserId        to User.UserId
+            Move tUserUpdate[iItem].sLoginName     to User.LoginName
+            Move tUserUpdate[iItem].sPassword      to User.Password
+            Move tUserUpdate[iItem].sFirstName     to User.FirstName
+            Move tUserUpdate[iItem].sLastName      to User.LastName
+            Move tUserUpdate[iItem].sState         to User.State
+            Move tUserUpdate[iItem].sEditRights    to User.EditRights
+            Move tUserUpdate[iItem].iChangedFlag   to User.ChangedFlag
+            Move tUserUpdate[iItem].iCustContactId to User.CustContactId
+            SaveRecord User
+            Unlock
+            Get_Attribute DF_FILE_STATUS of User.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tUserUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure User" * String(iIdno))
+            End
+            //
+            If (User.UserId > System.UserId) Begin
+                Reread System
+                Move User.UserId to System.UserId
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tUserUpdate
+    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateWebAppUser tWebAppUser[] tWebAppUserUpdate Returns tWebAppUser[]
+        Integer iItems iItem iIdno eStatus
+        String sLoginName
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of WebAppUser.File_Number   to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tWebAppUserUpdate)) to iItems
+        Send LogEvent 264 ("Function UpdateWebAppUser - SizeOfArray:"* String(iItems))
+        Decrement                          iItems
+        //
+        For iItem from 0 to iItems
+            Clear WebAppUser
+            Move tWebAppUserUpdate[iItem].sLoginName        to sLoginName
+            Send LogEvent 264 ("Looking for LoginName:"* sLoginName)
+            Move sLoginName                                 to WebAppUser.LoginName
+            Find eq WebAppUser.LoginName
+            Reread WebAppUser
+                Move tWebAppUserUpdate[iItem].sLoginName            to WebAppUser.LoginName
+                Move tWebAppUserUpdate[iItem].sPassword             to WebAppUser.Password
+                Move tWebAppUserUpdate[iItem].sFullName             to WebAppUser.FullName
+                Move tWebAppUserUpdate[iItem].dLastLogin            to WebAppUser.LastLogin
+                Move tWebAppUserUpdate[iItem].iRights               to WebAppUser.Rights
+                Move tWebAppUserUpdate[iItem].iEmployerIdno         to WebAppUser.EmployerIdno
+                Move tWebAppUserUpdate[iItem].iEmployeeIdno         to WebAppUser.EmployeeIdno
+                Move tWebAppUserUpdate[iItem].iChangedFlag          to WebAppUser.ChangedFlag
+                Send LogEvent 264 ("tWebAppUserUpdate.sStatus="*tWebAppUserUpdate[iItem].sStatus)
+                Move tWebAppUserUpdate[iItem].sStatus               to WebAppUser.Status
+                Move tWebAppUserUpdate[iItem].iBillingAccessFlag    to WebAppUser.BillingAccessFlag
+                SaveRecord WebAppUser
+                Send LogEvent 264 ("SaveRecord WebAppUser")
+            Unlock
+            Get_Attribute DF_FILE_STATUS of WebAppUser.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tWebAppUserUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 264 ("Update Failure WebAppUser" * sLoginName)
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tWebAppUserUpdate
+    End_Function
+    
+    
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateContact tContact[] tContactUpdate Returns tContact[]
+        Integer iItems iItem iIdno eStatus
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Contact.File_Number   to DF_Filemode_Default
+        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tContactUpdate)) to iItems
+        Decrement                          iItems
+        //
+        For iItem from 0 to iItems
+            Clear Contact
+            Move tContactUpdate[iItem].iContactIdno        to iIdno
+            Move iIdno                             to Contact.ContactIdno
+            Find eq Contact.ContactIdno
+            Reread Contact
+            Move tContactUpdate[iItem].iCustomerIdno        to Contact.CustomerIdno
+            Move tContactUpdate[iItem].iContactIdno         to Contact.ContactIdno
+            Move tContactUpdate[iItem].sLastName            to Contact.LastName 
+            Move tContactUpdate[iItem].sFirstName           to Contact.FirstName
+            Move tContactUpdate[iItem].sAddress1            to Contact.Address1
+            Move tContactUpdate[iItem].sAddress2            to Contact.Address2
+            Move tContactUpdate[iItem].sCity                to Contact.City
+            Move tContactUpdate[iItem].sState               to Contact.State
+            Move tContactUpdate[iItem].sZip                 to Contact.Zip
+            Move tContactUpdate[iItem].sPhone1              to Contact.Phone1
+            Move tContactUpdate[iItem].sPhone2              to Contact.Phone2
+            Move tContactUpdate[iItem].sEmailAddress        to Contact.EmailAddress
+            Move tContactUpdate[iItem].sStatus              to Contact.Status
+            Move tContactUpdate[iItem].iChangedFlag         to Contact.ChangedFlag
+            SaveRecord Contact
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Contact.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tContactUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Contact" * String(iIdno))
+            End
+            //
+            If (Contact.ContactIdno > System.LastContact) Begin
+                Reread System
+                Move Contact.ContactIdno to System.LastContact
+                SaveRecord System
+                Unlock
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tContactUpdate
+    End_Function
+
+//    // Transaction Detail Expansion
+//    { Published = True  }
+//    { Description = ""  }
+//    Function UpdateSystem tSystem[] tSystemUpdate Returns tSystem[]
+//        Integer iItems iItem iIdno eStatus
+//        //
+//        Send ChangeAllFileModes DF_Filemode_ReadOnly
+//        Set_Attribute DF_File_Mode of System.File_Number   to DF_Filemode_Default
+//        Set_Attribute DF_File_Mode of System.File_Number to DF_Filemode_Default
+//        //
+//        Move (SizeOfArray(tUserUpdate)) to iItems
+//        Decrement                          iItems
+//        //
+//        For iItem from 0 to iItems
+//            Clear User
+//            Move tUserUpdate[iItem].iUserId        to iIdno
+//            Move iIdno                             to User.UserId
+//            Find eq User.UserId
+//            Reread User
+//            Move tSystemUpdate[iItem].iUserId        to User.UserId
+//            Move tSystemUpdate[iItem].sLoginName     to User.LoginName
+//            Move tSystemUpdate[iItem].sPassword      to User.Password
+//            Move tSystemUpdate[iItem].sFirstName     to User.FirstName
+//            Move tSystemUpdate[iItem].sLastName      to User.LastName
+//            Move tSystemUpdate[iItem].sState         to User.State
+//            Move tSystemUpdate[iItem].sEditRights    to User.EditRights
+//            Move tSystemUpdate[iItem].iChangedFlag   to User.ChangedFlag
+//            Move tSystemUpdate[iItem].iCustContactId to User.CustContactId
+//            SaveRecord User
+//            Unlock
+//            Get_Attribute DF_FILE_STATUS of User.File_Number to eStatus
+//            If (eStatus = DF_FILE_ACTIVE) Begin
+//                // show as updated
+//                Move 0 to tUserUpdate[iItem].iChangedFlag
+//            End
+//            Else Begin
+//                Send LogEvent 5 ("Update Failure User" * String(iIdno))
+//            End
+//            //
+//            If (User.UserId > System.UserId) Begin
+//                Reread System
+//                Move User.UserId to System.UserId
+//                SaveRecord System
+//                Unlock
+//            End
+//        Loop
+//        //
+//        Send ChangeAllFileModes DF_Filemode_Default
+//        //
+//        Function_Return tUserUpdate
+//    End_Function
+
+    { Published = True  }
+    { Description = ""  }
+    Function UpdateReqtypes tReqtypes[] tUpdate Returns tReqtypes[]
+        Integer iItems iItem eStatus
+        String  sCode
+        //
+        Send ChangeAllFileModes DF_Filemode_ReadOnly
+        Set_Attribute DF_File_Mode of Reqtypes.File_Number to DF_Filemode_Default
+        //
+        Move (SizeOfArray(tUpdate)) to iItems
+        Decrement                      iItems
+        //
+        For iItem from 0 to iItems
+            Clear Reqtypes
+            Move tUpdate[iItem].sCode        to sCode
+            Move sCode                       to Reqtypes.ReqtypesCode
+            Find eq Reqtypes.ReqtypesCode
+            Reread Reqtypes
+            Move tUpdate[iItem].sCode        to Reqtypes.ReqtypesCode
+            Move tUpdate[iItem].sDescription to Reqtypes.Description
+            Move tUpdate[iItem].iChangedFlag to Reqtypes.ChangedFlag
+            SaveRecord Reqtypes
+            Unlock
+            Get_Attribute DF_FILE_STATUS of Reqtypes.File_Number to eStatus
+            If (eStatus = DF_FILE_ACTIVE) Begin
+                // show as updated
+                Move 0 to tUpdate[iItem].iChangedFlag
+            End
+            Else Begin
+                Send LogEvent 5 ("Update Failure Reqtypes" * sCode)
+            End
+        Loop
+        //
+        Send ChangeAllFileModes DF_Filemode_Default
+        //
+        Function_Return tUpdate
+    End_Function
+    
+    { Published = True  }
+    { Description = ""  }
+    Function GetOpenTransactions Returns tNewTransaction[]
+        tNewTransaction[] tTransactions
+        //
+        Integer iItem
+        //
+        Clear Trans
+        Find ge Trans by Index.5
+        While ((Found) and Trans.InvoicedFlag = 0)
+            If (Trans.StopHr = 0 and Trans.StopMin = 0 and Trans.Quantity = 0) Begin
+                Move Trans.TransIdno    to tTransactions[iItem].iTransIdno
+                Move Trans.JobNumber    to tTransactions[iItem].iJobNumber
+                Move Trans.EmployeeIdno to tTransactions[iItem].iEmployeeIdno
+                Move Trans.OpersIdno    to tTransactions[iItem].iOpersIdno
+                Move Trans.StartTime    to tTransactions[iItem].sStartTime
+                Move Trans.StartDate    to tTransactions[iItem].dStartDate
+                Move Trans.StartHr      to tTransactions[iItem].iStartHr
+                Move Trans.StartMin     to tTransactions[iItem].iStartMin
+                Move Trans.StopTime     to tTransactions[iItem].sStopTime
+                Move Trans.StopDate     to tTransactions[iItem].dStopDate
+                Move Trans.StopHr       to tTransactions[iItem].iStopHr
+                Move Trans.StopMin      to tTransactions[iItem].iStopMin
+                Move Trans.Quantity     to tTransactions[iItem].iQuantity
+                Move Trans.EquipmentID  to tTransactions[iItem].sEquipmentID
+                Move Trans.AreaNumber   to tTransactions[iItem].iArea
+                Increment iItem
+            End
+            Find gt Trans by Index.5
+        Loop
+        Function_Return tTransactions
+    End_Function // GetOpenTransactions Returns tNewTransaction[]
+
+//    Send RegisterInterface get_createNewProspect ;
+//        "get_createNewProspect"                  ;
+//        "String sFirstName String sLastName String sAddress String sZip String sPhone1 String sState String sCity String sBestTime1 String sPhone2 String sBestTime2 String sEmail String sRelationship String sBenefitsFlag String sDob String sMaritalStatus String sMedCondition String sOutOfWorkFlag String sAppliedFlag String sLastDenied String sAppealFlag String sAppealDate String sDenialFlag String sHasRepFlag String sToCallFlag String sDescription String sConditionFlag Returns integer" ;
+//        ""
+
+    Send RegisterInterface msg_LogEvent       ;
+        "msg_LogEvent"                        ;
+        "integer iEventType string lpszEvent" ;
+        ""
+
+End_Object

@@ -1,0 +1,79 @@
+Use Batchdd.pkg
+
+Object oEmployerTasks is a BusinessProcess
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+
+    Procedure ChangeEmployerStatus Integer iEmployerIdno String sToStatus Boolean bChilderen Boolean bPreviewChecked
+        Integer iEmployerFound iEmployerChanged iEmployeeFound iEmployeeChanged iEquipFound iEquipChanged
+        //
+        Clear Employer
+        Move iEmployerIdno to Employer.EmployerIdno
+        Find EQ Employer by 1
+        If ((Found) and Employer.EmployerIdno = iEmployerIdno) Begin
+            Increment iEmployerFound
+            If (not(bPreviewChecked)) Begin
+                Reread Employer
+                    Move sToStatus to Employer.Status
+                    Move 1 to Employer.ChangedFlag
+                    SaveRecord Employer
+                    Increment iEmployerChanged
+                Unlock
+            End
+            Else Begin
+                Showln ("Employer:"*String(Employer.EmployerIdno)*Trim(Employer.Name))
+            End
+            If (bChilderen) Begin
+                // Employees
+                Clear Employee
+                Move iEmployerIdno to Employee.EmployerIdno
+                Find GE Employee by 8
+                While ((Found) and Employee.EmployerIdno = iEmployerIdno)
+                    Increment iEmployeeFound
+                    If (not(bPreviewChecked)) Begin
+                        Move sToStatus to Employee.Status
+                        Move 1 to Employee.ChangedFlag
+                        SaveRecord Employee
+                        Increment iEmployeeChanged
+                    End
+                    Else Begin
+                        Showln (" - Employee:"*String(Employee.EmployeeIdno)*Trim(Employee.FirstName*Employee.LastName)*"- Status:"*Employee.Status)
+                    End
+                    Find GT Employee by 8
+                Loop
+                // Equipment  
+                Clear Equipmnt
+                Move iEmployerIdno to Equipmnt.OperatedBy
+                Find GE Equipmnt by 4
+                While ((Found) and Equipmnt.OperatedBy = iEmployerIdno)
+                    Increment iEquipFound
+                    If (not(bPreviewChecked)) Begin
+                        Move sToStatus to Equipmnt.Status
+                        Move 1 to Equipmnt.ChangedFlag
+                        SaveRecord Equipmnt
+                        Increment iEquipChanged
+                    End
+                    Else Begin
+                        Showln (" - Equipment:"*String(Equipmnt.EquipIdno)*Trim(Equipmnt.Description))
+                    End
+                    Find GT Equipmnt by 4
+                Loop           
+            End
+        End
+        Clear Employer Employee Equipmnt
+        Move iEmployerIdno to Employer.EmployerIdno
+        Find EQ Employer by 1
+    End_Procedure
+
+End_Object
+

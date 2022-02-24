@@ -1,0 +1,101 @@
+// C:\VDF15.0 Workspaces\Tempus\AppSrc\CallCenterUpdateItem.wo
+// Call Center Item Update
+//
+
+Use cAjaxWebBusinessProcess.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use cReqtypesDataDictionary.dd
+Use cLocnotesDataDictionary.dd
+Use SalesRep.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Object oCallCenterUpdateItem Is A cAjaxWebBusinessProcess
+    Set psDescription to "Call Center Item Update"
+    Set pbClearAfterSave to False
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOENTER to True
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOENTER to True
+    End_Object // oLocation_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+    Object oReqtypes_DD Is A cReqtypesDataDictionary
+    End_Object // oReqtypes_DD
+
+    Object oLocnotes_DD Is A cLocnotesDataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oOrder_DD
+        Set DDO_Server To oReqtypes_DD
+
+        Function Validate_Delete Returns Integer
+            Integer iError
+            //
+            Forward Get Validate_Delete to iError
+            //
+            If (not(iError)) Begin
+                If (Locnotes.ResolvedDate = 0) Begin
+                    Send UserError "Item has not been resolved" "Validation Error"
+                    Move 1 to iError
+                End
+            End
+            //
+            Function_Return iError
+        End_Function
+
+        Procedure Request_Delete
+            Integer iHr iMin iSec iUserId
+            String  sTime
+            Date    dToday
+            //
+            Sysdate dToday iHr iMin iSec
+            Get IsTimeString iHr iMin iSec to sTime
+            Get piUserId                   to iUserId
+            Set Field_Changed_Value Field Locnotes.ClosedDate to dToday
+            Set Field_Changed_Value Field Locnotes.ClosedTime to sTime
+            Set Field_Changed_Value Field Locnotes.ClosedBy   to iUserId
+            Send Request_Save
+        End_Procedure
+        
+        
+    End_Object // oLocnotes_DD
+
+    Set Main_DD To oLocnotes_DD
+
+    Send RegisterStandardInterface
+    //Send RegisterDebugInterface
+    //Send RegisterFullErrorInterface
+    //Send RegisterAutoEntryInterface
+
+    Procedure OnAjaxRequestStart TAjaxRequestData ByRef tRequestData
+        Integer iUserId
+        //
+        Forward Send OnAjaxRequestStart (&tRequestData)
+        //
+        Get GetAjaxRequestUserData "sUserId" to iUserId
+        Set piUserId of oLocnotes_DD         to iUserId
+    End_Procedure
+
+End_Object // oCallCenterUpdateItem

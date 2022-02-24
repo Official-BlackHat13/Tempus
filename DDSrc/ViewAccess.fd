@@ -1,0 +1,9 @@
+#REPLACE FILE84 ViewAccess
+#REPLACE ViewAccess.Recnum |FN84,0
+#REPLACE ViewAccess.ViewName |FS84,1
+#REPLACE ViewAccess.Application |FS84,2
+#REPLACE ViewAccess.Full |FS84,3
+#REPLACE ViewAccess.Modify |FS84,4
+#REPLACE ViewAccess.ReadOnly |FS84,5
+#REPLACE ViewAccess.ChangedFlag |FN84,6
+#REPLACE ViewAccess.Sequence |FN84,7

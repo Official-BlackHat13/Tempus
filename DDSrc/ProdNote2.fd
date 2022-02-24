@@ -1,0 +1,9 @@
+#REPLACE FILE113 ProdNote2
+#REPLACE ProdNote2.Recnum |FN113,0
+#REPLACE ProdNote2.ProdNoteIdno |FN113,1
+#REPLACE ProdNote2.JobNumber |FN113,2
+#REPLACE ProdNote2.Note |FS113,3
+#REPLACE ProdNote2.CreatedDate |FM113,4
+#REPLACE ProdNote2.CreatedBy |FS113,5
+#REPLACE ProdNote2.AcknowledgedDate |FM113,6
+#REPLACE ProdNote2.RepIdno |FN113,7

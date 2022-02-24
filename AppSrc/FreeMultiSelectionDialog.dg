@@ -1,0 +1,166 @@
+Use Windows.pkg
+//Use cCJGrid.pkg
+Use cGlblDbModalPanel.pkg
+Use cCJGridPromptList.pkg
+Use cCJGridColumn.pkg
+
+Object oFreeMultiSelectionDialog is a ModalPanel
+    Set Size to 113 333
+    Set Label to "MultiSelectionDialog"
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style to Border_Thick
+    
+    Property String[]   psItemName
+    Property Integer    piReqMissing
+    Property String     psTableName
+    Property Integer    piIndex
+    Property Boolean    pbCancel
+    Property tDataSourceRow[] pTheData
+
+    Set Locate_Mode to Center_On_Parent
+
+    Object oOK_Btn is a Button
+        Set Label    to "&OK"
+        Set Location to 95 224
+        Set peAnchors To anBottomRight
+
+        Procedure OnClick
+            Integer iUnChecked
+            Send ProcessSelectionItems of oMultiSelectGrid (&iUnChecked)
+            If (iUnChecked<>0) Set pbCancel to False
+            Else Set pbCancel to False
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_Btn is a Button
+        Set Label    to "&Cancel"
+        Set Location to 95 279
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Set pbCancel to True
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oMultiSelectGrid is a cCJGrid
+        Set Size to 72 323
+        Set Location to 17 5
+        Set peAnchors to anAll
+
+        //Set pbMultipleSelection to True
+        //Set peUpdateMode to umPromptCustom
+        Set pbMultiSelectionMode to True
+        Set pbHeaderReorders to False
+        Set pbHeaderTogglesDirection to False
+        //Set pbAutoOrdering to False
+        //Set piInitialColumn to 0
+        //Set piSortColumn    to 0
+        //Set pbEditOnTyping to False
+        //Set pbAutoSearch to False
+        //Set pbInitialSelectionEnable to False
+
+        Object oItemNameColumn is a cCJGridColumn
+            Set piWidth to 460
+            Set psCaption to "Name"
+            Set pbMultiLine to True
+        End_Object
+
+        Object oIdentifyerColumn is a cCJGridColumn
+            Set piWidth to 78
+            Set psCaption to "Id"
+            Set pbVisible to False
+        End_Object
+
+        Object oCheckNameColumn is a cCJGridColumn
+            Set piWidth to 78
+            Set psCaption to "Check"
+            Set pbCheckbox to True
+        End_Object
+        
+        Procedure LoadData 
+            Handle hoDataSource
+            tDataSourceRow[] TheData
+            Integer iRows i iName iStatus iElementCount iIndex
+            String sTableName
+            String[] sItemName
+            //
+            Get phoDataSource to hoDataSource
+            Move 0 to iRows
+            Get pTheData of oFreeMultiSelectionDialog to TheData
+            Send InitializeData TheData
+            Send MovetoFirstRow
+        End_Procedure
+    
+        Procedure ProcessSelectionItems Integer ByRef iReqMissing
+            Integer[] SelRows
+            Integer i iItems iChecked iRow
+            String sName
+            String[] sItemSelection
+            Handle hoDataSource
+            tDataSourceRow[] MyData
+            //
+            Get phoDataSource to hoDataSource
+            Get DataSource of hoDataSource to MyData
+            
+            Move (SizeOfArray(MyData)) to iItems
+            For i from 0 to (iItems-1)
+                //If it's checked, move the value to selected
+                If (MyData[i].sValue[2]=True) Begin
+                    Move MyData[i].sValue[1] to sItemSelection[i] //Identifyer
+                End
+                //If it's unchecked while required, increment missing count
+                If (MyData[i].vTag = True and MyData[i].sValue[2] = False) Begin
+                    Increment iReqMissing
+                End
+            Loop
+            Set piReqMissing to iReqMissing
+            Set psItemName to sItemSelection
+        End_Procedure
+
+    Procedure Activating
+        Forward Send Activating
+        // Populate Grid
+        Send LoadData
+    End_Procedure
+
+    End_Object
+
+    Object oMessageTextBox is a TextBox
+        Set Size to 10 164
+        Set Location to 4 6
+        Set Label to 'Message goes here!'
+    End_Object
+
+    Function PopupMultiSelectDialog String sTitle String sMessage tDataSourceRow[] TheData String[] ByRef sItemSelection Returns Boolean
+        Boolean bCancel bSuccess
+        Integer iReqMissing 
+        //
+        Set Label of oFreeMultiSelectionDialog to sTitle
+        Set Label of oMessageTextBox to sMessage
+        Set pTheData of oFreeMultiSelectionDialog to TheData
+        //
+        Send Popup_Modal of Self
+        //
+        Get pbCancel to bCancel
+        If not bCancel Begin
+            Get psItemName to sItemSelection
+            Get piReqMissing to iReqMissing
+            //Return True if at least one item is required or as long as selected count is greater or equal to required count
+            Function_Return (iReqMissing=0) 
+        End
+        //
+        Function_Return False
+    End_Function
+
+
+
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_Btn
+
+End_Object

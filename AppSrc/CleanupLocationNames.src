@@ -1,0 +1,42 @@
+Use GlobalAllEnt.pkg
+//Use Windows.pkg
+//Use cHtmlHelp.pkg
+//Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Location
+
+Procedure DoCleanupLocationNames
+    Boolean bCancel
+    Integer iPos iLen
+    String  sName
+    //
+    Get Confirm "Cleanup Location names?" to bCancel
+    If (bCancel) Procedure_Return
+    //
+    Find ge Location.Recnum
+    While (Found)
+        Move (Trim(Location.Name)) to sName
+        Move (Pos("/",sName))      to iPos
+        If (iPos) Begin
+            Move (Length(sName))        to iLen
+            Move (iLen-(iPos-1))        to iLen
+            Increment                      iPos
+            Move (Mid(sName,iLen,iPos)) to sName
+            Reread
+            Move sName to Location.Name
+            SaveRecord Location
+            Unlock
+        End
+        Find gt Location.Recnum
+    Loop
+End_Procedure
+
+Send DoCleanupLocationNames

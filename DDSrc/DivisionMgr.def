@@ -1,0 +1,54 @@
+-----------------------------------------------------------------------------
+  DATE: 07/24/2020      TIME: 13:58                                  PAGE:  1
+  FILE DEFINITION FOR FILE: DivisionMgr (# 85)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:DivisionMgr
+  USER DISPLAY NAME         : DivisionMgr
+  DATAFLEX FILE NAME        : DivisionMgr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 330       ( USED: 330 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 5 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-149\SQLEXPRESS;Trusted_Connection=yes;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  DivMgrIdno       NUM    8.0     1  1   
+  2  FirstName        ASC     50    12  2   
+  3  LastName         ASC     50    62  2   
+  4  Email            ASC    100   112      
+  5  CellPhone        ASC    100   212      
+  6  Status           ASC      2   312  4   
+  7  ChangedFlag      NUM    2.0   314  5   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    DivMgrIdno      NO  NO       0      0       1     ON-LINE
+
+  2    FirstName       NO  NO       0      0       3     ON-LINE
+       LastName        NO  NO 
+       DivMgrIdno      NO  NO 
+
+  3    LastName        NO  NO       0      0       3     ON-LINE
+       FirstName       NO  NO 
+       DivMgrIdno      NO  NO 
+
+  4    Status          NO  NO       0      0       4     ON-LINE
+       FirstName       NO  NO 
+       LastName        NO  NO 
+       DivMgrIdno      NO  NO 
+
+  5    ChangedFlag     NO  NO       0      0       4     ON-LINE
+       FirstName       NO  NO 
+       LastName        NO  NO 
+       DivMgrIdno      NO  NO 
+

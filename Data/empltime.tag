@@ -1,0 +1,16 @@
+EmpltimeId
+EmployeeId
+StartDate
+StartHr
+StartMn
+LunchOutDate
+LunchOutHr
+LunchOutMn
+LunchInDate
+LunchInHr
+LunchInMn
+StopDate
+StopHr
+StopMn
+LunchMinutes
+DayMinutes

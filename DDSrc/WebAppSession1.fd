@@ -1,0 +1,11 @@
+#REPLACE FILE132 WebAppSession1
+#REPLACE WebAppSession1.Recnum |FN132,0
+#REPLACE WebAppSession1.SessionKey |FS132,1
+#REPLACE WebAppSession1.CreateDate |FM132,2
+#REPLACE WebAppSession1.CreateTime |FS132,3
+#REPLACE WebAppSession1.LastAccessDate |FM132,4
+#REPLACE WebAppSession1.LastAccessTime |FS132,5
+#REPLACE WebAppSession1.UseCount |FN132,6
+#REPLACE WebAppSession1.RemoteAddress |FS132,7
+#REPLACE WebAppSession1.LoginName |FS132,8
+#REPLACE WebAppSession1.Active |FS132,9

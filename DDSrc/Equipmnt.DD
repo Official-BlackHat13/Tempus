@@ -1,0 +1,223 @@
+// Class Name: Equipmnt_DataDictionary
+// Revision  : 4
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Equipmnt
+Open Mastops
+Open Employer
+Open System
+Open Syslog
+
+Object oStatusValidationTable is a DescriptionValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "A" "Active"
+        Send Add_Table_Value "I" "Inactive"
+    End_Procedure
+End_Object
+
+Register_Object Equipmnt_sl
+
+Class Equipmnt_DataDictionary  is a cGlblDataDictionary
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Equipmnt.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    
+    // Update:
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        
+        Move 1 to Equipmnt.Changedflag
+    End_Procedure   // Update
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Equipmnt.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Mastops.File_Number
+        Set Add_Server_File to Employer.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to Syslog.File_Number DD_Lock_on_All
+
+        Set Field_Auto_Increment Field Equipmnt.Equipidno to File_Field System.Lastequipmnt
+        Set Field_Prompt_Object Field Equipmnt.EquipIdno to Equipmnt_sl
+
+        Set Field_Value_Table Field Equipmnt.Status to oStatusValidationTable
+        Set Field_Option Field Equipmnt.Status DD_CAPSLOCK to True
+        Set Field_Class_Name Field Equipmnt.Status to "cGlblDbComboForm"
+
+        // Field-based properties.......................
+
+
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // Equipmnt.EquipIdno
+        Set piKey2 to 4 // Equipmnt.MastOpsIdno
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+
+    End_Procedure    // Construct_Object
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   1 // Equipmnt.EquipIdno
+        Send DoAddArrayValue hArray   2 // Equipmnt.EquipmentID
+        Send DoAddArrayValue hArray   3 // Equipmnt.Description
+        Send DoAddArrayValue hArray   4 // Equipmnt.MastOpsIdno
+        Send DoAddArrayValue hArray   5 // Equipmnt.OperatedBy
+        Send DoAddArrayValue hArray   6 // Equipmnt.ContractorRate
+        Send DoAddArrayValue hArray   9 // Equipmnt.Status
+        Send DoAddArrayValue hArray  10 // Equipmnt.RentalRate
+        Send DoAddArrayValue hArray  12 // Equipmnt.Hr_Mat_MinFlag
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field Equipmnt.Status to "A"
+    End_Procedure    // Field_Defaults    
+
+    Function IsEquipmentValid Integer iLocationIdno Integer iEquipIdno Integer ByRef iOpersIdno Integer ByRef iAltEquipIdno String ByRef sErrorMsg Returns Boolean
+        Clear Equipmnt MastOps Opers
+        Move iEquipIdno to Equipmnt.EquipIdno
+        Find eq Equipmnt.EquipIdno
+        If ((Found) and Equipmnt.Status = "A") Begin
+            Relate Equipmnt
+            If (MastOps.Recnum <> 0 and (MastOps.CostType <> "Material")) Begin
+                Move iLocationIdno       to Opers.LocationIdno
+                Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                Find eq Opers by Index.4
+                If (Found) Begin
+                    Move Opers.OpersIdno to iOpersIdno
+                    Move Equipmnt.CEPM_EquipIdno to iAltEquipIdno
+                    Function_Return (Found)
+                End
+                Else Begin
+                    Move "Equipment category not allowed at location" to sErrorMsg
+                End
+            End
+            Else Begin
+                Move "Equipment not a Labor Code" to sErrorMsg
+            End
+        End
+        Else Begin
+            Move "Equipment not found" to sErrorMsg
+        End
+    End_Function
+
+    Function IsMaterialValid Integer iLocationIdno Integer iMaterialIdno Integer ByRef iOpersIdno Integer ByRef iAltMatIdno String ByRef sErrorMsg Returns Boolean
+        Clear Equipmnt MastOps Opers
+        Move iMaterialIdno to Equipmnt.EquipIdno
+        Find eq Equipmnt.EquipIdno
+        If ((Found) and Equipmnt.Status = "A") Begin
+            Relate Equipmnt
+            If (MastOps.Recnum <> 0 and (MastOps.CostType = "Material")) Begin
+                Move iLocationIdno       to Opers.LocationIdno
+                Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                Find eq Opers by Index.4
+                If (Found) Begin
+                    Move Opers.OpersIdno to iOpersIdno
+                    Move Equipmnt.CEPM_EquipIdno to iAltMatIdno
+                    Function_Return True
+                End
+                Else Begin
+                    Move "Material category not allowed at location" to sErrorMsg
+                    Function_Return False
+                End
+            End
+            Else Begin
+                Move "This is not a Material Code" to sErrorMsg
+                Function_Return False
+            End
+        End
+        Else Begin
+            Move "Material# not found" to sErrorMsg
+            Function_Return False
+        End
+    End_Function
+    
+    //
+    Function IsAttachmentValid Integer iLocationIdno Integer iAttachmentIdno Integer ByRef iOpersIdno Integer ByRef iAltEquipIdno String ByRef sErrorMsg Returns Boolean
+        Clear Equipmnt MastOps Opers
+        Move iAttachmentIdno to Equipmnt.EquipIdno
+        Find eq Equipmnt.EquipIdno
+        If ((Found) and Equipmnt.Status = "A") Begin
+            Relate Equipmnt
+            If (MastOps.Recnum <> 0 and (MastOps.CostType = "Labor" or MastOps.CostType = "Travel")) Begin
+                Move iLocationIdno       to Opers.LocationIdno
+                Move MastOps.MastOpsIdno to Opers.MastOpsIdno
+                Find eq Opers by Index.4
+                If (Found) Begin
+                    Move Opers.OpersIdno to iOpersIdno
+                    Move Equipmnt.CEPM_EquipIdno to iAltEquipIdno
+                    Function_Return (Found)
+                End
+                Else Begin
+                    Move "Equipment category not allowed at location" to sErrorMsg
+                End
+            End
+        End
+        Else Begin
+            Move "Equipment not found" to sErrorMsg
+        End
+    End_Function
+        
+
+End_Class    // Equipmnt_DataDictionary
+
+
+
+#IFDEF Is$WebApp
+#ELSE
+Use Equipmnt.sl
+#ENDIF

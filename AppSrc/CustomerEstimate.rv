@@ -1,0 +1,303 @@
+//Customer Estimate
+Use DFAllEnt.pkg
+Use cCrystal.pkg
+
+Activate_View Activate_oCustomerEstimate for oCustomerEstimate
+
+Object oCustomerEstimate is a ReportView
+
+    Property Integer piStart
+    Property Integer piStop
+
+    Set Label to "Customer Estimate"
+    Set Location to 6 6
+    Set Size to 129 169
+
+    Object oEstimateIdGroup is a Group
+        Set Label to "Select Estimate ID"
+        Set Location To 5 5
+        
+        Object oFromIdno is a Form
+            Set Size To 13 54
+            Set Location To 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset To 2
+            Set Label_Row_Offset To 0
+            Set Label To "From:"
+            Set Status_Help To "First value in selection range."
+            Set Numeric_Mask 0 To 8 0
+        End_Object
+        
+        Object oToIdno is a Form
+            Set Size To 13 54
+            Set Location To 25 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset To 2
+            Set Label_Row_Offset To 0
+            Set Label To "To:"
+            Set Status_Help To "Last value in selection range."
+            Set Numeric_Mask 0 To 8 0
+        End_Object
+        
+        Set Size to 43 159
+    
+    End_Object
+    
+    Object oDestinationGroup Is A RadioGroup
+        Set Label To "Output destination"
+        Set Location To 53 5
+        Set Size To 46 77
+        
+        Object oScreenRadio Is A Radio
+            Set Label To "Preview"
+            Set Size To 10 60
+            Set Location To 10 6
+            Set Status_Help To "Print the report to screen"
+        End_Object // oScreenRadio
+        
+        Object oPrinterRadio Is A Radio
+            Set Label To "Printer"
+            Set Size To 10 60
+            Set Location To 22 6
+            Set Status_Help To "Prints the report to printer"
+        End_Object // oPrinterRadio
+        
+        Object oFileRadio Is A Radio
+            Set Label To "Export"
+            Set Size To 10 60
+            Set Location To 34 6
+            Set Status_Help To "Outputs the report to disk file, application or email"
+        End_Object // oFileRadio
+        
+        // This function returns the output destination constant.
+        Function PrintDestination Returns Integer
+            Integer iCurrentRadio eDestination
+            Get Current_Radio to iCurrentRadio
+            If (iCurrentRadio=0)  Move PRINT_TO_WINDOW  to eDestination
+            If (iCurrentRadio=1)  Move PRINT_TO_PRINTER to eDestination
+            If (iCurrentRadio=2)  Move PRINT_TO_FILE    to eDestination
+            Function_Return eDestination
+        End_Function // PrintDestination
+        
+    End_Object // oDestinationGroup
+    
+    Object oSortOrderGroup Is A RadioGroup
+        Set Label To "Sort order"
+        Set Location To 53 87
+        Set Size To 46 77
+        
+        Object InvhdrInvoiceidnoRadio is a Radio
+            Set Label To "Invoiceidno"
+            Set Size To 10 60
+            Set Location To 10 6
+            Set Status_Help To "Sort by Invoiceidno"
+        End_Object // InvhdrInvoiceidnoRadio
+        
+        Object oDescendingCheckBox Is A CheckBox
+            Set Label To "Descending"
+            Set Size To 10 60
+            Set Location To 34 6
+            Set Status_Help To "Sort descending"
+        End_Object // oDescendingCheckBox
+        
+        // This function returns the number of the selected sort field radio.
+        Function SortField Returns Integer
+            Integer iCurrentRadio
+            Get Current_Radio to iCurrentRadio
+            Function_Return iCurrentRadio
+        End_Function // SortField
+        
+        // This function returns True if Descending is checked.
+        Function IsDescending Returns Boolean
+            Boolean bState
+            Get Checked_State of oDescendingCheckBox to bState
+            Function_Return bState
+        End_Function // IsDescending
+        
+    End_Object // oSortOrderGroup
+    
+    Object oPrintButton Is A Button
+        Set Label To "Print"
+        Set Size To 14 50
+        Set Location To 104 59
+        Set Status_Help To "Print the report"
+        Set Default_State To True
+        
+        // This procedure outputs the report by sending RunReport.
+        Procedure OnClick
+            Send DoStartReport
+        End_Procedure // OnClick
+        
+    End_Object // oPrintButton
+    
+    Object oCancelButton Is A Button
+        Set Label To "Cancel"
+        Set Size To 14 50
+        Set Location To 104 114
+        Set Status_Help To "Cancel this Panel"
+        
+        // This procedure closes the view.
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure // OnClick
+        
+    End_Object // oCancelButton
+
+    Object oCrystalCustomerEstimate is a cCrystal
+        // change here
+        Set psReportName to "Snow Estimate 2014-15.rpt"
+        
+        
+        // This event is sent when the report is run and the cCrystalReport COM object has been created.
+        Procedure OnInitializeReport handle hoReport
+            Integer eDestination
+            String  sSelection
+            Integer iFromIdno iToIdno
+            Integer iSortField
+            Boolean bDescending
+            
+            Forward Send OnInitializeReport hoReport
+            
+            // Set the print destination.
+            
+            Get PrintDestination of oDestinationGroup To eDestination
+            Set peOutputDestination To eDestination
+            
+            // Create the selection formula string.
+            
+            Get piStart to iFromIdno
+            Get piStop  to iToIdno
+            If (iFromIdno <> 0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{Quotehdr.QuotehdrID} >= "+(String(iFromIdno))) to sSelection
+            End
+            If (iToIdno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{Quotehdr.QuotehdrID} <= "+(String(iToIdno))) to sSelection
+            End
+            
+            // Set the selection formula.
+            Set ComRecordSelectionFormula of hoReport To sSelection
+            
+            
+            // Set the Sort Order.
+            
+            // Delete the existing sort order.
+            Send DeleteSortOrder of hoReport
+            // Create the new sort order.
+            Get SortField    of oSortOrderGroup To iSortField
+            Get IsDescending of oSortOrderGroup To bDescending
+            If (iSortField=0) Send AppendSortField of hoReport "QUOTEHDR" "QuotehdrID" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            
+        End_Procedure // OnInitializeReport
+        
+        // Event is called when report is sent to previewer
+        Procedure OnDisplayReport Handle hoReport
+            Handle hoViewer
+            
+            Forward Send OnDisplayReport hoReport
+            
+            // Viewer options can be customized by setting properties of the active/x viewer object
+            //Get ActiveXReportViewerObject of hoReport to hoViewer // handle of active/x viewer
+            
+            //Set ComDisplayToolbar           of hoViewer To True
+            //Set ComDisplayTabs              of hoViewer To False
+            //Set ComDisplayGroupTree         of hoViewer To False
+            //Set ComEnableGroupTree          of hoViewer To False
+            //Set ComEnablePrintButton        of hoViewer To True
+            //Set ComEnableCloseButton        of hoViewer To False
+            //Set ComEnableRefreshButton      of hoViewer To False
+            //Set ComEnableExportButton       of hoViewer To True
+            //Set ComEnableSearchExpertButton of hoViewer To True
+            //Set ComEnableHelpButton         of hoViewer To False
+            //Set ComEnableZoomControl        of hoViewer To True
+            //Set ComEnableProgressControl    of hoViewer To True
+            //Set ComEnableSearchControl      of hoViewer To True
+            //Set ComEnableNavigationControls of hoViewer To True
+            //Set ComEnableDrillDown          of hoViewer To False
+            //Set ComEnableAnimationCtrl      of hoViewer To True
+            //Set ComEnableSelectExpertButton of hoViewer To False
+            //Set ComLaunchHTTPHyperlinksInNewBrowser of hoViewer To True
+            
+        End_Procedure // OnDisplayReport
+        
+        
+        // Event is called when report is sent to Export
+        Procedure OnExportReport Handle hoReport
+            Handle hoExport
+            
+            Forward Send OnExportReport hoReport
+            
+            // By default Export options will be prompted when report is run.
+            
+            // Or, Export can be set up within the program
+            //Set pbExportPrompt of hoReport to False // suppress prompt for all export information
+            //Get ExportObject of hoReport to hoExport
+            
+            // Sample for export to disk file (word)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport To crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport To "Report.dat"
+            
+            // Sample for export to disk file (XML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport To crEFTXML
+            //Set ComXMLFileName     of hoExport To "Report.xml"
+            
+            // Sample for export to disk file (HTML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport To crEFTHTML40
+            //Set ComHTMLFileName    of hoExport To "Report.html"
+            
+            // Sample for export to mapi
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTEMailMAPI
+            //Set ComFormatType      of hoExport To crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport To "Report.dat"
+            //Set ComMailToList      of hoExport To "Add-name@name.net"
+            //Set ComMailSubject     of hoExport To "Add-Subject"
+            //Set ComMailMessage     of hoExport To "Add-Message"
+            //Set ComMailBccList     of hoExport To "Add-name@name.net"
+            
+            // Sample for export to application (Word)
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTApplication
+            //Set ComFormatType      of hoExport To crEFTWordForWindows
+            
+        End_Procedure // OnExportReport
+        
+        
+        // procedure is called when report is sent to printer
+        Procedure OnPrintReport Handle hoReport
+            
+            Forward Send OnPrintReport hoReport
+            
+            Set pbPrinterPrompt of hoReport to True // will prompt to set-up printer
+            
+            // Or... printer can be set up within the program
+            //Send ComSelectPrinter of hoReport "sDriverName" "sPrinterName" "sPortName"
+            //Set piPrinterCopies   of hoReport to 1
+            //Set pbPrinterCollate  of hoReport to True
+            
+        End_Procedure // OnPrintReport
+        
+    End_Object // oCrystalCustomerInvoice
+
+    Procedure DoStartReport
+        Integer iStart iStop
+        //
+        Get Value of oFromIdno to iStart
+        Get Value of oToIdno   to iStop
+        //
+        Set piStart to iStart
+        Set piStop  to iStop
+        //
+        Send RunReport of oCrystalCustomerEstimate
+    End_Procedure
+
+    Procedure DoJumpStartReport Integer iEstimate
+        Set piStart to iEstimate
+        Set piStop  to iEstimate
+        Send RunReport of oCrystalCustomerEstimate iEstimate
+        //Showln iEstimate
+    End_Procedure
+    
+End_Object // oCustomerEstimate

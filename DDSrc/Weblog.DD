@@ -1,0 +1,84 @@
+//DDB-FileStart
+//DDB-HeaderStart
+
+// File Name : Weblog.DD
+// Class Name: Weblog_DataDictionary
+// Revision  : 3
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Weblog
+Open System
+
+//DDB-HeaderEnd
+
+Class Weblog_DataDictionary  is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Define_Fields
+        Forward Send Define_Fields
+        //DDB-Generated-Code-Location
+        //DDB-DefineFieldStart
+
+        Set Main_File            To Weblog.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Options  DD_KEYFIELD   To DD_AUTOFIND    DD_NOPUT       DD_FINDREQ    
+        Set Foreign_Field_Options  DD_INDEXFIELD To DD_NOPUT       DD_FINDREQ    
+        Set Foreign_Field_Options  DD_DEFAULT    To DD_DISPLAYONLY
+
+        // External (System) file structure.............
+        Send Add_System_File  System.File_Number  DD_LOCK_ON_ALL
+
+        Define_Auto_Increment  System.Lastweblog  To Weblog.Weblogidno
+
+        // Field-based properties.......................
+
+        // Weblog.Weblogidno
+
+        // Weblog.Hitdate
+
+        // Weblog.Hithr
+
+        // Weblog.Hitmin
+
+        // Weblog.Hitsec
+
+        // Weblog.Success
+
+        // Weblog.Employeeidno
+
+        // Weblog.Pin
+
+        // Weblog.Transtype
+
+        // Weblog.Jobnumber1
+
+        // Weblog.Equipmentidno
+
+        // Weblog.Jobnumber2
+
+        // Weblog.Materialidno
+
+        // Weblog.Materialqty
+
+        //DDB-DefineFieldEnd
+    End_Procedure    // Define_Fields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        //DDB-Generated-Code-Location
+        //DDB-FieldDefaultStart
+        //DDB-FieldDefaultEnd
+    End_Procedure    // Field_Defaults
+
+End_Class    // Weblog_DataDictionary
+//DDB-FileEnd

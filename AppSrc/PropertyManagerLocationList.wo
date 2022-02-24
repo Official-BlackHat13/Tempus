@@ -1,0 +1,167 @@
+// PropertyManagerLocationList.wo
+// PropertyManagerLocationList
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+
+Open Order
+Open Trans
+Open Invhdr
+
+
+Object oPropertyManagerLocationList is a cWebBusinessProcess
+    
+    Set psDescription to "Property Manager Location List"
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+  
+    Property Integer piPropmgrIdno
+
+        Procedure OnConstrain
+            Constrain Location.PropmgrIdno eq (piPropmgrIdno(Self))
+        End_Procedure  
+  
+//        Property String psStartName
+//        Property String psStopName
+//
+//        Procedure OnConstrain 
+//            String sStart sStop
+//
+//            Get psStartName to sStart
+//            Get psStopName to sStop
+//
+//            If (sStart <> "" and sStop <> "") Begin
+//                Constrain Location.Name Between sStart and sStop
+//            End
+//            Else Begin
+//                If (sStart <> "") Begin
+//                    Constrain Location.Name Ge sStart
+//                End
+//                Else Begin
+//                    If (sStop <> "") Begin
+//                        Constrain Location.Name Le sStop
+//                    End
+//                End
+//            End
+//        End_Procedure // OnConstrain
+    End_Object // oLocation_DD
+
+    Set Main_DD To oLocation_DD
+// Ben - Added 06/29/2012 - creating the weather link
+// Link in Form:    http://www.showmyweather.com/weather_widget.php?int=0&type=js&country=us
+//                  &state=Minnesota&city=Minneapolis&smallicon=0&current=1&forecast=1
+//                  &background_color=ffffff&color=000000&width=300&padding=10
+//                  &border_width=0&border_color=000000&&font_size=12&font_family=Verdana
+//                  &showicons=1&measure=F&d=2012-06-28">
+//
+//Function CreateWeatherLink String sState String sCity String sZip Returns String
+//    String sLink 
+//    Move (Trim(sCity))                                                          to sCity
+//    Move (Left(sZip,5))                                                         to sZip
+//    Move "http://www.showmyweather.com/weather_widget.php?int=0&type=js&country=us" to sLink
+//    Move (sLink + "$state=" + sState)                                           to sLink
+//    Move (sLink + "$city=" + sCity)                                             to sLink
+//    Move (sLink + "&smallicon=0&current=1&forecast=1&background_color=ffffff&color=000000&width=300&padding=10&border_width=0&border_color=000000&&font_size=12&font_family=Verdana&showicons=1&measure=F&d=2012-06-28") to sLink
+//   
+//    Function_Return sLink
+//End_Function
+
+    Object oReport Is A cWebReport
+        Procedure OnPageTop
+            Send WriteHtmlTableBegin 'border="0" width="99%" class=""'
+            Send WriteHtmlRowBegin
+            Send WriteHtmlCellHeader 'Select Locations' 'class="" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText
+            String sLocationName
+            
+            Get ddValueEncode "Location.Name" to sLocationName
+            
+            Send WriteHtmlRowBegin
+                Get AddRowIdLink sLocationName to sText
+          
+                Send WriteHtmlCell sText 'class="Data" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunPropertyManagerLocationList Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunPropertyManagerLocationList
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+//    { Published=True }
+//    { Description="Sets the reports selection criteria" }
+//    Procedure SetLocation_Name String sStart String sStop
+//        Set psStartName of oLocation_DD To (Uppercase (sStart))
+//        Set psStopName  of oLocation_DD To (Uppercase (sStop))
+//    End_Procedure // SetLocation_Name
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetPropmgrIdno String sContactIdno
+        Set piPropmgrIdno        of oLocation_DD to sContactIdno
+        Send Rebuild_Constraints of oLocation_DD
+    End_Procedure
+
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunPropertyManagerLocationList Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        If (piPropmgrIdno(oLocation_DD) = 0) Begin
+            Function_Return sEndRowId
+        End
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunPropertyManagerLocationList of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunPropertyManagerLocationList
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oPropertyManagerLocationList

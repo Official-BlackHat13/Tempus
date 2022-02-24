@@ -1,0 +1,78 @@
+Use cGlblDataDictionary.pkg
+
+Open CreditDtl
+Open System
+Open CreditHdr
+Open Opers
+Open MastOps
+
+Register_Function PriceValidation Integer iField Number nPrice Returns Integer
+Register_Function QtyValidation Integer iField Number nQuantity Returns Integer
+
+Class cCreditDtlGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to CreditDtl.File_Number
+
+        Set Add_Server_File to CreditHdr.File_Number
+        Set Add_Server_File to MastOps.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field CreditDtl.DetailIdno to File_Field System.LastCreditDtlIdno
+
+        Set Field_Validate_msg Field CreditDtl.Quantity to get_QtyValidation
+
+        Set Field_Validate_msg Field CreditDtl.Price to get_PriceValidation
+        
+        Set Auto_Clear_DEO_State to False
+    End_Procedure
+
+    Function PriceValidation Integer iField Number nPrice Returns Integer
+        Boolean bState
+        Number  nQuantity
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field CreditDtl.Quantity to nQuantity
+            Set Field_Changed_Value Field CreditDtl.Total   to (nQuantity * nPrice)
+        End
+    End_Function   // PriceValidation
+    
+    Function QtyValidation Integer iField Number nQuantity Returns Integer
+        Boolean bState
+        Number  nPrice
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field CreditDtl.Price to nPrice
+            Set Field_Changed_Value Field CreditDtl.Total   to (nQuantity * nPrice)
+        End
+    End_Function   // PriceValidation
+    
+    Procedure Update
+        //Sales Tax
+        If (MastOps.IsTaxable) Move SalesTaxGroup.Rate to CreditDtl.TaxRate
+        Else Move 0 to CreditDtl.TaxRate
+        Move (CreditDtl.Price*CreditDtl.Quantity*CreditDtl.TaxRate/100.00) to CreditDtl.TaxAmount
+        // Update the record
+        Add CreditDtl.Total to CreditHdr.CreditSubTotal
+        Add CreditDtl.TaxAmount to CreditHdr.CreditTaxTotal
+        Move (CreditHdr.CreditSubTotal + CreditHdr.CreditTaxTotal) to CreditHdr.CreditTotal
+    End_Procedure
+
+    Procedure Backout
+        // Update the record
+        Subtract CreditDtl.Total from CreditHdr.CreditSubTotal
+        Subtract CreditDtl.TaxAmount from CreditHdr.CreditTaxTotal
+        Move (CreditHdr.CreditSubTotal + CreditHdr.CreditTaxTotal) to CreditHdr.CreditTotal
+    End_Procedure
+    
+    
+End_Class

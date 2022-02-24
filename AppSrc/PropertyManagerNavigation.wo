@@ -1,0 +1,279 @@
+// PropertyManagerNavigation.wo
+// PropertyManagerNavigation
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Customer.DD
+
+Object oPropertyManagerNavigation Is A cWebBusinessProcess
+    Set psDescription To "PropertyManagerNavigation"
+
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+        Property Number pnStartCustomerIdno
+        Property Number pnStopCustomerIdno
+        Property String psStartName
+        Property String psStopName
+        Property String psStartContactName
+        Property String psStopContactName
+
+        Procedure OnConstrain 
+            Number nStart nStop
+            String sStart sStop
+
+            Get pnStartCustomerIdno To nStart
+            Get pnStopCustomerIdno To nStop
+
+            If (nStart <> 0 And nStop <> 0) Begin
+                Constrain Customer.CustomerIdno Between nStart And nStop
+            End
+            Else Begin
+                If (nStart <> 0) Begin
+                    Constrain Customer.CustomerIdno Ge nStart
+                End
+                Else Begin
+                    If (nStop <> 0) Begin
+                        Constrain Customer.CustomerIdno Le nStop
+                    End
+                End
+            End
+
+            Get psStartName To sStart
+            Get psStopName To sStop
+
+            If (sStart <> "" And sStop <> "") Begin
+                Constrain Customer.Name Between sStart And sStop
+            End
+            Else Begin
+                If (sStart <> "") Begin
+                    Constrain Customer.Name Ge sStart
+                End
+                Else Begin
+                    If (sStop <> "") Begin
+                        Constrain Customer.Name Le sStop
+                    End
+                End
+            End
+
+            Get psStartContactName To sStart
+            Get psStopContactName To sStop
+
+            If (sStart <> "" And sStop <> "") Begin
+                Constrain Customer.ContactName Between sStart And sStop
+            End
+            Else Begin
+                If (sStart <> "") Begin
+                    Constrain Customer.ContactName Ge sStart
+                End
+                Else Begin
+                    If (sStop <> "") Begin
+                        Constrain Customer.ContactName Le sStop
+                    End
+                End
+            End
+        End_Procedure // OnConstrain
+    End_Object // oCustomer_DD
+
+    Set Main_DD To oCustomer_DD
+
+
+    Object oReport Is A cWebReport
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCellHeader 'CustomerIdno' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Name' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Address1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Address2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'City' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'State' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Zip' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Phone1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'PhoneType1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Phone2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'PhoneType2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Phone3' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'PhoneType3' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'PhoneExt1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'PhoneExt2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'PhoneExt3' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactName' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactPhn1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactPhnType1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactPhnExt1' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactPhn2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactPhnType2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactPhnExt2' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactEmail' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ContactComment' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Status' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'ChangedFlag' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'OrderCount' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'BusinessType' 'class="Header" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText
+            String sCustomerCustomerIdno
+            String sCustomerName
+            String sCustomerAddress1
+            String sCustomerAddress2
+            String sCustomerCity
+            String sCustomerState
+            String sCustomerZip
+            String sCustomerPhone1
+            String sCustomerPhoneType1
+            String sCustomerPhone2
+            String sCustomerPhoneType2
+            String sCustomerPhone3
+            String sCustomerPhoneType3
+            String sCustomerPhoneExt1
+            String sCustomerPhoneExt2
+            String sCustomerPhoneExt3
+            String sCustomerContactName
+            String sCustomerContactPhn1
+            String sCustomerContactPhnType1
+            String sCustomerContactPhnExt1
+            String sCustomerContactPhn2
+            String sCustomerContactPhnType2
+            String sCustomerContactPhnExt2
+            String sCustomerContactEmail
+            String sCustomerContactComment
+            String sCustomerStatus
+            String sCustomerChangedFlag
+            String sCustomerOrderCount
+            String sCustomerBusinessType
+
+            Get ddValueEncode "Customer.CustomerIdno" To sCustomerCustomerIdno
+            Get ddValueEncode "Customer.Name" To sCustomerName
+            Get ddValueEncode "Customer.Address1" To sCustomerAddress1
+            Get ddValueEncode "Customer.Address2" To sCustomerAddress2
+            Get ddValueEncode "Customer.City" To sCustomerCity
+            Get ddValueEncode "Customer.State" To sCustomerState
+            Get ddValueEncode "Customer.Zip" To sCustomerZip
+            Get ddValueEncode "Customer.Phone1" To sCustomerPhone1
+            Get ddValueEncode "Customer.PhoneType1" To sCustomerPhoneType1
+            Get ddValueEncode "Customer.Phone2" To sCustomerPhone2
+            Get ddValueEncode "Customer.PhoneType2" To sCustomerPhoneType2
+            Get ddValueEncode "Customer.Phone3" To sCustomerPhone3
+            Get ddValueEncode "Customer.PhoneType3" To sCustomerPhoneType3
+            Get ddValueEncode "Customer.PhoneExt1" To sCustomerPhoneExt1
+            Get ddValueEncode "Customer.PhoneExt2" To sCustomerPhoneExt2
+            Get ddValueEncode "Customer.PhoneExt3" To sCustomerPhoneExt3
+            Get ddValueEncode "Customer.ContactName" To sCustomerContactName
+            Get ddValueEncode "Customer.ContactPhn1" To sCustomerContactPhn1
+            Get ddValueEncode "Customer.ContactPhnType1" To sCustomerContactPhnType1
+            Get ddValueEncode "Customer.ContactPhnExt1" To sCustomerContactPhnExt1
+            Get ddValueEncode "Customer.ContactPhn2" To sCustomerContactPhn2
+            Get ddValueEncode "Customer.ContactPhnType2" To sCustomerContactPhnType2
+            Get ddValueEncode "Customer.ContactPhnExt2" To sCustomerContactPhnExt2
+            Get ddValueEncode "Customer.ContactEmail" To sCustomerContactEmail
+            Get ddValueEncode "Customer.ContactComment" To sCustomerContactComment
+            Get ddValueEncode "Customer.Status" To sCustomerStatus
+            Get ddValueEncode "Customer.ChangedFlag" To sCustomerChangedFlag
+            Get ddValueEncode "Customer.OrderCount" To sCustomerOrderCount
+            Get ddValueEncode "Customer.BusinessType" To sCustomerBusinessType
+
+            Send WriteHtmlRowBegin
+                Get AddRowIdLink (FormatNumber (sCustomerCustomerIdno,0)) To sText
+                Send WriteHtmlCell sText 'class="Data" align="right"'
+                Send WriteHtmlCell sCustomerName 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerAddress1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerAddress2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerCity 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerState 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerZip 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhone1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhoneType1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhone2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhoneType2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhone3 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhoneType3 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhoneExt1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhoneExt2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerPhoneExt3 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactName 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactPhn1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactPhnType1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactPhnExt1 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactPhn2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactPhnType2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactPhnExt2 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactEmail 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerContactComment 'class="Data" align="left"'
+                Send WriteHtmlCell sCustomerStatus 'class="Data" align="left"'
+                Send WriteHtmlCell (FormatNumber (sCustomerChangedFlag,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell (FormatNumber (sCustomerOrderCount,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell sCustomerBusinessType 'class="Data" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunPropertyManagerNavigation Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunPropertyManagerNavigation
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetCustomer_CustomerIdno String sStart String sStop
+        Set pnStartCustomerIdno of oCustomer_DD To sStart
+        Set pnStopCustomerIdno  of oCustomer_DD To sStop
+    End_Procedure // SetCustomer_CustomerIdno
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetCustomer_Name String sStart String sStop
+        Set psStartName of oCustomer_DD To (Uppercase (sStart))
+        Set psStopName  of oCustomer_DD To (Uppercase (sStop))
+    End_Procedure // SetCustomer_Name
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetCustomer_ContactName String sStart String sStop
+        Set psStartContactName of oCustomer_DD To (Uppercase (sStart))
+        Set psStopContactName  of oCustomer_DD To (Uppercase (sStop))
+    End_Procedure // SetCustomer_ContactName
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunPropertyManagerNavigation Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunPropertyManagerNavigation of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunPropertyManagerNavigation
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oPropertyManagerNavigation

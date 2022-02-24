@@ -1,0 +1,356 @@
+// Class Name: Invdtl_DataDictionary
+// Revision  : 18
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Invdtl
+Open Invhdr
+Open MastOps
+Open Opers
+Open SalesTaxGroup
+Open System
+Open Syslog
+
+
+Register_Function StartTimeValidation Integer iField String sTime Returns Integer
+Register_Function StopTimeValidation Integer iField String sTime Returns Integer
+Register_Function QuantityValidation integer iField number nQuantity Returns Integer
+Register_Function PriceValidation integer iField number nPrice Returns Integer
+
+Class Invdtl_DataDictionary  is a cGlblDataDictionary
+ 
+    // Construct_Object:
+    procedure Construct_Object
+        forward send Construct_Object
+
+        Set Main_File To Invdtl.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Invhdr.File_Number
+        Set Add_Server_File to Opers.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to Syslog.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Invdtl.Detailidno to File_Field System.Lastinvoicedtl
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Invdtl.Detailidno DD_AUTOFIND to True
+        Set Key_Field_State Field Invdtl.Detailidno To TRUE
+
+
+        Set Field_Validate_msg Field Invdtl.Starttime To get_StartTimeValidation
+
+        Set Field_Validate_msg Field Invdtl.Stoptime To get_StopTimeValidation
+
+        Set Field_Entry_msg Field Invdtl.Quantity To QuantityEntry
+        Set Field_Validate_msg Field Invdtl.Quantity To get_QuantityValidation
+
+        Set Field_Entry_msg Field Invdtl.Price To PriceEntry
+        Set Field_Validate_msg Field Invdtl.Price To get_PriceValidation
+        Set Field_Mask Field Invdtl.Price to "$ #,###,##0.0000"
+        Set Field_Mask_Type Field Invdtl.Price to Mask_Currency_Window
+        Set Field_Mask_Type Field Invdtl.Total to Mask_Currency_Window
+        Set Field_Mask Field Invdtl.Total to "$ #,###,##0.00"
+        Set Field_Option Field Invdtl.Total DD_DISPLAYONLY to True
+
+        Set Field_Entry_msg Field Invdtl.Description to DescriptionEntry
+
+        Set Field_Mask_Type Field Invdtl.TaxRate to Mask_Numeric_Window
+        Set Field_Mask Field Invdtl.TaxRate to "#0.0000 %"
+
+        Set Field_Mask_Type Field Invdtl.TaxAmount to Mask_Currency_Window
+        Set Field_Mask Field Invdtl.TaxAmount to "$ #,###,##0.00"
+        Set Field_Option Field Invdtl.TaxAmount DD_DISPLAYONLY to True
+
+        send DoInitializeWatchedFields
+        // when TRUE this property initiates
+        // System Log functionality
+        set pbUsesSystemLog to True
+        // declare a log file
+        set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 2 // Invdtl.InvoiceIdno
+        Set piKey2 to 4 // InvDtl.JobNumber
+        Set piKey3 to 1 // Invdtl.DetailIdno
+    End_Procedure // Construct_Object
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Invdtl.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+
+    Procedure DoInitializeWatchedFields
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hoArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hoArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hoArray  23 // InvDtl.Sequence
+        Send DoAddArrayValue hoArray  24 // InvDtl.MastOps
+        Send DoAddArrayValue hoArray   7 // InvDtl.OpersIdno
+        Send DoAddArrayValue hoArray  33 // InvDtl.AttachMastOpsIdno
+        Send DoAddArrayValue hoArray  30 // InvDtl.AttachOpersIdno
+        Send DoAddArrayValue hoArray  22 // InvDtl.Description        
+        Send DoAddArrayValue hoArray  17 // InvDtl.Qty
+        Send DoAddArrayValue hoArray  18 // InvDtl.Price
+        Send DoAddArrayValue hoArray  19 // InvDtl.Total
+    End_Procedure // DoInitializeWatchedFields
+
+    Procedure PriceEntry Integer iField Number nPrice
+        if (nPrice = 0) begin
+            set Field_Changed_Value iField to Opers.Sellrate
+        end
+    End_Procedure   // PriceEntry
+
+    Function PriceValidation integer iField number nPrice Returns Integer
+        boolean bState
+        Number  nQuantity
+        //
+        get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field Invdtl.Quantity to nQuantity
+            Set Field_Changed_Value Field Invdtl.Total    to (nQuantity * nPrice)
+        end
+    End_Function   // PriceValidation
+
+    Procedure DescriptionEntry Integer iField String sDescription
+               If (sDescription = "") Begin
+            Set Field_Changed_Value iField to Opers.Description
+        End
+    End_Procedure
+
+    Procedure QuantityEntry Integer iField Number nQuantity
+        If (nQuantity = 0) Begin
+            If (OPERATION_MODE <> MODE_WAITING) Break
+            //
+            DateTime dtStart dtStop
+            TimeSpan tsElapsed
+            Boolean  bLabor
+            Integer  iStartHr iStartMin iStopHr iStopMin
+            Number   nMins
+            Date     dStart dStop
+            //
+            Get Field_Current_Value Field Invdtl.StartDate to dStart
+            If (dStart = 0) Break
+            //
+            Get Field_Current_Value Field Invdtl.StartHr   to iStartHr
+            Get Field_Current_Value Field Invdtl.StartMin  to iStartMin
+            If (iStartHr + iStartMin = 0) Break
+            //
+            Get Field_Current_Value Field Invdtl.StopHr    to iStopHr
+            Get Field_Current_Value Field Invdtl.StopMin   to iStopMin
+            If (iStopHr + iStopMin = 0) Break
+            //
+            If (iStopHr < iStartHr) Begin
+                Move (dStart + 1)                          to dStop
+            End
+            Else Begin
+                Move  dStart                               to dStop
+            End
+            Set Field_Changed_Value Field Invdtl.StopDate  to dStop
+            //
+            Move (DateSetMinute(dtStop, iStopMin))         to dtStop
+            Move (DateSetHour  (dtStop, iStopHr ))         to dtStop
+            Move (DateSetDay   (dtStop, dStop   ))         to dtStop
+            //
+            Move (DateSetMinute(dtStart, iStartMin))       to dtStart
+            Move (DateSetHour  (dtStart, iStartHr ))       to dtStart
+            Move (DateSetDay   (dtStart, dStart   ))       to dtStart
+            //
+            Move (dtStop - dtStart)                        to tsElapsed
+            Move (DateGetHour  (tsElapsed))                to iStopHr
+            Move (DateGetMinute(tsElapsed))                to iStopMin
+            Move ((iStopHr * 60) + iStopMin)               to nMins
+            //
+            Set Field_Changed_Value iField                 to (nMins / 60)
+        End
+    End_Procedure   // QuantityEntry
+
+    Function QuantityValidation integer iField number nQuantity Returns Integer
+        boolean bState
+        number  nPrice
+        //
+        get Field_Changed_State iField to bState
+        if (bState) begin
+            get Field_Current_Value field Invdtl.Price to nPrice
+            set Field_Changed_Value field Invdtl.Total to (nQuantity * nPrice)
+        end
+    End_Function   // QuantityValidation
+ 
+    // IsTimeValid
+    Function IsTimeValid String ByRef sTime Integer ByRef iHr Integer ByRef iMin Returns Boolean
+        Integer iLength
+        String  sHr sMin
+        //
+        Move (Trim(sTime))   to sTime
+        Move (length(sTime)) to iLength
+        If (iLength < 1 or iLength > 5) Begin
+            Function_Return True
+        End
+        //
+        If (iLength < 3) Begin
+            Move sTime to iHr
+        End
+        Else Begin
+            Move     (right(sTime,2)) to iMin
+            If (iLength = 3) Begin
+                Move (left (sTime,1)) to iHr
+            End
+            Else Begin
+                Move (left (sTime,2)) to iHr
+            End
+        End
+        //
+        If (iHr > 23 or iMin > 59) Begin
+            Function_Return True
+        End
+        //
+        Move iHr                       to sHr
+        If (length(sHr) = 1) Begin
+            Move ("0" + sHr )          to sHr
+        End
+        Move iMin                      to sMin
+        If (length(sMin) = 1) Begin
+            Move ("0" + sMin)          to sMin
+        End
+        Move (sHr + ":" + sMin)        to sTime
+    End_Function  // IsTimeValid
+
+    // StartTimeValidation:
+    Function StartTimeValidation Integer iField String sTime Returns Integer
+        Boolean bError
+        Integer iHr iMin
+        //
+        If (OPERATION_MODE <> MODE_WAITING) Function_Return
+        //
+            If (sTime <> "") Begin
+            Get IsTimeValid (&sTime) (&iHr) (&iMin)           to bError
+            If (not(bError)) Begin
+                Set Field_Changed_Value Field Invdtl.StartHr  to iHr
+                Set Field_Changed_Value Field Invdtl.StartMin to iMin
+                Set Field_Changed_Value iField                to sTime
+            End
+        End
+        Function_Return bError
+    End_Function   // StartTimeValidation
+
+    // StopTimeValidation:
+    Function StopTimeValidation Integer iField String sTime Returns Integer
+        Boolean bError
+        Integer iHr iMin
+        //
+        If (OPERATION_MODE <> MODE_WAITING) Function_Return
+        //
+        If (sTime <> "") Begin
+            Get IsTimeValid (&sTime) (&iHr) (&iMin)          to bError
+            If (not(bError)) Begin
+                Set Field_Changed_Value Field Invdtl.StopHr  to iHr
+                Set Field_Changed_Value Field Invdtl.StopMin to iMin
+                Set Field_Changed_Value iField               to sTime
+            End
+        End
+        Function_Return bError
+    End_Function   // StopTimeValidation
+
+    // Backout:
+    Procedure Backout
+        Forward Send Backout
+        // Insert Code Here
+        Subtract Invdtl.TaxAmount                                       from Invhdr.TaxTotal
+        Subtract Invdtl.Total                                           from Invhdr.SubTotal
+        Move (Invhdr.TaxTotal+Invhdr.SubTotal)                          to Invhdr.TotalAmount
+    End_Procedure   // Backout
+ 
+    // Update:
+    Procedure Update
+        datetime dtStart dtStop
+        TimeSpan tsElapsed
+        Boolean  bLabor
+        Integer  iHr iMin
+        String   sCostType
+        //
+        Forward Send Update
+        // Insert Code Here     
+        //
+        Move (Trim(Opers.CostType))                         to sCostType
+        Move (Uppercase(sCostType) = "LABOR")               to bLabor
+        If (Invdtl.StopHr + Invdtl.StopMin > 0) Begin
+            If (Invdtl.StopHr < Invdtl.StartHr) Begin
+                Move (Invdtl.StartDate + 1)                 to Invdtl.StopDate
+            End
+            Else Begin
+                Move  Invdtl.StartDate                      to Invdtl.StopDate
+            End
+            Move (DateSetMinute(dtStart, Invdtl.StartMin )) to dtStart
+            Move (DateSetHour  (dtStart, Invdtl.StartHr  )) to dtStart
+            Move (DateSetDay   (dtStart, Invdtl.StartDate)) to dtStart
+            //
+            Move (DateSetMinute(dtStop,  Invdtl.StopMin  )) to dtStop
+            Move (DateSetHour  (dtStop,  Invdtl.StopHr   )) to dtStop
+            Move (DateSetDay   (dtStop,  Invdtl.StopDate )) to dtStop
+            //
+            Move (dtStop - dtStart)                         to tsElapsed
+            Move (DateGetHour  (tsElapsed))                 to iHr
+            Move (DateGetMinute(tsElapsed))                 to iMin
+            Move ((iHr * 60) + iMin)                        to Invdtl.ElapsedMinutes
+        End
+        //
+        If (Invdtl.StartDate = 0) Begin
+            Sysdate Invdtl.StartDate
+        End
+        //
+        Move MastOps.MastOpsIdno                                        to Invdtl.MastOpsIdno
+        //
+        Move Order.JobNumber                                            to Invdtl.JobNumber
+        //
+        Move (Invdtl.Quantity * Invdtl.Price)                           to Invdtl.Total
+        If (bLabor and (Invdtl.Total < Invdtl.Price) and Order.RoundingExempt = 0) Begin
+            Move 1                                                      to Invdtl.Quantity
+            Move (Invdtl.Quantity*Invdtl.Price)                         to Invdtl.Total
+        End
+        
+        // Apply Sales Tax if nessasary
+        If (MastOps.IsTaxable) Move SalesTaxGroup.Rate to Invdtl.TaxRate
+        Else Move 0 to Invdtl.TaxRate
+        Move (Invdtl.Quantity * Invdtl.Price * Invdtl.TaxRate/100.00)   to Invdtl.TaxAmount
+        //Update parent record
+        Add Invdtl.TaxAmount                                            to Invhdr.TaxTotal
+        Add Invdtl.Total                                                to Invhdr.SubTotal
+        Move (Invhdr.TaxTotal+Invhdr.SubTotal)                          to Invhdr.TotalAmount
+    End_Procedure   // Update
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+    
+   
+
+End_Class    // Invdtl_DataDictionary
+

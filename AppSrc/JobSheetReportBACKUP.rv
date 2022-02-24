@@ -1,0 +1,233 @@
+//Use cWindows.pkg
+Use cGlblReportView.pkg
+Use File_Dlg.Pkg
+Use Windows.pkg
+Use cGlblForm.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblRadio.pkg
+Use cTextEdit.pkg
+Use cGlblButton.pkg
+Use cDRReport.pkg
+Use cDRPreview.pkg
+Use DRStatuspanel.dg
+
+ACTIVATE_VIEW Activate_oJobSheetReportView FOR oJobSheetReportView
+
+Object oJobSheetReportView Is A cGlblReportView
+    Set Label to "JobSheet"
+    Set Border_Style to Border_Thick
+    Set pePreviewStyle to C_DRPREVIEW_MODAL
+    Set phoPreviewContainer to oDRModalPreview
+    Set pbShowStatusPanel to True
+    Set phoStatusPanel to oDRStatusPanel
+
+    Property Integer piJobNumber
+
+    Object oReport is a cDRReport
+        Set pbShowStatusPanel to True
+        Set phoStatusPanel to oDRStatusPanel
+
+        Procedure OnProgressRecordsRead Integer iRecords
+            Handle hoStatusPanel
+            Boolean bShowStatusPanel
+
+            Forward Send OnProgressRecordsRead iRecords
+
+            Get pbShowStatusPanel to bShowStatusPanel
+            Get phoStatusPanel to hoStatusPanel
+            If (bShowStatusPanel and hoStatusPanel <> 0) Begin
+                Send SetStatusText of hoStatusPanel (SFormat ("Records read: %1", iRecords))
+            End
+        End_Procedure
+
+        Procedure OnProgressFormatPage Integer iPage Integer iTotalPages
+            Handle hoStatusPanel
+            Boolean bShowStatusPanel
+
+            Forward Send OnProgressFormatPage iPage iTotalPages
+
+            Get pbShowStatusPanel to bShowStatusPanel
+            Get phoStatusPanel to hoStatusPanel
+            If (bShowStatusPanel and hoStatusPanel <> 0) Begin
+                If (iTotalPages <> -1) Begin
+                    Send SetStatusText of hoStatusPanel (SFormat ("Formatting page %1 of %2 pages", iPage, iTotalPages))
+                End
+                Else Begin
+                    Send SetStatusText of hoStatusPanel (SFormat ("Formatting page %1", iPage))
+                End
+            End
+        End_Procedure
+
+        Set psReportName to "JobSheet.dr"
+
+        Procedure OnInitializeReport
+            String sReportId
+            Integer eOutputDeviceMode
+
+            Forward Send OnInitializeReport
+
+            // Convert from the ReportView Output_Device_Mode to peOutputDestination
+            Get Output_Device_Mode to eOutputDeviceMode
+            Set peOutputDestination to eOutputDeviceMode
+
+            Get psReportId to sReportId
+
+            Send ChangeODBCDataSource sReportId
+            Send SetFilters
+            Send SetSortFields
+            Send SetParameters
+        End_Procedure
+
+        // Activate the code inside this method if you want to change the database connection
+        Procedure ChangeODBCDataSource String sReportId
+            String sConnectionString sDSN sSubReportId
+            Integer iSubReports iSubReport
+
+            Get psDatabaseConnection sReportId to sConnectionString
+            Get psDatabaseName sReportId to sDSN
+            // ToDo: Change the contents of sDSN and/or sConnectionString
+            Set psDatabaseConnection sReportId to sConnectionString
+            Set psDatabaseName sReportId to sDSN
+
+            Get SubReportCount sReportId to iSubReports
+            Decrement iSubReports
+            For iSubReport from 0 to iSubReports
+                Get SubReportId sReportId iSubReport to sSubReportId
+                Send ChangeODBCDataSource sSubReportId
+            Loop
+        End_Procedure
+
+
+        // In this routine we find the code that sets the parameter values. The values
+        // for the parameters can be retrieved from an input control or from own coding.
+        Procedure SetParameters
+            String sReportId sMainReportId sSubReportId
+            Integer iParameter
+            String sJobNumber
+
+            Get psReportId to sReportId
+            Get ParameterIdByName sReportId "JobNumber" to iParameter
+            Get SubReportIDByName sMainReportId "Subreport" to sSubReportId
+            //
+            Get Value of oJobNumberParameterForm to sJobNumber
+            If (piJobNumber(Self)<>0) Begin
+                Get piJobNumber to sJobNumber
+            End
+            Set psParameterValue sReportId iParameter to sJobNumber
+        End_Procedure
+
+        Procedure SetFilters
+            String sReportId
+            // You can use the method AddFilter to add a filter or set the filter via psFilterFunction
+
+            Get psReportId to sReportId
+        End_Procedure
+
+        Procedure SetSortFields
+            // The wizard did not detect any sort fields. If you later add sort fields to the report
+            // and want to alter them via this method you probably want to remove the existing sort fields first
+//            String sReportId
+//            Get psReportId to sReportId
+        End_Procedure
+    End_Object
+
+    Object oParametersGroup Is A cGlblGroup
+        Set Label to "Parameters"
+        Set Location to 5 5
+
+        Object oJobNumberParameterForm Is A cGlblForm
+            Set Size to 13 76
+            Set Location to 10 66
+            Set Label_Justification_Mode to jMode_Left
+            Set Label_Col_Offset to 60
+            Set Label to "Select JobNumber"
+            Set Status_Help to 'Parameter Field "Select JobNumber" Value'
+            Set Numeric_Mask 0 to 10 0
+        End_Object
+        Set Size to 27 147
+    End_Object
+
+    Object oDestinationGroup Is A cGlblRadioGroup
+        Set Label to "Output destination"
+        Set Location to 37 5
+        Set Size to 46 77
+        Set peAnchors to anBottomLeft
+
+        Object oScreenRadio Is A cGlblRadio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object
+
+        Object oPrinterRadio Is A cGlblRadio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object
+
+        Object oExportRadio Is A cGlblRadio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file (PDF, CSV, Image, HTML, Excel, RTF)"
+        End_Object
+
+        Procedure Notify_Select_State Integer iNewItem Integer iOldItem
+            Forward Send Notify_Select_State iNewItem iOldItem
+
+            Case Begin
+                Case (iNewItem = 0)
+                    Set Output_Device_Mode to PRINT_TO_WINDOW
+                    Case Break
+                Case (iNewItem = 1)
+                    Set Output_Device_Mode to PRINT_TO_PRINTER
+                    Case Break
+                Case (iNewItem = 2)
+                    Set Output_Device_Mode to PRINT_TO_FILE
+                    Case Break
+            Case End
+        End_Procedure
+    End_Object
+
+    Object oPrintButton Is A cGlblButton
+        Set Label to "&Print"
+        Set Status_Help to "Print the report"
+        Set Size to 14 50
+        Set Location to 88 47
+        Set Default_State to True
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send RunReport Of oReport
+        End_Procedure
+    End_Object
+
+    Object oCancelButton Is A cGlblButton
+        Set Label to "&Cancel"
+        Set Size to 14 50
+        Set Location to 88 102
+        Set Status_Help to "Cancel this Panel"
+        Set peAnchors to anBottomRight
+
+        // This procedure closes the report view.
+        Procedure OnClick
+            Send Request_Cancel
+        End_Procedure
+    End_Object
+
+    On_Key Key_Alt+Key_C Send KeyAction of oCancelButton
+    On_Key Key_Alt+Key_P Send KeyAction of oPrintButton
+
+    Set Location to 6 6
+    Set Size to 105 157
+    Set piMinSize to 105 157
+    
+    Procedure DoJumpStartReport Integer iJobNumber
+        Set piJobNumber to iJobNumber
+        Set Output_Device_Mode to PRINT_TO_WINDOW
+        Send RunReport of oReport
+    End_Procedure
+    
+End_Object

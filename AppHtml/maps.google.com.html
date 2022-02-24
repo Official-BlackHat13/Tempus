@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>Add custom markers in Mapbox GL JS</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+    <style></style>
+</head>
+<body>
+
+<iframe id="showmap" width="250" height="120" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+
+<script type="text/javascript">
+	function getParameterByName(name) {
+		name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+		var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+		var results = regex.exec(location.search);
+		return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+	};
+	var lat = getParameterByName('lat');
+	var lon = getParameterByName('lon');
+	var address = getParameterByName('address');
+	document.write("Lat:"+lat);
+	document.write("Lon:"+lon);
+	document.write("Address:"+address);
+	document.getElementById('showmap').src = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2808.7570860178516!2d'+lon+'!3d'+lat+'!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b2dd5d6fa4ba89%3A0xaec60a9bc6ae4b3f!2s'+address+'!5e0!3m2!1sen!2sus!4v1625578756782!5m2!1sen!2sus';
+	document.write("Address:"+'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2808.7570860178516!2d'+lon+'!3d'+lat+'!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b2dd5d6fa4ba89%3A0xaec60a9bc6ae4b3f!2s'+address+'!5e0!3m2!1sen!2sus!4v1625578756782!5m2!1sen!2sus');
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+LocationAPIdno
+LocationIdno
+BCFullName
+BCCellPhone
+BCOfficePhone
+BCOtherPhone
+BCEmail
+BillingName
+BillingAddress1
+BillingAddress2
+BillingAttn
+BillingCity
+BillingState
+BillingZip

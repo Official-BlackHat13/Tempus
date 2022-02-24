@@ -1,0 +1,12 @@
+#REPLACE FILE39 Jobcosts
+#REPLACE Jobcosts.Recnum |FN39,0
+#REPLACE Jobcosts.JobcostsId |FN39,1
+#REPLACE Jobcosts.JobNumber |FN39,2
+#REPLACE Jobcosts.WorkDate |FD39,3
+#REPLACE Jobcosts.CostType |FS39,4
+#REPLACE Jobcosts.MastOpsIdno |FN39,5
+#REPLACE Jobcosts.Quantity |FN39,6
+#REPLACE Jobcosts.UnitCost |FN39,7
+#REPLACE Jobcosts.TotalCost |FN39,8
+#REPLACE Jobcosts.Notes |FS39,9
+#REPLACE Jobcosts.ExcludeFlag |FN39,10

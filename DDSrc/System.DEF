@@ -1,0 +1,103 @@
+-----------------------------------------------------------------------------
+  DATE: 11/15/2016      TIME: 07:13                                  PAGE:  1
+  FILE DEFINITION FOR FILE: System (# 20)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:System
+  USER DISPLAY NAME         : System
+  DATAFLEX FILE NAME        : System
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 1250      ( USED: 1250 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 1 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : YES
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LastJob          NUM    8.0     1      
+  2  LastEvent        NUM    8.0    12      
+  3  LastEstimate     NUM    8.0    23      
+  4  LastEmployer     NUM    8.0    34      
+  5  LastEmployee     NUM    8.0    45      
+  6  LastCustomer     NUM    8.0    56      
+  7  LastLocation     NUM    8.0    67      
+  8  LastOpers        NUM    8.0    78      
+  9  LastContact      NUM    8.0    89      
+ 10  LastTrans        NUM    8.0   100      
+ 11  LastMastOps      NUM    8.0   111      
+ 12  LastEstimateDtl  NUM    8.0   122      
+ 13  LastSalesRep     NUM    8.0   133      
+ 14  LastInvoiceHdr   NUM    8.0   144      
+ 15  LastInvoiceDtl   NUM    8.0   155      
+ 16  SMTP_Server      ASC     50   166      
+ 17  LastEquipmnt     NUM    8.0   216      
+ 18  LastWeather      NUM    8.0   227      
+ 19  LastWeblog       NUM    8.0   238      
+ 20  CompanyName      ASC     50   249      
+ 21  Address1         ASC     50   299      
+ 22  Address2         ASC     50   349      
+ 23  City             ASC     35   399      
+ 24  State            ASC      2   434      
+ 25  Zip              ASC     10   436      
+ 26  CustomerInvoice  ASC     40   446      
+ 27  MaxCreateInv     NUM    2.0   486      
+ 28  SessionId        NUM    8.0   492      
+ 29  UserId           NUM    8.0   503      
+ 30  CrystalId        NUM    8.0   514      
+ 31  EmpltimeId       NUM    8.0   525      
+ 32  LocnotesId       NUM    8.0   536      
+ 33  QuoteHdrId       NUM    8.0   547      
+ 34  QuoteDtlId       NUM    8.0   558      
+ 35  ListlinkID       NUM    8.0   569      
+ 36  AreanoteId       NUM    8.0   580      
+ 37  ParkingLotId     NUM    8.0   591      
+ 38  LotAccessoryId   NUM    8.0   602      
+ 39  CrewId           NUM    8.0   613      
+ 40  CrewMemberId     NUM    8.0   624      
+ 41  EmployerId       NUM    8.0   635      
+ 42  LetterFolder     ASC     80   646      
+ 43  ProjectId        NUM    8.0   726      
+ 44  EscompId         NUM    8.0   737      
+ 45  EsitemId         NUM    8.0   748      
+ 46  ReportHours      NUM    4.0   759      
+ 47  SnowSeasonStart  DAT     10   765      
+ 48  DispatcherEmail  ASC     50   788      
+ 49  SMTP_MailFrom    ASC     50   838      
+ 50  SMTP_Password    ASC     50   888      
+ 51  JobcostsId       NUM    8.0   938      
+ 52  PR_JobNumber     NUM    8.0   949      
+ 53  PR_Active_Oper   NUM    8.0   960      
+ 54  PR_Break_Oper    NUM    8.0   971      
+ 55  LocequipIdno     NUM    8.0   982      
+ 56  SnowShtID        NUM    8.0   993      
+ 57  SnowShtHdr       NUM    8.0  1004      
+ 58  SnowShtDtl       NUM    8.0  1015      
+ 59  CO_Head          NUM    8.0  1026      
+ 60  CO_Detail        NUM    8.0  1037      
+ 61  Labor_Rate       NUM    6.2  1048      
+ 62  LastProdNote     NUM    8.0  1058      
+ 63  LastProposal     NUM    8.0  1069      
+ 64  LastPropDetail   NUM    8.0  1080      
+ 65  LastTMRates      NUM    8.0  1091      
+ 66  LastTMRateHdr    NUM    8.0  1102      
+ 67  LastProspect     NUM    8.0  1113      
+ 68  LastQuota        NUM    8.0  1124      
+ 69  LastQuota_Dtl    NUM    8.0  1135      
+ 70  ChangedFlag      NUM    2.0  1146      
+ 71  LastSalesTaxId   NUM    8.0  1152      
+ 72  LastCreditHdrIdno  NUM    8.0  1163      
+ 73  LastCreditDtlIdno  NUM    8.0  1174      
+ 74  LastWebAppLoginId  NUM    8.0  1185      
+ 75  LastMarketGrpIdno  NUM    8.0  1196      
+ 76  LastMarketMemberIdno  NUM    8.0  1207      
+ 77  LastOrderDtlIdno  NUM    8.0  1218      
+ 78  LastVenInvHdrIdno  NUM    8.0  1229      
+ 79  LastVenInvDtlIdno  NUM    8.0  1240      
+

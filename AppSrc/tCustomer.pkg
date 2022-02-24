@@ -1,0 +1,16 @@
+// tCustomer.pkg
+// used to update remote server data
+
+Struct tCustomer
+    Integer iRecId
+    Integer iIdno
+    String  sName
+    String  sAddress1
+    String  sAddress2
+    String  sCity
+    String  sState
+    String  sZip
+    String  sStatus
+    Integer iChangedFlag
+    String  sTerms
+End_Struct

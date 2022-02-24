@@ -1,0 +1,141 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use Contact.DD
+Use SalesRep.DD
+Use Eshead.DD
+Use Escomp.DD
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+Use Esitem.DD
+
+Object oQuoteToEstimate is a BusinessProcess
+    Object oJcdept_DD is a cJcdeptDataDictionary
+    End_Object
+
+    Object oJccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to oJcdept_DD
+    End_Object
+
+    Object oJcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to oJccntr_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oEshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEscomp_DD is a Escomp_DataDictionary
+        Set Constrain_file to Eshead.File_number
+        Set DDO_Server to oEshead_DD
+    End_Object
+
+    Object oEsitem_DD is a Esitem_DataDictionary
+        Set Constrain_file to Escomp.File_number
+        Set DDO_Server to oJcoper_DD
+        Set DDO_Server to oEscomp_DD
+    End_Object
+
+    Set Main_DD to oEshead_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Property Integer piQuotehdrId
+    Property Integer piEsheadId
+
+    Function DoCreateEstimateFromQuote Integer iQuoteHdrId Returns Integer
+        Set piQuotehdrId        to iQuoteHdrId
+        //
+        Send DoProcess
+        //
+        Function_Return (piEsheadId(Self))
+    End_Function 
+
+    Procedure OnProcess
+        Boolean bFail
+        Integer iQuoteHdrIdno hoDD
+        Date dToday
+        Sysdate dToday
+        //
+        Get piQuotehdrId to iQuoteHdrIdno
+        //
+        Get Main_DD             to hoDD 
+        // Create Estimate Header
+        If (iQuoteHdrIdno <> 0) Begin
+            Move iQuoteHdrIdno to Quotehdr.QuotehdrID
+            Find EQ Quotehdr by 1
+            If ((Found) and iQuoteHdrIdno = Quotehdr.QuotehdrID) Begin
+                Send Clear_All of hoDD
+                //
+                Move Quotehdr.ContactIdno to Contact.ContactIdno
+                Send Request_Find of hoDD EQ Contact.File_Number 2
+                If (not(Found)) Begin
+                    Send Stop_Box "Contact not found"
+                    Procedure_Return
+                End
+                Move Quotehdr.LocationIdno to Location.LocationIdno
+                Send Request_Find of hoDD EQ Location.File_Number 1
+                If (not(Found)) Begin
+                    Send Stop_Box "Location not found"
+                    Procedure_Return
+                End
+                Move Quotehdr.RepIdno to SalesRep.RepIdno
+                Send Request_Find of hoDD EQ SalesRep.File_Number 1
+                If (not(Found)) Begin
+                    Send Stop_Box "Sales Rep not found"
+                    Procedure_Return
+                End
+                If (Found) Begin
+                    Set Field_Changed_Value of hoDD Field Eshead.CREATION_DATE to dToday
+                    Set Field_Changed_Value of hoDD Field Eshead.QuoteReference to iQuoteHdrIdno
+                    Set Field_Changed_Value of hoDD Field Eshead.TITLE to Quotehdr.QuoteLostMemo
+                    Get Request_Validate    of hoDD                                     to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Estimate Header could not be created - Validation Error"
+                        Procedure_Return
+                    End
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD                
+                        Set piEsheadId to Eshead.ESTIMATE_ID
+                    End
+                End
+            End        
+        End // Create Estimate Header
+    End_Procedure
+
+End_Object
+

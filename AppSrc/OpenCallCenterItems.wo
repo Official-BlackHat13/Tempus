@@ -1,0 +1,220 @@
+// OpenCallCenterItems.wo
+// Open Call Center Items
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use cReqtypesDataDictionary.dd
+Use cLocnotesDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Open User
+
+Object oOpenCallCenterItems Is A cWebBusinessProcess
+    Set psDescription To "Open Call Center Items"
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+    End_Object // oLocation_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+    Object oReqtypes_DD Is A cReqtypesDataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oReqtypes_DD
+
+    Object oLocnotes_DD Is A cLocnotesDataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oOrder_DD
+        Set DDO_Server To oReqtypes_DD
+
+        Property Date pdStartClosedDate
+        Property Date pdStopClosedDate
+
+        Procedure OnConstrain 
+            Constrain Locnotes.ClosedDate eq 0
+//            Date dStart dStop
+//
+//            Get pdStartClosedDate To dStart
+//            Get pdStopClosedDate To dStop
+//
+//            If (dStart <> 0 And dStop <> 0) Begin
+//                Constrain Locnotes.Closeddate Between dStart And dStop
+//            End
+//            Else Begin
+//                If (dStart <> 0) Begin
+//                    Constrain Locnotes.Closeddate Ge dStart
+//                End
+//                Else Begin
+//                    If (dStop <> 0) Begin
+//                        Constrain Locnotes.Closeddate Le dStop
+//                    End
+//                End
+//            End
+        End_Procedure // OnConstrain
+    End_Object // oLocnotes_DD
+
+    Set Main_DD To oLocnotes_DD
+
+    Object oReport Is A cWebReport
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCellHeader 'Item ID'             'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Date/Time'           'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'By'                  'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Status'              'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Location Name'       'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Contact'             'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Request Description' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Assigned To'         'class="Header" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText
+            String sLocnotesLocnotesid
+            String sLocnotesCreateddate
+            String sLocnotesCreatedtime
+            String sLocnotesCreatedby
+            String sLocnotesStatus
+            String sLocationName
+            Integer iLocnotesId
+            String sEmailCustomerLink
+            String sReqtypesDescription
+            String sLocnotesAssignedto
+
+            Clear User
+            Move Locnotes.CreatedBy     to User.UserId
+            Find eq User.UserId
+            Move ((trim(User.FirstName)) *" "* (Trim(User.LastName))) to sLocnotesCreatedby
+
+            Get ddValueEncode "Locnotes.Locnotesid"         to sLocnotesLocnotesid
+            Get ddValueEncode "Locnotes.Createddate"        to sLocnotesCreateddate
+            Get ddValueEncode "Locnotes.Createdtime"        to sLocnotesCreatedtime
+            Get ddValueEncode "Locnotes.Status"             to sLocnotesStatus
+            Get ddValueEncode "Location.Name"               to sLocationName
+            Get DDValueEncode "Locnotes.Locnotesid"         to iLocnotesId
+            Get ddValueEncode "Reqtypes.Description"        to sReqtypesDescription
+            Get ddValueEncode "Locnotes.Assignedto"         to sLocnotesAssignedto
+
+            Move (Left(sLocnotesCreatedtime,5))                       to sLocnotesCreatedtime
+            Move (sLocnotesCreateddate * sLocnotesCreatedtime)        to sLocnotesCreateddate
+            Move (Mid(sLocnotesStatus,(Length(sLocnotesStatus)-2),3)) to sLocnotesStatus
+            
+            
+            
+            Send WriteHtmlRowBegin
+                Get AddRowIdLink (FormatNumber (sLocnotesLocnotesid,0)) to sText
+                Get AddEmailCustomerLink iLocnotesId    to sEmailCustomerLink
+                
+                Send WriteHtmlCell sText                'class="Data" align="right"'
+                Send WriteHtmlCell sLocnotesCreateddate 'class="Data" align="left"'
+                Send WriteHtmlCell sLocnotesCreatedby   'class="Data" align="left"'
+                Send WriteHtmlCell sLocnotesStatus      'class="Data" align="left"'
+                Send WriteHtmlCell sLocationName        'class="Data" align="left"'
+                Send WriteHtmlCell sEmailCustomerLink   'class="Data" align="center"'
+                Send WriteHtmlCell sReqtypesDescription 'class="Data" align="left"'
+                Send WriteHtmlCell sLocnotesAssignedto  'class="Data" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunOpenCallCenterItems Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            Integer eStatus
+            RowID   riLastRowId
+
+            Set piOrdering           to 1
+            Set piMaxCount           to iMaxCount
+            Set piMaxCountBreakLevel to 0
+            Set priStartRowId        to riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunOpenCallCenterItems
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetLocnotes_Closeddate String sStart String sStop
+        Set pdStartClosedDate of oLocnotes_DD To sStart
+        Set pdStopClosedDate  of oLocnotes_DD To sStop
+    End_Procedure // SetLocnotes_Closeddate
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunOpenCallCenterItems Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunOpenCallCenterItems of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunOpenCallCenterItems
+
+   Function HtmlLinkButton String sURL String sDat Returns String
+       Function_Return ('<a href="' + sURL + '">' + sDat + '</a>')
+   End_Function
+
+    Function AddEmailCustomerLink Integer iLocnotesId Returns String
+        String sValue sRefName sUrl sRowId sSep
+        RowID  riRowId
+        //
+        If (Locnotes.LocnotesId <> iLocnotesId) Begin
+            Clear Locnotes
+            Move iLocnotesId to Locnotes.LocnotesId
+            Find eq Locnotes.LocnotesId
+        End
+        //
+        Move "Email"         to sValue
+        Move "FollowupEmail.asp"                to sRefName
+        Move (If(pos("?",sRefName),"&","?"))    to sSep
+        Move (GetRowId(Locnotes.File_Number))   to riRowId
+        Move (SerializeRowId(riRowId))          to sRowId
+        Move (sRefName-sSep-"RowId=" - sRowId ) to sUrl
+        Get HtmlLinkButton sUrl sValue                to sValue
+        //
+        Function_Return sValue
+    End_Function
+
+    Set pbAllowSaveNew  to False
+    Set pbAllowSaveEdit to False
+    Set pbAllowDelete   to False
+
+End_Object // oOpenCallCenterItems

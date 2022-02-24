@@ -1,0 +1,1942 @@
+// Class Name: Jcoper_DataDictionary
+// Revision  : 70
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+Use Dates.nui
+
+Open Jcoper
+//Open Jctrns
+//Open Esitem
+//Open Eslitm
+//Open Esjitm
+//Open Initem
+Open Esvars
+Open Jccntr
+Open Syslog
+Open Esitem
+
+
+Register_Object Jcoper_Optype_VT1
+Register_Object Jcoper_Costype_VT1
+Register_Object Jcoper_Std_Type_VT
+Register_Object Jcoper_Unit_Costing_VT
+Register_Object Jcoper_Est_Formula_Typ_VT
+
+Object Jcoper_Optype_VT1  is a CodeValidationTable
+    Set Type_Value        To "COSTSUBTTL"
+    Set Allow_Blank_State To TRUE
+End_Object   // Jcoper_Optype_VT1
+
+Object Jcoper_Costype_VT1  is a DescriptionValidationTable
+    Set Allow_Blank_State To TRUE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "C"  "Chargeable Labor"
+        Send Add_Table_Value  "B"  "Burden or Non-chargeable Lbr."
+    End_Procedure    // Fill_List
+End_Object   // Jcoper_Costype_VT1
+
+Object Jcoper_Std_Type_VT  is a DescriptionValidationTable
+    Set Allow_Blank_State To TRUE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  ""  "Not applicable"
+        Send Add_Table_Value  "0"  "Not applicable"
+        Send Add_Table_Value  "1"  "Time Std: Minutes per unit"
+        Send Add_Table_Value  "2"  "Speed Std: Units per hour"
+    End_Procedure    // Fill_List
+End_Object   // Jcoper_Std_Type_VT
+
+Object Jcoper_Unit_Costing_VT  is a DescriptionValidationTable
+    Set Allow_Blank_State To TRUE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "0"  "default costing method"
+        Send Add_Table_Value  "1"  "unit rate labor cost"
+        Send Add_Table_Value  "2"  "billing item, no job cost"
+    End_Procedure    // Fill_List
+End_Object   // Jcoper_Unit_Costing_VT
+
+Object Jcoper_Est_Formula_Typ_VT  is a DescriptionValidationTable
+    Set Allow_Blank_State To TRUE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "$"  "DOLLARS"
+        Send Add_Table_Value  ":"  "HOURS"
+        Send Add_Table_Value  "#"  "USER-DEFINED"
+    End_Procedure    // Fill_List
+End_Object   // Jcoper_Est_Formula_Typ_VT
+
+Register_Object JCOPER_SL
+
+Register_Function OptypeValidation integer iField string sOptype Returns integer
+Register_Function CostypeValidation integer iField string sCostype Returns integer
+Register_Function StdTypeValidation integer iField string sStdType Returns Integer
+Register_Function FormulaValidation integer iField string sInput Returns integer
+Register_Function Dflt_Value_Validation integer iField integer iDflt_Value Returns integer
+Register_Function LinkCodeValidation integer iField integer iLinkCode Returns integer
+Register_Function VarTagSymblValidation integer iField string sTagSymbl Returns Integer
+Register_Function PicklistCodeValidation integer iField string sCode Returns Integer
+Register_Function ExportLinkSymbolValidation integer iField string sSymbol Returns Integer
+
+Class Jcoper_DataDictionary  is a cGlblDataDictionary
+
+    // Construct_Object:
+    procedure Construct_Object
+        forward send Construct_Object
+
+        Set Main_File To Jcoper.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_DISPLAYONLY to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+        Set Validate_Delete_Structure_Mode To DD_VALIDATE_STRUCTURE_ALWAYS
+
+        // Child (Client) file structure................
+//        Set Add_Client_File to Jctrns.File_Number
+//        Set Add_Client_File to Esitem.File_Number
+//        Set Add_Client_File to Eslitm.File_Number
+//        Set Add_Client_File to Esjitm.File_Number
+//        Set Add_Client_File to Initem.File_Number
+        Set Add_Client_File to Esvars.File_Number
+        Set Add_Client_File to Esitem.File_Number
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Jccntr.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to Syslog.File_Number DD_LOCK_ON_ALL
+
+        // Field-based properties.......................
+
+
+        Set Field_Mask Field Jcoper.Idno To "###"
+        Set Field_Mask_Type Field Jcoper.Idno To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Jcoper.Idno DD_AUTOFIND to True
+        Set Field_Option Field Jcoper.Idno DD_REQUIRED to True
+        Set Field_Prompt_Object Field Jcoper.Idno to JCOPER_SL
+        Set Field_Value_Range Field Jcoper.Idno To -999 999
+        Set Key_Field_State Field Jcoper.Idno To TRUE
+
+        Set Field_Option Field Jcoper.Opcode DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Jcoper.Opcode to JCOPER_SL
+        Set Key_Field_State Field Jcoper.Opcode To TRUE
+
+        Set Field_Option Field Jcoper.Name DD_REQUIRED to True
+        Set Status_Help Field Jcoper.Name To "Description for this operation"
+
+        Set Field_Option Field Jcoper.Nickname DD_REQUIRED to True
+        Set Field_Option Field Jcoper.Nickname DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Nickname To "Abbreviated description for columnar reporting and displays."
+
+        Set Field_Option Field Jcoper.Optype DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Optype To get_OptypeValidation
+        Set Field_Value_Table Field Jcoper.Optype to Jcoper_Optype_VT1
+        Set Status_Help Field Jcoper.Optype To "Controls subtotaling of this item in costing and estimating."
+
+        Set Field_Option Field Jcoper.Costype DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Costype To get_CostypeValidation
+        Set Field_Value_Table Field Jcoper.Costype to Jcoper_Costype_VT1
+        Set Status_Help Field Jcoper.Costype To "C=Chargeable, B=Burden or non-chargeable"
+
+        Set Field_Validate_msg Field Jcoper.Std_Type To get_StdTypeValidation
+        Set Field_Value_Table Field Jcoper.Std_Type to Jcoper_Std_Type_VT
+        Set Status_Help Field Jcoper.Std_Type To "1 = minutes/unit, 2 = units/hour"
+
+        Set Status_Help Field Jcoper.Standard To "Par efficiency std. for labor, Unit cost for material if no inventory is linked."
+
+        Set Status_Help Field Jcoper.Markup To "Internal costing markup applied to all full $ cost calculations."
+
+        Set Field_Option Field Jcoper.Ttl_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttl_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttl_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttl_Regunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttl_Altunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttl_Splunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1_Regunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1_Altunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1_Splunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2_Regunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2_Altunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2_Splunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3_Regunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3_Altunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3_Splunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4_Regunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4_Altunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4_Splunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Prevyr_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Prevyr_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Prevyr_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Prevyr_Regunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Prevyr_Altunits DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Prevyr_Splunits DD_NOENTER to True
+
+        Set Status_Help Field Jcoper.Eff_Lo To "Defines low end of valid efficiency calculation range"
+
+        Set Status_Help Field Jcoper.Eff_Hi To "Defines high end of valid efficiency calculation range"
+
+        Set Field_Option Field Jcoper.Ttleff_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttleff_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Ttleff_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1eff_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1eff_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q1eff_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2eff_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2eff_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q2eff_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3eff_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3eff_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q3eff_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4eff_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4eff_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Q4eff_Splhrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Preeff_Reghrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Preeff_Althrs DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Preeff_Splhrs DD_NOENTER to True
+
+        Set Status_Help Field Jcoper.Unit_Costing To "Calculate labor cost using units X unit rate instead of hours X hourly rate."
+
+        Set Field_Option Field Jcoper.Est_Std DD_NOENTER to True
+        Set Field_Option Field Jcoper.Est_Std DD_CAPSLOCK to True
+
+        Set Status_Help Field Jcoper.Std1 To "Unit rate for production units labor costing method."
+
+
+        Set Status_Help Field Jcoper.Unit_Prompt To "Prompts and defines reporting units to shop employee for this activity."
+
+        Set Field_Checkbox_Values Field Jcoper.Prompt_Mtl_Flag To "Y" "N"
+        Set Status_Help Field Jcoper.Prompt_Mtl_Flag To "Automatically prompt shop employee for material when ending this activity?"
+
+        Set Status_Help Field Jcoper.Prompt_Mtl_Op To "Defines default material to prompt for when ending this activity"
+
+        Set Field_Option Field Jcoper.Lookup_Var DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Lookup_Var To "Denotes value to use in finding table row: Var. 1-9 or 0 for Calc Units"
+
+        Set Field_Option Field Jcoper.Bracket_Var DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Bracket_Var To "Denotes value to use in finding table column: Var. 1-9 or 0 for Calc Units"
+
+        Set Field_Checkbox_Values Field Jcoper.Prorate_Bracket To "Y" "N"
+        Set Status_Help Field Jcoper.Prorate_Bracket To "Controls whether intermediate column values will be derived."
+
+        Set Field_Checkbox_Values Field Jcoper.Prorate_Lookup To "Y" "N"
+        Set Status_Help Field Jcoper.Prorate_Lookup To "Controls whether intermediate row values will be derived."
+
+        Set Field_Option Field Jcoper.Calc_Flags DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Calc_Flags To "Various symbols that will control how this standard will behave and how its formulas will execute"
+
+        Set Field_Option Field Jcoper.Formula DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Formula To get_FormulaValidation
+        Set Status_Help Field Jcoper.Formula To "A mathematical expression that results in a user-defined value, often used for table lookups"
+
+        Set Field_Option Field Jcoper.Est_Formula DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Est_Formula To get_FormulaValidation
+        Set Status_Help Field Jcoper.Est_Formula To "A mathematical expression that results in hours and/or base cost or any other user defined value."
+
+        Set Field_Option Field Jcoper.Est_Formula_Typ DD_CAPSLOCK to True
+        Set Field_Value_Table Field Jcoper.Est_Formula_Typ to Jcoper_Est_Formula_Typ_VT
+        Set Status_Help Field Jcoper.Est_Formula_Typ To "':' = hours to be extended to cost dollars, '$' = base cost dollars not associated with hours, #=user defined"
+
+        Set Field_Option Field Jcoper.Calc_Units_Desc DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Calc_Units_Desc To "Describes the result of the Calc. Units formula"
+
+        Set Field_Option Field Jcoper.Table_Std_Desc DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Table_Std_Desc To "Defines what the table values represent. OPCODE and JC_STANDARD trigger specific logic."
+
+        Set Status_Help Field Jcoper.Lookup_Desc To "Describes what the row lookup values represent"
+
+        Set Status_Help Field Jcoper.Bracket_Desc To "Describes what the column lookup values represent"
+
+        Set Field_Option Field Jcoper.Link_Depth DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Link_Symbol DD_NOENTER to True
+
+        Set Status_Help Field Jcoper.Var1_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var2_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var3_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var4_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var5_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var6_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var7_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var8_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Status_Help Field Jcoper.Var9_Tag To "Prompt and description of this variable's value. Prefixing with @ will suppress display in calc. wizard."
+
+        Set Field_Validate_msg Field Jcoper.Var1_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var1_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var2_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var2_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var3_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var3_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var4_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var4_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var5_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var5_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var6_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var6_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var7_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var7_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var8_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var8_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Validate_msg Field Jcoper.Var9_Dflt_Value To get_Dflt_Value_Validation
+        Set Status_Help Field Jcoper.Var9_Dflt_Value To "Default value used by this Variable in lieu of input or linked value"
+
+        Set Field_Prompt_Object Field Jcoper.Var1_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var1_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var1_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var2_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var2_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var2_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var3_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var3_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var3_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var4_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var4_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var4_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var5_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var5_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var5_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var6_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var6_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var6_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var7_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var7_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var7_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var8_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var8_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var8_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Prompt_Object Field Jcoper.Var9_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Var9_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Var9_Link_Code To "Specifies an operation from which to derive this variable's value, or to which a value will be exported"
+
+        Set Field_Option Field Jcoper.Var1_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var1_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var1_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var2_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var2_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var2_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var3_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var3_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var3_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var4_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var4_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var4_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var5_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var5_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var5_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var6_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var6_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var6_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var7_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var7_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var7_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var8_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var8_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var8_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Field_Option Field Jcoper.Var9_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Var9_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X!"
+        Set Status_Help Field Jcoper.Var9_Link_Symbl To "Denotes the value within the linked operation that will be retrieved or used for export by this variable"
+
+        Set Status_Help Field Jcoper.Con1_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con2_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con3_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con4_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con5_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con6_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con7_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con8_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con9_Desc To "Description of this constant's value. Prefixing with ! will suppress execution of linked operation."
+
+        Set Status_Help Field Jcoper.Con1_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con2_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con3_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con4_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con5_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con6_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con7_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con8_Value To "Defined value for this constant"
+
+        Set Status_Help Field Jcoper.Con9_Value To "Defined value for this constant"
+
+        Set Field_Prompt_Object Field Jcoper.Con1_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con1_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con1_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con2_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con2_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con2_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con3_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con3_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con3_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con4_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con4_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con4_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con5_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con5_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con5_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con6_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con6_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con6_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con7_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con7_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con7_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con8_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con8_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con8_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Prompt_Object Field Jcoper.Con9_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.Con9_Link_Code To get_LinkCodeValidation
+        Set Status_Help Field Jcoper.Con9_Link_Code To "Specifies an operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con1_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con1_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con1_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con2_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con2_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con2_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con3_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con3_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con3_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con4_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con4_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con4_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con5_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con5_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con5_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con6_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con6_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con6_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con7_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con7_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con7_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con8_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con8_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con8_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Option Field Jcoper.Con9_Link_Symbl DD_CAPSLOCK to True
+        Set Field_Value_Check Field Jcoper.Con9_Link_Symbl To " 0123456789ABCDEFGHIST#LWM$X"
+        Set Status_Help Field Jcoper.Con9_Link_Symbl To "Denotes the value within the linked operation from which to derive this constant's value"
+
+        Set Field_Mask Field Jcoper.Bracket1_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Bracket1_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Bracket1_Value To "Index value for selecting this column from the table"
+
+        Set Field_Mask Field Jcoper.Bracket2_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Bracket2_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Bracket2_Value To "Index value for selecting this column from the table"
+
+        Set Field_Mask Field Jcoper.Bracket3_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Bracket3_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Bracket3_Value To "Index value for selecting this column from the table"
+
+        Set Field_Mask Field Jcoper.Bracket4_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Bracket4_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Bracket4_Value To "Index value for selecting this column from the table"
+
+        Set Field_Mask Field Jcoper.Bracket5_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Bracket5_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Bracket5_Value To "Index value for selecting this column from the table"
+
+        Set Field_Mask Field Jcoper.Lookup1_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup1_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup1_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup2_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup2_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup2_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup3_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup3_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup3_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup4_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup4_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup4_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup5_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup5_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup5_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup6_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup6_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup6_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup7_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup7_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup7_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup8_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup8_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup8_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup9_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup9_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup9_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.Lookup10_Value To "##,###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.Lookup10_Value To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Jcoper.Lookup10_Value To "Index value for selecting this row from the table"
+
+        Set Field_Mask Field Jcoper.L1b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L1b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L1b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L1b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L1b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L1b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L1b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L1b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L1b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L1b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L2b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L2b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L2b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L2b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L2b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L2b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L2b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L2b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L2b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L2b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L3b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L3b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L3b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L3b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L3b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L3b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L3b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L3b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L3b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L3b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L4b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L4b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L4b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L4b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L4b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L4b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L4b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L4b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L4b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L4b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L5b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L5b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L5b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L5b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L5b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L5b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L5b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L5b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L5b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L5b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L6b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L6b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L6b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L6b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L6b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L6b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L6b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L6b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L6b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L6b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L7b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L7b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L7b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L7b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L7b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L7b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L7b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L7b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L7b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L7b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L8b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L8b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L8b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L8b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L8b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L8b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L8b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L8b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L8b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L8b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L9b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L9b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L9b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L9b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L9b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L9b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L9b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L9b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L9b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L9b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L10b1_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L10b1_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L10b2_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L10b2_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L10b3_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L10b3_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L10b4_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L10b4_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Jcoper.L10b5_Std To "###,##0.0000"
+        Set Field_Mask_Type Field Jcoper.L10b5_Std To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Jcoper.Value1_Pass DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Value2_Pass DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Value3_Pass DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Calc_Std_Desc DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Calc_Std_Desc To "Describes the result of the Prod. Units formula"
+
+        Set Field_Option Field Jcoper.Multi_Val_Flag DD_NOENTER to True
+
+        Set Field_Option Field Jcoper.Var1_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var1_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var1_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var2_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var2_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var2_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var3_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var3_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var3_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var4_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var4_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var4_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var5_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var5_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var5_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var6_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var6_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var6_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var7_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var7_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var7_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var8_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var8_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var8_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Var9_Tag_Symbl DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Var9_Tag_Symbl To get_VarTagSymblValidation
+        Set Status_Help Field Jcoper.Var9_Tag_Symbl To "Symbols to control this variable: input type, picklist generation, conditional execution and link type - export or retrieval"
+
+        Set Field_Option Field Jcoper.Print_Flags DD_CAPSLOCK to True
+        Set Status_Help Field Jcoper.Print_Flags To "Pre-defined and user-defined symbols to control what values from this standard output on reports."
+
+        Set Field_Option Field Jcoper.Picklist_Code DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Picklist_Code To get_PicklistCodeValidation
+        Set Status_Help Field Jcoper.Picklist_Code To "User-assigned code for inclusion of this std. in user-defined filtered picklists."
+
+        Set Field_Option Field Jcoper.C1_Tag_Symbl DD_CAPSLOCK to True
+
+        Set Field_Prompt_Object Field Jcoper.C1_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.C1_Link_Code To get_LinkCodeValidation
+
+        Set Field_Validate_msg Field Jcoper.C1_Link_Symbl To get_ExportLinkSymbolValidation
+
+        Set Field_Option Field Jcoper.C2_Tag_Symbl DD_CAPSLOCK to True
+
+        Set Field_Prompt_Object Field Jcoper.C2_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.C2_Link_Code To get_LinkCodeValidation
+
+        Set Field_Validate_msg Field Jcoper.C2_Link_Symbl To get_ExportLinkSymbolValidation
+
+        Set Field_Option Field Jcoper.C3_Tag_Symbl DD_CAPSLOCK to True
+
+        Set Field_Prompt_Object Field Jcoper.C3_Link_Code to JCOPER_SL
+        Set Field_Validate_msg Field Jcoper.C3_Link_Code To get_LinkCodeValidation
+
+        Set Field_Validate_msg Field Jcoper.C3_Link_Symbl To get_ExportLinkSymbolValidation
+
+        Set Field_Option Field Jcoper.Sell_Formula DD_CAPSLOCK to True
+        Set Field_Validate_msg Field Jcoper.Sell_Formula To get_FormulaValidation
+        Set Status_Help Field Jcoper.Sell_Formula To "Optional formula to calculate a Base Sell at the operations level. If blank, then cost $ will instead be used for the base sell value."
+
+        Set Status_Help Field Jcoper.Instrctn_Form To "Default text to display when prompting for text input"
+
+        send DoInitializeWatchedFields
+        //
+        property integer pbEditStandards FALSE
+        //
+        set piLogFile to Syslog.File_number
+        // when TRUE this property initiates
+        // System Log functionality
+        set pbUsesSystemLog   to TRUE
+        // when TRUE logging is only active if
+        // changes are made locally
+        set pbLocalOriginOnly to FALSE
+        // when TRUE logging does not occur
+        // on the creation of the record
+        set pbNoLogOnCreate   to TRUE
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        set piKey1 to 4 // Opcode
+        set piKey2 to 0 //
+        set piKey3 to 0 //
+        //
+        Send DoInitializeWatchedFields
+    End_Procedure // Construct_Object
+
+    procedure DoInitializeWatchedFields
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        integer hArray
+        //
+        send DoCreateSystemLogArrays
+        move oWatchedFieldsArray to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        send DoAddArrayValue hArray   2 // CSTCTR_IDNO
+        send DoAddArrayValue hArray   4 // OPCODE
+        send DoAddArrayValue hArray   5 // NAME
+        send DoAddArrayValue hArray   6 // NICKNAME
+        send DoAddArrayValue hArray   7 // OPTYPE
+        send DoAddArrayValue hArray   8 // COSTYPE
+        send DoAddArrayValue hArray   9 // STD_TYPE
+        send DoAddArrayValue hArray  10 // STANDARD
+        send DoAddArrayValue hArray  11 // MARKUP
+        send DoAddArrayValue hArray  48 // EFF_LO
+        send DoAddArrayValue hArray  49 // EFF_HI
+        send DoAddArrayValue hArray  69 // EST_STD
+        send DoAddArrayValue hArray  74 // UNIT_PROMPT
+        send DoAddArrayValue hArray  75 // PROMPT_MTL_FLAG
+        send DoAddArrayValue hArray  76 // PROMPT_MTL_OP
+        send DoAddArrayValue hArray  77 // LOOKUP_VAR
+        send DoAddArrayValue hArray  78 // BRACKET_VAR
+        send DoAddArrayValue hArray  79 // PRORATE_BRACKET
+        send DoAddArrayValue hArray  80 // PRORATE_LOOKUP
+        send DoAddArrayValue hArray  81 // CALC_FLAGS
+        send DoAddArrayValue hArray  82 // FORMULA
+        send DoAddArrayValue hArray  83 // EST_FORMULA
+        send DoAddArrayValue hArray  84 // EST_FORMULA_TYP
+        send DoAddArrayValue hArray  85 // CALC_UNITS_DESC
+        send DoAddArrayValue hArray  86 // TABLE_STD_DESC
+        send DoAddArrayValue hArray  87 // LOOKUP_DESC
+        send DoAddArrayValue hArray  88 // BRACKET_DESC
+        send DoAddArrayValue hArray  91 // VAR1_TAG
+        send DoAddArrayValue hArray  92 // VAR2_TAG
+        send DoAddArrayValue hArray  93 // VAR3_TAG
+        send DoAddArrayValue hArray  94 // VAR4_TAG
+        send DoAddArrayValue hArray  95 // VAR5_TAG
+        send DoAddArrayValue hArray  96 // VAR6_TAG
+        send DoAddArrayValue hArray  97 // VAR7_TAG
+        send DoAddArrayValue hArray  98 // VAR8_TAG
+        send DoAddArrayValue hArray  99 // VAR9_TAG
+        send DoAddArrayValue hArray 100 // VAR1_DFLT_VALUE
+        send DoAddArrayValue hArray 101 // VAR2_DFLT_VALUE
+        send DoAddArrayValue hArray 102 // VAR3_DFLT_VALUE
+        send DoAddArrayValue hArray 103 // VAR4_DFLT_VALUE
+        send DoAddArrayValue hArray 104 // VAR5_DFLT_VALUE
+        send DoAddArrayValue hArray 105 // VAR6_DFLT_VALUE
+        send DoAddArrayValue hArray 106 // VAR7_DFLT_VALUE
+        send DoAddArrayValue hArray 107 // VAR8_DFLT_VALUE
+        send DoAddArrayValue hArray 108 // VAR9_DFLT_VALUE
+        send DoAddArrayValue hArray 109 // VAR1_LINK_CODE
+        send DoAddArrayValue hArray 110 // VAR2_LINK_CODE
+        send DoAddArrayValue hArray 111 // VAR3_LINK_CODE
+        send DoAddArrayValue hArray 112 // VAR4_LINK_CODE
+        send DoAddArrayValue hArray 113 // VAR5_LINK_CODE
+        send DoAddArrayValue hArray 114 // VAR6_LINK_CODE
+        send DoAddArrayValue hArray 115 // VAR7_LINK_CODE
+        send DoAddArrayValue hArray 116 // VAR8_LINK_CODE
+        send DoAddArrayValue hArray 117 // VAR9_LINK_CODE
+        send DoAddArrayValue hArray 118 // VAR1_LINK_SYMBL
+        send DoAddArrayValue hArray 119 // VAR2_LINK_SYMBL
+        send DoAddArrayValue hArray 120 // VAR3_LINK_SYMBL
+        send DoAddArrayValue hArray 121 // VAR4_LINK_SYMBL
+        send DoAddArrayValue hArray 122 // VAR5_LINK_SYMBL
+        send DoAddArrayValue hArray 123 // VAR6_LINK_SYMBL
+        send DoAddArrayValue hArray 124 // VAR7_LINK_SYMBL
+        send DoAddArrayValue hArray 125 // VAR8_LINK_SYMBL
+        send DoAddArrayValue hArray 126 // VAR9_LINK_SYMBL
+        send DoAddArrayValue hArray 136 // CON1_VALUE
+        send DoAddArrayValue hArray 137 // CON2_VALUE
+        send DoAddArrayValue hArray 138 // CON3_VALUE
+        send DoAddArrayValue hArray 139 // CON4_VALUE
+        send DoAddArrayValue hArray 140 // CON5_VALUE
+        send DoAddArrayValue hArray 141 // CON6_VALUE
+        send DoAddArrayValue hArray 142 // CON7_VALUE
+        send DoAddArrayValue hArray 143 // CON8_VALUE
+        send DoAddArrayValue hArray 144 // CON9_VALUE
+        send DoAddArrayValue hArray 145 // CON1_LINK_CODE
+        send DoAddArrayValue hArray 146 // CON2_LINK_CODE
+        send DoAddArrayValue hArray 147 // CON3_LINK_CODE
+        send DoAddArrayValue hArray 148 // CON4_LINK_CODE
+        send DoAddArrayValue hArray 149 // CON5_LINK_CODE
+        send DoAddArrayValue hArray 150 // CON6_LINK_CODE
+        send DoAddArrayValue hArray 151 // CON7_LINK_CODE
+        send DoAddArrayValue hArray 152 // CON8_LINK_CODE
+        send DoAddArrayValue hArray 153 // CON9_LINK_CODE
+        send DoAddArrayValue hArray 154 // CON1_LINK_SYMBL
+        send DoAddArrayValue hArray 155 // CON2_LINK_SYMBL
+        send DoAddArrayValue hArray 156 // CON3_LINK_SYMBL
+        send DoAddArrayValue hArray 157 // CON4_LINK_SYMBL
+        send DoAddArrayValue hArray 158 // CON5_LINK_SYMBL
+        send DoAddArrayValue hArray 159 // CON6_LINK_SYMBL
+        send DoAddArrayValue hArray 160 // CON7_LINK_SYMBL
+        send DoAddArrayValue hArray 161 // CON8_LINK_SYMBL
+        send DoAddArrayValue hArray 162 // CON9_LINK_SYMBL
+        send DoAddArrayValue hArray 163 // BRACKET1_VALUE
+        send DoAddArrayValue hArray 164 // BRACKET2_VALUE
+        send DoAddArrayValue hArray 165 // BRACKET3_VALUE
+        send DoAddArrayValue hArray 166 // BRACKET4_VALUE
+        send DoAddArrayValue hArray 167 // BRACKET5_VALUE
+        send DoAddArrayValue hArray 168 // LOOKUP1_VALUE
+        send DoAddArrayValue hArray 169 // LOOKUP2_VALUE
+        send DoAddArrayValue hArray 170 // LOOKUP3_VALUE
+        send DoAddArrayValue hArray 171 // LOOKUP4_VALUE
+        send DoAddArrayValue hArray 172 // LOOKUP5_VALUE
+        send DoAddArrayValue hArray 173 // LOOKUP6_VALUE
+        send DoAddArrayValue hArray 174 // LOOKUP7_VALUE
+        send DoAddArrayValue hArray 175 // LOOKUP8_VALUE
+        send DoAddArrayValue hArray 176 // LOOKUP9_VALUE
+        send DoAddArrayValue hArray 177 // LOOKUP10_VALUE
+        send DoAddArrayValue hArray 178 // L1B1_STD
+        send DoAddArrayValue hArray 179 // L1B2_STD
+        send DoAddArrayValue hArray 180 // L1B3_STD
+        send DoAddArrayValue hArray 181 // L1B4_STD
+        send DoAddArrayValue hArray 182 // L1B5_STD
+        send DoAddArrayValue hArray 183 // L2B1_STD
+        send DoAddArrayValue hArray 184 // L2B2_STD
+        send DoAddArrayValue hArray 185 // L2B3_STD
+        send DoAddArrayValue hArray 186 // L2B4_STD
+        send DoAddArrayValue hArray 187 // L2B5_STD
+        send DoAddArrayValue hArray 188 // L3B1_STD
+        send DoAddArrayValue hArray 189 // L3B2_STD
+        send DoAddArrayValue hArray 190 // L3B3_STD
+        send DoAddArrayValue hArray 191 // L3B4_STD
+        send DoAddArrayValue hArray 192 // L3B5_STD
+        send DoAddArrayValue hArray 193 // L4B1_STD
+        send DoAddArrayValue hArray 194 // L4B2_STD
+        send DoAddArrayValue hArray 195 // L4B3_STD
+        send DoAddArrayValue hArray 196 // L4B4_STD
+        send DoAddArrayValue hArray 197 // L4B5_STD
+        send DoAddArrayValue hArray 198 // L5B1_STD
+        send DoAddArrayValue hArray 199 // L5B2_STD
+        send DoAddArrayValue hArray 200 // L5B3_STD
+        send DoAddArrayValue hArray 201 // L5B4_STD
+        send DoAddArrayValue hArray 202 // L5B5_STD
+        send DoAddArrayValue hArray 203 // L6B1_STD
+        send DoAddArrayValue hArray 204 // L6B2_STD
+        send DoAddArrayValue hArray 205 // L6B3_STD
+        send DoAddArrayValue hArray 206 // L6B4_STD
+        send DoAddArrayValue hArray 207 // L6B5_STD
+        send DoAddArrayValue hArray 208 // L7B1_STD
+        send DoAddArrayValue hArray 209 // L7B2_STD
+        send DoAddArrayValue hArray 210 // L7B3_STD
+        send DoAddArrayValue hArray 211 // L7B4_STD
+        send DoAddArrayValue hArray 212 // L7B5_STD
+        send DoAddArrayValue hArray 213 // L8B1_STD
+        send DoAddArrayValue hArray 214 // L8B2_STD
+        send DoAddArrayValue hArray 215 // L8B3_STD
+        send DoAddArrayValue hArray 216 // L8B4_STD
+        send DoAddArrayValue hArray 217 // L8B5_STD
+        send DoAddArrayValue hArray 218 // L9B1_STD
+        send DoAddArrayValue hArray 219 // L9B2_STD
+        send DoAddArrayValue hArray 220 // L9B3_STD
+        send DoAddArrayValue hArray 221 // L9B4_STD
+        send DoAddArrayValue hArray 222 // L9B5_STD
+        send DoAddArrayValue hArray 223 // L10B1_STD
+        send DoAddArrayValue hArray 224 // L10B2_STD
+        send DoAddArrayValue hArray 225 // L10B3_STD
+        send DoAddArrayValue hArray 226 // L10B4_STD
+        send DoAddArrayValue hArray 227 // L10B5_STD
+        send DoAddArrayValue hArray 231 // CALC_STD_DESC
+        send DoAddArrayValue hArray 233 // VAR1_TAG_SYMBL
+        send DoAddArrayValue hArray 234 // VAR2_TAG_SYMBL
+        send DoAddArrayValue hArray 235 // VAR3_TAG_SYMBL
+        send DoAddArrayValue hArray 236 // VAR4_TAG_SYMBL
+        send DoAddArrayValue hArray 237 // VAR5_TAG_SYMBL
+        send DoAddArrayValue hArray 238 // VAR6_TAG_SYMBL
+        send DoAddArrayValue hArray 239 // VAR7_TAG_SYMBL
+        send DoAddArrayValue hArray 240 // VAR8_TAG_SYMBL
+        send DoAddArrayValue hArray 241 // VAR9_TAG_SYMBL
+        send DoAddArrayValue hArray 242 // PRINT_FLAGS
+        send DoAddArrayValue hArray 243 // PICKLIST_CODE
+        send DoAddArrayValue hArray 244 // C1_TAG_SYMBL
+        send DoAddArrayValue hArray 245 // C1_LINK_CODE
+        send DoAddArrayValue hArray 246 // C1_LINK_SYMBL
+        send DoAddArrayValue hArray 247 // C2_TAG_SYMBL
+        send DoAddArrayValue hArray 248 // C2_LINK_CODE
+        send DoAddArrayValue hArray 249 // C2_LINK_SYMBL
+        send DoAddArrayValue hArray 250 // C3_TAG_SYMBL
+        send DoAddArrayValue hArray 251 // C3_LINK_CODE
+        send DoAddArrayValue hArray 252 // C3_LINK_SYMBL
+        send DoAddArrayValue hArray 253 // Sell_Formula
+    end_procedure // DoInitializeWatchedFields
+
+
+    // VarTagSymblValidation:
+    Function VarTagSymblValidation integer iField string sTagSymbl Returns Integer
+        #IFDEF CE_CALC_TEST
+        integer iLinkCode
+        //
+        if (Operation_Mode <> MODE_VALIDATING) function_return
+        //
+        if (NOT(sTagSymbl CONTAINS "E") OR sTagsymbl CONTAINS "^") function_return
+        //
+        get Field_Current_Value (iField - 124) to iLinkCode
+        if ((iLinkCode) AND NOT(sTagSymbl CONTAINS "D")) begin
+            error 900 "When a Var. has a link, use of E without D is not allowed"
+            function_return 1
+        end
+        #ENDIF
+    End_Function   // VarTagSymblValidation
+
+
+    // ExportLinkSymbolValidation:
+    Function ExportLinkSymbolValidation integer iField string sSymbol Returns Integer
+        if ("123456789" CONTAINS sSymbol OR sSymbol = "") function_return
+        error 900 "Invalid link symbol code"
+        Function_Return 1
+    End_Function   // ExportLinkSymbolValidation
+
+
+    // PicklistCodeValidation:
+    Function PicklistCodeValidation integer iField string sCode Returns Integer
+        // only validate when editing the standards record
+        if (Operation_Origin <> self) function_return
+        //
+        if ("~@!#$%^&*<>?+-LMPDE" CONTAINS sCode) begin
+            error 900 "Invalid filter code"
+            function_return 1
+        end
+    End_Function   // PicklistCodeValidation
+
+
+    // OptypeValidation:
+    Function OptypeValidation integer iField string sOptype returns integer
+        integer iIdno
+        get File_Field_Current_Value file_field Jccntr.Idno to iIdno
+        if (iIdno < 1) function_return
+        if (sOptype <> "") function_return
+        error 900 "Subtotal type cannot be blank."
+        function_return 1
+    End_Function   // OptypeValidation
+
+
+    // CostypeValidation:
+    Function CostypeValidation integer iField string sCostype returns integer
+        integer iIdno
+        get File_Field_Current_Value file_field Jccntr.Idno to iIdno
+        if (iIdno < 1) function_return
+        if (sCostype <> "") function_return
+        error 900 "Labor cost type cannot be blank."
+        function_return 1
+    End_Function   // CostypeValidation
+
+
+    // StdTypeValidation:
+    Function StdTypeValidation integer iField string sStdType Returns Integer
+        string sOptype
+        get Field_Current_Value field Jcoper.Optype to sOptype
+        if (left(sOptype,1)<>"L") function_return
+        // sOptype = "Ln"
+        if ("12" contains sStdType) function_return
+        error 900 "Labor subtotal must be 1 or 2"
+        function_return 1
+    End_Function   // StdTypeValidation
+
+
+    // FormulaValidation:
+    function FormulaValidation ;
+        integer iField ;
+        string  sInput ;
+        returns integer
+        //
+        integer bState bFail bOper iPosition iLeftParen iRightParen
+        integer iSymbol1 iSymbol2 iFieldLength
+        string  sCheckValue sInstruction sOperator sCalcFlags sFormula
+        //if (Operation_Mode = MODE_FINDING) function_return
+        //
+        Get_attribute DF_FIELD_LENGTH of Jcoper.File_Number iField to iFieldLength
+        if      (iField = 82) move "123456789ABCDEFGHI+-*/()MNX<>=W"        to sCheckValue
+        else if (iField = 83) move "0123456789ABCDEFGHIRT+-*/()MNX<>=W"     to sCheckValue
+        else                  move "0123456789ABCDEFGHITPJSO$+-*/()MNX<>=W" to sCheckValue
+        //
+        get Field_Current_Value field Jcoper.Calc_flags to sCalcFlags
+        if (sInput CONTAINS "R" AND (NOT(sCalcFlags CONTAINS "S"))) begin
+            error 900 "CAN'T USE R SYMBOL IN FORMULA WITHOUT S SYMBOL IN CALC FLAGS"
+            function_return 1
+        end
+        //
+        get Field_Changed_State iField to bState
+        if (NOT(bState)) function_return
+        // check first character, can't be math operator, inlucding min or max
+        move (left(sInput,1)) to sInstruction
+        if ("+-*/<>=M" CONTAINS sInstruction) begin
+            error 900 "FIRST SYMBOL CANNOT BE A MATH OPERATOR"
+            function_return 1
+        end
+        // check last character, can't be math operator
+        move (right(sInput,1)) to sInstruction
+        if ("+-*/<>=NX" CONTAINS sInstruction) begin
+            error 900 "LAST SYMBOL CANNOT BE A MATH OPERATOR"
+            function_return 1
+        end
+        //
+        // check for valid vars, constants & math symbols
+        move 1 to iPosition
+        repeat
+            move DFFALSE to bFail
+            move DFFALSE to bOper
+            if (iPosition >= iFieldLength) break
+            //
+            move (mid(sInput,1,iPosition)) to sInstruction
+            if (sInstruction = "") break
+            if (sInstruction = "(") increment iLeftParen
+            if (sInstruction = ")") increment iRightParen
+            //
+            move (NOT(sCheckValue CONTAINS sInstruction)) to bFail
+            if (bFail) break
+            // check for MIN or MAX
+            move (sInstruction = "M") to bOper
+            if (bOper) begin
+                move (mid(sInput,3,iPosition)) to sOperator
+                if (NOT("MINMAX" CONTAINS sOperator)) begin
+                    error 900 (sOperator * "is an invalid operator.")
+                    function_return 1
+                end
+                if (iSymbol1 = 999) begin
+                    error 900 "TWO ADJACENT MATH OPERATOR SYMBOLS"
+                    function_return 1
+                end
+                move (iPosition + 3) to iPosition
+                move 999 to iSymbol1
+            end
+            if (bOper) break BEGIN
+            //
+            move ("+-*/><=" CONTAINS sInstruction) to bOper
+            if (bOper) move 999                 to iSymbol2
+            else move (ascii(sInstruction))     to iSymbol2
+            if (iSymbol2 = iSymbol1) begin
+                if ("()" CONTAINS sInstruction) break
+                if ("<>" CONTAINS sInstruction) break
+                if (bOper) error 900 "TWO ADJACENT MATH OPERATOR SYMBOLS"
+                else       error 900 "SAME SYMBOL REPEATED TWICE"
+                function_return 1
+            end
+            else begin
+                if (iPosition = 1) break
+                if ("()" CONTAINS sInstruction) break
+                if (iSymbol1 <> 999 AND iSymbol2 <> 999 AND ;
+                    (iSymbol1 <> 40 AND iSymbol1 <> 41)) begin
+                    error 900 "TWO SYMBOLS WITHOUT MATH OPERATOR SEPARATION"
+                    function_return 1
+                end
+            end
+            //
+            if (bOper) move 999                   to iSymbol1
+            else       move (ascii(sInstruction)) to iSymbol1
+            // enforce "W" preceded and followed by "("
+            if ((sInstruction="W") and ((mid(sInput,1,(iPosition+1)))<>"(")) begin
+                error 900 "Whole number symbol must be followed by left parenthesis."
+                function_return 1
+            end
+            //enfoce that "(" can't be followed by a math operator
+            if ((sInstruction="(") and "+-*/" contains (mid(sInput,1,(iPosition+1))) ) begin
+                error 900 "Left parenthesis cannot be followed by a math operator."
+                function_return 1
+            end
+            //enfoce that ")" can't be preceded by a math operator
+            if ((sInstruction=")") and "+-*/" contains (mid(sInput,1,(iPosition-1))) ) begin
+                error 900 "Right parenthesis cannot be preceded by a math operator."
+                function_return 1
+            end
+            //enfoce that "()" can't be used
+            if ((sInstruction="(") and ((mid(sInput,1,(iPosition+1)))=")")) begin
+                error 900 "Empty Parentheses not allowed."
+                function_return 1
+            end
+            increment iPosition
+        loop
+        //
+        if (sInput contains "><") begin // invalid syntax for not equal
+            error 900 "INVALID USE OF LOGICAL SYMBOLS: ><"
+            function_return 1
+        end
+        //
+        if (bFail) ;
+            error 900 "INVALID SYMBOL USED FOR PROMPT OR CONSTANT"
+        if (iLeftParen <> iRightParen) begin
+            error 900 "UNEQUAL PARENTHESES"
+            move DFTRUE to bFail
+        end
+        function_return bFail
+    end_function // FormulaValidation
+
+    // LinkCodeValidation:
+    function LinkCodeValidation integer iField integer iLinkCode returns integer
+        integer bFail iOprec
+        string  sSymbol
+        // Insert Code Here
+        //showln ("MODE" * string(Operation_Mode))
+        if (Operation_Mode = MODE_FINDING) function_return
+        if (NOT(iLinkCode)) function_return
+        //
+        send Refind_Records
+        //
+        if (iLinkCode = Jcoper.Opcode) begin
+            error 900 "Link code must be a different standard"
+            move DFTRUE to bFail
+        end
+        if (NOT(bFail)) begin
+            get Current_Record to iOprec
+            clear Jcoper
+            move iLinkCode to Jcoper.Opcode
+            find EQ Jcoper by Index.2
+            if (NOT(FOUND)) begin
+                error 900 "Link code does not exist"
+                move DFTRUE to bFail
+            end
+            if (NOT(bFail) AND Jcoper.Est_std <> "Y" AND Operation_Mode = MODE_SAVING) begin
+                get Field_Current_Value (iField + 9) to sSymbol
+                // this is only allowed when getting the standard value
+                if (sSymbol = "S") break
+                // otherwise, this is an error
+                error 900 "Link code is not an Estimating Standard"
+                move DFTRUE to bFail
+            end
+            send Refind_Records
+        end
+        function_return bFail
+    end_function   // LinkCodeValidation
+
+    Function Dflt_Value_Validation integer iField integer iDflt_Value Returns integer
+        integer iFld_Var1_Tag_Symbl iLinkcode iPos
+        string sVarModifiers sLinkSymbol
+        if (Operation_Mode = MODE_FINDING) function_return
+//        If (Operation_Mode<>MODE_SAVING or Operation_Origin <> SELF) function_return
+        If (Operation_Origin <> SELF) function_return
+        get Field_Current_Value (iField + 133) to sVarModifiers
+        get Field_Current_Value (iField + 9) to iLinkcode
+        get Field_Current_Value (iField + 18) to sLinkSymbol
+        if (sVarModifiers contains "I3" or  ; 
+            sVarModifiers contains "CC" or  ;
+            sVarModifiers contains "OP" and ;
+            iDflt_Value = 0 and ; 
+            iLinkCode = 0) ; 
+            Begin
+                error 900 "Modifier Sign in use requires a default value or a link to supply value."
+                function_return 1
+            End
+        else if (sVarModifiers contains "D" and (iLinkcode=0 and sLinkSymbol="")) Begin
+                //test if "D" used as operand value in conditional comparison
+                // operator must be 1 or 2 characters to left of D, also ^ and ?
+                move (pos("D",sVarModifiers)) to iPos
+                if ("><=~" contains (Mid(sVarModifiers,(iPos-1 max 0),1))) function_return
+                if ("><=~" contains (Mid(sVarModifiers,(iPos-2 max 0),1))) function_return
+                error 900 ("Modifier Sign" * "'D'" * "requires a link to supply value.")
+                function_return 1
+        end
+    End_Function    
+    
+    // 438Validate_Save:
+    // This function is used to perform validation checking before a
+    // save operation. It should return zero if the save is allowed
+    // otherwise it should return non-zero or generate an error to
+    // prevent the save. By default it returns zero to allow the save.
+    // This function should be used to inforce business rules and
+    // integrity rules on the database. If this function returns a non-
+    // zero value, the current save operation is aborted, the records
+    // involved in the save are 'rolled back' to their original values,
+    // and the Transaction_Aborted message is sent.
+
+    Function Validate_Save  Returns Integer
+        Local Integer iReturnVal
+        Forward Get Validate_Save  To iReturnVal
+        If (Not(iReturnVal)) Begin
+            // Insert Code Here
+            if Jcoper.Idno eq 0 error 900 "Jcoper.Idno required."
+            If (jcoper.est_formula > "" and jcoper.est_formula_typ ="") ; 
+               error 900 "Missing Prod. Units formula type value."
+            If (jcoper.formula > "" and jcoper.calc_units_desc ="") ; 
+               error 900 "Misscing Calc. Units formula description."
+        End
+        Function_Return iReturnVal
+    End_Function   // Validate_Save
+
+    procedure Creating
+        local integer iOpcode iIdno
+        forward send Creating
+//        calc (JCCNTR.IDNO * 10000) to iOpcode
+        calc (JCCNTR.IDNO * 1000) to iOpcode
+        if (iOpcode < 0 and JCOPER.IDNO > 0) move ;
+            (JCOPER.IDNO * -1) to JCOPER.IDNO
+        move (iOpcode + JCOPER.IDNO) to JCOPER.OPCODE
+    end_procedure
+
+    procedure Update
+        integer iTagSymbl iLinkSymbl iFile iIndex iPos iLinkCode
+        string  sTagSymbl sLinkSymbl sInstruction sLinkCode
+        //
+        forward send Update
+        //
+        add 1 to Jccntr.Count
+        //
+        if (Jcoper.Est_std = "Y") begin
+            if (NOT(Jcoper.Calc_flags CONTAINS "D")) add 1 to Jccntr.Std_count
+        end
+        // add Jcoper values to Jccntr using conditionals if appropriate
+        //
+        if (pbEditStandards(self)) begin
+            move Jcoper.File_number to iFile
+            move 233                to iTagSymbl
+            move 118                to iLinkSymbl
+            move 109                to iLinkCode
+            // check for unnecessary "!" in tag symbols
+            for iIndex from 0 to 8
+                get_field_value iFile (iTagSymbl  + iIndex) to sTagSymbl
+                get_field_value iFile (iLinkSymbl + iIndex) to sLinkSymbl
+                get_field_value iFile (iLinkCode  + iIndex) to sLinkCode
+                trim sLinkCode to sLinkCode
+                if (sTagSymbl CONTAINS "!") begin
+                    if ("ABCDEFGHI123456789#LW$!" CONTAINS sLinkSymbl) begin
+                        move (replaces("!",sTagSymbl,"")) to sTagSymbl
+                        set_field_value iFile (iTagSymbl + iIndex) to sTagSymbl
+                    end // if ("ABCDEFGHI123456789" CONTAINS sLinkSymbl)
+                end // if (sTagSymbl CONTAINS "!")
+                // check for contradictory "@" in tag symbols
+                if (sTagSymbl CONTAINS "@") begin
+                    if ("ABCDEFGHI123456789#LW$!" CONTAINS sLinkSymbl ;
+                        or sLinkCode<>0) begin
+                            move (replaces("@",sTagSymbl,"")) to sTagSymbl
+                            set_field_value iFile (iTagSymbl + iIndex) to sTagSymbl
+                    end // if ("ABCDEFGHI123456789" CONTAINS sLinkSymbl)
+                end // if (sTagSymbl CONTAINS "@")
+                // check for contradictory "T" in tag symbols
+                if (sTagSymbl CONTAINS "T") begin
+                    if ("ABCDEFGHI123456789#LW$!" CONTAINS sLinkSymbl ;
+                        or sLinkCode<>0) begin
+                            move (replaces("T",sTagSymbl,"")) to sTagSymbl
+                            set_field_value iFile (iTagSymbl + iIndex) to sTagSymbl
+                    end // if ("ABCDEFGHI123456789" CONTAINS sLinkSymbl)
+                end // if (sTagSymbl CONTAINS "T")
+            loop
+            //
+            if (Jcoper.Calc_flags CONTAINS ">") begin
+                move (pos(">",Jcoper.Calc_flags)) to iPos
+                if (mid(Jcoper.Calc_flags,1,(iPos-1)) <> "I") ;
+                    move (replaces(">",Jcoper.Calc_flags,"")) to Jcoper.Calc_flags
+            end // if (Jcoper.Calc_flags CONTAINS ">")
+            if (Jcoper.Est_Formula_Typ=":") Move "HOURS" to Jcoper.Calc_Std_Desc
+            if (Jcoper.Est_Formula_Typ="$") Move "DOLLARS" to Jcoper.Calc_Std_Desc
+        end
+        if (not("LH" contains left(Jcoper.Optype,1))) begin //don't allow non-zero values for non-labor items
+            move 0 to Jcoper.Unit_Costing
+            move 0 to Jcoper.Std1
+        end
+    end_procedure
+
+    procedure Backout
+        forward send Backout
+        //
+        subtract 1 from Jccntr.Count
+        //
+        if (Jcoper.Est_std = "Y") begin
+            if (NOT(Jcoper.Calc_flags CONTAINS "D")) subtract 1 from Jccntr.Std_count
+        end
+        // Subtract Jcoper values from Jccntr using conditionals if appropriate
+        //
+    end_procedure
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Jcoper.Markup To 1.0
+        Set Field_Changed_Value   Field Jcoper.Eff_Lo To 0.35
+        Set Field_Changed_Value   Field Jcoper.Eff_Hi To 2.5
+    End_Procedure    // Field_Defaults
+
+    // functions to display the actual average standard achieved for all periods
+    // Type 1 = std. in minutes = ( ttl hrs / ttl units ) * 60
+    // Type 2 = speed (units/hr) = ttl units / ttl hrs
+
+    /// determine which quarter today is in
+    Function QuarterInDate Returns integer
+        date dToday
+        integer iMonth iQtr
+        //
+        sysdate dToday
+        //If dToday GT 12/31/99 Move (dToday -693975) to dToday
+        //Move (Get_Month(dToday)) to iMonth
+        move (VDFQ_DateSegment(dToday,DS_MONTH)) to iMonth
+        If iMonth LT 4 Move 1 to iQtr
+        If ( (iMonth GE 4) and (iMonth LE 6) ) Move 2 to iQtr
+        If ( (iMonth GE 7) and (iMonth LE 9) ) Move 3 to iQtr
+        If iMonth GT 9 Move 4 to iQtr
+        Function_Return iQtr
+    End_Function
+
+    Function Q1_AvgStd returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number RegHrs RegUnits AltHrs AltUnits SplHrs SplUnits
+        Local Number Hours Units StdType EffRegHrs EffAltHrs EffSplHrs EffHours
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        //
+        Get Field_Current_Value Field JCOPER.Q1_RegHrs to RegHrs
+        Get Field_Current_Value Field JCOPER.Q1_RegUnits to RegUnits
+        Get Field_Current_Value Field JCOPER.Q1_AltHrs to AltHrs
+        Get Field_Current_Value Field JCOPER.Q1_AltUnits to AltUnits
+        Get Field_Current_Value Field JCOPER.Q1_SplHrs to SplHrs
+        Get Field_Current_Value Field JCOPER.Q1_SplUnits to SplUnits
+        Move (RegHrs +AltHrs +SplHrs) to Hours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        Get Field_Current_Value Field JCOPER.Q1Eff_RegHrs to EffRegHrs
+        Get Field_Current_Value Field JCOPER.Q1Eff_AltHrs to EffAltHrs
+        Get Field_Current_Value Field JCOPER.Q1Eff_SplHrs to EffSplHrs
+        Move (EffRegHrs +EffAltHrs +EffSplHrs) to EffHours
+        If StdType EQ 1 Function_Return (EffHours /Units *60)
+        If StdType EQ 2 Function_Return (Units /EffHours)
+        If StdType EQ 0 Function_Return (Hours /Units *60)
+    End_Function
+
+
+    Function Q2_AvgStd returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local Number RegHrs RegUnits AltHrs AltUnits SplHrs SplUnits
+        Local Number Hours Units StdType EffRegHrs EffAltHrs EffSplHrs EffHours
+        Local String Optype
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        Local Integer Current_Qtr
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        get QuarterInDate to Current_Qtr
+        if Current_Qtr lt 2 function_return
+        //
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Q2_RegHrs to RegHrs
+        Get Field_Current_Value Field JCOPER.Q2_RegUnits to RegUnits
+        Get Field_Current_Value Field JCOPER.Q2_AltHrs to AltHrs
+        Get Field_Current_Value Field JCOPER.Q2_AltUnits to AltUnits
+        Get Field_Current_Value Field JCOPER.Q2_SplHrs to SplHrs
+        Get Field_Current_Value Field JCOPER.Q2_SplUnits to SplUnits
+        Move (RegHrs +AltHrs +SplHrs) to Hours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        Get Field_Current_Value Field JCOPER.Q2Eff_RegHrs to EffRegHrs
+        Get Field_Current_Value Field JCOPER.Q2Eff_AltHrs to EffAltHrs
+        Get Field_Current_Value Field JCOPER.Q2Eff_SplHrs to EffSplHrs
+        Move (EffRegHrs +EffAltHrs +EffSplHrs) to EffHours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        If StdType EQ 1 Function_Return (EffHours /Units *60)
+        If StdType EQ 2 Function_Return (Units /EffHours)
+        If StdType EQ 0 Function_Return (Hours /Units *60)
+    End_Function
+
+    Function Q3_AvgStd returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local Number RegHrs RegUnits AltHrs AltUnits SplHrs SplUnits
+        Local Number Hours Units StdType EffRegHrs EffAltHrs EffSplHrs EffHours
+        Local String Optype
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        Local Integer Current_Qtr
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        get QuarterInDate to Current_Qtr
+        if Current_Qtr lt 3 function_return
+        //
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Q3_RegHrs to RegHrs
+        Get Field_Current_Value Field JCOPER.Q3_RegUnits to RegUnits
+        Get Field_Current_Value Field JCOPER.Q3_AltHrs to AltHrs
+        Get Field_Current_Value Field JCOPER.Q3_AltUnits to AltUnits
+        Get Field_Current_Value Field JCOPER.Q3_SplHrs to SplHrs
+        Get Field_Current_Value Field JCOPER.Q3_SplUnits to SplUnits
+        Move (RegHrs +AltHrs +SplHrs) to Hours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        Get Field_Current_Value Field JCOPER.Q3Eff_RegHrs to EffRegHrs
+        Get Field_Current_Value Field JCOPER.Q3Eff_AltHrs to EffAltHrs
+        Get Field_Current_Value Field JCOPER.Q3Eff_SplHrs to EffSplHrs
+        Move (EffRegHrs +EffAltHrs +EffSplHrs) to EffHours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        If StdType EQ 1 Function_Return (EffHours /Units *60)
+        If StdType EQ 2 Function_Return (Units /EffHours)
+        If StdType EQ 0 Function_Return (Hours /Units *60)
+    End_Function
+
+    Function Q4_AvgStd returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local Number RegHrs RegUnits AltHrs AltUnits SplHrs SplUnits
+        Local Number Hours Units StdType EffRegHrs EffAltHrs EffSplHrs EffHours
+        Local String Optype
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        Local Integer Current_Qtr
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        get QuarterInDate to Current_Qtr
+        if Current_Qtr lt 4 function_return
+        //
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Q4_RegHrs to RegHrs
+        Get Field_Current_Value Field JCOPER.Q4_RegUnits to RegUnits
+        Get Field_Current_Value Field JCOPER.Q4_AltHrs to AltHrs
+        Get Field_Current_Value Field JCOPER.Q4_AltUnits to AltUnits
+        Get Field_Current_Value Field JCOPER.Q4_SplHrs to SplHrs
+        Get Field_Current_Value Field JCOPER.Q4_SplUnits to SplUnits
+        Move (RegHrs +AltHrs +SplHrs) to Hours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        Get Field_Current_Value Field JCOPER.Q4Eff_RegHrs to EffRegHrs
+        Get Field_Current_Value Field JCOPER.Q4Eff_AltHrs to EffAltHrs
+        Get Field_Current_Value Field JCOPER.Q4Eff_SplHrs to EffSplHrs
+        Move (EffRegHrs +EffAltHrs +EffSplHrs) to EffHours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        If StdType EQ 1 Function_Return (EffHours /Units *60)
+        If StdType EQ 2 Function_Return (Units /EffHours)
+        If StdType EQ 0 Function_Return (Hours /Units *60)
+    End_Function
+
+    Function YTD_AvgStd returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local Number RegHrs RegUnits AltHrs AltUnits SplHrs SplUnits
+        Local Number Hours Units StdType EffRegHrs EffAltHrs EffSplHrs EffHours
+        Local String Optype
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        Local Integer Current_Qtr
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        //
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.TTL_RegHrs to RegHrs
+        Get Field_Current_Value Field JCOPER.TTL_RegUnits to RegUnits
+        Get Field_Current_Value Field JCOPER.TTL_AltHrs to AltHrs
+        Get Field_Current_Value Field JCOPER.TTL_AltUnits to AltUnits
+        Get Field_Current_Value Field JCOPER.TTL_SplHrs to SplHrs
+        Get Field_Current_Value Field JCOPER.TTL_SplUnits to SplUnits
+        Move (RegHrs +AltHrs +SplHrs) to Hours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        Get Field_Current_Value Field JCOPER.TTLEff_RegHrs to EffRegHrs
+        Get Field_Current_Value Field JCOPER.TTLEff_AltHrs to EffAltHrs
+        Get Field_Current_Value Field JCOPER.TTLEff_SplHrs to EffSplHrs
+        Move (EffRegHrs +EffAltHrs +EffSplHrs) to EffHours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        If StdType EQ 1 Function_Return (EffHours /Units *60)
+        If StdType EQ 2 Function_Return (Units /EffHours)
+        If StdType EQ 0 Function_Return (Hours /Units *60)
+    End_Function
+
+    Function PrevYr_AvgStd returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local Number RegHrs RegUnits AltHrs AltUnits SplHrs SplUnits
+        Local Number Hours Units StdType EffRegHrs EffAltHrs EffSplHrs EffHours
+        Local String Optype
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        Local Integer Current_Qtr
+        Get Field_Current_Value Field JCOPER.OpType to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        //
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.PrevYr_RegHrs to RegHrs
+        Get Field_Current_Value Field JCOPER.PrevYr_RegUnits to RegUnits
+        Get Field_Current_Value Field JCOPER.PrevYr_AltHrs to AltHrs
+        Get Field_Current_Value Field JCOPER.PrevYr_AltUnits to AltUnits
+        Get Field_Current_Value Field JCOPER.PrevYr_SplHrs to SplHrs
+        Get Field_Current_Value Field JCOPER.PrevYr_SplUnits to SplUnits
+        Move (RegHrs +AltHrs +SplHrs) to Hours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        Get Field_Current_Value Field JCOPER.PreEff_RegHrs to EffRegHrs
+        Get Field_Current_Value Field JCOPER.PreEff_AltHrs to EffAltHrs
+        Get Field_Current_Value Field JCOPER.PreEff_SplHrs to EffSplHrs
+        Move (EffRegHrs +EffAltHrs +EffSplHrs) to EffHours
+        Move (RegUnits +AltUnits +SplUnits) to Units
+        If StdType EQ 1 Function_Return (EffHours /Units *60)
+        If StdType EQ 2 Function_Return (Units /EffHours)
+        If StdType EQ 0 Function_Return (Hours /Units *60)
+    End_Function
+
+    Function Q1_Eff returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number StdType AvgStd ParStd
+        Get Field_Current_Value Field JCOPER.Optype to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Standard to ParStd
+        Get Q1_AvgStd to AvgStd
+        If StdType EQ 2 Function_Return (AvgStd /ParStd *100)
+        If StdType EQ 1 Function_Return (ParStd /AvgStd *100)
+    End_Function
+
+    Function Q2_Eff returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number StdType AvgStd ParStd
+        Get Field_Current_Value Field JCOPER.Optype to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Standard to ParStd
+        Get Q2_AvgStd to AvgStd
+        If StdType EQ 2 Function_Return (AvgStd /ParStd *100)
+        If StdType EQ 1 Function_Return (ParStd /AvgStd *100)
+    End_Function
+
+    Function Q3_Eff returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number StdType AvgStd ParStd
+        Get Field_Current_Value Field JCOPER.Optype to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Standard to ParStd
+        Get Q3_AvgStd to AvgStd
+        If StdType EQ 2 Function_Return (AvgStd /ParStd *100)
+        If StdType EQ 1 Function_Return (ParStd /AvgStd *100)
+    End_Function
+
+    Function Q4_Eff returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number StdType AvgStd ParStd
+        Get Field_Current_Value Field JCOPER.Optype to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Standard to ParStd
+        Get Q4_AvgStd to AvgStd
+        If StdType EQ 2 Function_Return (AvgStd /ParStd *100)
+        If StdType EQ 1 Function_Return (ParStd /AvgStd *100)
+    End_Function
+
+    Function YTD_Eff returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number StdType AvgStd ParStd
+        Get Field_Current_Value Field JCOPER.Optype to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Standard to ParStd
+        Get YTD_AvgStd to AvgStd
+        If StdType EQ 2 Function_Return (AvgStd /ParStd *100)
+        If StdType EQ 1 Function_Return (ParStd /AvgStd *100)
+    End_Function
+
+    Function PrevYr_Eff returns number
+        if not (Current_Record(Current_Object)) function_return
+        Local String Optype
+        Local Number StdType AvgStd ParStd
+        Get Field_Current_Value Field JCOPER.Optype to Optype
+        If not Optype in "L0L1L2L3L4H0H1H2H3H4" Function_Return
+        Get Field_Current_Value Field JCOPER.Std_Type to StdType
+        Get Field_Current_Value Field JCOPER.Standard to ParStd
+        Get PrevYr_AvgStd to AvgStd
+        If StdType EQ 2 Function_Return (AvgStd /ParStd *100)
+        If StdType EQ 1 Function_Return (ParStd /AvgStd *100)
+    End_Function
+
+    Procedure RemoveEstimatingData
+        //BC 07/28/04 disallow if operation is in use in estimating tables
+//        Clear Esitem Eslitm Esjitm
+//        Move Jcoper.Opcode to Esitem.Opcode
+//        Move Jcoper.Opcode to Eslitm.Opcode
+//        Move Jcoper.Opcode to Esjitm.Opcode
+//        Find GE Esitem by Index.4
+//        Find GE Eslitm by Index.3
+//        Find GE Esjitm by Index.6
+//        if (Esitem.Recnum>0 and Esitem.Opcode=Jcoper.Opcode) begin
+//            Send Stop_Box "Standard is in use by an Estimate and cannot be removed."
+//            Clear Esitem Eslitm Esjitm
+//            Procedure_Return
+//        end
+//        else if (Eslitm.Recnum>0 and Eslitm.Opcode=Jcoper.Opcode) begin
+//            Send Stop_Box "Standard is in use by a Library Component and cannot be removed."
+//            Clear Esitem Eslitm Esjitm
+//            Procedure_Return
+//        end
+//        else if (Esjitm.Recnum>0 and Esjitm.Opcode=Jcoper.Opcode) begin
+//            Send Stop_Box "Standard is in use by a Job Component and cannot be removed."
+//            Clear Esitem Eslitm Esjitm
+//            Procedure_Return
+//        end
+        set Field_Changed_Value  69 to ""
+        set Field_Changed_Value  77 to ""  // LOOKUP_VAR       ASC      1   333
+        set Field_Changed_Value  78 to ""  // BRACKET_VAR      ASC      1   334
+        set Field_Changed_Value  79 to "N" // PRORATE_BRACKET  ASC      1   335
+        set Field_Changed_Value  80 to "N" // PRORATE_LOOKUP   ASC      1   336
+        set Field_Changed_Value  81 to ""  // CALC_FLAGS       ASC     26   337
+        set Field_Changed_Value  82 to ""  // FORMULA          ASC     54   363
+        set Field_Changed_Value  83 to ""  // EST_FORMULA      ASC     54   417
+        set Field_Changed_Value  84 to ""  // EST_FORMULA_TYP  ASC      1   471
+        set Field_Changed_Value  85 to ""  // CALC_UNITS_DESC  ASC     14   472
+        set Field_Changed_Value  86 to ""  // TABLE_STD_DESC   ASC     14   486
+        set Field_Changed_Value  87 to ""  // LOOKUP_DESC      ASC     14   500
+        set Field_Changed_Value  88 to ""  // BRACKET_DESC     ASC     14   514
+        set Field_Changed_Value  89 to 0   // LINK_DEPTH       NUM    2.0   528
+        set Field_Changed_Value  90 to ""  // LINK_SYMBOL      ASC      1   529
+        set Field_Changed_Value  91 to ""  // VAR1_TAG         ASC     30   530
+        set Field_Changed_Value  92 to ""  // VAR2_TAG         ASC     30   560
+        set Field_Changed_Value  93 to ""  // VAR3_TAG         ASC     30   590
+        set Field_Changed_Value  94 to ""  // VAR4_TAG         ASC     30   620
+        set Field_Changed_Value  95 to ""  // VAR5_TAG         ASC     30   650
+        set Field_Changed_Value  96 to ""  // VAR6_TAG         ASC     30   680
+        set Field_Changed_Value  97 to ""  // VAR7_TAG         ASC     30   710
+        set Field_Changed_Value  98 to ""  // VAR8_TAG         ASC     30   740
+        set Field_Changed_Value  99 to ""  // VAR9_TAG         ASC     30   770
+        set Field_Changed_Value 100 to 0   // VAR1_DFLT_VALUE  NUM    8.4   800
+        set Field_Changed_Value 101 to 0   // VAR2_DFLT_VALUE  NUM    8.4   806
+        set Field_Changed_Value 102 to 0   // VAR3_DFLT_VALUE  NUM    8.4   812
+        set Field_Changed_Value 103 to 0   // VAR4_DFLT_VALUE  NUM    8.4   818
+        set Field_Changed_Value 104 to 0   // VAR5_DFLT_VALUE  NUM    8.4   824
+        set Field_Changed_Value 105 to 0   // VAR6_DFLT_VALUE  NUM    8.4   830
+        set Field_Changed_Value 106 to 0   // VAR7_DFLT_VALUE  NUM    8.4   836
+        set Field_Changed_Value 107 to 0   // VAR8_DFLT_VALUE  NUM    8.4   842
+        set Field_Changed_Value 108 to 0   // VAR9_DFLT_VALUE  NUM    8.4   848
+        set Field_Changed_Value 109 to 0   // VAR1_LINK_CODE   NUM    8.0   854
+        set Field_Changed_Value 110 to 0   // VAR2_LINK_CODE   NUM    8.0   858
+        set Field_Changed_Value 111 to 0   // VAR3_LINK_CODE   NUM    8.0   862
+        set Field_Changed_Value 112 to 0   // VAR4_LINK_CODE   NUM    8.0   866
+        set Field_Changed_Value 113 to 0   // VAR5_LINK_CODE   NUM    8.0   870
+        set Field_Changed_Value 114 to 0   // VAR6_LINK_CODE   NUM    8.0   874
+        set Field_Changed_Value 115 to 0   // VAR7_LINK_CODE   NUM    8.0   878
+        set Field_Changed_Value 116 to 0   // VAR8_LINK_CODE   NUM    8.0   882
+        set Field_Changed_Value 117 to 0   // VAR9_LINK_CODE   NUM    8.0   886
+        set Field_Changed_Value 118 to ""  // VAR1_LINK_SYMBL  ASC      1   890
+        set Field_Changed_Value 119 to ""  // VAR2_LINK_SYMBL  ASC      1   891
+        set Field_Changed_Value 120 to ""  // VAR3_LINK_SYMBL  ASC      1   892
+        set Field_Changed_Value 121 to ""  // VAR4_LINK_SYMBL  ASC      1   893
+        set Field_Changed_Value 122 to ""  // VAR5_LINK_SYMBL  ASC      1   894
+        set Field_Changed_Value 123 to ""  // VAR6_LINK_SYMBL  ASC      1   895
+        set Field_Changed_Value 124 to ""  // VAR7_LINK_SYMBL  ASC      1   896
+        set Field_Changed_Value 125 to ""  // VAR8_LINK_SYMBL  ASC      1   897
+        set Field_Changed_Value 126 to ""  // VAR9_LINK_SYMBL  ASC      1   898
+        set Field_Changed_Value 127 to ""  // CON1_DESC        ASC     30   899
+        set Field_Changed_Value 128 to ""  // CON2_DESC        ASC     30   929
+        set Field_Changed_Value 129 to ""  // CON3_DESC        ASC     30   959
+        set Field_Changed_Value 130 to ""  // CON4_DESC        ASC     30   989
+        set Field_Changed_Value 131 to ""  // CON5_DESC        ASC     30  1019
+        set Field_Changed_Value 132 to ""  // CON6_DESC        ASC     30  1049
+        set Field_Changed_Value 133 to ""  // CON7_DESC        ASC     30  1079
+        set Field_Changed_Value 134 to ""  // CON8_DESC        ASC     30  1109
+        set Field_Changed_Value 135 to ""  // CON9_DESC        ASC     30  1139
+        set Field_Changed_Value 136 to 0   // CON1_VALUE       NUM    8.4  1169
+        set Field_Changed_Value 137 to 0   // CON2_VALUE       NUM    8.4  1175
+        set Field_Changed_Value 138 to 0   // CON3_VALUE       NUM    8.4  1181
+        set Field_Changed_Value 139 to 0   // CON4_VALUE       NUM    8.4  1187
+        set Field_Changed_Value 140 to 0   // CON5_VALUE       NUM    8.4  1193
+        set Field_Changed_Value 141 to 0   // CON6_VALUE       NUM    8.4  1199
+        set Field_Changed_Value 142 to 0   // CON7_VALUE       NUM    8.4  1205
+        set Field_Changed_Value 143 to 0   // CON8_VALUE       NUM    8.4  1211
+        set Field_Changed_Value 144 to 0   // CON9_VALUE       NUM    8.4  1217
+        set Field_Changed_Value 145 to 0   // CON1_LINK_CODE   NUM    8.0  1223
+        set Field_Changed_Value 146 to 0   // CON2_LINK_CODE   NUM    8.0  1227
+        set Field_Changed_Value 147 to 0   // CON3_LINK_CODE   NUM    8.0  1231
+        set Field_Changed_Value 148 to 0   // CON4_LINK_CODE   NUM    8.0  1235
+        set Field_Changed_Value 149 to 0   // CON5_LINK_CODE   NUM    8.0  1239
+        set Field_Changed_Value 150 to 0   // CON6_LINK_CODE   NUM    8.0  1243
+        set Field_Changed_Value 151 to 0   // CON7_LINK_CODE   NUM    8.0  1247
+        set Field_Changed_Value 152 to 0   // CON8_LINK_CODE   NUM    8.0  1251
+        set Field_Changed_Value 153 to 0   // CON9_LINK_CODE   NUM    8.0  1255
+        set Field_Changed_Value 154 to ""  // CON1_LINK_SYMBL  ASC      1  1259
+        set Field_Changed_Value 155 to ""  // CON2_LINK_SYMBL  ASC      1  1260
+        set Field_Changed_Value 156 to ""  // CON3_LINK_SYMBL  ASC      1  1261
+        set Field_Changed_Value 157 to ""  // CON4_LINK_SYMBL  ASC      1  1262
+        set Field_Changed_Value 158 to ""  // CON5_LINK_SYMBL  ASC      1  1263
+        set Field_Changed_Value 159 to ""  // CON6_LINK_SYMBL  ASC      1  1264
+        set Field_Changed_Value 160 to ""  // CON7_LINK_SYMBL  ASC      1  1265
+        set Field_Changed_Value 161 to ""  // CON8_LINK_SYMBL  ASC      1  1266
+        set Field_Changed_Value 162 to ""  // CON9_LINK_SYMBL  ASC      1  1267
+        set Field_Changed_Value 163 to 0   // BRACKET1_VALUE   NUM    8.4  1268
+        set Field_Changed_Value 164 to 0   // BRACKET2_VALUE   NUM    8.4  1274
+        set Field_Changed_Value 165 to 0   // BRACKET3_VALUE   NUM    8.4  1280
+        set Field_Changed_Value 166 to 0   // BRACKET4_VALUE   NUM    8.4  1286
+        set Field_Changed_Value 167 to 0   // BRACKET5_VALUE   NUM    8.4  1292
+        set Field_Changed_Value 168 to 0   // LOOKUP1_VALUE    NUM    8.4  1298
+        set Field_Changed_Value 169 to 0   // LOOKUP2_VALUE    NUM    8.4  1304
+        set Field_Changed_Value 170 to 0   // LOOKUP3_VALUE    NUM    8.4  1310
+        set Field_Changed_Value 171 to 0   // LOOKUP4_VALUE    NUM    8.4  1316
+        set Field_Changed_Value 172 to 0   // LOOKUP5_VALUE    NUM    8.4  1322
+        set Field_Changed_Value 173 to 0   // LOOKUP6_VALUE    NUM    8.4  1328
+        set Field_Changed_Value 174 to 0   // LOOKUP7_VALUE    NUM    8.4  1334
+        set Field_Changed_Value 175 to 0   // LOOKUP8_VALUE    NUM    8.4  1340
+        set Field_Changed_Value 176 to 0   // LOOKUP9_VALUE    NUM    8.4  1346
+        set Field_Changed_Value 177 to 0   // LOOKUP10_VALUE   NUM    8.4  1352
+        set Field_Changed_Value 178 to 0   // L1B1_STD         NUM    6.4  1358
+        set Field_Changed_Value 179 to 0   // L1B2_STD         NUM    6.4  1363
+        set Field_Changed_Value 180 to 0   // L1B3_STD         NUM    6.4  1368
+        set Field_Changed_Value 181 to 0   // L1B4_STD         NUM    6.4  1373
+        set Field_Changed_Value 182 to 0   // L1B5_STD         NUM    6.4  1378
+        set Field_Changed_Value 183 to 0   // L2B1_STD         NUM    6.4  1383
+        set Field_Changed_Value 184 to 0   // L2B2_STD         NUM    6.4  1388
+        set Field_Changed_Value 185 to 0   // L2B3_STD         NUM    6.4  1393
+        set Field_Changed_Value 186 to 0   // L2B4_STD         NUM    6.4  1398
+        set Field_Changed_Value 187 to 0   // L2B5_STD         NUM    6.4  1403
+        set Field_Changed_Value 188 to 0   // L3B1_STD         NUM    6.4  1408
+        set Field_Changed_Value 189 to 0   // L3B2_STD         NUM    6.4  1413
+        set Field_Changed_Value 190 to 0   // L3B3_STD         NUM    6.4  1418
+        set Field_Changed_Value 191 to 0   // L3B4_STD         NUM    6.4  1423
+        set Field_Changed_Value 192 to 0   // L3B5_STD         NUM    6.4  1428
+        set Field_Changed_Value 193 to 0   // L4B1_STD         NUM    6.4  1433
+        set Field_Changed_Value 194 to 0   // L4B2_STD         NUM    6.4  1438
+        set Field_Changed_Value 195 to 0   // L4B3_STD         NUM    6.4  1443
+        set Field_Changed_Value 196 to 0   // L4B4_STD         NUM    6.4  1448
+        set Field_Changed_Value 197 to 0   // L4B5_STD         NUM    6.4  1453
+        set Field_Changed_Value 198 to 0   // L5B1_STD         NUM    6.4  1458
+        set Field_Changed_Value 199 to 0   // L5B2_STD         NUM    6.4  1463
+        set Field_Changed_Value 200 to 0   // L5B3_STD         NUM    6.4  1468
+        set Field_Changed_Value 201 to 0   // L5B4_STD         NUM    6.4  1473
+        set Field_Changed_Value 202 to 0   // L5B5_STD         NUM    6.4  1478
+        set Field_Changed_Value 203 to 0   // L6B1_STD         NUM    6.4  1483
+        set Field_Changed_Value 204 to 0   // L6B2_STD         NUM    6.4  1488
+        set Field_Changed_Value 205 to 0   // L6B3_STD         NUM    6.4  1493
+        set Field_Changed_Value 206 to 0   // L6B4_STD         NUM    6.4  1498
+        set Field_Changed_Value 207 to 0   // L6B5_STD         NUM    6.4  1503
+        set Field_Changed_Value 208 to 0   // L7B1_STD         NUM    6.4  1508
+        set Field_Changed_Value 209 to 0   // L7B2_STD         NUM    6.4  1513
+        set Field_Changed_Value 210 to 0   // L7B3_STD         NUM    6.4  1518
+        set Field_Changed_Value 211 to 0   // L7B4_STD         NUM    6.4  1523
+        set Field_Changed_Value 212 to 0   // L7B5_STD         NUM    6.4  1528
+        set Field_Changed_Value 213 to 0   // L8B1_STD         NUM    6.4  1533
+        set Field_Changed_Value 214 to 0   // L8B2_STD         NUM    6.4  1538
+        set Field_Changed_Value 215 to 0   // L8B3_STD         NUM    6.4  1543
+        set Field_Changed_Value 216 to 0   // L8B4_STD         NUM    6.4  1548
+        set Field_Changed_Value 217 to 0   // L8B5_STD         NUM    6.4  1553
+        set Field_Changed_Value 218 to 0   // L9B1_STD         NUM    6.4  1558
+        set Field_Changed_Value 219 to 0   // L9B2_STD         NUM    6.4  1563
+        set Field_Changed_Value 220 to 0   // L9B3_STD         NUM    6.4  1568
+        set Field_Changed_Value 221 to 0   // L9B4_STD         NUM    6.4  1573
+        set Field_Changed_Value 222 to 0   // L9B5_STD         NUM    6.4  1578
+        set Field_Changed_Value 223 to 0   // L10B1_STD        NUM    6.4  1583
+        set Field_Changed_Value 224 to 0   // L10B2_STD        NUM    6.4  1588
+        set Field_Changed_Value 225 to 0   // L10B3_STD        NUM    6.4  1593
+        set Field_Changed_Value 226 to 0   // L10B4_STD        NUM    6.4  1598
+        set Field_Changed_Value 227 to 0   // L10B5_STD        NUM    6.4  1603
+        set Field_Changed_Value 228 to 0   // VALUE1_PASS      NUM    8.4  1608
+        set Field_Changed_Value 229 to 0   // VALUE2_PASS      NUM    8.4  1614
+        set Field_Changed_Value 230 to 0   // VALUE3_PASS      NUM    8.4  1620
+        set Field_Changed_Value 231 to ""  // CALC_STD_DESC    ASC     14  1626
+        set Field_Changed_Value 232 to ""  // MULTI_VAL_FLAG   ASC      1  1640
+        set Field_Changed_Value 233 to ""  // VAR1_TAG_SYMBL   ASC     15  1641
+        set Field_Changed_Value 234 to ""  // VAR2_TAG_SYMBL   ASC     15  1656
+        set Field_Changed_Value 235 to ""  // VAR3_TAG_SYMBL   ASC     15  1671
+        set Field_Changed_Value 236 to ""  // VAR4_TAG_SYMBL   ASC     15  1686
+        set Field_Changed_Value 237 to ""  // VAR5_TAG_SYMBL   ASC     15  1701
+        set Field_Changed_Value 238 to ""  // VAR6_TAG_SYMBL   ASC     15  1716
+        set Field_Changed_Value 239 to ""  // VAR7_TAG_SYMBL   ASC     15  1731
+        set Field_Changed_Value 240 to ""  // VAR8_TAG_SYMBL   ASC     15  1746
+        set Field_Changed_Value 241 to ""  // VAR9_TAG_SYMBL   ASC     15  1761
+        set Field_Changed_Value 242 to ""  // PRINT_FLAGS      ASC     26  1776
+        set Field_Changed_Value 243 to ""  // PICKLIST_CODE    ASC      1  1999
+        set Field_Changed_Value 244 to ""  // C1_TAG_SYMBL     ASC      6  2000
+        set Field_Changed_Value 245 to 0   // C1_LINK_CODE     NUM    6.0  2006
+        set Field_Changed_Value 246 to ""  // C1_LINK_SYMBL    ASC      1  2009
+        set Field_Changed_Value 247 to ""  // C2_TAG_SYMBL     ASC      6  2010
+        set Field_Changed_Value 248 to 0   // C2_LINK_CODE     NUM    6.0  2016
+        set Field_Changed_Value 249 to ""  // C2_LINK_SYMBL    ASC      1  2019
+        set Field_Changed_Value 250 to ""  // C3_TAG_SYMBL     ASC      6  2020
+        set Field_Changed_Value 251 to 0   //  C3_LINK_CODE     NUM    6.0  2026
+        set Field_Changed_Value 252 to ""  // C3_LINK_SYMBL    ASC      1  2029
+        set Field_Changed_Value 253 to ""  // SELL_FORMULA     ASC     54  2030
+        send Request_Save
+        // remove extended ESVARS standards data
+        if (NOT(Should_Save(self))) begin
+//            clear Esvars
+//            move Jcoper.Opcode to Esvars.Opcode
+//            Find GE Esvars.Opcode
+//            While ((FOUND) AND Esvars.Opcode = Jcoper.Opcode)
+//                Delete Esvars
+//                Find GT Esvars.Opcode
+//            Loop
+        End
+    End_Procedure
+
+End_Class    // Jcoper_DataDictionary
+
+#IFDEF Is$WebApp
+#ELSE
+
+Use JCOPER.SL        // JCOPER_SL
+
+#ENDIF
+

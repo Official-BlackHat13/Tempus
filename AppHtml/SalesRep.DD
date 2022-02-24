@@ -1,0 +1,84 @@
+//DDB-FileStart
+//DDB-HeaderStart
+
+// File Name : SalesRep.DD
+// Class Name: Salesrep_DataDictionary
+// Revision  : 5
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Salesrep
+
+//DDB-HeaderEnd
+
+Class Salesrep_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Define_Fields
+        Forward Send Define_Fields
+        //DDB-Generated-Code-Location
+        //DDB-DefineFieldStart
+
+        Set Main_File            To Salesrep.File_Number
+
+
+        // Field-based properties.......................
+
+        // Salesrep.Repidno
+
+        // Salesrep.Lastname
+
+        // Salesrep.Firstname
+
+        // Salesrep.Address1
+
+        // Salesrep.Address2
+
+        // Salesrep.City
+
+        // Salesrep.State
+        Set Field_Options          Field Salesrep.State To DD_CAPSLOCK   
+
+        // Salesrep.Zip
+
+        // Salesrep.Phone1
+        Set Field_Class_Name       Field Salesrep.Phone1 To "get_PhoneValidation"
+
+        // Salesrep.Phonetype1
+        Set Field_Class_Name       Field Salesrep.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Options          Field Salesrep.Phonetype1 To DD_CAPSLOCK   
+
+        // Salesrep.Phone2
+        Set Field_Class_Name       Field Salesrep.Phone2 To "get_PhoneValidation"
+
+        // Salesrep.Phonetype2
+        Set Field_Class_Name       Field Salesrep.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Options          Field Salesrep.Phonetype2 To DD_CAPSLOCK   
+
+        // Salesrep.Phone3
+        Set Field_Class_Name       Field Salesrep.Phone3 To "get_PhoneValidation"
+
+        // Salesrep.Phonetype3
+        Set Field_Class_Name       Field Salesrep.Phonetype3 To "cGlblDbComboForm"
+        Set Field_Options          Field Salesrep.Phonetype3 To DD_CAPSLOCK   
+
+        // Salesrep.Emailaddress
+
+        //DDB-DefineFieldEnd
+    End_Procedure    // Define_Fields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        //DDB-Generated-Code-Location
+        //DDB-FieldDefaultStart
+        //DDB-FieldDefaultEnd
+    End_Procedure    // Field_Defaults
+
+End_Class    // Salesrep_DataDictionary
+//DDB-FileEnd

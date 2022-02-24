@@ -1,0 +1,13 @@
+// tAreanote.pkg
+// used to retrieve remote server data
+
+Struct tAreanote
+    Integer iAreanoteId
+    Integer iAreaNumber
+    Date    dCreatedDate
+    String  sCreatedTime
+    Integer iCreatedBy
+    Date    dNoteDate
+    Integer iAreanoteRef
+    String  sNote
+End_Struct

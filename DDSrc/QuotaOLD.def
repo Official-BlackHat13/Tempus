@@ -1,0 +1,59 @@
+-----------------------------------------------------------------------------
+  DATE: 08/15/2013      TIME: 15:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Quota (# 66)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : DATAFLEX
+  FILE ROOT NAME            : Quota
+  USER DISPLAY NAME         : Quota
+  DATAFLEX FILE NAME        : Quota
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 128       ( USED: 107 )
+  MAX NUMBER OF RECORDS     : 10000     ( USED: 1 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : FILE
+  HEADER INTEGRITY CHECKING : YES
+  TRANSACTION TYPE          : CLIENT ATOMIC
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : 
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Quota_Idno       NUM    8.0     1  1   
+  2  SalesYear        DAT      6     5      
+  3  SalesRepIdno     NUM    8.0     8  2   SalesRep.FIELD_1 (5,1)
+  4  Asphalt_Q1       NUM    8.0    12      
+  5  Asphalt_Q2       NUM    8.0    16      
+  6  Asphalt_Q3       NUM    8.0    20      
+  7  Asphalt_Q4       NUM    8.0    24      
+  8  Concrete_Q1      NUM    8.0    28      
+  9  Concrete_Q2      NUM    8.0    32      
+ 10  Concrete_Q3      NUM    8.0    36      
+ 11  Concrete_Q4      NUM    8.0    40      
+ 12  Excavation_Q1    NUM    8.0    44      
+ 13  Excavation_Q2    NUM    8.0    48      
+ 14  Excavation_Q3    NUM    8.0    52      
+ 15  Excavation_Q4    NUM    8.0    56      
+ 16  Snow_Q1          NUM    8.0    60      
+ 17  Snow_Q2          NUM    8.0    64      
+ 18  Snow_Q3          NUM    8.0    68      
+ 19  Snow_Q4          NUM    8.0    72      
+ 20  Sweep_Q1         NUM    8.0    76      
+ 21  Sweep_Q2         NUM    8.0    80      
+ 22  Sweep_Q3         NUM    8.0    84      
+ 23  Sweep_Q4         NUM    8.0    88      
+ 24  Other_Q1         NUM    8.0    92      
+ 25  Other_Q2         NUM    8.0    96      
+ 26  Other_Q3         NUM    8.0   100      
+ 27  Other_Q4         NUM    8.0   104      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Quota_Idno      NO  NO       4      2       1     ON-LINE
+
+  2    SalesRepIdno    NO  NO       8      3       2     ON-LINE
+       Quota_Idno      NO  NO 
+

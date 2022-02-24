@@ -1,0 +1,171 @@
+// Class Name: Invhdr_DataDictionary
+// Revision  : 8
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Invhdr
+Open Invdtl
+Open Order
+Open System
+Open Customer
+Open Sht_Hdr
+
+
+Register_Object Invhdr_sl
+
+Class Invhdr_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Main_File to Invhdr.File_Number
+        Set Cascade_Delete_State to False
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+        Set Add_Client_File to Invdtl.File_Number
+        Set Add_Client_File to Sht_Hdr.File_Number
+     //   Set Add_Client_File to SnoSheet.File_Number
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Order.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to Syslog.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Invhdr.Invoiceidno to File_Field System.Lastinvoicehdr
+        Set Field_Prompt_Object Field Invhdr.InvoiceIdno to Invhdr_sl
+
+        Set Field_Mask_Type Field Invhdr.TotalAmount to Mask_Currency_Window
+        Set Field_Mask Field Invhdr.TotalAmount to "$ #,###,##0.00"
+
+        Set Field_Prompt_Object Field Invhdr.QBInvoiceNumber to Invhdr_sl
+
+        Set Field_Mask_Type Field Invhdr.TotalCost to Mask_Currency_Window
+        Set Field_Mask Field Invhdr.TotalCost to "$ #,###,##0.00"
+
+        Set Field_Mask_Type Field Invhdr.TaxTotal to Mask_Currency_Window
+        Set Field_Mask Field Invhdr.TaxTotal to "$ #,###,##0.00"
+
+        Set Field_Mask_Type Field Invhdr.SubTotal to Mask_Currency_Window
+        Set Field_Mask Field Invhdr.SubTotal to "$ #,###,##0.00"
+
+        // Field-based properties.......................
+
+        Send DoInitializeWatchedFields
+        // when TRUE this property initiates
+        // System Log functionality
+        Set pbUsesSystemLog to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // InvHdr.InvoiceIdno
+        Set piKey2 to 11 // InvHdr.JobNumber
+        //Set piKey3 to 
+
+    End_Procedure    // Construct_Object
+     
+     Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Invhdr.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+     End_Procedure 
+
+    Procedure DoInitializeWatchedFields
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hoArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hoArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hoArray   5 // InvHdr.InvoiceDate
+        Send DoAddArrayValue hoArray   6 // InvHdr.Terms
+        //Send DoAddArrayValue hoArray   7 // InvHdr.TotalAmount
+        Send DoAddArrayValue hoArray  12 // InvHdr.EditFlag
+        Send DoAddArrayValue hoArray  13 // InvHdr.VoidFlag
+        Send DoAddArrayValue hoArray  17 // InvHdr.PostReady
+        Send DoAddArrayValue hoArray  19 // InvHdr.InvReturnMessage
+        Send DoAddArrayValue hoArray  21 // InvHdr.QBInvoiceNumber
+        Send DoAddArrayValue hoArray  22 // InvHdr.QBPaidFlag
+        Send DoAddArrayValue hoArray  29 // InvHdr.QBAppliedAmount
+        Send DoAddArrayValue hoArray  32 // InvHdr.QBPaidDate
+        Send DoAddArrayValue hoArray  33 // InvHdr.CompleteFlag
+        Send DoAddArrayValue hoArray  34 // InvHdr.CompleteDate
+        Send DoAddArrayValue hoArray  35 // InvHdr.CompletedBy
+        Send DoAddArrayValue hoArray  36 // InvHdr.CompletedTotalAmount
+    End_Procedure // DoInitializeWatchedFields
+     
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here     
+        //
+        Move Location.CustomerIdno    to Invhdr.CustomerIdno
+        Move Location.LocationIdno    to Invhdr.LocationIdno
+        Move (Invhdr.PrintCount <> 0) to Invhdr.PrintFlag
+        Move 1                        to Invhdr.ChangedFlag
+        
+        //Add Invoice Total to Order Header, but on Update, subtract if Invoice was voided.
+        If (Invhdr.VoidFlag = 0) Begin
+            Add Invhdr.TotalAmount         to Order.InvoiceAmt
+        End
+        
+        
+    End_Procedure   // Update
+
+    Procedure Backout
+        Forward Send Backout
+        
+        Subtract Invhdr.TotalAmount from Order.InvoiceAmt
+    End_Procedure
+
+    Procedure Creating
+        Forward Send Creating
+        //
+        #IFDEF Is$WebApp
+        #ELSE
+        Integer iHr iMin iSec
+        String  sTime
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        Get IsTimeString iHr iMin iSec to sTime
+        //
+        Move dToday to Invhdr.CreatedDate
+        Move sTime  to Invhdr.CreatedTime
+        #ENDIF
+    End_Procedure
+
+
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // Invhdr_DataDictionary
+#IFDEF Is$WebApp
+#ELSE
+Use Invhdr.sl
+#ENDIF

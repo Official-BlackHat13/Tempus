@@ -1,0 +1,4 @@
+#REPLACE FILE71 MarketGroup
+#REPLACE MarketGroup.Recnum |FN71,0
+#REPLACE MarketGroup.MktGroupIdno |FN71,1
+#REPLACE MarketGroup.GroupName |FS71,2

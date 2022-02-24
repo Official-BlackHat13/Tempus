@@ -1,0 +1,197 @@
+Use cGlblDataDictionary.pkg
+
+Open OrderDtl
+Open Order
+Open MastOps
+Open System
+
+Register_Function QuantityValidation Integer iField Number nQuantity Returns Integer
+Register_Function PriceValidation Integer iField Number nPrice Returns Integer
+
+Class cOrderDtlGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to OrderDtl.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All        
+        Set Add_System_File to Syslog.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Order.File_Number
+        Set Add_Server_File to MastOps.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field OrderDtl.OrderDtlIdno to File_Field System.LastOrderDtlIdno
+
+        Set Field_Validate_msg Field OrderDtl.Quantity to get_QuantityValidation
+
+        Set Field_Entry_msg Field OrderDtl.Price to PriceEntry
+        Set Field_Validate_msg Field OrderDtl.Price to get_PriceValidation
+        Set Field_Mask_Type Field OrderDtl.Price to Mask_Currency_Window
+        Set Field_Mask Field OrderDtl.Price to "$ #,###,##0.00"
+
+        Set Field_Mask_Type Field OrderDtl.TaxRate to Mask_Numeric_Window
+        Set Field_Mask Field OrderDtl.TaxRate to "#0.0000 %"
+
+        Set Field_Mask_Type Field OrderDtl.TaxAmount to Mask_Currency_Window
+        Set Field_Mask Field OrderDtl.TaxAmount to "$ #,###,##0.00"
+        Set Field_Option Field OrderDtl.TaxAmount DD_NOENTER to True
+
+        Set Field_Option Field OrderDtl.Amount DD_NOENTER to True
+        Set Field_Mask_Type Field OrderDtl.Amount to Mask_Currency_Window
+        Set Field_Mask Field OrderDtl.Amount to "$ #,###,##0.00"
+
+        Set Field_Mask_Type Field OrderDtl.Sqft to Mask_Numeric_Window
+        Set Field_Mask Field OrderDtl.Sqft to "##,###,##0.00 sqft"
+
+        Set Field_Mask_Type Field OrderDtl.Lnft to Mask_Numeric_Window
+        Set Field_Mask Field OrderDtl.Lnft to "##,###,##0.00 lnft"
+
+        Set Field_Mask_Type Field OrderDtl.TotalManHours to Mask_Numeric_Window
+        Set Field_Mask Field OrderDtl.TotalManHours to "##,###,##0.00 h"
+        
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 2 // OrderDtl.OrderDtlIdno
+        Set piKey2 to 1 // OrderDtl.JobNumber 
+        Set piKey3 to 3 // OrderDtl.MastOps
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+        
+    End_Procedure
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   1 // OrderDtl.OrderDtlIdno
+        Send DoAddArrayValue hArray   2 // OrderDtl.JobNumber
+        Send DoAddArrayValue hArray   3 // OrderDtl.MastOpsIdno
+        Send DoAddArrayValue hArray   5 // OrderDtl.Sequence
+        Send DoAddArrayValue hArray   6 // OrderDtl.Quantity
+        Send DoAddArrayValue hArray   7 // OrderDtl.Price
+        Send DoAddArrayValue hArray   8 // OrderDtl.TaxRate
+        Send DoAddArrayValue hArray   9 // OrderDtl.TaxAmount
+        Send DoAddArrayValue hArray  10 // OrderDtl.Amount
+        Send DoAddArrayValue hArray  11 // OrderDtl.Description
+        Send DoAddArrayValue hArray  12 // OrderDtl.Instructions
+        Send DoAddArrayValue hArray  17 // OrderDtl.Sqft
+        Send DoAddArrayValue hArray  18 // OrderDtl.Lnft
+        Send DoAddArrayValue hArray  19 // OrderDtl.MatQuantity
+        Send DoAddArrayValue hArray  20 // OrderDtl.TotalMnHours
+        Send DoAddArrayValue hArray  21 // OrderDtl.OSCost
+        Send DoAddArrayValue hArray  22 // OrderDtl.MatCost
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+
+    Procedure PriceEntry Integer iField Number nPrice
+        If (nPrice = 0) Begin
+            Set Field_Changed_Value iField to MastOps.Sellrate
+        End
+    End_Procedure   // PriceEntry
+
+    Function PriceValidation Integer iField Number nPrice Returns Integer
+        Boolean bState
+        Number  nQuantity
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field OrderDtl.Quantity to nQuantity
+            Set Field_Changed_Value Field OrderDtl.Amount   to (nQuantity * nPrice)
+        End
+    End_Function   // PriceValidation
+
+    Function QuantityValidation Integer iField Number nQuantity Returns Integer
+        Boolean bState
+        Number  nPrice
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Get Field_Current_Value Field OrderDtl.Price to nPrice
+            Set Field_Changed_Value Field OrderDtl.Amount to (nQuantity * nPrice)
+        End
+    End_Function   // QuantityValidation
+    
+    Procedure Backout
+        Forward Send Backout
+        // Insert Code Here
+        // Subtract sales tax from quote again
+        Subtract OrderDtl.TaxAmount                                     from Order.OrderTaxTotal
+        Subtract OrderDtl.Amount                                        from Order.OrderSubtotal
+        Move (Order.OrderTaxTotal+Order.OrderSubtotal)                  to Order.OrderTotalAmount
+        // EstHours
+        Subtract OrderDtl.TotalManHours                                 from Order.EstHoursTotal
+        // DIVISIONS ON ORDER [S][SW][C][SL][E]
+        String sDivisions sRemDivision
+        Integer iPos iLen
+        Move (Trim(Order.Division)) to sDivisions
+        Move ('['+Trim(WorkType.ShortCut)+']') to sRemDivision
+        If (sDivisions contains sRemDivision) Begin
+            Move (Pos(sRemDivision,sDivisions)) to iPos
+            Move (Length(sRemDivision)) to iLen
+            Move (Remove(sDivisions,iPos,iLen)) to sDivisions
+            Move sDivisions to Order.Division
+        End
+        // Remove from Order.LineItemCount, LineItemReqCount and LineItemCompCount
+        Subtract 1 from Order.LineItemCount
+        Subtract (OrderDtl.CompletedReqFlag) from Order.LineItemReqCount
+        Subtract (OrderDtl.CompletedFlag) from Order.LineItemCompCount
+        // Reset OrderDtl.CompletedReqFlag
+        Move 0 to OrderDtl.CompletedReqFlag
+    End_Procedure   // Backout
+ 
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here      
+        // Apply Sales Tax if nessasary
+        If (MastOps.IsTaxable) Move SalesTaxGroup.Rate                          to OrderDtl.TaxRate
+        Else Move 0 to OrderDtl.TaxRate
+        Move (OrderDtl.Quantity * OrderDtl.Price * OrderDtl.TaxRate/100.00)     to OrderDtl.TaxAmount
+        //Update parent record
+        Add OrderDtl.TaxAmount                                                  to Order.OrderTaxTotal
+        Add OrderDtl.Amount                                                     to Order.OrderSubtotal
+        Move (Order.OrderTaxTotal+Order.OrderSubtotal)                          to Order.OrderTotalAmount
+        //
+        //EstHours
+        Add OrderDtl.TotalManHours                                              to Order.EstHoursTotal
+        // DIVISIONS ON ORDER [S][SW][C][SL][E]
+        String sDivisions sAddDivision
+        Move (Trim(Order.Division)) to sDivisions
+        Move ('['+Trim(WorkType.ShortCut)+']') to sAddDivision
+        Move (sDivisions+sAddDivision) to sDivisions
+        Move sDivisions to Order.Division
+        // Update OrderDtl.CompleteReqFlag
+        Move (OrderDtl.Amount>0 or OrderDtl.TotalManHours>0 or OrderDtl.SubOnlyFlag<>0) to OrderDtl.CompletedReqFlag
+        Move (OrderDtl.CompletedReqFlag and OrderDtl.CompletedFlag) to OrderDtl.CompletedFlag
+        //Move (If(OrderDtl.CompletedReqFlag,(If(OrderDtl.CompletedFlag<>0,OrderDtl.CompletedFlag,1)),0)) to OrderDtl.CompletedFlag
+        // Add to Order.LineItemCount, LineItemReqCount and LineItemCompCount
+        Add 1 to Order.LineItemCount
+        Add (OrderDtl.CompletedReqFlag) to Order.LineItemReqCount
+        Add (OrderDtl.CompletedFlag) to Order.LineItemCompCount
+    End_Procedure   // Update
+
+End_Class

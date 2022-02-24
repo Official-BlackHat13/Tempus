@@ -1,0 +1,7 @@
+ProdNoteIdno
+JobNumber
+Note
+CreatedDate
+CreatedBy
+AcknowledgedDate
+RepIdno

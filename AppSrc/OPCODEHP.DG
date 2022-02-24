@@ -1,0 +1,77 @@
+// OpcodeHp.dg
+// dialog to display Opcode help files
+
+object OpcodeHelpDialog is a ModalPanel
+
+    set Locate_Mode to CENTER_ON_PANEL
+    set GUISize     to 278 520
+
+    property integer piCC       0
+    property integer piOpcode   0
+    property integer pbOpcode   FALSE
+
+    object HelpEdit is an Edit
+
+        on_key kCancel send Close_Panel
+        on_key kHelp   send RetrieveMoreHelp
+
+        set Read_Only_State to TRUE
+
+        Set GUILocation to 10 10
+        Set GUISize to 238 495
+
+    end_object // HelpEdit
+
+    procedure RetrieveHelp integer iCC integer iOpcode string sStandard
+        integer bExists
+        string  sProfile sWorkspace sDirectory sFile
+        // label the text window
+        set Label to sStandard
+        // set the properties
+        set piCC     to iCC
+        set piOpcode to iOpcode
+        set pbOpcode to FALSE
+        // get the directory from the Workspace
+//*dw*
+//        get psCompanyPath of ghoApplication to sDirectory
+        // look for opcode help first
+        move (trim(sDirectory) + "\ESH" + string(iOpcode) + ".TXT") to sFile
+        file_exist sFile bExists
+        if (bExists) set pbOpcode to TRUE
+        else begin
+            move (trim(sDirectory) + "\ESH" + string(iCC) + ".TXT") to sFile
+            file_exist sFile bExists
+            if (bExists) break
+            send Stop_Box "No help available for this operation."
+            procedure_return
+        end
+        send Delete_Data of HelpEdit
+        send Read        of HelpEdit sFile
+        send Popup //_Modal
+    end_procedure // RetrieveHelp
+
+    procedure RetrieveMoreHelp
+        integer iCC iOpcode bExists
+        string  sProfile sWorkspace sDirectory sFile
+        // if there was no Opcode help, there can be no further help
+        if (pbOpcode(self)) begin
+            // get the properties
+            get piCC     to iCC
+            get piOpcode to iOpcode
+            // get the directory from the Workspace
+//*dw*
+//            get psCompanyPath of ghoApplication to sDirectory
+            // parse the directory
+            move (trim(sDirectory) + "\ESH" + string(iCC) + ".TXT") to sFile
+            file_exist sFile bExists
+            if (bExists) set pbOpcode to FALSE
+        end // if (pbOpcode(self))
+        if (NOT(bExists)) begin
+            send Stop_Box "No further help available for this operation."
+            procedure_return
+        end
+        send Delete_Data of HelpEdit
+        send Read        of HelpEdit sFile
+    end_procedure // RetrieveMoreHelp
+
+end_object // OpcodeHelpDialog

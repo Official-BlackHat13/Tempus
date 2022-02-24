@@ -1,0 +1,187 @@
+.CalendarButton {
+	background: url(../Images/Calendar/Calendar.gif) no-repeat;
+	border: 0px solid black;
+	height: 18px;
+	width: 30px;
+	cursor: pointer;
+}
+
+/*
+    Global calendar styles
+*/
+.JPopCalendar {
+	z-index: 200;
+	position: absolute;
+}
+        
+.JPopCalendar .maintable {
+	border: 1px solid #a0a0a0;
+	background: #ffffff;
+	font-family: Verdana, Arial, 'Century Gothic';
+	font-size: 10px;
+    margin: 0;
+	}
+    
+.JPopCalendar .body {
+	padding: 5px;
+	background: #ffffff;
+	color: #777777;
+	font-family: Verdana, Arial, 'Century Gothic';
+	font-size: 10px;
+	}
+    
+.JPopCalendar .body-title{
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.JPopCalendar .today {
+	padding: 0px;
+	background: #cee3ef;
+	text-align: center;	
+	}
+
+.JPopCalendar .weeknumber-separator {
+	background: #d0d0d0; 
+	padding: 0px;
+    width: 2px;
+	}
+
+/*
+    Menu /header styles
+*/
+.JPopCalendar .title {
+	padding: 2px;
+	font-family: Verdana, Arial, 'Century Gothic';
+	font-size: 10px;
+	color: #ffffff;	
+	}
+
+.JPopCalendar .title-background {
+	background: #466381;
+	}
+
+.JPopCalendar .menu-list{
+    list-style: none; 
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.JPopCalendar .menu-list li{
+    float: left;
+    margin: 0;
+    padding: 0;
+}
+
+.JPopCalendar .monthmenu, .JPopCalendar .yearmenu {
+    display: none;
+    list-style: none;
+    float: none;
+    position: absolute;
+	border: 1px solid #a0a0a0; 
+	background: #ffffff;
+    color: #466381;
+	cursor: pointer;
+    margin-left: 2px;
+    margin-right: 2px;
+    margin-top: 1px;
+    padding: 0;
+}
+
+.JPopCalendar .monthmenu li, .JPopCalendar .yearmenu li{
+    float: none;
+    display: block;
+    padding: 1px;
+}
+
+.JPopCalendar .monthmenu li{
+    width: 65px;
+}
+
+.JPopCalendar .yearmenu li{
+    width: 40px;
+    text-align: center;
+}
+
+.JPopCalendar .submenuitem-hover, .JPopCalendar .submenu-scrollitem-up-hover, .JPopCalendar .submenu-scrollitem-down-hover, .JPopCalendar .submenu-scrollitem-up-down, .JPopCalendar .submenu-scrollitem-down-down{
+    color: #777777;
+	background: #cee3ef;   
+}
+
+.JPopCalendar .submenu-scrollitem-up{
+    background: url(../Images/calendar/ArrowUpNormal.gif) no-repeat center;
+}
+.JPopCalendar .submenu-scrollitem-up-hover{
+    background: url(../Images/calendar/ArrowUpHover.gif) no-repeat center;
+}
+.JPopCalendar .submenu-scrollitem-up-down{
+    background: url(../Images/calendar/ArrowUpDown.gif) no-repeat center;
+}
+.JPopCalendar .submenu-scrollitem-down{
+	background: url(../Images/calendar/ArrowDownNormal.gif) no-repeat center;
+    }
+.JPopCalendar .submenu-scrollitem-down-hover{
+    background: url(../Images/calendar/ArrowDownHover.gif) no-repeat center;
+    }
+.JPopCalendar .submenu-scrollitem-down-down{
+    background: url(../Images/calendar/ArrowDownDown.gif) no-repeat center;
+    }
+    
+.JPopCalendar .control-select, .JPopCalendar .control-next, .JPopCalendar .control-prev{
+    display: block;
+    border: 1px solid #3a6ea5;
+    cursor: pointer;
+    margin-left: 2px;
+    margin-right: 2px;
+    padding: 1px;
+ }
+ 
+.JPopCalendar .control-select{
+    background: url(../Images/Calendar/Drop.gif) no-repeat right;
+    padding-right: 15px;
+}
+ 
+.JPopCalendar .control-next{
+    background: url(../Images/Calendar/Right.gif) no-repeat center;
+    width: 13px;
+}
+ 
+.JPopCalendar .control-prev{
+    background: url(../Images/Calendar/Left.gif) no-repeat center;
+    width: 13px;
+}
+
+.JPopCalendar .closebutton{
+    background: url(../Images/Calendar/Close.gif) no-repeat center;    
+    width: 17px;
+    height: 17px;
+    border: 0px solid black;
+    cursor: pointer;
+}    
+
+/*
+    Day styles
+*/
+.JPopCalendar .weekend-day:link, .JPopCalendar .weekend-day:visited, .JPopCalendar .weekend-day:active, .JPopCalendar .weekend-day:hover{
+	color: #888888;
+	}
+.JPopCalendar .normal-day:link, .JPopCalendar .normal-day:visited, .JPopCalendar .normal-day:active, .JPopCalendar .normal-day:hover{
+    color: #777777;
+}
+.JPopCalendar .weekend-day, .JPopCalendar .normal-day, .JPopCalendar .current-day{
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+.JPopCalendar .selected-day {
+	border: 1px solid #a0a0a0;
+	}
+
+.JPopCalendar .current-day{
+	font-weight: bold;
+	}
+
+.JPopCalendar .weeknumber{
+    text-align: center;
+}

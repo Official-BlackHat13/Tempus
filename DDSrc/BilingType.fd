@@ -1,0 +1,5 @@
+#REPLACE FILE61 BilingType
+#REPLACE BilingType.Recnum |FN61,0
+#REPLACE BilingType.TypeIdno |FN61,1
+#REPLACE BilingType.ShortCode |FS61,2
+#REPLACE BilingType.Description |FS61,3

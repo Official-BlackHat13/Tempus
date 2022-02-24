@@ -1,0 +1,415 @@
+Use Windows.pkg
+Use dfLine.pkg
+Use cTextEdit.pkg
+Use CustomEmailNotification.bp
+Use cCJGrid.pkg
+Use cCJGridColumn.pkg
+Use dfSpnFrm.pkg
+Use cCJGridPromptList.pkg
+
+Object oEmailSend is a ModalPanel
+    Set Size to 289 387
+    Set Label to "EmailSend"
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+
+    Property tEmail peMessage
+
+    Object oFromEmailForm is a Form
+        Set Size to 13 349
+        Set Location to 6 32
+        Set Label to "From"
+        Set Value to "from@email.com"
+        Set Enabled_State to False
+        Set Entry_State to False
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oLineControl1 is a LineControl
+        Set Size to 2 375
+        Set Location to 21 7
+    End_Object
+
+    Object oRecipientDialog is a TabDialog
+        Set Size to 87 372
+        Set Location to 27 8
+        Set pbFlatSeparators to True
+        Set TabWidth_Mode to twFixedWidth
+
+        Object oTabPage1 is a TabPage
+            Set Label to "TO"
+
+            Object oToEmailCJGrid is a cCJGrid
+                Set Size to 62 357
+                Set Location to 4 5
+                Set pbShowHeader to False
+        
+                Object oFriendlyNameCJGridColumn is a cCJGridColumn
+                    Set piWidth to 297
+                    Set psCaption to "Name"
+                End_Object
+                
+                Object oEmailAddressCJGridColumn is a cCJGridColumn
+                    Set piWidth to 298
+                    Set psCaption to "Email Address"
+                End_Object
+                
+                Procedure LoadData
+                    Handle hoDataSource
+                    tEmail eMessage
+                    tDataSourceRow[] TheData
+                    Integer iRows iNameCol iEmailCol
+                    //
+                    Get phoDataSource to hoDataSource
+                    Get peMessage of oEmailSend to eMessage
+                    // Get the datasource indexes of the various columns
+                    Get piColumnId of oFriendlyNameCJGridColumn to iNameCol
+                    Get piColumnId of oEmailAddressCJGridColumn to iEmailCol
+                    //
+                    For iRows from 0 to (SizeOfArray(eMessage.stToEmail)-1)
+                        Move (eMessage.stToEmail[iRows].sFriendlyName) to TheData[iRows].sValue[iNameCol]
+                        Move (eMessage.stToEmail[iRows].sEmailAddress) to TheData[iRows].sValue[iEmailCol]
+                    Loop
+                    Send InitializeData TheData
+                End_Procedure
+                
+                Procedure Activating
+                    Forward Send Activating
+                    Send LoadData
+                End_Procedure
+        
+                
+            End_Object
+
+        End_Object
+
+        Object oTabPage2 is a TabPage
+            Set Label to "CC"
+            
+            Object oCCEmailCJGrid is a cCJGrid
+                Set Size to 62 357
+                Set Location to 4 5
+                Set pbShowHeader to False
+        
+                Object oFriendlyCCNameCJGridColumn is a cCJGridColumn
+                    Set piWidth to 300
+                    Set psCaption to "Name"
+                End_Object
+                
+                Object oEmailCCAddressCJGridColumn is a cCJGridColumn
+                    Set piWidth to 303
+                    Set psCaption to "Email Address"
+                End_Object
+                
+                Procedure LoadData
+                    Handle hoDataSource
+                    tEmail eMessage
+                    tDataSourceRow[] TheData
+                    Integer iRows iNameCol iEmailCol
+                    //
+                    Get phoDataSource to hoDataSource
+                    Get peMessage of oEmailSend to eMessage
+                    // Get the datasource indexes of the various columns
+                    Get piColumnId of oFriendlyCCNameCJGridColumn to iNameCol
+                    Get piColumnId of oEmailCCAddressCJGridColumn to iEmailCol
+                    //
+                    For iRows from 0 to (SizeOfArray(eMessage.stCCEmail)-1)
+                        Move (eMessage.stCCEmail[iRows].sFriendlyName) to TheData[iRows].sValue[iNameCol]
+                        Move (eMessage.stCCEmail[iRows].sEmailAddress) to TheData[iRows].sValue[iEmailCol]
+                    Loop
+                    Send InitializeData TheData
+                End_Procedure
+                
+                Procedure Activating
+                    Forward Send Activating
+                    Send LoadData
+                End_Procedure
+        
+                
+            End_Object
+        End_Object
+
+        Object oTabPage3 is a TabPage
+            Set Label to "BCC"
+            
+            Object oBCCEmailCJGrid is a cCJGrid
+                Set Size to 62 357
+                Set Location to 4 5
+                Set pbShowHeader to False
+        
+                Object oFriendlyBCCNameCJGridColumn is a cCJGridColumn
+                    Set piWidth to 100
+                    Set psCaption to "Name"
+                End_Object
+                
+                Object oEmailBCCAddressCJGridColumn is a cCJGridColumn
+                    Set piWidth to 100
+                    Set psCaption to "Email Address"
+                End_Object
+                
+                Procedure LoadData
+                    Handle hoDataSource
+                    tEmail eMessage
+                    tDataSourceRow[] TheData
+                    Integer iRows iNameCol iEmailCol
+                    //
+                    Get phoDataSource to hoDataSource
+                    Get peMessage of oEmailSend to eMessage
+                    // Get the datasource indexes of the various columns
+                    Get piColumnId of oFriendlyBCCNameCJGridColumn to iNameCol
+                    Get piColumnId of oEmailBCCAddressCJGridColumn to iEmailCol
+                    //
+                    For iRows from 0 to (SizeOfArray(eMessage.stBCCEmail)-1)
+                        Move (eMessage.stBCCEmail[iRows].sFriendlyName) to TheData[iRows].sValue[iNameCol]
+                        Move (eMessage.stBCCEmail[iRows].sEmailAddress) to TheData[iRows].sValue[iEmailCol]
+                    Loop
+                    Send InitializeData TheData
+                End_Procedure
+                
+                Procedure Activating
+                    Forward Send Activating
+                    Send LoadData
+                End_Procedure
+        
+                
+            End_Object
+            
+        End_Object
+
+        Object oTabPage4 is a TabPage
+            Set Label to "Reply To"
+
+            Object oReplyToEmailCJGrid is a cCJGrid
+                Set Size to 62 357
+                Set Location to 4 5
+                Set pbShowHeader to False
+        
+                Object oFriendlyNameCJGridColumn is a cCJGridColumn
+                    Set piWidth to 297
+                    Set psCaption to "Name"
+                End_Object
+                
+                Object oEmailAddressCJGridColumn is a cCJGridColumn
+                    Set piWidth to 298
+                    Set psCaption to "Email Address"
+                End_Object
+                
+                Procedure LoadData
+                    Handle hoDataSource
+                    tEmail eMessage
+                    tDataSourceRow[] TheData
+                    Integer iRows iNameCol iEmailCol
+                    //
+                    Get phoDataSource to hoDataSource
+                    Get peMessage of oEmailSend to eMessage
+                    // Get the datasource indexes of the various columns
+                    Get piColumnId of oFriendlyNameCJGridColumn to iNameCol
+                    Get piColumnId of oEmailAddressCJGridColumn to iEmailCol
+                    //
+                    For iRows from 0 to (SizeOfArray(eMessage.stReplyTo)-1)
+                        Move (eMessage.stReplyTo[iRows].sFriendlyName) to TheData[iRows].sValue[iNameCol]
+                        Move (eMessage.stReplyTo[iRows].sEmailAddress) to TheData[iRows].sValue[iEmailCol]
+                    Loop
+                    Send InitializeData TheData
+                End_Procedure
+                
+                Procedure Activating
+                    Forward Send Activating
+                    Send LoadData
+                End_Procedure
+        
+                
+            End_Object
+        End_Object
+    End_Object
+
+    Object oLineControl1 is a LineControl
+        Set Size to 2 375
+        Set Location to 124 7
+    End_Object
+
+    Object oSubjectForm is a Form
+        Set Size to 13 349
+        Set Location to 128 32
+        Set Label to "Subject"
+        Set Value to ""
+        Set Enabled_State to True
+        Set Entry_State to True
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oLineControl2 is a LineControl
+        Set Size to 2 375
+        Set Location to 145 7
+    End_Object
+
+    Object oBodyEdit is a cTextEdit
+        Set Size to 91 371
+        Set Location to 150 9
+    End_Object
+
+    Object oAttachmentsCJGrid is a cCJGrid
+        Set Size to 33 260
+        Set Location to 245 11
+        Set pbShowHeader to False
+        Set pbAllowEdit to False
+        Set pbEditOnTyping to False
+
+        Object oFileNameCJGridColumn is a cCJGridColumn
+            Set piWidth to 433
+            Set psCaption to "Attachments"
+        End_Object
+        
+        Object oFilePathCJGridColumn is a cCJGridColumn
+            Set piWidth to 433
+            Set psCaption to "FilePath"
+            Set pbVisible to False
+        End_Object
+        
+        Procedure LoadData
+            Handle hoDataSource
+            tEmail eMessage
+            tDataSourceRow[] TheData
+            Integer iRows iNameCol iPathCol
+            //
+            Get phoDataSource to hoDataSource
+            Get peMessage of oEmailSend to eMessage
+            // Get the datasource indexes of the various columns
+            Get piColumnId of oFileNAmeCJGridColumn to iNameCol
+            Get piColumnId of oFilePathCJGridColumn to iPathCol
+            //
+            For iRows from 0 to (SizeOfArray(eMessage.sAttachmentFilePath)-1)
+                String sFilePath
+                Integer iLenght iLastBS
+                Move (Trim(eMessage.sAttachmentFilePath[iRows])) to sFilePath
+                Move (sFilePath) to TheData[iRows].sValue[iPathCol]
+                Move (Length(sFilePath)) to iLenght
+                Move (RightPos("\",sFilePath)) to iLastBS
+                Move (Right(sFilePath,(iLenght-iLastBS))+Character(10)) to TheData[iRows].sValue[iNameCol]
+            Loop
+            Send InitializeData TheData
+        End_Procedure
+        
+        Procedure Activating
+            Forward Send Activating
+            Send LoadData
+        End_Procedure
+
+        Procedure OnRowDoubleClick Integer iRow Integer iCol
+            Forward Send OnRowDoubleClick iRow iCol
+            //
+            Integer iPathCol
+            tDataSourceRow[] TheData
+            Handle hoDataSource
+            String sFilePath
+            //
+            Get phoDataSource to hoDataSource
+            Get DataSource of hoDataSource to TheData
+            Get piColumnId of oFilePathCJGridColumn to iPathCol
+            Move (TheData[iRow].sValue[iPathCol]) to sFilePath
+            If (Length(Trim(sFilePath))>0) Begin
+                Runprogram Shell Background (sFilePath)
+            End
+        End_Procedure
+
+
+
+        
+    End_Object
+
+//    Object oAttachmentListTextEdit is a cTextEdit
+//        Set Size to 34 257
+//        Set Location to 245 9
+//        Set Read_Only_State to True        
+//    End_Object
+
+    Object oOK_Btn is a Button
+        Set Size to 34 50
+        Set Label    to "Send"
+        Set Location to 244 273
+        Set peAnchors To anBottomRight
+
+        Procedure OnClick
+            //Send Email via EmailSend
+            Boolean bSuccess
+            Integer i iRows
+            tDataSourceRow[] TheToData TheCCData TheBCCData TheReplyToData
+            tEmail eMessage
+            Handle hoToDataSource hoCCDataSource hoBCCDataSource hoReplyToDataSource
+            // Pre-Load with previous Data and overwrite with data from view
+            Get peMessage of oEmailSend to eMessage
+            // TO
+            Get phoDataSource of oToEmailCJGrid to hoToDataSource
+            Get DataSource of hoToDataSource to TheToData
+            For iRows from 0 to (SizeOfArray(TheToData)-1)
+                Move TheToData[iRows].sValue[0] to eMessage.stToEmail[iRows].sFriendlyName
+                Move TheToData[iRows].sValue[1] to eMessage.stToEmail[iRows].sEmailAddress
+            Loop
+            //CC
+            Get phoDataSource of oCCEmailCJGrid to hoCCDataSource
+            Get DataSource of hoCCDataSource to TheCCData
+            For iRows from 0 to (SizeOfArray(TheCCData)-1)
+                Move TheCCData[iRows].sValue[0] to eMessage.stCCEmail[iRows].sFriendlyName
+                Move TheCCData[iRows].sValue[1] to eMessage.stCCEmail[iRows].sEmailAddress
+            Loop
+            //BCC
+            Get phoDataSource of oBCCEmailCJGrid to hoBCCDataSource
+            Get DataSource of hoBCCDataSource to TheBCCData
+            For iRows from 0 to (SizeOfArray(TheBCCData)-1)
+                Move TheBCCData[iRows].sValue[0] to eMessage.stBCCEmail[iRows].sFriendlyName
+                Move TheBCCData[iRows].sValue[1] to eMessage.stBCCEmail[iRows].sEmailAddress
+            Loop
+            //REPLY TO
+            Get phoDataSource of oReplyToEmailCJGrid to hoReplyToDataSource
+            Get DataSource of hoReplyToDataSource to TheReplyToData
+            For iRows from 0 to (SizeOfArray(TheReplyToData)-1)
+                Move TheReplyToData[iRows].sValue[0] to eMessage.stReplyTo[iRows].sFriendlyName
+                Move TheReplyToData[iRows].sValue[1] to eMessage.stReplyTo[iRows].sEmailAddress
+            Loop
+            // - SUBJECT FIELD
+            Get Value of oSubjectForm to eMessage.sSubject
+            // - BODY
+            Get Value of oBodyEdit to eMessage.sBody
+            //SEND
+            Get DoSendCustomEmail of (oCustomEmailNotification(Self)) eMessage to bSuccess
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_Btn is a Button
+        Set Size to 34 50
+        Set Label    to "&Cancel"
+        Set Location to 245 330
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_Btn
+
+    Function OpenEmailMessage tEmail eMessage Returns Boolean
+        String sTo sCC sBCC sSubject sHTML_Message sFilePath sAttachment
+        Integer i iLastBS iLenght
+        // Prior to opening the ModalDialog, fill the fields with items from eMessage
+        Set peMessage of oEmailSend to eMessage
+        // TO, CC and BCC fields are filled in the LoadData procedure of each grid. 
+        // GridData can only Get loaded after Object is created
+        // - FROM Field
+        Set Value of oFromEmailForm to (Trim(eMessage.sFromEmail))
+        // - SUBJECT FIELD
+        Set Value of oSubjectForm to (Trim(eMessage.sSubject))
+        // - BODY
+        Set Value of oBodyEdit to (eMessage.sBody)
+        Send Popup_Modal
+        Function_Return True
+    End_Function
+
+End_Object

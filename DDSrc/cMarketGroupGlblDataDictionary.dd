@@ -1,0 +1,36 @@
+Use cGlblDataDictionary.pkg
+
+Open MarketGroup
+Open MarketMember
+Open System
+
+Register_Object MarketGroup_sl
+
+Class cMarketGroupGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to MarketGroup.File_Number
+
+        Set Add_Client_File to MarketMember.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field MarketGroup.MktGroupIdno to File_Field System.LastMarketGrpIdno
+        Set Field_Prompt_Object Field MarketGroup.MktGroupIdno to MarketGroup_sl
+
+        Set Field_Prompt_Object Field MarketGroup.GroupName to MarketGroup_sl
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use MarketGroup.sl
+#ENDIF

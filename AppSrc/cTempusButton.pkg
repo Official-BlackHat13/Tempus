@@ -1,0 +1,31 @@
+//***************************************************************************
+//*
+//* Class:        cTempusButton
+//* Package Name: cTempusButton.pkg
+//*
+//***************************************************************************
+
+Use cGlblButton.pkg
+
+Class cTempusButton is a cGlblButton
+
+    // Construct_Object: Object constructor.
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        // Define new Properties: Property {Type} {pxName} {initial_value}
+
+        // Create child objects
+
+        // Set property values:
+        set Focus_Mode to Pointer_Only
+
+
+        // Hot key
+        on_key kCancel send Close_Panel
+
+    End_Procedure
+
+    // Create and augment procedure and functions
+
+End_Class // cTempusButton

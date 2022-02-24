@@ -1,0 +1,248 @@
+// Class Name: Customer_DataDictionary
+// Revision  : 18
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Customer
+Open Location
+Open Contact
+Open System
+Open Terms
+
+Use cli.pkg
+
+
+Register_Object Customer_Phonetype1_VT
+Register_Object Customer_Phonetype2_VT
+Register_Object Customer_Phonetype3_VT
+Register_Object Customer_Contactphntype1_VT
+Register_Object Customer_Contactphntype2_VT
+Register_Object Customer_Status_VT
+
+Object Customer_Phonetype1_VT  is a CodeValidationTable
+    Set Type_Value        to "PHONETYPE"
+    Set Allow_Blank_State to True
+    Set Validate_State    to False
+End_Object   // Customer_Phonetype1_VT
+
+Object Customer_Phonetype2_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State to True
+    Set Validate_State    to False
+End_Object   // Customer_Phonetype2_VT
+
+Object Customer_Phonetype3_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State to True
+    Set Validate_State    to False
+End_Object   // Customer_Phonetype3_VT
+
+Object Customer_Contactphntype1_VT  is a CodeValidationTable
+    Set Type_Value        to "PHONETYPE"
+    Set Allow_Blank_State to True
+    Set Validate_State    to False
+End_Object   // Customer_Contactphntype1_VT
+
+Object Customer_Contactphntype2_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State to True
+    Set Validate_State    to False
+End_Object   // Customer_Contactphntype2_VT
+
+Object Customer_Status_VT  is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "A" "Active"
+        Send Add_Table_Value "I" "Inactive"
+        Send Add_Table_Value "P" "Prospect"
+    End_Procedure    // Fill_List
+End_Object   // Customer_Status_VT
+
+Object Customer_BusinessType_VT is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "RT" "Retail"
+        Send Add_Table_Value "CM" "Commercial"
+        Send Add_Table_Value "MX" "Mixed Use"
+        Send Add_Table_Value "MH" "Multi-Housing"
+        Send Add_Table_Value "MF" "Manufacturing"
+        Send Add_Table_Value "MU" "Municipal"
+    End_Procedure
+    Set Allow_Blank_State to True
+    Set Validate_State    To FALSE
+End_Object
+
+Object TermsValidation is a FileValidationTable
+    //ToDo: Find out if the FileValidationTable can be constrained
+    Set Validate_State to False
+    
+//    Procedure Request_Fill_From_List Integer iObj Integer iMsg
+//        // Validatiecode
+//        If (Main_File(Self) = Terms.File_Number) Begin
+//            Set_Attribute DF_FILE_SQL_FILTER of ValidatieCode.File_Number to 'Aktief = 1'
+//            Set_Attribute DF_FILE_SQL_FILTER_Active of ValidatieCode.File_Number to True            
+//            Forward Send Request_Fill_From_List iObj iMsg
+//            Set_Attribute DF_FILE_SQL_FILTER_Active of ValidatieCode.File_Number to False        
+//        End
+//    End_Procedure
+    
+    Set Allow_Blank_State to True
+    Set Main_File         to Terms.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 1 // description is in field 2
+    Set Ordering          to 1 // load by index 1
+End_Object
+
+
+Register_Object CUSTOMER_SL
+Register_Object oCustomerWebLookup
+
+Class Customer_DataDictionary is a cGlblDataDictionary
+
+
+//    Procedure OnConstrain
+//        Forward Send OnConstrain
+//        #IFDEF TEMPUS        
+//        If (giCompanyIdno>0) Begin
+//            //Send FilterData Customer.File_Number "Customer"
+//            Constrain Customer.RecordOwner eq giCompanyIdno
+//        End
+//        #ELSE
+//        #ENDIF
+//    End_Procedure 
+
+    // Update:
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Customer.ChangedFlag
+        End
+    End_Procedure   // Update
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Customer.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+        Set Add_Client_File to Location.File_Number
+        Set Add_Client_File to Contact.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Customer.Customeridno to File_Field System.Lastcustomer
+
+        // Field-based properties.......................
+        Set Field_Prompt_Object Field Customer.Customeridno to Customer_sl
+        Set Key_Field_State Field Customer.Customeridno To TRUE
+
+        Set Field_Prompt_Object Field Customer.Name to Customer_sl
+        Set Field_Option Field Customer.Name DD_REQUIRED to True
+
+
+        Set Field_Option Field Customer.State DD_CAPSLOCK to True
+
+        Set Field_Validate_msg Field Customer.Zip to get_ZipValidation
+        Set Field_Mask_Type Field Customer.Zip to Mask_Window
+        Set Field_Mask Field Customer.Zip to "#####-####"
+
+
+        Set Field_Validate_msg Field Customer.Phone1 To get_PhoneValidation
+
+        Set Field_Class_Name Field Customer.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Option Field Customer.Phonetype1 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Customer.Phonetype1 to Customer_Phonetype1_VT
+
+        Set Field_Validate_msg Field Customer.Phone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Customer.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Option Field Customer.Phonetype2 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Customer.Phonetype2 to Customer_Phonetype2_VT
+
+        Set Field_Validate_msg Field Customer.Phone3 To get_PhoneValidation
+
+        Set Field_Class_Name Field Customer.Phonetype3 To "cGlblDbComboForm"
+        Set Field_Option Field Customer.Phonetype3 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Customer.Phonetype3 to Customer_Phonetype3_VT
+
+
+        Set Field_Class_Name Field Customer.Contactphntype1 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Customer.Contactphntype1 to Customer_Contactphntype1_VT
+
+
+        Set Field_Class_Name Field Customer.Contactphntype2 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Customer.Contactphntype2 to Customer_Contactphntype2_VT
+
+
+        Set Field_Class_Name Field Customer.Status To "cGlblDbComboForm"
+        Set Field_Option Field Customer.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Customer.Status to Customer_Status_VT
+
+        Set Field_Class_Name Field Customer.BusinessType to "cGlblDbComboForm"
+        Set Field_Value_Table Field Customer.BusinessType to Customer_BusinessType_VT
+        Set Field_Option Field Customer.BusinessType DD_CAPSLOCK to True
+
+        Set Field_Value_Table Field Customer.Terms to TermsValidation
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Customer.Phonetype1 To "O"
+        Set Field_Changed_Value   Field Customer.Phonetype2 To "F"
+        Set Field_Changed_Value   Field Customer.Status To "A"
+        Set Field_Changed_Value   Field Customer.Terms to "Net 30"
+    End_Procedure    // Field_Defaults
+
+    Function Validate_Save Returns Integer
+        Integer iRetval
+        //
+        Forward Get Validate_Save to iRetval
+        If (not(iRetval)) Begin
+            If (Customer.CustomerIdno = 0) Begin
+                Send UserError "ID cannot be 0" "Validation Error"
+                Move 1 to iRetval
+            End
+        End
+        Function_Return iRetval
+    End_Function
+
+    Procedure Creating
+        #IFDEF TEMPUS        
+//        If (giCompanyIdno>0) Begin
+//            Move giCompanyIdno to Customer.RecordOwner
+//        End
+        #ELSE
+        #ENDIF
+        Forward Send Creating
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+//Use CustomerWebLookup.wo
+
+#ELSE
+Use CUSTOMER.SL      // CUSTOMER_SL
+
+#ENDIF

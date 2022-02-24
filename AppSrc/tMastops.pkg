@@ -1,0 +1,23 @@
+// tMastops.pkg
+// used to update remote server data
+
+Struct tMastOps
+    Integer iRecId
+    Integer iMastOpsIdno
+    String  sName
+    Number  nSellRate
+    Number  nCostRate
+    String  sCostType
+    String  sCalcBasis
+    String  sActivityType
+    Number  nStandardHours
+    String  sDescription
+    String  sStatus
+    Number  nDisplaySequence
+    Integer iChangedFlag
+    Number  nQtyDivisor
+    String  sQtyDescription
+    String  sReportCategory
+    String  sIsAttachment
+    String  sNeedsAttachment
+End_Struct

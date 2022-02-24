@@ -1,0 +1,290 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Jcoper (# 53)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Jcoper
+  USER DISPLAY NAME         : Jcoper
+  DATAFLEX FILE NAME        : Jcoper
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 19728     ( USED: 19728 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 169 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CSTCTR_RECNO     NUM    5.0     1      
+  2  CSTCTR_IDNO      NUM    5.0     7  3   Jccntr.FIELD_1 (52,1)
+  3  IDNO             NUM    5.0    13  1   
+  4  OPCODE           NUM   10.0    19  2   
+  5  NAME             ASC     40    30      
+  6  NICKNAME         ASC     10    70      
+  7  OPTYPE           ASC      2    80      
+  8  COSTYPE          ASC      1    82      
+  9  STD_TYPE         ASC      1    83      
+ 10  STANDARD         NUM    6.2    84      
+ 11  MARKUP           NUM    2.4    94      
+ 12  TTL_REGHRS       NUM    6.2   102      
+ 13  TTL_ALTHRS       NUM    6.2   112      
+ 14  TTL_SPLHRS       NUM    6.2   122      
+ 15  TTL_REGUNITS     NUM   10.0   132      
+ 16  TTL_ALTUNITS     NUM   10.0   143      
+ 17  TTL_SPLUNITS     NUM   10.0   154      
+ 18  Q1_REGHRS        NUM    6.2   165      
+ 19  Q1_ALTHRS        NUM    6.2   175      
+ 20  Q1_SPLHRS        NUM    6.2   185      
+ 21  Q1_REGUNITS      NUM   10.0   195      
+ 22  Q1_ALTUNITS      NUM   10.0   206      
+ 23  Q1_SPLUNITS      NUM   10.0   217      
+ 24  Q2_REGHRS        NUM    6.2   228      
+ 25  Q2_ALTHRS        NUM    6.2   238      
+ 26  Q2_SPLHRS        NUM    6.2   248      
+ 27  Q2_REGUNITS      NUM   10.0   258      
+ 28  Q2_ALTUNITS      NUM   10.0   269      
+ 29  Q2_SPLUNITS      NUM   10.0   280      
+ 30  Q3_REGHRS        NUM    6.2   291      
+ 31  Q3_ALTHRS        NUM    6.2   301      
+ 32  Q3_SPLHRS        NUM    6.2   311      
+ 33  Q3_REGUNITS      NUM   10.0   321      
+ 34  Q3_ALTUNITS      NUM   10.0   332      
+ 35  Q3_SPLUNITS      NUM   10.0   343      
+ 36  Q4_REGHRS        NUM    6.2   354      
+ 37  Q4_ALTHRS        NUM    6.2   364      
+ 38  Q4_SPLHRS        NUM    6.2   374      
+ 39  Q4_REGUNITS      NUM   10.0   384      
+ 40  Q4_ALTUNITS      NUM   10.0   395      
+ 41  Q4_SPLUNITS      NUM   10.0   406      
+ 42  PREVYR_REGHRS    NUM    6.2   417      
+ 43  PREVYR_ALTHRS    NUM    6.2   427      
+ 44  PREVYR_SPLHRS    NUM    6.2   437      
+ 45  PREVYR_REGUNITS  NUM   10.0   447      
+ 46  PREVYR_ALTUNITS  NUM   10.0   458      
+ 47  PREVYR_SPLUNITS  NUM   10.0   469      
+ 48  EFF_LO           NUM    2.2   480      
+ 49  EFF_HI           NUM    2.2   486      
+ 50  TTLEFF_REGHRS    NUM    6.2   492      
+ 51  TTLEFF_ALTHRS    NUM    6.2   502      
+ 52  TTLEFF_SPLHRS    NUM    6.2   512      
+ 53  Q1EFF_REGHRS     NUM    6.2   522      
+ 54  Q1EFF_ALTHRS     NUM    6.2   532      
+ 55  Q1EFF_SPLHRS     NUM    6.2   542      
+ 56  Q2EFF_REGHRS     NUM    6.2   552      
+ 57  Q2EFF_ALTHRS     NUM    6.2   562      
+ 58  Q2EFF_SPLHRS     NUM    6.2   572      
+ 59  Q3EFF_REGHRS     NUM    6.2   582      
+ 60  Q3EFF_ALTHRS     NUM    6.2   592      
+ 61  Q3EFF_SPLHRS     NUM    6.2   602      
+ 62  Q4EFF_REGHRS     NUM    6.2   612      
+ 63  Q4EFF_ALTHRS     NUM    6.2   622      
+ 64  Q4EFF_SPLHRS     NUM    6.2   632      
+ 65  PREEFF_REGHRS    NUM    6.2   642      
+ 66  PREEFF_ALTHRS    NUM    6.2   652      
+ 67  PREEFF_SPLHRS    NUM    6.2   662      
+ 68  UNIT_COSTING     NUM    4.2   672      
+ 69  EST_STD          ASC      1   680      
+ 70  STD1             NUM    6.2   681      
+ 71  STD2             NUM    6.2   691      
+ 72  STD3             NUM    6.2   701      
+ 73  STD4             NUM    6.2   711      
+ 74  UNIT_PROMPT      ASC     34   721      
+ 75  PROMPT_MTL_FLAG  ASC      1   755      
+ 76  PROMPT_MTL_OP    NUM   10.0   756      
+ 77  LOOKUP_VAR       ASC      1   767      
+ 78  BRACKET_VAR      ASC      1   768      
+ 79  PRORATE_BRACKET  ASC      1   769      
+ 80  PRORATE_LOOKUP   ASC      1   770      
+ 81  CALC_FLAGS       ASC     26   771      
+ 82  FORMULA          ASC     64   797      
+ 83  EST_FORMULA      ASC     64   861      
+ 84  EST_FORMULA_TYP  ASC      1   925      
+ 85  CALC_UNITS_DESC  ASC     14   926      
+ 86  TABLE_STD_DESC   ASC     14   940      
+ 87  LOOKUP_DESC      ASC     14   954      
+ 88  BRACKET_DESC     ASC     14   968      
+ 89  LINK_DEPTH       NUM    5.0   982      
+ 90  LINK_SYMBOL      ASC      1   988      
+ 91  VAR1_TAG         ASC     40   989      
+ 92  VAR2_TAG         ASC     40  1029      
+ 93  VAR3_TAG         ASC     40  1069      
+ 94  VAR4_TAG         ASC     40  1109      
+ 95  VAR5_TAG         ASC     40  1149      
+ 96  VAR6_TAG         ASC     40  1189      
+ 97  VAR7_TAG         ASC     40  1229      
+ 98  VAR8_TAG         ASC     40  1269      
+ 99  VAR9_TAG         ASC     40  1309      
+100  VAR1_DFLT_VALUE  NUM    8.4  1349      
+101  VAR2_DFLT_VALUE  NUM    8.4  1363      
+102  VAR3_DFLT_VALUE  NUM    8.4  1377      
+103  VAR4_DFLT_VALUE  NUM    8.4  1391      
+104  VAR5_DFLT_VALUE  NUM    8.4  1405      
+105  VAR6_DFLT_VALUE  NUM    8.4  1419      
+106  VAR7_DFLT_VALUE  NUM    8.4  1433      
+107  VAR8_DFLT_VALUE  NUM    8.4  1447      
+108  VAR9_DFLT_VALUE  NUM    8.4  1461      
+109  VAR1_LINK_CODE   NUM   10.0  1475      
+110  VAR2_LINK_CODE   NUM   10.0  1486      
+111  VAR3_LINK_CODE   NUM   10.0  1497      
+112  VAR4_LINK_CODE   NUM   10.0  1508      
+113  VAR5_LINK_CODE   NUM   10.0  1519      
+114  VAR6_LINK_CODE   NUM   10.0  1530      
+115  VAR7_LINK_CODE   NUM   10.0  1541      
+116  VAR8_LINK_CODE   NUM   10.0  1552      
+117  VAR9_LINK_CODE   NUM   10.0  1563      
+118  VAR1_LINK_SYMBL  ASC      1  1574      
+119  VAR2_LINK_SYMBL  ASC      1  1575      
+120  VAR3_LINK_SYMBL  ASC      1  1576      
+121  VAR4_LINK_SYMBL  ASC      1  1577      
+122  VAR5_LINK_SYMBL  ASC      1  1578      
+123  VAR6_LINK_SYMBL  ASC      1  1579      
+124  VAR7_LINK_SYMBL  ASC      1  1580      
+125  VAR8_LINK_SYMBL  ASC      1  1581      
+126  VAR9_LINK_SYMBL  ASC      1  1582      
+127  CON1_DESC        ASC     40  1583      
+128  CON2_DESC        ASC     40  1623      
+129  CON3_DESC        ASC     40  1663      
+130  CON4_DESC        ASC     40  1703      
+131  CON5_DESC        ASC     40  1743      
+132  CON6_DESC        ASC     40  1783      
+133  CON7_DESC        ASC     40  1823      
+134  CON8_DESC        ASC     40  1863      
+135  CON9_DESC        ASC     40  1903      
+136  CON1_VALUE       NUM    8.4  1943      
+137  CON2_VALUE       NUM    8.4  1957      
+138  CON3_VALUE       NUM    8.4  1971      
+139  CON4_VALUE       NUM    8.4  1985      
+140  CON5_VALUE       NUM    8.4  1999      
+141  CON6_VALUE       NUM    8.4  2013      
+142  CON7_VALUE       NUM    8.4  2027      
+143  CON8_VALUE       NUM    8.4  2041      
+144  CON9_VALUE       NUM    8.4  2055      
+145  CON1_LINK_CODE   NUM   10.0  2069      
+146  CON2_LINK_CODE   NUM   10.0  2080      
+147  CON3_LINK_CODE   NUM   10.0  2091      
+148  CON4_LINK_CODE   NUM   10.0  2102      
+149  CON5_LINK_CODE   NUM   10.0  2113      
+150  CON6_LINK_CODE   NUM   10.0  2124      
+151  CON7_LINK_CODE   NUM   10.0  2135      
+152  CON8_LINK_CODE   NUM   10.0  2146      
+153  CON9_LINK_CODE   NUM   10.0  2157      
+154  CON1_LINK_SYMBL  ASC      1  2168      
+155  CON2_LINK_SYMBL  ASC      1  2169      
+156  CON3_LINK_SYMBL  ASC      1  2170      
+157  CON4_LINK_SYMBL  ASC      1  2171      
+158  CON5_LINK_SYMBL  ASC      1  2172      
+159  CON6_LINK_SYMBL  ASC      1  2173      
+160  CON7_LINK_SYMBL  ASC      1  2174      
+161  CON8_LINK_SYMBL  ASC      1  2175      
+162  CON9_LINK_SYMBL  ASC      1  2176      
+163  BRACKET1_VALUE   NUM    8.4  2177      
+164  BRACKET2_VALUE   NUM    8.4  2191      
+165  BRACKET3_VALUE   NUM    8.4  2205      
+166  BRACKET4_VALUE   NUM    8.4  2219      
+167  BRACKET5_VALUE   NUM    8.4  2233      
+168  LOOKUP1_VALUE    NUM    8.4  2247      
+169  LOOKUP2_VALUE    NUM    8.4  2261      
+170  LOOKUP3_VALUE    NUM    8.4  2275      
+171  LOOKUP4_VALUE    NUM    8.4  2289      
+172  LOOKUP5_VALUE    NUM    8.4  2303      
+173  LOOKUP6_VALUE    NUM    8.4  2317      
+174  LOOKUP7_VALUE    NUM    8.4  2331      
+175  LOOKUP8_VALUE    NUM    8.4  2345      
+176  LOOKUP9_VALUE    NUM    8.4  2359      
+177  LOOKUP10_VALUE   NUM    8.4  2373      
+178  L1B1_STD         NUM    6.4  2387      
+179  L1B2_STD         NUM    6.4  2399      
+180  L1B3_STD         NUM    6.4  2411      
+181  L1B4_STD         NUM    6.4  2423      
+182  L1B5_STD         NUM    6.4  2435      
+183  L2B1_STD         NUM    6.4  2447      
+184  L2B2_STD         NUM    6.4  2459      
+185  L2B3_STD         NUM    6.4  2471      
+186  L2B4_STD         NUM    6.4  2483      
+187  L2B5_STD         NUM    6.4  2495      
+188  L3B1_STD         NUM    6.4  2507      
+189  L3B2_STD         NUM    6.4  2519      
+190  L3B3_STD         NUM    6.4  2531      
+191  L3B4_STD         NUM    6.4  2543      
+192  L3B5_STD         NUM    6.4  2555      
+193  L4B1_STD         NUM    6.4  2567      
+194  L4B2_STD         NUM    6.4  2579      
+195  L4B3_STD         NUM    6.4  2591      
+196  L4B4_STD         NUM    6.4  2603      
+197  L4B5_STD         NUM    6.4  2615      
+198  L5B1_STD         NUM    6.4  2627      
+199  L5B2_STD         NUM    6.4  2639      
+200  L5B3_STD         NUM    6.4  2651      
+201  L5B4_STD         NUM    6.4  2663      
+202  L5B5_STD         NUM    6.4  2675      
+203  L6B1_STD         NUM    6.4  2687      
+204  L6B2_STD         NUM    6.4  2699      
+205  L6B3_STD         NUM    6.4  2711      
+206  L6B4_STD         NUM    6.4  2723      
+207  L6B5_STD         NUM    6.4  2735      
+208  L7B1_STD         NUM    6.4  2747      
+209  L7B2_STD         NUM    6.4  2759      
+210  L7B3_STD         NUM    6.4  2771      
+211  L7B4_STD         NUM    6.4  2783      
+212  L7B5_STD         NUM    6.4  2795      
+213  L8B1_STD         NUM    6.4  2807      
+214  L8B2_STD         NUM    6.4  2819      
+215  L8B3_STD         NUM    6.4  2831      
+216  L8B4_STD         NUM    6.4  2843      
+217  L8B5_STD         NUM    6.4  2855      
+218  L9B1_STD         NUM    6.4  2867      
+219  L9B2_STD         NUM    6.4  2879      
+220  L9B3_STD         NUM    6.4  2891      
+221  L9B4_STD         NUM    6.4  2903      
+222  L9B5_STD         NUM    6.4  2915      
+223  L10B1_STD        NUM    6.4  2927      
+224  L10B2_STD        NUM    6.4  2939      
+225  L10B3_STD        NUM    6.4  2951      
+226  L10B4_STD        NUM    6.4  2963      
+227  L10B5_STD        NUM    6.4  2975      
+228  VALUE1_PASS      NUM    8.4  2987      
+229  VALUE2_PASS      NUM    8.4  3001      
+230  VALUE3_PASS      NUM    8.4  3015      
+231  CALC_STD_DESC    ASC     14  3029      
+232  MULTI_VAL_FLAG   ASC      1  3043      
+233  VAR1_TAG_SYMBL   ASC     15  3044      
+234  VAR2_TAG_SYMBL   ASC     15  3059      
+235  VAR3_TAG_SYMBL   ASC     15  3074      
+236  VAR4_TAG_SYMBL   ASC     15  3089      
+237  VAR5_TAG_SYMBL   ASC     15  3104      
+238  VAR6_TAG_SYMBL   ASC     15  3119      
+239  VAR7_TAG_SYMBL   ASC     15  3134      
+240  VAR8_TAG_SYMBL   ASC     15  3149      
+241  VAR9_TAG_SYMBL   ASC     15  3164      
+242  PRINT_FLAGS      ASC     26  3179      
+243  PICKLIST_CODE    ASC      1  3205      
+244  C1_TAG_SYMBL     ASC      6  3206      
+245  C1_LINK_CODE     NUM   10.0  3212      
+246  C1_LINK_SYMBL    ASC      1  3223      
+247  C2_TAG_SYMBL     ASC      6  3224      
+248  C2_LINK_CODE     NUM   10.0  3230      
+249  C2_LINK_SYMBL    ASC      1  3241      
+250  C3_TAG_SYMBL     ASC      6  3242      
+251  C3_LINK_CODE     NUM   10.0  3248      
+252  C3_LINK_SYMBL    ASC      1  3259      
+253  SELL_FORMULA     ASC     64  3260      
+254  INSTRCTN_FORM    TEX    512  3324      
+255  MAST_OPS_IDNO    NUM   10.0 19707      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    IDNO            NO  NO       0      0       2     ON-LINE
+       Recnum          NO  NO 
+
+  2    OPCODE          NO  NO       0      0       1     ON-LINE
+
+  3    CSTCTR_IDNO     NO  NO       0      0       2     ON-LINE
+       IDNO            NO  NO 
+

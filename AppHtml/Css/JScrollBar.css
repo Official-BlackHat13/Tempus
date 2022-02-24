@@ -1,0 +1,65 @@
+.JScrollBar {
+	position: relative;
+	padding: 0px;
+	margin: 0px;
+}
+
+td.JScrollBar  {
+    line-height: 1px;
+    border: 1px solid #efefef;
+  	padding: 0px;
+	margin: 0px;
+    }
+	
+.JScrollBar .btnUp {
+    background: url(../Images/scroll/btnUp.PNG) center center no-repeat;
+    }
+	
+.JScrollBar .btnDown {
+    background: url(../Images/scroll/btnDown.PNG) center center no-repeat;
+    }
+
+.JScrollBar .slider {
+    background: url(../Images/scroll/slider.PNG) center center no-repeat;
+    }
+    
+.JScrollBar .btnUpPress {
+    background: url(../Images/scroll/btnUpPress.PNG) center center no-repeat;
+    }
+	
+.JScrollBar .btnDownPress {
+    background: url(../Images/scroll/btnDownPress.PNG) center center no-repeat;
+    }
+
+.JScrollBar .sliderPress {
+    background: url(../Images/scroll/sliderPress.PNG) center center no-repeat;
+    }
+	
+.JScrollBar .filler {
+    background: url(../Images/scroll/bar.PNG) center repeat;
+    }
+    
+.JScrollBar .btnUpDisabled {
+    background: url(../Images/scroll/btnUp.PNG) center center no-repeat;
+    -moz-opacity: .3;
+    opacity: .3;
+    filter: alpha(opacity=30);
+    }
+
+.JScrollBar .btnDownDisabled {
+    background: url(../Images/scroll/btnDown.PNG) center center no-repeat;
+    -moz-opacity: .3;
+    opacity: .3;
+    filter: alpha(opacity=30);
+    }
+
+.JScrollBar .sliderDisabled {
+    background: url(../Images/scroll/slider.PNG) center center no-repeat;
+    -moz-opacity: .3;
+    opacity: .3;
+    filter: alpha(opacity=30);
+    }
+    
+.JScrollBar .fillerDisabled {
+    background: url(../Images/scroll/bar.PNG) center repeat;
+    }

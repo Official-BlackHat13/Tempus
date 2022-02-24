@@ -1,0 +1,27 @@
+// tInvdtl.pkg
+
+Struct tInvdtl
+    Integer iDetailIdno
+    Integer iInvoiceIdno
+    Integer iTransIdno
+    Integer iJobNumber
+    Integer iAreaNumber
+    Integer iEmployeeIdno
+    Integer iOpersIdno
+    String  sStartTime
+    Date    dStartDate
+    Integer iStartHr
+    Integer iStartMin
+    String  sStopTime
+    Date    dStopDate
+    Integer iStopHr
+    Integer iStopMin
+    Integer iElapsedMinutes
+    Number  nQuantity
+    Number  nPrice
+    Number  nTotal
+    String  sComment
+    Integer iClearToInvoice
+    String  sDescription
+    Number  nSequence
+End_Struct

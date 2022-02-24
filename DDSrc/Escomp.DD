@@ -1,0 +1,699 @@
+// Class Name: Escomp_DataDictionary
+// Revision  : 32
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Escomp
+Open Esitem
+Open Eshead
+Open System
+//Open Esclib
+
+//Register_Object ESCOMP_SL
+//Register_Object ESCLIB_SL
+
+// search for BC 12/03 for code inserted re: sell_price enhancement and other changes
+
+Register_Function Qty1Validation integer iField integer iQty Returns Integer
+Register_Function Qty2Validation integer iField integer iQty Returns Integer
+Register_Function Qty3Validation integer iField integer iQty Returns Integer
+Register_Function WidthValidation integer iField number nWidth Returns Integer
+Register_Function LengthValidation integer iField number nLength Returns Integer
+Register_Function PagesValidation integer iField integer iPages Returns Integer
+Register_Function Colors1Validation integer iField integer iColors Returns Integer
+Register_Function Colors2Validation integer iField integer iColors Returns Integer
+Register_Function FormPagesValidation integer iField integer iPages Returns Integer
+Register_Function NumberUpValidation integer iField integer iNumber Returns Integer
+
+Class Escomp_DataDictionary  is a cGlblDataDictionary
+ 
+    // Construct_Object:
+    Procedure Construct_Object
+        forward send Construct_Object
+
+        Set Main_File To Escomp.File_Number
+
+        Set Add_Server_File to Eshead.File_Number
+
+        Set Add_Client_File to Esitem.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Escomp.Component_Id DD_AUTOFIND to True
+        Set Field_Option Field Escomp.Component_Id DD_CAPSLOCK to True
+        Set Key_Field_State Field Escomp.Component_Id to True
+        Set Field_Auto_Increment Field Escomp.COMPONENT_ID to File_Field System.EscompId
+
+        Set Field_Option Field Escomp.Item_Count DD_NOENTER to True
+
+        Set Field_Option Field Escomp.Needs_Calced DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Art_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Art_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Art_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Art_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q1_Art_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q1_Art_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q1_Art_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Art_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Art_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Art_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Art_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q2_Art_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q2_Art_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q2_Art_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Art_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Art_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Art_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Art_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q3_Art_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q3_Art_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q3_Art_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Prep_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Prep_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Prep_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Prep_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q1_Prep_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q1_Prep_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q1_Prep_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Prep_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Prep_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Prep_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Prep_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q2_Prep_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q2_Prep_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q2_Prep_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Prep_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Prep_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Prep_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Prep_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q3_Prep_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q3_Prep_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q3_Prep_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Press_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Press_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Press_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Press_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q1_Press_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q1_Press_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q1_Press_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Press_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Press_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Press_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Press_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q2_Press_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q2_Press_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q2_Press_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Press_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Press_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Press_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Press_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q3_Press_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q3_Press_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q3_Press_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Bind_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Bind_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Bind_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Bind_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q1_Bind_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q1_Bind_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q1_Bind_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Bind_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Bind_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Bind_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Bind_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q2_Bind_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q2_Bind_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q2_Bind_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Bind_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Bind_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Bind_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Bind_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q3_Bind_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q3_Bind_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q3_Bind_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Lbr_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Lbr_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Lbr_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Lbr_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q1_Lbr_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q1_Lbr_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q1_Lbr_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Lbr_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Lbr_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Lbr_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Lbr_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q2_Lbr_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q2_Lbr_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q2_Lbr_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Lbr_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Lbr_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Lbr_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Lbr_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Q3_Lbr_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Escomp.Q3_Lbr_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Escomp.Q3_Lbr_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Mtl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Mtl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Mtl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Mtl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Mtl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Mtl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Mtl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Mtl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Mtl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Mtl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Mtl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Mtl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Pp_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Pp_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Pp_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Pp_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Pp_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Pp_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Pp_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Pp_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Pp_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Pp_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Pp_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Pp_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Pur_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Pur_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Pur_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Pur_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Pur_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Pur_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Pur_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Pur_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Pur_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Pur_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Pur_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Pur_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Ttl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Ttl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Ttl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Ttl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Ttl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Ttl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Ttl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Ttl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Ttl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Ttl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Ttl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Ttl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_X_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_X_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_X_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_X_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_X_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_X_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_X_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_X_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_X_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_X_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_X_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_X_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Frt_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Frt_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q1_Frt_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q1_Frt_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Frt_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Frt_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q2_Frt_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q2_Frt_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Frt_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Frt_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Escomp.Q3_Frt_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Escomp.Q3_Frt_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Escomp.Qty1 To "##,###,###"
+        Set Field_Mask_Type Field Escomp.Qty1 To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Escomp.Qty2 To "##,###,###"
+        Set Field_Mask_Type Field Escomp.Qty2 To MASK_NUMERIC_WINDOW
+
+        Set Field_Mask Field Escomp.Qty3 To "##,###,###"
+        Set Field_Mask_Type Field Escomp.Qty3 To MASK_NUMERIC_WINDOW
+
+        //
+        Property Integer pbQtyChg
+        Property Integer pbPgeChg
+        Property Integer pbShtChg
+        Property String  psCalcFlag
+        //
+    End_Procedure   // Construct_Object
+
+    // Deleting:
+    Procedure Deleting
+        boolean bNeedsCalced
+        integer iRecnum
+        string  sValue
+        // the docs say the record is still in the buffer
+        move Escomp.Recnum to iRecnum
+        //
+        Forward Send Deleting
+        // Insert Code Here
+        clear Escomp
+        move Eshead.Estimate_id to Escomp.Estimate_id
+        find GE Escomp.Estimate_id
+        while ((FOUND) AND Escomp.Estimate_id = Eshead.Estimate_id)
+            move (Escomp.Recnum <> iRecnum AND Escomp.Needs_calced = "Y") to bNeedsCalced
+            if (bNeedsCalced) break
+            find GT Escomp.Estimate_id
+        loop
+        if (bNeedsCalced) move "Y" to sValue
+        else              move "N" to sValue
+        move sValue                to Eshead.Needs_calced
+        // refresh Escomp record buffer
+        clear Escomp
+        // this shouldn't happen
+        if (NOT(iRecnum)) procedure_return
+        move iRecnum to Escomp.Recnum
+        find EQ Escomp.Recnum
+    End_Procedure   // Deleting
+
+    // Validate_Delete:
+    Function Validate_Delete  Returns Integer
+        Integer iReturnVal
+        Forward Get Validate_Delete  To iReturnVal
+        If (Not(iReturnVal)) Begin
+            send Refind_Records
+            set psCalcFlag to Eshead.Needs_calced
+        End
+        Function_Return iReturnVal
+    End_Function   // Validate_Delete
+
+    // Clear_Main_File:
+    // This message is sent whenever the buffer for the main file must
+    // be cleared. Overriding the default behavior of this message would
+    // stop the clear from occurring. You should augment this message to
+    // force manually related files to be cleared whenever the main file
+    // is cleared (see also Relate_Main_File).
+    Procedure Clear_Main_File
+        Forward Send Clear_Main_File
+        // Insert Code Here
+        Set pbQtyChg to False
+        Set pbPgeChg to False
+        Set pbShtChg to False
+    End_Procedure   // Clear_Main_File
+
+    // Save_Main_File:
+    // Performs a saverecord on the main_file. You can augment this
+    // message to save an unrelated file such as a system file.
+    Procedure Save_Main_File
+        Forward Send Save_Main_File
+        // Insert Code Here
+        Set pbQtyChg to False
+        Set pbPgeChg to False
+        Set pbPgeChg to False
+    End_Procedure   // Save_Main_File
+
+    // Validate_Save:
+    // This function is used to perform validation checking before a
+    // save operation. It should return zero if the save is allowed
+    // otherwise it should return non-zero or generate an error to
+    // prevent the save. By default it returns zero to allow the save.
+    // This function should be used to inforce business rules and
+    // integrity rules on the database. If this function returns a non-
+    // zero value, the current save operation is aborted, the records
+    // involved in the save are 'rolled back' to their original values,
+    // and the Transaction_Aborted message is sent.
+//    Function Validate_Save  Returns Integer
+//        Integer iReturnVal
+//        //
+//        Forward Get Validate_Save to iReturnVal
+//        //
+//        If (not(iReturnVal)) Begin
+//            if (Escomp.Component_id = "") error 900 "ID required"
+//            if (Escomp.Description  = "") error 900 "Description required"
+//        End
+//        Function_Return iReturnVal
+//    End_Function   // Validate_Save
+
+    // Backout:
+    Procedure Backout
+        Forward Send Backout
+        // Insert Code Here
+        subtract 1 from Eshead.Comp_count
+        //
+        Subtract Escomp.Q1_art_$ from Eshead.Q1_art_$
+        subtract Escomp.Q1_art_hrs from Eshead.Q1_art_hrs
+        subtract Escomp.Q2_art_$ from Eshead.Q2_art_$
+        subtract Escomp.Q2_art_hrs from Eshead.Q2_art_hrs
+        subtract Escomp.Q3_art_$ from Eshead.Q3_art_$
+        subtract Escomp.Q3_art_hrs from Eshead.Q3_art_hrs
+        // BC 12/03
+        subtract Escomp.Q1_art_sell from Eshead.Q1_art_sell
+        subtract Escomp.Q2_art_sell from Eshead.Q2_art_sell
+        subtract Escomp.Q3_art_sell from Eshead.Q3_art_sell
+        //
+        subtract Escomp.Q1_prep_$ from Eshead.Q1_prep_$
+        subtract Escomp.Q1_prep_hrs from Eshead.Q1_prep_hrs
+        subtract Escomp.Q2_prep_$ from Eshead.Q2_prep_$
+        subtract Escomp.Q2_prep_hrs from Eshead.Q2_prep_hrs
+        Subtract Escomp.Q3_prep_$ from Eshead.Q3_prep_$
+        subtract Escomp.Q3_prep_hrs from Eshead.Q3_prep_hrs
+        // BC 12/03
+        subtract Escomp.Q1_prep_sell from Eshead.Q1_prep_sell
+        subtract Escomp.Q2_prep_sell from Eshead.Q2_prep_sell
+        subtract Escomp.Q3_prep_sell from Eshead.Q3_prep_sell
+        //
+        subtract Escomp.Q1_press_$ from Eshead.Q1_press_$
+        subtract Escomp.Q1_press_hrs from Eshead.Q1_press_hrs
+        subtract Escomp.Q2_press_$ from Eshead.Q2_press_$
+        subtract Escomp.Q2_press_hrs from Eshead.Q2_press_hrs
+        subtract Escomp.Q3_press_$ from Eshead.Q3_press_$
+        subtract Escomp.Q3_press_hrs from Eshead.Q3_press_hrs
+        // BC 12/03
+        subtract Escomp.Q1_press_sell from Eshead.Q1_press_sell
+        subtract Escomp.Q2_press_sell from Eshead.Q2_press_sell
+        subtract Escomp.Q3_press_sell from Eshead.Q3_press_sell
+        //
+        subtract Escomp.Q1_bind_$ from Eshead.Q1_bind_$
+        subtract Escomp.Q1_bind_hrs from Eshead.Q1_bind_hrs
+        subtract Escomp.Q2_bind_$ from Eshead.Q2_bind_$
+        subtract Escomp.Q2_bind_hrs from Eshead.Q2_bind_hrs
+        Subtract Escomp.Q3_bind_$ from Eshead.Q3_bind_$
+        subtract Escomp.Q3_bind_hrs from Eshead.Q3_bind_hrs
+        // BC 12/03
+        subtract Escomp.Q1_bind_sell from Eshead.Q1_bind_sell
+        subtract Escomp.Q2_bind_sell from Eshead.Q2_bind_sell
+        subtract Escomp.Q3_bind_sell from Eshead.Q3_bind_sell
+        //
+        subtract Escomp.Q1_lbr_$ from Eshead.Q1_lbr_$
+        subtract Escomp.Q1_lbr_hrs from Eshead.Q1_lbr_hrs
+        subtract Escomp.Q2_lbr_$ from Eshead.Q2_lbr_$
+        subtract Escomp.Q2_lbr_hrs from Eshead.Q2_lbr_hrs
+        subtract Escomp.Q3_lbr_$ from Eshead.Q3_lbr_$
+        subtract Escomp.Q3_lbr_hrs from Eshead.Q3_lbr_hrs
+        // BC 12/03
+        subtract Escomp.Q1_lbr_sell from Eshead.Q1_lbr_sell
+        subtract Escomp.Q2_lbr_sell from Eshead.Q2_lbr_sell
+        subtract Escomp.Q3_lbr_sell from Eshead.Q3_lbr_sell
+        //
+        subtract Escomp.Q1_mtl_$ from Eshead.Q1_mtl_$
+        subtract Escomp.Q2_mtl_$ from Eshead.Q2_mtl_$
+        subtract Escomp.Q3_mtl_$ from Eshead.Q3_mtl_$
+        // BC 12/03
+        subtract Escomp.Q1_mtl_sell from Eshead.Q1_mtl_sell
+        subtract Escomp.Q2_mtl_sell from Eshead.Q2_mtl_sell
+        subtract Escomp.Q3_mtl_sell from Eshead.Q3_mtl_sell
+        //
+        Subtract Escomp.Q1_pp_$ from Eshead.Q1_pp_$
+        subtract Escomp.Q2_pp_$ from Eshead.Q2_pp_$
+        subtract Escomp.Q3_pp_$ from Eshead.Q3_pp_$
+        // BC 12/03
+        subtract Escomp.Q1_pp_sell from Eshead.Q1_pp_sell
+        subtract Escomp.Q2_pp_sell from Eshead.Q2_pp_sell
+        subtract Escomp.Q3_pp_sell from Eshead.Q3_pp_sell
+        //
+        subtract Escomp.Q1_pur_$ from Eshead.Q1_pur_$
+        subtract Escomp.Q2_pur_$ from Eshead.Q2_pur_$
+        subtract Escomp.Q3_pur_$ from Eshead.Q3_pur_$
+        // BC 12/03
+        subtract Escomp.Q1_pur_sell from Eshead.Q1_pur_sell
+        subtract Escomp.Q2_pur_sell from Eshead.Q2_pur_sell
+        subtract Escomp.Q3_pur_sell from Eshead.Q3_pur_sell
+        //
+        subtract Escomp.Q1_ttl_$ from Eshead.Q1_ttl_$
+        subtract Escomp.Q2_ttl_$ from Eshead.Q2_ttl_$
+        Subtract Escomp.Q3_ttl_$ from Eshead.Q3_ttl_$
+        // BC 12/03
+        subtract Escomp.Q1_ttl_sell from Eshead.Q1_ttl_sell
+        subtract Escomp.Q2_ttl_sell from Eshead.Q2_ttl_sell
+        subtract Escomp.Q3_ttl_sell from Eshead.Q3_ttl_sell
+        //
+        subtract Escomp.Q1_x_$ from Eshead.Q1_x_$
+        subtract Escomp.Q2_x_$ from Eshead.Q2_x_$
+        subtract Escomp.Q3_x_$ from Eshead.Q3_x_$
+        // BC 12/03
+        subtract Escomp.Q1_x_sell from Eshead.Q1_x_sell
+        subtract Escomp.Q2_x_sell from Eshead.Q2_x_sell
+        subtract Escomp.Q3_x_sell from Eshead.Q3_x_sell
+        //
+        subtract Escomp.Q1_frt_$ from Eshead.Q1_frt_$
+        subtract Escomp.Q2_frt_$ from Eshead.Q2_frt_$
+        Subtract Escomp.Q3_frt_$ from Eshead.Q3_frt_$
+        // BC 12/03
+        subtract Escomp.Q1_frt_sell from Eshead.Q1_frt_sell
+        subtract Escomp.Q2_frt_sell from Eshead.Q2_frt_sell
+        subtract Escomp.Q3_frt_sell from Eshead.Q3_frt_sell
+        //
+    End_Procedure   // Backout
+
+
+    // Update:
+    // Use this message to effect changes in related-to files. The
+    // Backout message should be designed to reverse the effects of this
+    // message. It is invoked while the database is locked.
+    Procedure Update
+        String sCalcFlag
+        //
+        Forward Send Update
+        // Insert Code Here
+        add 1 to Eshead.Comp_count
+        //
+        if (Escomp.Needs_calced = "Y") move "Y" to Eshead.Needs_calced
+        if (Escomp.Item_count = 0 AND Operation_Mode = MODE_DELETING) begin
+            get psCalcFlag to sCalcFlag
+            move sCalcFlag to Eshead.Needs_calced
+        end
+        //
+        Add Escomp.Q1_art_$ to Eshead.Q1_art_$
+        add Escomp.Q1_art_hrs TO Eshead.Q1_art_hrs
+        add Escomp.Q2_art_$ TO Eshead.Q2_art_$
+        add Escomp.Q2_art_hrs TO Eshead.Q2_art_hrs
+        add Escomp.Q3_art_$ TO Eshead.Q3_art_$
+        add Escomp.Q3_art_hrs TO Eshead.Q3_art_hrs
+        // BC 12/03
+        add Escomp.Q1_art_sell TO Eshead.Q1_art_sell
+        add Escomp.Q2_art_sell TO Eshead.Q2_art_sell
+        add Escomp.Q3_art_sell TO Eshead.Q3_art_sell
+        //
+        add Escomp.Q1_prep_$ TO Eshead.Q1_prep_$
+        add Escomp.Q1_prep_hrs TO Eshead.Q1_prep_hrs
+        add Escomp.Q2_prep_$ TO Eshead.Q2_prep_$
+        add Escomp.Q2_prep_hrs TO Eshead.Q2_prep_hrs
+        add Escomp.Q3_prep_$ TO Eshead.Q3_prep_$
+        add Escomp.Q3_prep_hrs TO Eshead.Q3_prep_hrs
+        // BC 12/03
+        add Escomp.Q1_prep_sell TO Eshead.Q1_prep_sell
+        add Escomp.Q2_prep_sell TO Eshead.Q2_prep_sell
+        add Escomp.Q3_prep_sell TO Eshead.Q3_prep_sell
+        //
+        add Escomp.Q1_press_$ TO Eshead.Q1_press_$
+        add Escomp.Q1_press_hrs TO Eshead.Q1_press_hrs
+        add Escomp.Q2_press_$ TO Eshead.Q2_press_$
+        add Escomp.Q2_press_hrs TO Eshead.Q2_press_hrs
+        Add Escomp.Q3_press_$ to Eshead.Q3_press_$
+        add Escomp.Q3_press_hrs TO Eshead.Q3_press_hrs
+        // BC 12/03
+        add Escomp.Q1_press_sell TO Eshead.Q1_press_sell
+        add Escomp.Q2_press_sell TO Eshead.Q2_press_sell
+        add Escomp.Q3_press_sell TO Eshead.Q3_press_sell
+        //
+        add Escomp.Q1_bind_$ TO Eshead.Q1_bind_$
+        add Escomp.Q1_bind_hrs TO Eshead.Q1_bind_hrs
+        add Escomp.Q2_bind_$ TO Eshead.Q2_bind_$
+        add Escomp.Q2_bind_hrs TO Eshead.Q2_bind_hrs
+        add Escomp.Q3_bind_$ TO Eshead.Q3_bind_$
+        add Escomp.Q3_bind_hrs TO Eshead.Q3_bind_hrs
+        // BC 12/03
+        add Escomp.Q1_bind_sell TO Eshead.Q1_bind_sell
+        add Escomp.Q2_bind_sell TO Eshead.Q2_bind_sell
+        add Escomp.Q3_bind_sell TO Eshead.Q3_bind_sell
+        //
+        add Escomp.Q1_lbr_$ TO Eshead.Q1_lbr_$
+        add Escomp.Q1_lbr_hrs TO Eshead.Q1_lbr_hrs
+        add Escomp.Q2_lbr_$ TO Eshead.Q2_lbr_$
+        add Escomp.Q2_lbr_hrs TO Eshead.Q2_lbr_hrs
+        Add Escomp.Q3_lbr_$ to Eshead.Q3_lbr_$
+        add Escomp.Q3_lbr_hrs TO Eshead.Q3_lbr_hrs
+        // BC 12/03
+        add Escomp.Q1_lbr_sell TO Eshead.Q1_lbr_sell
+        add Escomp.Q2_lbr_sell TO Eshead.Q2_lbr_sell
+        add Escomp.Q3_lbr_sell TO Eshead.Q3_lbr_sell
+        //
+        add Escomp.Q1_mtl_$ TO Eshead.Q1_mtl_$
+        add Escomp.Q2_mtl_$ TO Eshead.Q2_mtl_$
+        add Escomp.Q3_mtl_$ TO Eshead.Q3_mtl_$
+        // BC 12/03
+        add Escomp.Q1_mtl_sell TO Eshead.Q1_mtl_sell
+        add Escomp.Q2_mtl_sell TO Eshead.Q2_mtl_sell
+        add Escomp.Q3_mtl_sell TO Eshead.Q3_mtl_sell
+        //
+        add Escomp.Q1_pp_$ TO Eshead.Q1_pp_$
+        add Escomp.Q2_pp_$ TO Eshead.Q2_pp_$
+        add Escomp.Q3_pp_$ TO Eshead.Q3_pp_$
+        // BC 12/03
+        add Escomp.Q1_pp_sell TO Eshead.Q1_pp_sell
+        add Escomp.Q2_pp_sell TO Eshead.Q2_pp_sell
+        add Escomp.Q3_pp_sell TO Eshead.Q3_pp_sell
+        //
+        add Escomp.Q1_pur_$ TO Eshead.Q1_pur_$
+        add Escomp.Q2_pur_$ TO Eshead.Q2_pur_$
+        Add Escomp.Q3_pur_$ to Eshead.Q3_pur_$
+        // BC 12/03
+        add Escomp.Q1_pur_sell TO Eshead.Q1_pur_sell
+        add Escomp.Q2_pur_sell TO Eshead.Q2_pur_sell
+        add Escomp.Q3_pur_sell TO Eshead.Q3_pur_sell
+        //
+        add Escomp.Q1_ttl_$ TO Eshead.Q1_ttl_$
+        add Escomp.Q2_ttl_$ TO Eshead.Q2_ttl_$
+        add Escomp.Q3_ttl_$ TO Eshead.Q3_ttl_$
+        // BC 12/03
+        add Escomp.Q1_ttl_sell TO Eshead.Q1_ttl_sell
+        add Escomp.Q2_ttl_sell TO Eshead.Q2_ttl_sell
+        add Escomp.Q3_ttl_sell TO Eshead.Q3_ttl_sell
+        //
+        add Escomp.Q1_x_$ TO Eshead.Q1_x_$
+        add Escomp.Q2_x_$ TO Eshead.Q2_x_$
+        add Escomp.Q3_x_$ TO Eshead.Q3_x_$
+        // BC 12/03
+        add Escomp.Q1_x_sell TO Eshead.Q1_x_sell
+        add Escomp.Q2_x_sell TO Eshead.Q2_x_sell
+        add Escomp.Q3_x_sell TO Eshead.Q3_x_sell
+        //
+        add Escomp.Q1_frt_$ TO Eshead.Q1_frt_$
+        add Escomp.Q2_frt_$ TO Eshead.Q2_frt_$
+        Add Escomp.Q3_frt_$ to Eshead.Q3_frt_$
+        // BC 12/03
+        add Escomp.Q1_frt_sell TO Eshead.Q1_frt_sell
+        add Escomp.Q2_frt_sell TO Eshead.Q2_frt_sell
+        add Escomp.Q3_frt_sell TO Eshead.Q3_frt_sell
+        //
+     End_Procedure   // Update
+
+    // Creating:
+    Procedure Creating
+        Forward Send Creating
+        //
+        Sysdate Escomp.CREATION_DATE
+        //
+//        If Escomp.Qty1   eq 0 Move Eshead.Qty1   to Escomp.Qty1
+//        if Escomp.Qty2   eq 0 move Eshead.Qty2   to Escomp.Qty2
+//        if Escomp.Qty3   eq 0 move Eshead.Qty3   to Escomp.Qty3
+//        if Escomp.Width  eq 0 move Eshead.Width  to Escomp.Width
+//        if Escomp.Length eq 0 move Eshead.Length to Escomp.Length
+    End_Procedure   // Creating
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+//        Set Field_Default_Value   Field Escomp.Qty1 To Eshead.Qty1
+//        Set Field_Default_Value   Field Escomp.Qty2 To Eshead.Qty2
+//        Set Field_Default_Value   Field Escomp.Qty3 To Eshead.Qty3
+    End_Procedure    // Field_Defaults
+
+End_Class    // Escomp_DataDictionary
+
+#IFDEF Is$WebApp
+#ELSE
+
+//Use ESCOMP.SL        // ESCOMP_SL
+//Use ESCLIB.SL        // ESCLIB_SL
+
+#ENDIF
+

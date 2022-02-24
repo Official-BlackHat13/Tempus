@@ -1,0 +1,12 @@
+#REPLACE FILE67 Quota_dtl
+#REPLACE Quota_dtl.Recnum |FN67,0
+#REPLACE Quota_dtl.Quote_Dtl_Idno |FN67,1
+#REPLACE Quota_dtl.Quota_Idno |FN67,2
+#REPLACE Quota_dtl.Quota_Mo_Yr |FS67,3
+#REPLACE Quota_dtl.Asphalt |FN67,4
+#REPLACE Quota_dtl.Concrete |FN67,5
+#REPLACE Quota_dtl.Excavation |FN67,6
+#REPLACE Quota_dtl.Snow |FN67,7
+#REPLACE Quota_dtl.Sweep |FN67,8
+#REPLACE Quota_dtl.Marking |FN67,9
+#REPLACE Quota_dtl.Other |FN67,10

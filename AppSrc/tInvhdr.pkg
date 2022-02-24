@@ -1,0 +1,21 @@
+// tInvhdr.pkg
+Use tInvdtl.pkg
+
+Struct tInvhdr
+    Integer iRecId
+    Integer iInvoiceIdno
+    Integer iLocationIdno
+    Integer iCustomerIdno
+    Integer iEventIdno
+    Date    dInvoiceDate
+    String  sTerms
+    Number  nTotalAmount
+    Integer iPrintCount
+    Integer iPostFlag
+    Integer iPrintFlag
+    Integer iJobNumber
+    Integer iEditFlag
+    Integer iVoidFlag
+    Integer iChangedFlag
+    tInvdtl[] tDetail
+End_Struct

@@ -1,0 +1,31 @@
+Use cDbCJGridPromptList.pkg
+
+Class cDbCJGridPromptList_Enhanced is a cDbCJGridPromptList
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+    End_Procedure
+
+    // Get array of selected rows. This is not to be confused with
+    // with the Grid's SelectedRow. These are rows that are selected
+    Procedure SetColumnValuesForSelectedRows Integer[] SelectedRowColumnValues
+        Integer iCount iSels iSel
+        Handle hoDataSource
+        Get phoDataSource to hoDataSource
+        Get RowCount of hoDataSource to iCount
+        // re-set selected Rows
+        Move (SizeOfArray(SelectedRowColumnValues)) to iSels
+        For iSel from 0 to (iSels-1)
+            If (SelectedRowColumnValues[iSel]<iCount) Begin
+                Send SetSelectedRow SelectedRowColumnValues[iSel] True
+            End
+        Loop
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+
+    End_Procedure
+
+End_Class

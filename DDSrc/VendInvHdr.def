@@ -1,0 +1,63 @@
+-----------------------------------------------------------------------------
+  DATE: 12/14/2016      TIME: 04:07                                  PAGE:  1
+  FILE DEFINITION FOR FILE: VendInvHdr (# 75)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:VendInvHdr
+  USER DISPLAY NAME         : VendInvHdr
+  DATAFLEX FILE NAME        : VendInvHdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 600       ( USED: 600 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 43 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  VendInvHdrIdno   NUM   10.0     1  1   
+  2  EmployerIdno     NUM    8.0    12  2   Employer.FIELD_1 (4,1)
+  3  CreatedDate      DAT     10    23  3   
+  4  CreatedTime      ASC     10    46      
+  5  CreatedBy        ASC     50    56      
+  6  SubmissionDate   DAT     10   106      
+  7  SubmissionTime   ASC     10   129      
+  8  SubmissionBy     ASC     50   139      
+  9  Memo             ASC     50   189      
+ 10  WeekNumber       ASC     50   239  4   
+ 11  StartDateRange   DAT     10   289      
+ 12  StopDateRange    DAT     10   312      
+ 13  Terms            ASC     25   335      
+ 14  PostReadyFlag    NUM    6.0   360      
+ 15  PostedFlag       NUM    6.0   371      
+ 16  VoidFlag         NUM    6.0   382      
+ 17  ApprovalDate     DAT     10   393      
+ 18  ApprovalTime     ASC     10   416      
+ 19  ApprovalBy       ASC     50   426      
+ 20  SubTotal         NUM    8.4   476      
+ 21  TaxTotal         NUM    8.4   490      
+ 22  TotalAmount      NUM    8.4   504      
+ 23  QBBillNumber     NUM   10.0   518      
+ 24  QBBillTxnId      ASC     50   529      
+ 25  QBPaidFlag       NUM    6.0   579      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    VendInvHdrIdno  NO  NO       0      0       1     ON-LINE
+
+  2    EmployerIdno    NO  NO       0      0       2     ON-LINE
+       VendInvHdrIdno  NO  NO 
+
+  3    CreatedDate     NO  NO       0      0       2     ON-LINE
+       VendInvHdrIdno  NO  NO 
+
+  4    WeekNumber      NO  NO       0      0       2     ON-LINE
+       VendInvHdrIdno  NO  NO 
+

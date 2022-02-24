@@ -1,0 +1,88 @@
+// Class Name: Weather_DataDictionary
+// Revision  : 3
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Weather
+Open Areas
+Open System
+
+
+Register_Object Weather_Winddirection_VT
+
+Object Weather_Winddirection_VT  is a DescriptionValidationTable
+    Set Allow_Blank_State To TRUE
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "N"  "N"
+        Send Add_Table_Value  "NNE"  "NNE"
+        Send Add_Table_Value  "NE"  "NE"
+        Send Add_Table_Value  "ENE"  "ENE"
+        Send Add_Table_Value  "E"  "E"
+        Send Add_Table_Value  "ESE"  "ESE"
+        Send Add_Table_Value  "SE"  "SE"
+        Send Add_Table_Value  "SSE"  "SSE"
+        Send Add_Table_Value  "S"  "S"
+        Send Add_Table_Value  "SSW"  "SSW"
+        Send Add_Table_Value  "SW"  "SW"
+        Send Add_Table_Value  "WSW"  "WSW"
+        Send Add_Table_Value  "W"  "W"
+        Send Add_Table_Value  "WNW"  "WNW"
+        Send Add_Table_Value  "NW"  "NW"
+        Send Add_Table_Value  "NNW"  "NNW"
+    End_Procedure    // Fill_List
+End_Object   // Weather_Winddirection_VT
+
+Class Weather_DataDictionary  is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Weather.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Areas.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Weather.Weatherid to File_Field System.Lastweather
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Weather.Weatherid DD_AUTOFIND to True
+        Set Key_Field_State Field Weather.Weatherid To TRUE
+
+
+        Set Field_Class_Name Field Weather.Winddirection to "Combo"
+        Set Field_Option Field Weather.Winddirection DD_CAPSLOCK to True
+        Set Field_Value_Table Field Weather.Winddirection to Weather_Winddirection_VT
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // Weather_DataDictionary
+

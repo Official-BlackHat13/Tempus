@@ -1,0 +1,11 @@
+#REPLACE FILE115 PropDtl1
+#REPLACE PropDtl1.Recnum |FN115,0
+#REPLACE PropDtl1.PropHdr_Idno |FN115,1
+#REPLACE PropDtl1.PropDtl_Idno |FN115,2
+#REPLACE PropDtl1.SnowDepth |FS115,3
+#REPLACE PropDtl1.PlowPrice |FS115,4
+#REPLACE PropDtl1.ShovelPrice |FS115,5
+#REPLACE PropDtl1.DeicePrice |FS115,6
+#REPLACE PropDtl1.SideWalkDeice |FS115,7
+#REPLACE PropDtl1.AddService |FS115,8
+#REPLACE PropDtl1.AddPrice |FS115,9

@@ -1,0 +1,6 @@
+#REPLACE FILE12 EstHead
+#REPLACE EstHead.Recnum |FN12,0
+#REPLACE EstHead.EstHeadIdno |FN12,1
+#REPLACE EstHead.Entered |FD12,2
+#REPLACE EstHead.Planner |FS12,3
+#REPLACE EstHead.Title |FS12,4

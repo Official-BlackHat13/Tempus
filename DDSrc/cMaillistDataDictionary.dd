@@ -1,0 +1,36 @@
+Use cGlblDataDictionary.pkg
+
+Open Maillist
+Open Listlink
+
+Register_Object Maillist_sl
+
+Class cMaillistDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Maillist.File_Number
+
+        Set Add_Client_File to Listlink.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field Maillist.ListCode DD_CAPSLOCK to True
+        Set Field_Prompt_Object Field Maillist.ListCode to Maillist_sl
+        Set Field_Option Field Maillist.ListCode DD_AUTOFIND to True
+
+        Set Field_Prompt_Object Field Maillist.Description to Maillist_sl
+
+        Set Field_Class_Name Field Maillist.AutoCreateFlag to "cGlblDbCheckBox"
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Maillist.sl
+#ENDIF

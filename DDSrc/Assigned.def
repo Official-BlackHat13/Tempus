@@ -1,0 +1,39 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Assigned (# 38)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Assigned
+  USER DISPLAY NAME         : Assigned
+  DATAFLEX FILE NAME        : Assigned
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 68        ( USED: 68 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 13 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  AssignedCode     ASC     10     1  1   
+  2  Description      ASC     40    11  2   
+  3  Status           ASC      1    51      
+  4  ChangedFlag      NUM    5.0    52  3   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    AssignedCode    NO  NO       0      0       1     ON-LINE
+
+  2    Description     NO  NO       0      0       2     ON-LINE
+       AssignedCode    NO  NO 
+
+  3    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       AssignedCode    NO  NO 
+

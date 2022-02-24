@@ -1,0 +1,32 @@
+Use cGlblDataDictionary.pkg
+
+Open InsClass
+Open Employee
+
+Register_Object InsClass_sl
+
+Class cInsClassGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to InsClass.File_Number
+
+        Set Add_Client_File to Employee.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Prompt_Object Field InsClass.ClassCode to InsClass_sl
+
+        Set Field_Prompt_Object Field InsClass.ClassDescription to InsClass_sl
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use InsClass.sl
+#ENDIF

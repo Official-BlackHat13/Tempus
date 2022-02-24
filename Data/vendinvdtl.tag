@@ -1,0 +1,17 @@
+VendInvDtlIdno
+VendInvHdrIdno
+TransReference
+JobNumber
+Sequence
+StartDate
+StartTme
+StopDate
+StopTime
+ElapsedMinutes
+ElapsedHours
+Description
+Quantity
+Rate
+TaxRate
+TaxAmount
+Total

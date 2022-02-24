@@ -1,0 +1,40 @@
+//Use DfAllEnt.pkg
+Use cHtmlHelp.pkg
+Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open MastOps
+Open Opers
+
+Procedure DoFixOpers
+    Boolean bCancel
+    Number  nSelRate
+    //
+    Get Confirm "Reduce Selrate by 1/2 for Opers records with MastOpsIdno 158?" to bCancel
+    If (bCancel) Begin
+        Procedure_Return
+    End
+    //
+    Clear Opers
+    Move 158 to Opers.MastOpsIdno
+    Find ge Opers.MastOpsIdno
+    While ((Found) and Opers.MastOpsIdno = 158)
+        Move Opers.SellRate to nSelRate
+        Move (nSelRate / 2) to nSelRate
+        Reread
+        Move nSelRate       to Opers.SellRate
+        Move 1              to Opers.ChangedFlag
+        SaveRecord Opers
+        Unlock
+        Find gt Opers.MastOpsIdno
+    Loop
+End_Procedure
+
+Send DoFixOpers

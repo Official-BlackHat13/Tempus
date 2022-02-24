@@ -1,0 +1,225 @@
+Use DFClient.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use cProjectDataDictionary.dd
+Use Order.DD
+Use cJobcostsDataDictionary.dd
+Use MastOps.DD
+Use SalesRep.DD
+Use cGlblDbForm.pkg
+Use cGlblDbComboForm.pkg
+Use szcalendar.pkg
+Use Mastops.sl
+
+Object oMaterialCost is a dbModalPanel
+
+    Property RowID priJobcosts
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oProject_DD is a cProjectDataDictionary
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oProject_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oJobcosts_DD is a cJobcostsDataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oOrder_DD
+        Send DefineAllExtendedFields
+
+        Procedure Field_Defaults
+            Forward Send Field_Defaults
+            Set Field_Changed_Value Field Jobcosts.CostType to "MATERIAL"
+        End_Procedure
+    End_Object
+
+    Set Main_DD to oJobcosts_DD
+    Set Server to oJobcosts_DD
+
+    Set Label to "Material Costs"
+    Set Size to 191 331
+    Set piMinSize to 191 331
+    Set Location to 7 11
+    Set Border_Style to Border_Thick
+    Set Locate_Mode to Center_On_Panel
+
+    Object oOrder_JobNumber is a cGlblDbForm
+        Entry_Item Order.JobNumber
+        Set Location to 5 70
+        Set Size to 13 54
+        Set Label to "Job Number:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+        Set Enabled_State to False
+        Set Prompt_Button_Mode to PB_PromptOn
+    End_Object
+
+    Object oLocation_Name is a cGlblDbForm
+        Entry_Item Location.Name
+        Set Location to 20 70
+        Set Size to 13 160
+        Set Label to "Property:"
+        Set Prompt_Button_Mode to PB_PromptOff
+        Set Enabled_State to False
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oJobcosts_WorkDate is a cdbszDatePicker
+        Entry_Item Jobcosts.WorkDate
+        Set Location to 35 70
+        Set Size to 13 60
+        Set Label to "Work Date:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oJobcosts_MastOpsIdno is a cGlblDbForm
+        Entry_Item MastOps.MastOpsIdno
+        Set Location to 50 70
+        Set Size to 13 60
+        Set Label to "Operation ID:"
+        Set Prompt_Button_Mode to PB_PromptOn
+        Set Prompt_Object to MastOps_SL
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+
+        Procedure Prompt
+            Integer iIdno
+            //
+            Get IsSelectedJobCostOperation of Mastops_sl "PM Material" to iIdno
+            Send Request_Assign            of oJobcosts_DD MastOps.File_Number
+        End_Procedure
+    End_Object
+
+    Object oMastOps_Name is a cGlblDbForm
+        Entry_Item MastOps.Name
+        Set Location to 50 134
+        Set Size to 13 160
+        Set Prompt_Button_Mode to PB_PromptOff
+        Set Enabled_State to False
+    End_Object
+
+    Object oJobcosts_Quantity is a cGlblDbForm
+        Entry_Item Jobcosts.Quantity
+        Set Location to 65 70
+        Set Size to 13 66
+        Set Label to "Quantity:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oJobcosts_UnitCost is a cGlblDbForm
+        Entry_Item Jobcosts.UnitCost
+        Set Location to 80 70
+        Set Size to 13 66
+        Set Label to "Unit Cost:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oJobcosts_TotalCost is a cGlblDbForm
+        Entry_Item Jobcosts.TotalCost
+        Set Location to 95 70
+        Set Size to 13 66
+        Set Label to "Total Cost:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oJobcosts_Notes is a cDbTextEdit
+        Entry_Item Jobcosts.Notes
+        Set Location to 110 70
+        Set Size to 55 240
+        Set Label to "Notes:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+    Object oOK_btn is a Button
+        Set Label    to "&OK"
+        Set Location to 173 222
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Boolean bFail
+            Integer hoServer
+            RowID   riJobcosts
+            //
+            Get Server                       to hoServer
+            Get Request_Validate of hoServer to bFail
+            If (not(bFail)) Begin
+                Send Request_Save of hoServer
+                Get CurrentRowId  of hoServer to riJobcosts
+                Set priJobcosts               to riJobcosts
+                Send Close_Panel
+            End
+        End_Procedure
+    End_Object
+
+    Object oCancel_btn is a Button
+        Set Size to 14 50
+        Set Label    to "&Cancel"
+        Set Location to 173 277
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+           Send Close_Panel
+        End_Procedure
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_btn
+
+    Function DoAddMaterial RowID riJobNo Returns RowID
+        Integer hoServer
+        RowID   riJobcosts
+        //
+        Set priJobcosts to riJobcosts
+        Get Server      to hoServer
+        Send Clear_All   of hoServer
+        Send FindByRowId of hoServer Order.File_Number riJobNo
+        Send Popup
+        Get priJobcosts to riJobcosts
+        Function_Return riJobcosts
+    End_Function
+
+    Function DoEditMaterial RowID riJobcosts Returns RowID
+        Integer hoServer
+        //
+        Set priJobcosts to riJobcosts
+        Get Server      to hoServer
+        Send Clear_All   of hoServer
+        Send FindByRowId of hoServer Jobcosts.File_Number riJobcosts
+        Send Popup
+        Get priJobcosts to riJobcosts
+        Function_Return riJobcosts
+    End_Function
+
+    Procedure Activating
+//        Set Type_Value   of oJobcostsDescriptionVT to "PMMATERIAL"
+//        Send Fill_List   of oJobcostsDescriptionVT
+    End_Procedure
+
+End_Object

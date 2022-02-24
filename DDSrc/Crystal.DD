@@ -1,0 +1,63 @@
+// Class Name: Crystal_DataDictionary
+// Revision  : 2
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Crystal
+Open System
+
+Register_Object Crystal_sl
+
+Class Crystal_DataDictionary  is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Crystal.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Crystal.Crystalid to File_Field System.Crystalid
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Crystal.Crystalid DD_AUTOFIND to True
+        Set Key_Field_State Field Crystal.Crystalid To TRUE
+
+        Set Field_Option Field Crystal.Description DD_AUTOFIND to True
+        Set Field_Option Field Crystal.Description DD_CAPSLOCK to True
+        Set Field_Prompt_Object Field Crystal.Description to Crystal_sl
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // Crystal_DataDictionary
+#IFDEF Is$WebApp
+#ELSE
+
+Use Crystal.sl       // Crystal_sl
+
+#ENDIF
+

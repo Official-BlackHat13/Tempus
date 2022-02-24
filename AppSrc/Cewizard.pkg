@@ -1,0 +1,574 @@
+// Mastering Visual DataFlex
+//
+// WIZARD.PKG
+//
+// (c) 1997, StarZen Technologies, Inc
+//
+// Use of any parts of the code contained in this file is governed
+// by the terms of the license agreement contained in the
+// accompanying book, "Mastering Visual DataFlex".
+
+use Windows
+use Dfline
+Use StatPnl.pkg
+Use GlobalAllEnt.pkg
+//vdf12 implemented a new status panel package that has broken the calc wizard
+//Use StatPnl.pkg    // Make sure you load the new status panel object first. this is not optional!
+//Use OldStatPnl.pkg // load the old status panel. Status_Panel is now this old object
+
+open Jcpars
+
+#IFDEF doStandard
+#ELSE
+enumeration_list
+    // display object type
+    define doStandard
+    define doFormat
+    define doCheckbox
+    define doCombo
+end_enumeration_list
+#ENDIF
+
+Class cCEWizardPage IS A Dialog
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        // short description
+        Property String ShortTitle ""
+
+        Set PopUp_State  TO TRUE
+        Set Caption_Bar  TO FALSE
+        Set Border_Style TO Border_None
+        Set pbSizeToClientArea to False
+    End_Procedure
+
+    // public access method to set long description/title
+    //Procedure Set Title String strtitle
+    //    Set Value OF (oTitle(self)) TO strTitle
+    //End_Procedure
+
+    Procedure OnEnter Integer fromObj
+    End_Procedure
+
+    Procedure OnLeave Integer toObj
+    End_Procedure
+End_Class
+
+register_object oCalcEngine
+//
+Class cCECalcButton IS A cGlblButton
+    Procedure OnClick
+        //Delegate Send DoTestCalculation
+        send DoTestCalculation of oCalcEngine
+    End_Procedure
+End_Class
+Class cCENextButton IS A cGlblButton
+    Procedure OnClick
+        Delegate Send DoNext
+    End_Procedure
+End_Class
+Class cCEBackButton is a cGlblButton
+    Procedure OnClick
+        Delegate Send DoBack
+    End_Procedure
+End_Class
+Class cCECloseButton IS A cGlblButton
+    Procedure OnClick
+        Delegate Send DoClose
+    End_Procedure
+End_Class
+
+
+class CETagForm is a Form
+	procedure Construct_Object
+		forward send Construct_Object
+        //
+        property integer piItem     0
+        property integer phVarValue 0
+        //
+        set GUISize       to 20 250
+        set Form_Border   to BORDER_NONE
+        set Enabled_State to FALSE
+	end_procedure
+    //
+    procedure ClearValue
+		set Value item 0 to ""
+	end_procedure
+    //
+    function IsLocalEntry   ;
+        string  sTagsymbols ;
+        integer iLinkcode   ;
+        string  sLinksymbol ;
+        returns integer
+        //
+        boolean bLocal bOperator
+        //
+        move DFTRUE to bLocal
+        if (sTagsymbols CONTAINS "@" OR ;
+            sTagsymbols CONTAINS "^") move DFFALSE to bLocal
+        if (bLocal AND sTagsymbols CONTAINS "E") begin
+            move (sTagsymbols CONTAINS "=" OR sTagsymbols CONTAINS ">" ;
+                OR sTagsymbols CONTAINS "<" OR sTagsymbols CONTAINS "~") to bOperator
+            if (NOT(bOperator)) move DFFALSE to bLocal
+        end
+        if (bLocal) begin
+            if (iLinkcode <> 0)         move DFFALSE to bLocal
+            else if (sLinksymbol <> "") move DFFALSE to bLocal
+        end
+        if (sTagsymbols CONTAINS "D")   move DFTRUE  to bLocal
+        //
+        function_return bLocal
+    end_function
+    //
+    procedure DisplayTag integer hoStandards integer iOpcodeRow integer iShadowColor
+        boolean bLocal bInvisibleState
+        integer iItem iVarLinkCode iPos iInput hVarValue iValueShadowColor iValueWindowColor
+        string  sVarTag sVarTagSymbl sVarLinkSymbl
+        number  nDefault
+        //
+        get piItem to iItem
+        get IsVarTag of hoStandards iOpcodeRow iItem to sVarTag
+        //BC: commented out begin/end block so all 9 vars would go thru. formatting logic
+        //if (sVarTag <> "") begin
+            get IsVarTagSymbl  of hoStandards iOpcodeRow iItem to sVarTagSymbl
+            get IsVarLinkCode  of hoStandards iOpcodeRow iItem to iVarLinkCode
+            get IsVarLinkSymbl of hoStandards iOpcodeRow iItem to sVarLinkSymbl
+            get IsVarDfltValue of hoStandards iOpcodeRow iItem to nDefault
+            //
+            get IsLocalEntry sVarTagSymbl iVarLinkCode sVarLinkSymbl to bLocal
+            //
+            move (pos("I",sVarTagSymbl))                  to iPos
+            if (iPos) move (mid(sVarTagSymbl,1,(iPos+1))) to iInput
+            get phVarValue to hVarValue
+            //BC: added iShadowColor to passed parameters on next line
+            move ((left(sVarTag,1))="@" OR sVarTag="") to bInvisibleState
+            if (blocal) move clBlack      to iValueShadowColor
+            else        move iShadowColor to iValueShadowColor
+            //BC: 12/19/06 implement default link input color - send iValueWindowColor as new argument to DoShowInput
+            if (sVarTagSymbl contains "D") move clAqua to iValueWindowColor
+            else move clBtnFace to iValueWindowColor
+            //if (hVarValue) send DoShowInput of hVarValue iInput iValueShadowColor bInvisibleState nDefault
+            if (hVarValue) send DoShowInput of hVarValue iInput iValueShadowColor iValueWindowColor bInvisibleState nDefault
+        //end
+        if (bLocal) set TextColor to clBlack
+        else        set TextColor to iShadowColor
+        //BC: added next line to suppress display according to user's use of "@" in desc.
+        if (bInvisibleState) move "" to sVarTag
+        set Value item 0 to sVarTag
+    end_procedure
+    //
+    procedure HighlightTag boolean bOn
+        set Enabled_State to bOn
+    end_procedure
+end_class
+
+class CEValueForm is a Form
+    procedure Construct_Object
+        integer iDecimals
+        //
+        forward send Construct_Object
+        // the associated Qty? array
+        property integer phArray     0
+        // the associated Flag array
+        property integer phFlags     0
+        // the Var item
+        property integer piItem      0
+        // the input control value
+        property integer piInput     doStandard
+        // object Id of checkbox
+        property integer phCheckbox  0
+        // object Id of ComboForm
+        property integer phComboForm 0
+        //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+        // object id of ValueForm
+        property integer phValueForm 0
+        // default value
+        property number  pnDefault   0
+        //
+        move Jcpars.Decimals to iDecimals
+        //
+        set GUISize             to 20 85
+        set Numeric_Mask item 0 to 8 iDecimals "*,"
+        set Enabled_State       to FALSE
+    end_procedure
+	procedure ClearValue
+		set Value item 0 to 0
+	end_procedure
+    //
+    //procedure DoShowInput integer iInput
+    //BC: added shadowcolor & hidelogic to this procedure
+    procedure DoShowInput integer iInput integer iShadowColor integer iWindowColor integer bInVisibleState number nDefault
+        integer iDecimals iOpcode iVarnum hCheckbox hComboForm
+        //
+        get piOpcode       to iOpcode
+        get piItem         to iVarnum
+        move (iVarnum + 1) to iVarnum
+        //
+        if (iInput = doFormat) begin
+            clear Esvars
+            move iOpcode to Esvars.Opcode
+            move iVarnum to Esvars.Varnum
+            find GE Esvars by Index.1
+            if ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum) begin
+                move Esvars.Decimals to iDecimals
+            end
+        end
+        else move Jcpars.Decimals to iDecimals
+        //
+        set pnDefault                                   to nDefault
+        set piInput                                     to iInput
+        //set Visible_State                               to (iInput <> doCheckbox)
+        //BC: modified next line
+        //set Visible_State                               to (iInput <> doCheckbox AND iInput <> doCombo)
+        set Visible_State to (iInput <> doCheckbox AND iInput <> doCombo AND (NOT(bInvisibleState)))
+        set Numeric_Mask item 0                         to 8 iDecimals "*,"
+        get phCheckbox                                  to hCheckbox
+        if (hCheckbox) begin
+            set Visible_State of hCheckbox              to (iInput = doCheckbox)
+            //BC: 12/27/06 next line commented out to fix default value getting cleared when execution moves to/past a var that has a link 
+            // object is now initialized in procedure doDisplayValue
+            //set Checked_State of hCheckbox              to FALSE
+        end
+        get phComboForm                                 to hComboForm
+        if (hComboForm) set Visible_State of hComboForm to (iInput = doCombo)
+        //BC: 12/12/06 the next line resolves the default display issue whereby
+        // a Var using a linked default value, with a current value of 0, was
+        // displaying the comboform's value for that VAR from the last time it was used
+        // resulting in completely irrelevant values displaying as a default
+        //BC: 12/27/06 but the new line results in the default value getting cleared when execution moves to/past a var that has a link,
+        // object is now initialized in procedure doDisplayValue
+        //        if (hComboForm) set value of hComboForm Item 0 to ""
+        if (NOT(iShadowColor)) set TextColor to clBlack
+        else                   set TextColor to iShadowColor
+        //BC: 12/19/06 implement default link input color - 
+        set Color to iWindowColor
+        set Color of hComboForm to iWindowColor
+        set Color of hCheckBox  to iWindowColor
+    end_procedure
+    //
+    procedure DisplayValue integer iLinkLevel
+        send DoDisplayValue iLinkLevel FALSE
+    end_procedure
+    //
+    procedure DisplayDefault integer iLinkLevel
+        send DoDisplayValue iLinkLevel TRUE
+    end_procedure
+    //
+    procedure DoDisplayValue integer iLinkLevel boolean bDefault
+        integer hArray hFlags iItem iInput hCheckbox hComboForm iOpcode iVarnum hValueForm
+        string  sDescription sFlags
+        number  nValue
+            // there should always be an associated Qty? array
+        get phArray to hArray
+        if (hArray = 0) procedure_return
+        if (bDefault) get phFlags to hFlags
+        //
+        get piItem      to iItem
+        get piInput     to iInput
+        get phCheckbox  to hCheckbox
+        get phComboForm to hComboForm
+        //BC: 12/30/06 to clear value in wizard using same logic as for checkbox and comboform, instead of "send clearvalues" in updatewizard proc.
+        get phValueForm to hValueForm
+        //
+        get Number_Value of hArray item (iItem + (iLinklevel * 23)) to nValue
+        #IFDEF CE_CALC_TEST
+        #ELSE
+        if (hFlags <> 0) get String_Value of hFlags item (iItem + (iLinkLevel * 23)) to sFlags
+        #ENDIF
+        // if entered as 0, keep it
+        if (bDefault AND nValue = 0) begin
+            if (sFlags CONTAINS "X") break
+            get pnDefault to nValue
+            //BC: 12/27/06 replace next line with new begin/end block re: input type display issues
+            //if (nValue = 0) procedure_return
+            if (nValue = 0) begin
+                if (iInput = doCheckBox) set Checked_State of hCheckbox to False
+                else if (iInput = doCombo) set value of hComboForm item 0 to ""
+                set value item 0 to 0
+                procedure_return
+            end
+        end
+        //
+        // BC: 12/20/06 Next line doesn't set checked_state due to some class shortcoming
+        // checked state is ether 0 or 1 -- it doesn't recognize 2.5, etc. as "true"
+        // alternative coding  using boolean value works
+          if      (iInput = doCheckbox) set Checked_State of hCheckbox to (nValue>0)
+        else if (iInput = doCombo   ) begin
+            get piOpcode     to iOpcode
+            move (iItem + 1) to iVarnum
+            clear Esvars
+            move iOpcode to Esvars.Opcode
+            move iVarnum to Esvars.Varnum
+            //BC: 12/27/06 Comboform input type needs to use index 2, not 1!
+            move 3       to Esvars.Input_Type
+            find GE Esvars by Index.2
+            while ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum)
+                if (Esvars.Itemnum = nValue) move Esvars.Description to sDescription
+                if (sDescription <> "") break
+                find GT Esvars by Index.2
+                if (NOT(FOUND)) break
+            loop
+            set Value of hComboForm item 0 to sDescription
+        end
+        else set Value item 0 to nValue
+    end_procedure
+end_class // class CEValueForm is a Form
+//
+class CEValueTestForm is a CEValueForm
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set Numeric_Mask item 0 to 8 4 "*,"
+    end_procedure
+end_class // CEWalueTestForm
+//
+class CEValueCheckbox is a Checkbox
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set GUISize       to 20 20
+        set Visible_State to FALSE
+        set Enabled_State to FALSE
+        set Label         to "***"
+    end_procedure
+end_class // CEValueCheckbox
+//
+class CEValueComboForm is a ComboForm
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        //set Size             to 13 57
+        set Size             to 13 68
+        set Visible_State    to FALSE
+        set Enabled_State    to FALSE
+        set Combo_Sort_State to FALSE
+    end_procedure
+end_class // CEValueComboForm
+//
+class CETableForm is a Form
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        set GUISize             to 20 75
+        set Numeric_Mask item 0 to 6 4 "*,"
+        set Enabled_State       to FALSE
+    end_procedure
+end_class // CETableForm
+
+
+Class cCEWizardPanel IS A BasicPanel //ModalPanel
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        // set up caption bar
+        Set SysMenu_Icon  To False
+        Set Minimize_Icon To False
+        Set Maximize_Icon To False
+
+        // Set Size in pixels
+		#IFDEF CE_CALC_TEST
+			set GUISize to 450 603
+		#ELSE
+			set GUISize to 375 603
+		#ENDIF
+
+        // current page number
+        Property Integer Current_Page Public -1
+
+        // Title property
+        Property String Title Public ""
+
+        // storage array for pages
+        Object PageArray IS An Array
+        End_Object
+
+        // bitmap container object
+        Object oBitmapBox IS A Container3D
+            Set GUILocation  To 14 14
+            Set GUISize      To 40 28
+            Set Border_Style To Border_None //ClientEdge
+        End_Object
+
+        #IFDEF CE_CALC_TEST
+        Object oCalcButton is a cCECalcButton
+            Set Label to "Calculate"
+			Set GUILocation TO 376 299
+            Set GUISize             TO 28 67
+            //set Focus_Mode to POINTERONLY
+        End_Object    // oCalcButton
+
+        Object oBackButton is a cCEBackButton
+            Set Label to "< B&ack"
+			Set GUILocation TO 376 373
+            Set GUISize             TO 28 67
+        End_Object    // oBackButton
+
+        Object oNextButton is a cCENextButton
+            Set Label to "&Next >"
+			Set GUILocation TO 376 440
+            Set GUISize             TO 28 67
+        End_Object    // oNextButton
+
+        Object oCloseButton is a cCECloseButton
+            Set Label to "Close"
+			Set GUILocation TO 376 514
+            Set GUISize             TO 28 67
+        End_Object    // oCancel_bn
+
+        Object LineControl1 is a LineControl
+            Set GUILocation TO 362 14
+            Set GUISize             TO 2 566
+        End_Object    // LineControl1
+        #ENDIF
+
+    End_Procedure
+
+    Function PageObjectID Integer page# returns Integer
+        Local Integer ObjectID
+        Get Value OF (PageArray(self)) Item page# to ObjectID
+        Function_Return ObjectID
+    End_Function
+
+    Procedure Set PageObjectID Integer page# Integer ObjectID
+        Set Value OF (PageArray(self)) Item page# To ObjectID
+    End_Procedure
+
+    Function Page_Count Returns Integer
+        Local Integer iPageCount
+        Get Item_Count Of (PageArray(self)) To iPageCount
+        Function_Return iPageCount
+    End_Function
+
+    Procedure AddWizardPage Integer objId
+        Local Integer nxItem
+        Get Item_Count OF (PageArray(self)) To nxItem
+        Set Value OF (PageArray(self)) Item nxItem To objid
+    End_Procedure
+
+    Procedure Page Integer state
+        Forward Send Page state
+        if state EQ 1 Send ShowPage 0
+    End_Procedure
+
+    Procedure ShowPage Integer page#
+        Local Integer ToObj FromObj curPage
+
+        Get Current_Page TO curPage
+
+        Get PageObjectID page#   TO ToObj
+        Get PageObjectID curPage TO FromObj
+
+        // make sure page exists !
+        if ToObj NE 0 begin
+
+            // only if valid page
+            if curpage NE -1 Begin
+                send OnLeave To FromObj ToObj
+
+                send deactivate to FromObj
+
+                set Current_Page To -1
+            End
+
+            // set location and size just to be sure
+            Set GUILocation OF ToObj To 14 60
+			#IFDEF CE_CALC_TEST
+        	    Set GUISize     OF ToObj To 345 520
+			#ELSE
+				Set GUISize     OF ToObj To 270 520
+			#ENDIF
+
+			#IFDEF CE_CALC_TEST
+            If page# EQ 0 Send EnableBack FALSE
+            Else Send EnableBack TRUE
+
+            If page# ne 0 Send EnableCalc FALSE
+            Else Send EnableCalc TRUE
+
+            Send EnableNext TRUE
+
+            If page# EQ (Page_Count(self)-1) begin
+                Set Value OF (oNextButton(self)) to '&Finish'
+            end
+            else begin
+                Set Value OF (oNextButton(self)) to '&Next >'
+            End
+			#ENDIF
+
+            Send OnEnter TO ToObj FromObj
+            Send Popup   TO ToObj
+
+            Set Current_Page To page#
+
+            Set Value TO (Title(self) + " - " + ;
+                          ShortTitle(ToObj))
+        End
+    End_Procedure
+
+    Procedure DoFinish
+        Send Close_Panel
+    End_Procedure
+
+	procedure DoTestCalculation
+	end_procedure
+
+    Procedure DoBack
+        Local Integer CurPage
+
+        Get Current_Page To CurPage
+
+        // make sure we are not on first page or uninitialized
+        If CurPage LE 0 Procedure_Return
+
+        // switch to previous page
+        Send ShowPage (CurPage - 1)
+    End_Procedure
+
+    Procedure DoNext
+        Local Integer CurPage
+
+        Get Current_Page To CurPage
+
+        // make sure we do have pages
+        If CurPage EQ -1 Procedure_Return
+
+        // are we on last Page ?
+        If CurPage EQ (Page_Count(self)-1) Begin
+            Send DoFinish
+            Procedure_Return
+        End
+
+        // switch to next page
+        Send ShowPage (CurPage + 1)
+    End_Procedure
+
+    Procedure DoClose
+        Send Close_Panel
+    End_Procedure
+
+	#IFDEF CE_CALC_TEST
+    Procedure EnableNext Integer state
+        Set Shadow_State OF (oNextButton(self)) To (1-state)
+    End_Procedure
+
+    Procedure EnableBack Integer state
+        Set Shadow_State OF (oBackButton(self)) To (1-state)
+    End_Procedure
+
+    Procedure EnableCalc Integer state
+        Set Shadow_State OF (oCalcButton(self)) To (1-state)
+    End_Procedure
+	#ENDIF
+
+    Procedure Set Wizard_Bitmap String bitmapName
+        Set Bitmap OF (oBitmapBox(self)) To bitmapName
+    End_Procedure
+
+    // calc engine methods
+
+
+End_Class // cWizardPanel
+
+// --------------------------

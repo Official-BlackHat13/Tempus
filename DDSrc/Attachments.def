@@ -1,0 +1,73 @@
+-----------------------------------------------------------------------------
+  DATE: 03/09/2018      TIME: 08:06                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Attachments (# 81)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Attachments
+  USER DISPLAY NAME         : Attachments
+  DATAFLEX FILE NAME        : Attachments
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16801     ( USED: 16801 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 12 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  AttachIdno       NUM    8.0     1  1   
+  2  Sequence         NUM    6.2    12  2   
+  3  Name             ASC     50    22  3   
+  4  Description      TEX    512    72      
+  5  CreatedBy        ASC     50 16455      
+  6  CreatedDate      DAT     10 16505      
+  7  CreatedTime      ASC      8 16528      
+  8  UpdatedBy        ASC     50 16536      
+  9  UpdatedDate      DAT     10 16586      
+ 10  UpdatedTime      ASC      8 16609      
+ 11  EstimateIdno     NUM    8.0 16617  5   
+ 12  QuoteIdno        NUM    8.0 16628  6   
+ 13  JobNumber        NUM    8.0 16639  7   
+ 14  InvoiceIdno      NUM    8.0 16650  8   
+ 15  FileName         ASC    100 16661  4   
+ 16  EstimateFlag     NUM    2.0 16761      
+ 17  QuoteFlag        NUM    2.0 16767      
+ 18  OrderFlag        NUM    2.0 16773      
+ 19  InvoiceFlag      NUM    2.0 16779      
+ 20  ChangedFlag      NUM    2.0 16785      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    AttachIdno      NO  NO       0      0       1     ON-LINE
+
+  2    Sequence        NO  NO       0      0       2     ON-LINE
+       AttachIdno      NO  NO 
+
+  3    Name            NO  NO       0      0       2     ON-LINE
+       AttachIdno      NO  NO 
+
+  4    FileName        NO  NO       0      0       1     ON-LINE
+
+  5    EstimateIdno    NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       AttachIdno      NO  NO 
+
+  6    QuoteIdno       NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       AttachIdno      NO  NO 
+
+  7    JobNumber       NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       AttachIdno      NO  NO 
+
+  8    InvoiceIdno     NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       AttachIdno      NO  NO 
+

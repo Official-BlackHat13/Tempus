@@ -1,0 +1,75 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Invdtl (# 15)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:INVDTL
+  USER DISPLAY NAME         : Invoice Detail
+  DATAFLEX FILE NAME        : Invdtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16905     ( USED: 16905 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 218429 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  DetailIdno       NUM   10.0     1  1   
+  2  InvoiceIdno      NUM   10.0    12  2   Invhdr.FIELD_1 (14,1)
+  3  TransIdno        NUM   10.0    23      
+  4  JobNumber        NUM   10.0    34      
+  5  AreaNumber       NUM    5.0    45      
+  6  EmployeeIdno     NUM   10.0    51  4   
+  7  OpersIdno        NUM   10.0    62  3   Opers.FIELD_1 (7,1)
+  8  StartTime        ASC     10    73      
+  9  StartDate        DAT     10    83  4   
+ 10  StartHr          NUM    5.0   106      
+ 11  StartMin         NUM    5.0   112      
+ 12  StopTime         ASC     10   118      
+ 13  StopDate         DAT     10   128      
+ 14  StopHr           NUM    5.0   151      
+ 15  StopMin          NUM    5.0   157      
+ 16  ElapsedMinutes   NUM   10.0   163      
+ 17  Quantity         NUM    6.2   174      
+ 18  Price            NUM    6.2   184      
+ 19  Total            NUM    6.2   194      
+ 20  Comment          ASC     50   204      
+ 21  ClearToInvoice   NUM    5.0   254      
+ 22  Description      TEX    512   260      
+ 23  Sequence         NUM    4.2 16643  2   
+ 24  MastOpsIdno      NUM   10.0 16651      
+ 25  EquipIdno        NUM   10.0 16662      
+ 26  EmployerIdno     NUM   10.0 16673      
+ 27  TaxRate          NUM    2.4 16684      
+ 28  TaxAmount        NUM    4.4 16692      
+ 29  RecordOwner      NUM   10.0 16702      
+ 30  AttachOpersIdno  NUM   10.0 16713      
+ 31  AttachOpersName  ASC     50 16724      
+ 32  AttachOpersDescription  ASC     50 16774      
+ 33  AttachMastOpsIdno  NUM   10.0 16824      
+ 34  AttachPrice      NUM    6.2 16835      
+ 35  OpersName        ASC     50 16845      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    DetailIdno      NO  NO       0      0       1     ON-LINE
+
+  2    InvoiceIdno     NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       DetailIdno      NO  NO 
+
+  3    OpersIdno       NO  NO       0      0       2     ON-LINE
+       DetailIdno      NO  NO 
+
+  4    EmployeeIdno    NO  NO       0      0       3     ON-LINE
+       StartDate       NO  NO 
+       DetailIdno      NO  NO 
+

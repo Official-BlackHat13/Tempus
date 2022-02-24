@@ -1,0 +1,37 @@
+// Test.wo
+// Test
+Use cWebBusinessProcess.pkg
+
+Use Employer.DD
+Use Employee.DD
+
+Object oTest Is A cWebBusinessProcess
+    Set psDescription To "Test"
+    Set pbClearAfterSave To False
+
+
+    Object oEmployer_DD Is A Employer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oEmployer_DD
+
+    Object oEmployee_DD Is A Employee_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oEmployer_DD
+    End_Object // oEmployee_DD
+
+    Set Main_DD To oEmployee_DD
+
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew to False
+    Set pbAllowSaveEdit to False
+    Set pbAllowDelete to False
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+    Set pbAllowDDUpdate To True
+
+End_Object // oTest

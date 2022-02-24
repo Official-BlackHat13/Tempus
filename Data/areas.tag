@@ -1,0 +1,5 @@
+AreaNumber
+Name
+Manager
+ChangedFlag
+EmployeeIdno

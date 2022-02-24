@@ -1,0 +1,68 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Customer (# 2)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Customer
+  USER DISPLAY NAME         : Customer
+  DATAFLEX FILE NAME        : Customer
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16899     ( USED: 16899 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 2533 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CustomerIdno     NUM   10.0     1  1   
+  2  Name             ASC     60    12  2   
+  3  Address1         ASC     50    72      
+  4  Address2         ASC     50   122      
+  5  City             ASC     35   172      
+  6  State            ASC      2   207      
+  7  Zip              ASC     10   209      
+  8  Phone1           ASC     14   219      
+  9  PhoneType1       ASC      1   233      
+ 10  Phone2           ASC     14   234      
+ 11  PhoneType2       ASC      1   248      
+ 12  Phone3           ASC     14   249      
+ 13  PhoneType3       ASC      1   263      
+ 14  PhoneExt1        ASC      6   264      
+ 15  PhoneExt2        ASC      6   270      
+ 16  PhoneExt3        ASC      6   276      
+ 17  ContactName      ASC     40   282      
+ 18  ContactPhn1      ASC     14   322      
+ 19  ContactPhnType1  ASC      1   336      
+ 20  ContactPhnExt1   ASC      6   337      
+ 21  ContactPhn2      ASC     14   343      
+ 22  ContactPhnType2  ASC      1   357      
+ 23  ContactPhnExt2   ASC      6   358      
+ 24  ContactEmail     ASC     50   364      
+ 25  ContactComment   TEX    512   414      
+ 26  Status           ASC      1 16797      
+ 27  ChangedFlag      NUM    5.0 16798  3   
+ 28  OrderCount       NUM   10.0 16804      
+ 29  BusinessType     ASC      2 16815      
+ 30  Terms            ASC     25 16817      
+ 31  WebAddress       ASC     30 16842      
+ 32  PORequired       NUM    5.0 16872      
+ 33  RecordOwner      NUM   10.0 16878      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CustomerIdno    NO  NO       0      0       1     ON-LINE
+
+  2    Name            NO  NO       0      0       2     ON-LINE
+       CustomerIdno    NO  NO 
+
+  3    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       CustomerIdno    NO  NO 
+

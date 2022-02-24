@@ -1,0 +1,149 @@
+Use cGlblDataDictionary.pkg
+
+Open Locnotes
+Open Contact
+Open Location
+Open Order
+Open User
+Open System
+Open Reqtypes
+
+Object oAssignedToVT is a ValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "ADMIN"
+        Send Add_Table_Value "SALES"
+        Send Add_Table_Value "OPERATIONS"
+    End_Procedure
+End_Object
+
+Object oStatusVT is a ValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "1-OPEN"
+        Send Add_Table_Value "2-ASSIGNED"
+        Send Add_Table_Value "3-RESOLVED"
+        Send Add_Table_Value "4-CLOSED"
+    End_Procedure
+End_Object
+
+Class cLocnotesDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Locnotes.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Order.File_Number
+        Set Add_Server_File to Reqtypes.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Locnotes.LocnotesId to File_Field System.LocnotesId
+
+        #IFDEF Is$Windows
+        #ELSE
+        Set Field_Auto_Increment Field Locnotes.LocnotesId to File_Field System.LocnotesId
+        #ENDIF
+
+        Set Field_Option Field Locnotes.CreatedDate DD_NOENTER to True
+
+        Set Field_Option Field Locnotes.Status DD_CAPSLOCK to True
+        Set Field_Option Field Locnotes.Status DD_NOENTER to True
+        Set Field_Value_Table Field Locnotes.Status to oStatusVT
+        Set Field_Class_Name Field Locnotes.Status to "cGlblDbComboForm"
+
+        Set Field_Value_Table Field Locnotes.AssignedTo to oAssignedToVT
+        Set Field_Option Field Locnotes.AssignedTo DD_CAPSLOCK to True
+        Set Field_Class_Name Field Locnotes.AssignedTo to "cGlblDbComboForm"
+
+        Set Field_Validate_msg Field Locnotes.CallerPhone to get_PhoneValidation
+        Set Status_Help Field Locnotes.CallerPhone to "Enter the number as 10 digits, the number will be formatted when you save the record."
+        Set piPrimaryIndex to 1
+
+    End_Procedure
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Locnotes.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    
+    Procedure Update
+        Integer iHr iMin iSec
+        String  sTime 
+        Date    dToday
+        //
+        Forward Send Update
+        // Insert Code Here
+        Move Order.LocationIdno to Locnotes.LocationIdno
+        Move 1                  to Locnotes.ChangedFlag
+        //
+        Sysdate dToday iHr iMin iSec
+        Get IsTimeString iHr iMin iSec to sTime
+        //
+        If (Locnotes.AssignedDate = 0 and Locnotes.AssignedTo <> "") Begin
+            Move dToday             to Locnotes.AssignedDate
+            Move sTime              to Locnotes.AssignedTime
+        End
+        //
+        If (Locnotes.ResolvedDate = 0 and Locnotes.Resolution <> "") Begin
+            Move dToday             to Locnotes.ResolvedDate
+            Move sTime              to Locnotes.ResolvedTime
+        End
+        //
+        If      (Locnotes.ClosedDate <> 0) Begin
+            Move "4-CLOSED"   to Locnotes.Status
+        End
+        Else If (Locnotes.ResolvedDate <> 0) Begin
+            Move "3-RESOLVED" to Locnotes.Status
+        End
+        Else If (Locnotes.AssignedDate <> 0) Begin
+            Move "2-ASSIGNED" to Locnotes.Status
+        End
+        Else Begin
+            Move "1-OPEN"     to Locnotes.Status
+        End
+    End_Procedure   // Update
+
+    Procedure Creating
+        Forward Send Creating
+        //
+        #IFDEF Is$WebApp
+        Integer iHr iMin iSec iUserId
+        String  sTime sWebAppUserName
+        Date    dToday
+        //
+        Sysdate dToday iHr iMin iSec
+        Get IsTimeString iHr iMin iSec to sTime
+        Move dToday                    to Locnotes.CreatedDate
+        Move sTime                     to Locnotes.CreatedTime
+        Move sWebAppUserName           to Locnotes.CreatedBy
+        #ENDIF
+    End_Procedure
+
+    Procedure Field_Defaults
+        Date dToday
+        //
+        Sysdate dToday
+        //
+        Forward Send Field_Defaults
+        //
+        #IFDEF Is$WebApp
+        Set Field_Changed_Value Field Locnotes.Notedate to dToday
+        Set Field_Changed_Value Field Locnotes.Status to "1-OPEN"
+        #ENDIF
+    End_Procedure
+
+End_Class

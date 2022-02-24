@@ -1,0 +1,5 @@
+#REPLACE FILE28 Listlink
+#REPLACE Listlink.Recnum |FN28,0
+#REPLACE Listlink.ListlinkID |FN28,1
+#REPLACE Listlink.ContactIdno |FN28,2
+#REPLACE Listlink.ListCode |FS28,3

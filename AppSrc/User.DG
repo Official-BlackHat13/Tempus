@@ -1,0 +1,117 @@
+// User.DG
+
+Use DFAllEnt.pkg
+Use cGlblDbGroup.pkg
+Use cGlblDbForm.pkg
+Use cGlblForm.pkg
+
+
+Use User.DD
+
+Object oUserPasswordDialog is a cGlblDbModalPanel
+    Set Border_Style to Border_Thick
+    Set Label to "Change Password"
+    Set Size to 99 238
+    Set Location to 26 79
+    Set piMinSize to 99 238
+    Set piMaxSize to 99 238
+
+    Object User_DD is a User_DataDictionary
+    End_Object    // User_DD
+
+    Set Main_DD to User_DD
+    Set Server to User_DD
+
+    Object oPasswordGroup is a cGlblDbGroup
+        Set Size to 75 228
+        Set Location to 0 5
+
+        Object oUser_Stf_Name is a cGlblDbForm
+            Entry_Item User.LastName
+            Set Label to "Name"
+            Set Size to 13 126
+            Set Location to 10 66
+            Set Enabled_State to False
+            Set Prompt_Button_Mode to PB_PromptOff
+        End_Object    // oUser_Stf_Name
+
+        Object oUser_LoginName is a cGlblDbForm
+            Entry_Item User.LoginName
+            Set Label to "Login Name"
+            Set Size to 13 126
+            Set Location to 25 66
+            Set Enabled_State to False
+        End_Object    // oUser_User_Name
+
+        Object oPasswordForm is a cGlblForm
+            Set Label to "Type Password"
+            Set Size to 13 126
+            Set Location to 40 66
+            Set Password_State to True
+
+            On_Key kCancel Send Close_Panel
+        End_Object    // oPasswordForm
+
+        Object oVerifyForm is a cGlblForm
+            Set Label to "Verify Password"
+            Set Size to 13 126
+            Set Location to 55 66
+            Set Password_State to True
+
+            On_Key kCancel Send Close_Panel
+        End_Object    // oVerifyForm
+
+    End_Object    // oPasswordGroup
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Location to 80 125
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send DoSavePassword
+        End_Procedure
+    End_Object    // oOK_bn
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Location to 80 180
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object    // oCancel_bn
+
+    Procedure DoSavePassword
+        handle hoDD
+        string sPassword sVerify sEncrypted
+        //
+        get Value of oPasswordForm to sPassword
+        get Value of oVerifyForm   to sVerify
+        //
+        if (sPassword <> sVerify) begin
+            send Stop_Box "Password does not match verification"
+            procedure_return
+        end
+        //
+        get Server to hoDD
+        get IsEncryptedPassword sPassword to sEncrypted
+        Set Field_Changed_Value of hoDD Field User.Password to sPassword //sEncrypted
+        send Request_Save of hoDD
+        send Close_Panel
+    end_procedure
+
+    Procedure DoChangePassword Integer iRecnum
+        Handle hoDD
+        //
+        Set Value of oPasswordForm to ""
+        Set Value of oVerifyForm   to ""
+        //
+        Get Server to hoDD
+        Send Clear of hoDD
+        Send Find_By_Recnum of hoDD User.File_number iRecnum
+        Send Popup
+    End_Procedure
+
+End_Object    // oUserPasswordDialog

@@ -1,0 +1,178 @@
+Use cGlblDataDictionary.pkg
+
+Open LocationAPForm
+Open Location
+Open System
+
+Register_Object LocationAPForm_sl
+Register_Object TermsValidation
+
+Object TermsValidation is a FileValidationTable
+    //ToDo: Find out if the FileValidationTable can be constrained
+    Set Validate_State to False
+    Set Allow_Blank_State to True
+    Set Main_File         to Terms.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 1 // description is in field 2
+    Set Ordering          to 1 // load by index 1
+End_Object
+
+Class cLocationAPFormGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to LocationAPForm.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+        Set Add_System_File to Syslog.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Location.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Prompt_Object Field LocationAPForm.LocationAPIdno to LocationAPForm_sl
+
+        Set Field_Mask Field LocationAPForm.BCCellPhone to "Z###-###-####"
+        Set Field_Mask_Type Field LocationAPForm.BCCellPhone to Mask_Window
+
+        Set Field_Mask_Type Field LocationAPForm.BCOfficePhone to Mask_Window
+        Set Field_Mask Field LocationAPForm.BCOfficePhone to "Z###-###-#### x ####"
+
+        Set Field_Mask_Type Field LocationAPForm.BCOtherPhone to Mask_Window
+        Set Field_Mask Field LocationAPForm.BCOtherPhone to "Z###-###-####"
+
+        Set Field_Class_Name Field LocationAPForm.BillingState to "Form"
+
+        Set Field_Validate_msg Field LocationAPForm.BillingZip to get_ZipValidation
+        Set Field_Mask_Type Field LocationAPForm.BillingZip to Mask_Window
+        Set Field_Mask Field LocationAPForm.BillingZip to "#####-####"
+        Set Field_Class_Name Field LocationAPForm.BillingZip to "Form"
+
+        Set Field_Class_Name Field LocationAPForm.BillingTerms to "Combo"
+        Set Field_Value_Table Field LocationAPForm.BillingTerms to TermsValidation
+
+        Set Field_Class_Name Field LocationAPForm.SendMailFlag to "Checkbox"
+        Set Field_Label_Long Field LocationAPForm.SendMailFlag to "Send Mail"
+        Set Field_Label_Short Field LocationAPForm.SendMailFlag to "Mail"
+
+        Set Field_Class_Name Field LocationAPForm.SendEmailFlag to "Checkbox"
+        Set Field_Label_Long Field LocationAPForm.SendEmailFlag to "Send Email"
+        Set Field_Label_Short Field LocationAPForm.SendEmailFlag to "Email"
+
+        Set Field_Class_Name Field LocationAPForm.ThirdPartyFlag to "Checkbox"
+        Set Field_Label_Long Field LocationAPForm.ThirdPartyFlag to "3rd Party / External"
+        Set Field_Label_Short Field LocationAPForm.ThirdPartyFlag to "3rd Party"
+
+        Set Field_Class_Name Field LocationAPForm.ThirdPartyServiceName to "Form"
+        Set Field_Label_Long Field LocationAPForm.ThirdPartyServiceName to "Service"
+        Set Field_Label_Short Field LocationAPForm.ThirdPartyServiceName to "Service"
+
+        Set Field_Class_Name Field LocationAPForm.ThirdPartyInstructions to "Edit"
+        Set Field_Label_Long Field LocationAPForm.ThirdPartyInstructions to "Instructions"
+        Set Field_Label_Short Field LocationAPForm.ThirdPartyInstructions to "Instructions"
+        Set Status_Help Field LocationAPForm.ThirdPartyInstructions to "Please provide details on the above named 3rd Party Billing Service."
+
+        Set Field_Class_Name Field LocationAPForm.ThirdPartyContactName to "Form"
+
+        Set Field_Class_Name Field LocationAPForm.ThirdPartyContactEmail to "Form"
+        Set Field_Mask_Type Field LocationAPForm.ThirdPartyContactEmail to Mask_Window
+        Set Field_Label_Long Field LocationAPForm.ThirdPartyContactEmail to "Email"
+        Set Field_Label_Short Field LocationAPForm.ThirdPartyContactEmail to "Email"
+
+        Set Field_Class_Name Field LocationAPForm.ThirdPartyPhone to "Form"
+        Set Field_Mask_Type Field LocationAPForm.ThirdPartyPhone to Mask_Window
+        Set Field_Label_Long Field LocationAPForm.ThirdPartyPhone to "Phone"
+        Set Field_Label_Short Field LocationAPForm.ThirdPartyPhone to "Phone"
+
+        Set Field_Class_Name Field LocationAPForm.ChangedDate to "Form"
+        Set Field_Mask_Type Field LocationAPForm.ChangedDate to Mask_Date_Window
+
+        //SYSLOG - BELOW
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // LocationAPForm.LocationAPIdno
+        Set piKey2 to 2 // LocationAPForm.LocationIdno
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+        //SYSLOG - ABOVE
+    End_Procedure
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray 3   // BCFullName
+        Send DoAddArrayValue hArray 4   // BCCellPhone
+        Send DoAddArrayValue hArray 5   // BCOfficePhone
+        Send DoAddArrayValue hArray 6   // BCOtherPhone
+        Send DoAddArrayValue hArray 7   // BCEmail
+        Send DoAddArrayValue hArray 8   // BillingName
+        Send DoAddArrayValue hArray 9   // BillingAttn
+        Send DoAddArrayValue hArray 10  // BillingAddress1
+        Send DoAddArrayValue hArray 11  // BillingAddress2
+        Send DoAddArrayValue hArray 12  // BillingCity
+        Send DoAddArrayValue hArray 13  // BillingState
+        Send DoAddArrayValue hArray 14  // BillingZip
+        Send DoAddArrayValue hArray 15  // BillingTerms
+        Send DoAddArrayValue hArray 16  // SendMailFlag
+        Send DoAddArrayValue hArray 17  // SendEmailFlag
+        Send DoAddArrayValue hArray 18  // 3rdPartyFlag
+        Send DoAddArrayValue hArray 19  // 3rdPartyServiceName
+        Send DoAddArrayValue hArray 20  // 3rdPartyInstructions
+        Send DoAddArrayValue hArray 21  // 3rdPartyContactName
+        Send DoAddArrayValue hArray 22  // 3rdPartyContactEmail
+        Send DoAddArrayValue hArray 23  // 3rdPartyPhone
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure
+    
+//    Procedure AutoIncrement
+//        Set Field_Changed_Value Field LocationAPForm.LocationAPIdno to Location.LocationIdno
+//    End_Procedure
+
+    Procedure Creating
+        //Set Field_Changed_Value Field LocationAPForm.LocationAPIdno to Location.LocationIdno
+        Move Location.LocationIdno to LocationAPForm.LocationAPIdno
+        Forward Send Creating
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to LocationAPForm.ChangedFlag
+        End
+    End_Procedure
+
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use LocationAPForm.sl
+#ENDIF

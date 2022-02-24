@@ -1,0 +1,31 @@
+// TransactionEdit.wo
+// TransactionEdit
+Use cWebBusinessProcess.pkg
+
+Use User.DD
+
+Object oTransactionEdit Is A cWebBusinessProcess
+    Set psDescription To "TransactionEdit"
+    Set pbClearAfterSave To False
+
+
+    Object oUser_DD Is A User_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oUser_DD
+
+    Set Main_DD To oUser_DD
+
+
+    Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+    Set pbAllowSaveNew To True
+    Set pbAllowSaveEdit To True
+    Set pbAllowDelete To True
+    Set pbAllowClear To True
+    Set pbAllowFind To True
+    Set pbAllowDDUpdate To True
+
+End_Object // oTransactionEdit

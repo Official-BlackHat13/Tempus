@@ -1,0 +1,73 @@
+// Class Name: Event_DataDictionary
+// Revision  : 15
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Event
+Open System
+
+Register_Object Event_sl
+
+Class Event_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Event.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Event.Eventidno to File_Field System.Lastevent
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Event.Eventidno DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Event.Eventidno to Event_sl
+        Set Key_Field_State Field Event.Eventidno To TRUE
+
+        Set Field_Prompt_Object Field Event.Startdate to Event_sl
+
+        Set Field_Prompt_Object Field Event.Stopdate to Event_sl
+
+        Set Field_Option Field Event.Planner DD_CAPSLOCK to True
+
+        Set Field_Option Field Event.Entereddate DD_NOENTER to True
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Date dToday
+        //
+        Sysdate dToday
+        //
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Event.Entereddate To dToday
+    End_Procedure    // Field_Defaults
+
+End_Class    // Event_DataDictionary
+#IFDEF Is$WebApp
+#ELSE
+
+Use Event.sl         // Event_sl
+
+#ENDIF
+

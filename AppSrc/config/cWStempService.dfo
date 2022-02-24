@@ -1,0 +1,34 @@
+Object 
+
+    //
+    // Interface:
+    //
+    // Function wsGetNewTransactions Returns tWStNewTransaction[]
+    // Function wsUpdateCollectedTransactions tWStCollectedTransaction[] lltTransactions Returns integer
+    // Function wsGetNewLocationNotes Returns tWStLocnotes[]
+    // Function wsUpdateCollectedLocationNotes tWStLocnotes[] lltNotes Returns integer
+    // Function wsGetNewAreaNotes Returns tWStAreanote[]
+    // Function wsUpdateCollectedAreaNotes tWStAreanote[] lltNotes Returns integer
+    // Function wsUpdateMastOps tWStMastOps[] lltMastOpsUpdate Returns tWStMastOps[]
+    // Function wsUpdateAreas tWStAreas[] lltAreasUpdate Returns tWStAreas[]
+    // Function wsUpdateCustomer tWStCustomer[] lltCustomerUpdate Returns tWStCustomer[]
+    // Function wsUpdateLocation tWStLocation[] lltLocationUpdate Returns tWStLocation[]
+    // Function wsUpdateOpers tWStOpers[] lltOpersUpdate Returns tWStOpers[]
+    // Function wsUpdateOrder tWStOrder[] lltOrderUpdate Returns tWStOrder[]
+    // Function wsUpdateInvhdr tWStInvhdr[] lltInvhdrUpdate Returns tWStInvhdr[]
+    // Function wsUpdateEmployer tWStEmployer[] lltEmployerUpdate Returns tWStEmployer[]
+    // Function wsUpdateEmployee tWStEmployee[] lltEmployeeUpdate Returns tWStEmployee[]
+    // Function wsUpdateEquipmnt tWStEquipmnt[] lltEquipmntUpdate Returns tWStEquipmnt[]
+    // Function wsUpdateUser tWStUser[] lltUserUpdate Returns tWStUser[]
+    // Function wsGetOpenTransactions Returns tWStNewTransaction[]
+    //
+
+
+    // phoSoapClientHelper
+    //     Setting this property will pop up a view that provides information
+    //     about the Soap (xml) data transfer. This can be useful in debugging.
+    //     If you use this you must make sure you USE the test view at the top
+    //     of your program/view by adding:   Use WebClientHelper.vw // oClientWSHelper
+    //Set phoSoapClientHelper to oClientWSHelper
+
+End_Object

@@ -1,0 +1,7 @@
+// tReqtypes.pkg
+
+Struct tReqtypes
+    String  sCode
+    String  sDescription
+    Integer iChangedFlag
+End_Struct

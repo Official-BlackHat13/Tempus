@@ -1,0 +1,80 @@
+Use Windows.pkg
+Use dfEntry.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cDbTextEdit.pkg
+
+
+Object oReturnMemoModalDialog is a dbModalPanel
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Set Main_DD to oOrder_DD
+    Set Server to oOrder_DD
+
+    Set Size to 62 197
+    Set Label to "Return Memo"
+    Set piMinSize to 60 197
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+    Set Locate_Mode to Center_On_Screen
+
+    Object oOrder_ReturnMemo is a cDbTextEdit
+        Entry_Item Order.ReturnMemo
+        Set Location to 23 10
+        Set Size to 13 179
+        Set Label to "Please Enter the Return Memo:"
+        Set Label_FontWeight to fw_Bold
+        Set Label_Row_Offset to 5
+    End_Object
+        
+    Object oOK_Btn is a Button
+        Set Size to 14 60
+        Set Label    to "&OK"
+        Set Location to 43 123
+        Set peAnchors to anBottomRight
+        Procedure OnClick
+            Send Request_Save of oOrder_DD
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+//    Object oCancel_Btn is a Button
+//        Set Label    to "&Cancel"
+//        Set Location to 71 157
+//        Set peAnchors to anBottomRight
+//
+//        Procedure OnClick
+//            Send Close_Panel
+//        End_Procedure
+//
+//    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+
+
+End_Object

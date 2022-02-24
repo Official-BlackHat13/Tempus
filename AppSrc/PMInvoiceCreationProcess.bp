@@ -1,0 +1,68 @@
+Use Batchdd.pkg
+Use for_all.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use Invhdr.DD
+Use MastOps.DD
+Use Opers.DD
+Use Invdtl.DD
+Use cProjectDataDictionary.dd
+Use SalesRep.DD
+
+
+Object oPMInvoiceCreationProcess is a BusinessProcess
+Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oProject_DD is a cProjectDataDictionary
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oProject_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oInvhdr_DD is a Invhdr_DataDictionary
+        Set DDO_Server to oOrder_DD
+        Send DefineAllExtendedFields
+    End_Object
+
+    Object oInvdtl_DD is a Invdtl_DataDictionary
+        Set Constrain_file to Invhdr.File_number
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oInvhdr_DD
+        Send DefineAllExtendedFields
+    End_Object
+
+    Set Main_DD to oInvdtl_DD
+    Set Display_Error_State to True
+
+    Procedure OnProcess
+    End_Procedure
+
+End_Object
+

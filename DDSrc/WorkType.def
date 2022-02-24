@@ -1,0 +1,46 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: WorkType (# 74)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:WorkType
+  USER DISPLAY NAME         : WorkType
+  DATAFLEX FILE NAME        : WorkType
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 144       ( USED: 144 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 8 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  WorkTypeId       ASC     20     1  1   
+  2  Description      ASC     30    21  2   
+  3  ShortCut         ASC      2    51      
+  4  Sequence         NUM    2.2    53  3   
+  5  ManagedBy        NUM   10.0    59      
+  6  QBItemRefID      ASC     50    70      
+  7  ChangedFlag      NUM    5.0   120  4   
+  8  HourlyCost       NUM    4.2   126      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    WorkTypeId      NO  NO       0      0       1     ON-LINE
+
+  2    Description     NO  NO       0      0       2     ON-LINE
+       WorkTypeId      NO  NO 
+
+  3    Sequence        NO  NO       0      0       2     ON-LINE
+       WorkTypeId      NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       WorkTypeId      NO  NO 
+

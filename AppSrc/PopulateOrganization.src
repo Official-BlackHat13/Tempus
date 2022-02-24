@@ -1,0 +1,40 @@
+Use GlobalAllEnt.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Customer
+Open Location
+Open Quotehdr
+
+Procedure DoPopulateOrganization
+    Boolean bCancel
+    //
+    Get Confirm "Populate Organization/Location?" to bCancel
+    If (not(bCancel)) Begin
+        Find ge Quotehdr.Recnum
+        While (Found)
+//            Relate Quotehdr
+//            Clear Location
+//            Move Quotehdr.LocationIdno to Location.LocationIdno
+//            Find eq Location.LocationIdno
+//            If (Found) Begin
+            Reread
+            Move "P" to Quotehdr.WorkType
+//            Move Customer.Name         to Quotehdr.Organization
+//            Move Location.CustomerIdno to Quotehdr.CustomerIdno
+//            Move Location.Name         to Quotehdr.LocationName
+            SaveRecord Quotehdr
+            Unlock
+//            End
+            Find gt Quotehdr.Recnum
+        Loop
+    End
+End_Procedure
+
+Send DoPopulateOrganization

@@ -1,0 +1,204 @@
+Use DFClient.pkg
+Use Areas.DD
+Use Weather.DD
+Use cGlblDbForm.pkg
+Use cDbTextEdit.pkg
+Use cGlblDbComboForm.pkg
+Use dbSuggestionForm.pkg
+
+Object oWeatherAddEdit is a dbModalPanel
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oWeather_DD is a Weather_DataDictionary
+        Set DDO_Server to oAreas_DD
+    End_Object
+    
+    Property Boolean pbOk
+
+    Set Main_DD to oWeather_DD
+    Set Server to oWeather_DD
+
+    Set Label to "WeatherAddEdit"
+    Set Size to 194 214
+    Set piMinSize to 89 211
+    Set Location to 2 1
+    Set Border_Style to Border_Thick
+
+    Object oAreaSuggestionForm is a DbSuggestionForm
+        Entry_Item Areas.Name
+        Set Location to 11 6
+        Set Size to 13 200
+        Set Label to "Area"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+        Set peAnchors to anTopLeftRight
+        Set peSuggestionMode to smFind
+        Set pbFullText to True
+        Set piStartAtChar to 1
+    End_Object
+
+//    Object oAreas_Name is a cGlblDbForm
+//        Entry_Item Areas.Name
+//        Set Location to 11 6
+//        Set Size to 13 200
+//        Set Label to "Area"
+//        Set Label_Col_Offset to 0
+//        Set Label_Justification_Mode to JMode_Top
+//        Set peAnchors to anTopLeftRight
+//    End_Object
+
+    Object oWeather_EventDate is a cGlblDbForm
+        Entry_Item Weather.EventDate
+        Set Location to 36 6
+        Set Size to 13 95
+        Set Label to "Date"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+        Set Form_Datatype to Mask_Date_Window
+        Set Prompt_Button_Mode to PB_PromptOn
+        Set Prompt_Object to oMonthCalendarPrompt
+    End_Object
+
+    Object oWeather_EventTime is a cGlblDbForm
+        Entry_Item Weather.EventTime
+        Set Location to 36 111
+        Set Size to 13 95
+        Set Label to "Time"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+        Set Form_Datatype to Mask_Time
+    End_Object
+
+    Object oWeather_AirTemperature is a cGlblDbForm
+        Entry_Item Weather.AirTemperature
+        Set Location to 62 6
+        Set Size to 13 95
+        Set Label to "Air Temp."
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+    End_Object
+
+    Object oWeather_GndTemperature is a cGlblDbForm
+        Entry_Item Weather.GndTemperature
+        Set Location to 62 111
+        Set Size to 13 95
+        Set Label to "Ground Temp."
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+    End_Object
+
+    Object oWeather_SnowInches is a cGlblDbForm
+        Entry_Item Weather.SnowInches
+        Set Location to 88 6
+        Set Size to 13 95
+        Set Label to "Snow Inches"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+    End_Object
+
+    Object oWeather_WindVelocity is a cGlblDbForm
+        Entry_Item Weather.WindVelocity
+        Set Location to 88 111
+        Set Size to 13 41
+        Set Label to "Wind Velocity"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+    End_Object
+
+    Object oWeather_WindDirection is a cGlblDbComboForm
+        Entry_Item Weather.WindDirection
+        Set Location to 88 160
+        Set Size to 13 46
+        Set Label to "Wind Direction"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+        Set peAnchors to anTopLeftRight
+    End_Object
+
+    Object oWeather_Description is a cDbTextEdit
+        Entry_Item Weather.Description
+        Set Location to 113 6
+        Set Size to 60 203
+        Set Label to "Description"
+        Set Label_Col_Offset to 0
+        Set Label_Justification_Mode to JMode_Top
+        Set peAnchors to anAll
+    End_Object
+
+    Object oOK_btn is a Button
+        Set Label    to "&OK"
+        Set Location to 176 107
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Set pbOk to True
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_btn is a Button
+        Set Size to 14 50
+        Set Label    to "&Cancel"
+        Set Location to 176 162
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Request_Clear of oWeather_DD
+            Set pbOk to False
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Function PopupWeatherInput Integer iWeatherIdno String sArea String sType Returns Boolean
+        Boolean bErr
+        Handle hoDD
+        //
+        Move oWeather_DD to hoDD
+        //
+        Case Begin
+            Case (sType="New")
+                DateTime dtNow
+                String sDate sTime
+                //
+                Send Clear_All of hoDD
+                //
+                Move (CurrentDateTime()) to dtNow 
+                Move (String(DateGetDay(dtNow))+'/'+String(DateGetMonth(dtNow))+'/'+String(DateGetYear(dtNow))) to sDate
+                Move (String(DateGetHour(dtNow))+':'+String(DateGetMinute(dtNow))) to sTime
+                If (Length(sArea)>1) Begin 
+                    Move sArea to Areas.Name
+                    Send Request_Find of hoDD EQ Areas.File_Number 2
+                    Set Field_Changed_Value of hoDD Field Areas.Name to sArea
+                    Set Value of oAreas_Name to sArea
+                End
+                Set Field_Changed_Value of hoDD Field Weather.EventDate to sDate
+                Set Field_Changed_Value of hoDD Field Weather.EventTime to sTime
+                Case Break
+            Case (sType="Edit")
+                Send Refind_Records of hoDD
+                Case Break
+            Case Else
+                Send Info_Box ("Type"* sType * "does not exsist.") "Wrong Type"
+                Function_Return False
+                Case Break
+        Case End
+            
+        //
+        Send Popup_Modal of Self
+        //
+        If (pbOk(Self)) Begin
+            Get Request_Validate of hoDD to bErr
+            If (not(bErr)) Begin
+                Send Request_Save of hoDD
+            End
+        End
+        Function_Return (pbOk(Self) and (not(bErr)))
+    End_Function
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_btn
+
+End_Object

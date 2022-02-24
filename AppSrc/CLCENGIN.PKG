@@ -1,0 +1,3958 @@
+// CEWIZARD.SRC
+//
+// this package is part of the Vdfquery suite
+//
+// 09-06-02: Adjusted Schedule_Flag logic for new flag values
+//           test for >0 changed to >1
+
+
+
+use Array.nui
+use Strings.nui
+
+Use StdArray.pkg
+
+Use Mastops.sl
+
+//use Initem.sl //*dw*
+use Instruction.dg
+use Override.dg
+use vpMsgBox.dg
+
+// this statement is here only for development documentation
+// it will be placed at the top of those programs that
+// include the ClcEngin.pkg file
+// the possible symbols are...
+//define CE_CALC_TEST
+//define CE_CALC_ORDER
+//define CE_CALC_ESTIMATE
+//define CE_CALC_LIBRARY
+
+// include the necessary files and DD packages
+// system parameter file
+open Jcpars
+// common
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use Jcoper.dd
+// Order Maintenance
+#IFDEF CE_CALC_ORDER
+//use Jcreps.dd
+//use Jccust.dd
+//use Jccrep.dd
+//use Jcorep.dd
+//use Jccntc.dd
+//use Jcprod.dd
+//use Jcjobs.dd
+//use Esjcmp.dd
+//use Esjitm.dd
+//
+use bpScheDD.pkg
+#ENDIF
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+use Eshead.dd
+use Escomp.dd
+Use Esitem.dd
+Use Location.DD
+Use Customer.DD
+Use Contact.DD
+Use SalesRep.DD
+#ENDIF
+// Component Library
+#IFDEF CE_CALC_LIBRARY
+//use Esctyp.dd
+//use Esclib.dd
+//use Eslitm.dd
+#ENDIF
+
+// make the code more readable
+enumeration_list
+    //
+    define CE_FINDERR             for -1
+    // which process
+    define CE_GET_VARIABLES       for  2
+    define CE_GET_CONSTANTS       for  3
+    define CE_CALC_FORMULA        for  4
+    define CE_TABLE_VALUE         for  5
+    define CE_PROD_FORMULA        for  6
+    define CE_SELL_FORMULA        for  7
+    define CE_TRIGGER             for  8
+    // which method
+    define CE_IGNORE              for  9
+    define CE_STANDARD            for 10
+    define CE_LOCAL               for 11
+    define CE_LOCAL_SAVE          for 12
+    define CE_STORE_DEFAULT       for 13
+    define CE_RETRIEVE            for 14
+    define CE_CC_SELECT           for 15
+    define CE_OP_SELECT           for 16
+    define CE_OP_LINK             for 17
+    define CE_CCOP                for 18
+    define CE_PUSH                for 19
+    define CE_POP                 for 20
+    define CE_POP_DEFAULT         for 21
+    define CE_INVENTORY_BASIS     for 22
+    define CE_INVENTORY_WIDTH     for 23
+    define CE_INVENTORY_LENGTH    for 24
+    define CE_INVENTORY_MWGT      for 25
+    define CE_INVENTORY_RATE      for 26
+    define CE_CANCEL              for 27
+    // which calc/file type
+    define CE_TEST                for 28
+    define CE_ADD                 for 29
+    define CE_ADD_MASTER          for 30
+    define CE_ADD_AGAIN           for 31
+    define CE_EDIT                for 32
+    define CE_BATCH               for 33
+    define CE_ORDER               for 34
+    define CE_ESTIMATE            for 35
+    define CE_LIBRARY             for 36
+    define CE_NO_FILE             for 37
+    //
+    define CE_FINISHED            for 99
+    //
+end_enumeration_list
+
+use Statpnl.pkg
+
+// standards Array
+object oStandardsArray is a cStandardsArray
+end_object
+//
+
+use CalcWizard.pkg
+
+object oCalcEngine is a cObject
+
+//    //
+//    property integer piAddOpcode            0
+//    // Order Processing
+//    property boolean pbComponentId          FALSE
+//    //
+//    property string  psHeaderId             ""
+//    property integer piComponentRec         0
+//    property string  psComponentId          ""
+//    // Calc flags
+//    property integer pbNeedsCalced          FALSE
+//    // Quantity synchronization
+//    property integer piQty1                 0
+//    property integer piQty2                 0
+//    property integer piQty3                 0
+//    property integer piQtyOpcode            0
+//    // Pagespecs synchronization
+//    property integer piPages                0
+//    property number  pnWidth                0
+//    property number  pnLength               0
+//    property integer piColors1              0
+//    property integer piColors2              0
+//    // Sheet Layout synchronization
+//    property integer piFormPages            0
+//    property integer piNumberUp             0
+//    //
+//    property boolean pbAddMaster            FALSE
+//    property integer piCalcMode             CE_TEST
+//    property integer piLinkLevel            0
+//    property integer pbProcessFlag          FALSE
+//    property integer pbCanceled             FALSE
+//    // these two properties support link symbol "X"
+//    property boolean pbCalcError            FALSE
+//    property string  psCalcError            ""
+//    //
+//    // used in Wizard mode to ensure
+//    // cometics
+//    property boolean pbStoreDefault         FALSE
+//    //
+//    property integer pbWizardMode           FALSE
+//    property integer pbValidateMode         TRUE
+//    // used only by Order Management
+//    property integer pbLogRecalc            FALSE
+//    //
+//    // the following is set true by pressing the F2 key in interactive mode
+//    // from the input dialog.  It remains true until a link is executed at
+//    // which point it is reset to false
+//    property integer pbAutoSave             FALSE
+//    //
+//    // the following is set to true to indicate a maintenance calculation
+//    // that requires exclusion of procedure Backout
+//    property integer pbNoBackout            FALSE
+//    //
+//    property integer pbBatchMode            FALSE
+
+    property string  psStatusCaption        "Batch Calculation Mode"
+    property string  psStatusTitle          ""
+    property string  psStatusMessage        ""
+    Property Integer phStatusPanel          ghoStatusPanel // (Status_Panel(self))
+    property integer piErrorObjectId        0
+    property integer piErrorCheckState      FALSE
+    property integer Error_Processing_State FALSE
+    // used to store the elapsed time
+    property string  psCalcTime             ""
+    property string  psVarTag               ""
+
+//    // used to report a calculation error
+//    property string  psFormula              ""
+//    // following property, when true, causes the
+//    // StoreVariableValues function to return to the
+//    // the previous prompt
+//    property boolean pbBackup               FALSE
+//    property boolean pbReturn               FALSE
+//    // maintained for the help system
+//    property integer piCC                   0
+//    // the following are maintained for each link level
+//    // they are pushed & popped as the link level changes
+//    property integer piOpcode               0
+//    property integer piOpcodeRow            0
+//    property integer piProcessIndex         0
+//    property integer pbMultiValue           FALSE
+//    property integer pbReturnValue          TRUE
+//    property string  psLinkSymbol           ""
+//    property string  psCurrentStandard      ""
+//    property string  psLinkedTo             ""
+//    property string  psLinkedFrom           ""
+//    // the following are maintained for
+//    // the batch array process
+//    property integer piKeyIndex             0
+//    property integer piKeyCount             0
+//    property integer piComponentIndex       0
+//    property integer piRangeStart           0
+//    property integer piRangeStop            0
+//    // the following maintains a count of
+//    // items created during a batch recalc
+//    property integer piBatchCreatedCount    0
+//    // the following boolean determines
+//    // whether or not link level info is
+//    // sent to a text file
+//    property integer pbDebug                FALSE
+//    // temp directory used by pbDebug
+//    property string  psTempDir              ""
+//    // holds first created debug .TXT file
+//    property string  psDebugFile            ""
+    // ---------------------------------------------------------------
+
+    // intended to be sent from the CEWizard dialog
+    procedure SetAutoSave boolean bFlag
+        set pbAutoSave to bFlag //TRUE
+    end_procedure
+
+    // standards Array
+//    object oStandardsArray is a cStandardsArray
+//    end_object
+    //
+
+//    // store component id's of each component in batch calculation
+//    object ComponentArray is an Array
+//        item_property_list
+//            item_property string  psComponentId
+//            item_property integer piQty1
+//            item_property integer piQty2
+//            item_property integer piQty3
+//            item_property integer piPages
+//            item_property number  pnWidth
+//            item_property number  pnLength
+//            item_property integer piColors1
+//            item_property integer piColors2
+//            item_property integer piFormPages
+//            item_property integer piNumberUp
+//            item_property integer piLastItem
+//        end_item_property_list
+//    end_object
+//    // one entry for each component/opcode record
+//    object OpcodeKeyStorageArray is an Array
+//    end_object
+    function ExistingStorageLevel integer iOpcode returns integer
+        integer hKeyStorage iStoredKey iKeyIndex iRangeStop
+        //
+        move (OpcodeKeyStorageArray(self)) to hKeyStorage
+        get piRangeStart to iKeyIndex
+        get piRangeStop to iRangeStop
+        while (iKeyIndex <= iRangeStop)
+            get Integer_Value of hKeyStorage item iKeyIndex to iStoredKey
+            if (iStoredKey = iOpcode) break
+            increment iKeyIndex
+        end // iKeyIndex le iRangeStop
+        if (iKeyIndex > iRangeStop) move CE_FINDERR to iKeyIndex
+        function_return iKeyIndex
+    end_function // ExistingStorageLevel
+//    // 38 entries for each item record
+//    object OpcodeDataStorageArray is an Array
+//        // item  0       Item record number
+//        // item  1 -  9  Vars
+//        // item 10 - 12  Calc units
+//        // item 13 - 15  Table stds
+//        // item 16 - 18  Prod units
+//        // item 19 - 21  Est$
+//        // item 22 - 24  Sell$
+//        // item 25 - 33  Var flags
+//        // item 34       Jcoper calc_flags
+//        // item 35       Item calc_flags
+//        // item 36       Component Recnum
+//        // item 37       Component Id
+//    end_object
+
+    // the following array holds the opcode & description
+    // of items re-created during a batch re-calc in order
+    // to alert the user upon completion of the re-calc
+    object oBatchCreatedOpcodeArray is an Array
+        item_property_list
+            item_property integer piCode
+            item_property string  psName
+            item_property string  psComponentID
+        end_item_property_list
+    end_object
+
+//    // store link level values Qty 1
+//    object oQty1Array is an Array
+//        // used to store 23 values per calculated standard (LinkLevel)
+//        // 0-8      Variables
+//        // 9-17     Constants
+//        // 18       Calc units formula
+//        // 19       Table value
+//        // 20       Prod units formula
+//        // 21       Est$
+//        // 22       Sell units formula
+//    end_object
+//    object oFlagArray is an Array
+//        // when NOT testing, used to store supplemental variable info
+//    end_object
+//    object oQty2Array is an Array
+//    end_object
+//    object oQty3Array is an Array
+//    end_object
+    procedure StoreValue integer hoQtyArray integer iArrayIndex number nValue string sFlags
+        string sValue
+        //
+    //    if (iArrayIndex <= 8) begin
+            // function NumToStr resides in VDFQuery package - strings.nui
+            // 01/22/05 test if adding these two lines a couple months ago to fix a rounding issue
+            // has broken panaprint's -1496, -1496, 2250 stds. logic
+            // comment them out
+            move (NumToStr(nValue,4)) to sValue
+            move (number(sValue))     to nValue
+    //    end
+        //
+        set Array_Value of hoQtyArray item ;
+            (iArrayIndex + (piLinkLevel(self) * 23)) to nValue
+        if (iArrayIndex <= 8 AND sFlags <> "") send StoreFlags iArrayIndex sFlags
+    end_procedure
+    procedure StoreFlags integer iArrayIndex string sFlags
+        set Array_Value of oFlagArray item ;
+            (iArrayIndex + (piLinkLevel(self) * 23)) to sFlags
+    end_procedure
+    procedure ClearArrayValues integer iLinkLevel
+        integer iCounter hoQtyArray iArrayIndex
+        for iCounter from 1 to 4
+            if      (iCounter = 1) move oQty1Array to hoQtyArray
+            else if (iCounter = 2) move oFlagArray to hoQtyArray
+            else if (iCounter = 3) move oQty2Array to hoQtyArray
+            else if (iCounter = 4) move oQty3Array to hoQtyArray
+            for iArrayIndex from 0 to 22
+                set Array_Value of hoQtyArray item (iArrayIndex + (iLinkLevel * 23)) to 0
+            loop
+        loop
+    end_procedure // ClearArrayValues
+//    procedure DumpValues integer hoQtyArray
+//        string sFilename
+//        integer iArrayIndex
+//        number nValue
+//        move "dump" to sFilename
+//        append sFilename hoQtyArray ".txt"
+//        append_output sFilename
+//        writeln (piOpcode(self))
+//        writeln (piLinkLevel(self))
+//        writeln (pbMultiValue(self))
+//        for iArrayIndex from 0 to 20
+//            get Number_Value of hoQtyArray item ;
+//                (iArrayIndex + (piLinkLevel(self) * 23)) to nValue
+//            writeln nValue
+//        loop
+//        close_output
+//    end_procedure // DumpValues
+//    procedure DumpFlags
+//        string sFilename sFlags
+//        integer hoFlagArray iArrayIndex
+//        number nValue
+//        move (oFlagArray(self)) to hoFlagArray
+//        move "dumpflag.txt" to sFilename
+//        append_output sFilename
+//        writeln (piOpcode(self))
+//        writeln (piLinkLevel(self))
+//        for iArrayIndex from 0 to 8
+//            get String_Value of hoFlagArray item ;
+//                (iArrayIndex + (piLinkLevel(self) * 23)) to sFlags
+//            writeln sFlags
+//        loop
+//        close_output
+//    end_procedure // DumpFlags
+    //
+//    object oOpcodeArray is an Array
+//        // used to store the OpCodes of link levels
+//        // initial OpCode is Item 0
+//    end_object
+    //
+    function ExistingArrayLevel integer iOpcode integer iLinkLevel returns integer
+        integer hOpcodeArray iExistingLevel iExistingOpcode
+        //
+        move (oOpcodeArray(self)) to hOpcodeArray
+        // start with closest level
+        move iLinkLevel to iExistingLevel
+        // check memory
+        while iExistingLevel ge 0
+            get Integer_Value of hOpcodeArray item iExistingLevel ;
+                to iExistingOpcode
+            if (iExistingOpcode = iOpcode) function_return iExistingLevel
+            decrement iExistingLevel
+        loop
+        function_return iExistingLevel
+    end_function // ExistingArrayLevel
+    //
+    procedure LoadArraysToArrays integer iFromLevel integer iToLevel integer bMultiValue
+        integer iCounter iArrayIndex hoQtyArray hoFlagArray
+        number  nValue
+        string  sFlags
+        //
+        for iCounter from 1 to 3
+            if      (iCounter = 1) move oQty1Array to hoQtyArray
+            else if (iCounter = 2) move oQty2Array to hoQtyArray
+            else if (iCounter = 3) move oQty3Array to hoQtyArray
+            for iArrayIndex from 0 to 22
+                get Number_Value of hoQtyArray item ;
+                    (iArrayIndex + (iFromLevel * 23)) to nValue
+                set Array_Value of hoQtyArray item ;
+                    (iArrayIndex + (iToLevel * 23)) to nValue
+            loop
+            if (NOT(bMultiValue)) break
+        loop
+        //
+        move oFlagArray to hoFlagArray
+        for iArrayIndex from 0 to 8
+            get String_Value of hoFlagArray item (iArrayIndex + (iFromLevel * 23)) to sFlags
+            set Array_Value  of hoFlagArray item (iArrayIndex + (iToLevel * 23))   to sFlags
+        loop
+    end_procedure // LoadArraysToArrays
+    //
+    procedure SaveArraysToStorage integer iKeyIndex integer iLinkLevel
+        integer hQty1 hQty2 hQty3 hFlags hData iCompIndex
+        number  nArrayValue
+        string  sFlags
+        //
+        move OpcodeDataStorageArray to hData
+        move oQty1Array             to hQty1
+        move oQty2Array             to hQty2
+        move oQty3Array             to hQty3
+        move oFlagArray             to hFlags
+        // save 9 variable values
+        //  1
+        get Number_Value of hQty1 item ( 0 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 1 + (iKeyIndex  * 38)) to nArrayValue
+        //  2
+        get Number_Value of hQty1 item ( 1 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 2 + (iKeyIndex  * 38)) to nArrayValue
+        //  3
+        get Number_Value of hQty1 item ( 2 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 3 + (iKeyIndex  * 38)) to nArrayValue
+        //  4
+        get Number_Value of hQty1 item ( 3 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 4 + (iKeyIndex  * 38)) to nArrayValue
+        //  5
+        get Number_Value of hQty1 item ( 4 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 5 + (iKeyIndex  * 38)) to nArrayValue
+        //  6
+        get Number_Value of hQty1 item ( 5 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 6 + (iKeyIndex  * 38)) to nArrayValue
+        //  7
+        get Number_Value of hQty1 item ( 6 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 7 + (iKeyIndex  * 38)) to nArrayValue
+        //  8
+        get Number_Value of hQty1 item ( 7 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value of  hData item ( 8 + (iKeyIndex  * 38)) to nArrayValue
+        //  9
+        get Number_Value of hQty1 item ( 8 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item ( 9 + (iKeyIndex  * 38)) to nArrayValue
+        // save Calc Units formula
+        //  Qty1
+        get Number_Value of hQty1 item (18 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (10 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty2
+        get Number_Value of hQty2 item (18 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (11 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty3
+        get Number_Value of hQty3 item (18 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (12 + (iKeyIndex  * 38)) to nArrayValue
+        // save Table standards
+        //  Qty1
+        get Number_Value of hQty1 item (19 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (13 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty2
+        get Number_Value of hQty2 item (19 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (14 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty3
+        get Number_Value of hQty3 item (19 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (15 + (iKeyIndex  * 38)) to nArrayValue
+        // save Prod Units formula
+        //  Qty1
+        get Number_Value of hQty1 item (20 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (16 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty2
+        get Number_Value of hQty2 item (20 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (17 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty3
+        get Number_Value of hQty3 item (20 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (18 + (iKeyIndex  * 38)) to nArrayValue
+        // save Est$ values
+        //  Qty1
+        get Number_Value of hQty1 item (21 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (19 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty2
+        get Number_Value of hQty2 item (21 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (20 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty3
+        get Number_Value of hQty3 item (21 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (21 + (iKeyIndex  * 38)) to nArrayValue
+        // save Sell Units formula
+        //  Qty1
+        get Number_Value of hQty1 item (22 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (22 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty2
+        get Number_Value of hQty2 item (22 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (23 + (iKeyIndex  * 38)) to nArrayValue
+        //  Qty3
+        get Number_Value of hQty3 item (22 + (iLinkLevel * 23)) to nArrayValue
+        set Array_Value  of hData item (24 + (iKeyIndex  * 38)) to nArrayValue
+        //
+        if (pbBatchMode(self)) procedure_return
+        // save flag values
+        //  1
+        get String_Value of hFlags   item (0 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (25 + (iKeyIndex * 38)) to sFlags
+        //  2
+        get String_Value of hFlags   item (1 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (26 + (iKeyIndex * 38)) to sFlags
+        //  3
+        get String_Value of hFlags   item (2 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (27 + (iKeyIndex * 38)) to sFlags
+        //  4
+        get String_Value of hFlags   item (3 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (28 + (iKeyIndex * 38)) to sFlags
+        //  5
+        get String_Value of hFlags   item (4 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (29 + (iKeyIndex * 38)) to sFlags
+        //  6
+        get String_Value of hFlags   item (5 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (30 + (iKeyIndex * 38)) to sFlags
+        //  7
+        get String_Value of hFlags   item (6 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (31 + (iKeyIndex * 38)) to sFlags
+        //  8
+        get String_Value of hFlags   item (7 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (32 + (iKeyIndex * 38)) to sFlags
+        //  9
+        get String_Value of hFlags   item (8 + (iLinkLevel * 23)) to sFlags
+        if not "0" in sFlags ;
+            set Array_Value of hData item (33 + (iKeyIndex * 38)) to sFlags
+    end_procedure // SaveArraysToStorage
+    //
+    procedure LoadStorageToArrays integer iKeyIndex integer iLinkLevel integer bMultiValue
+        integer hData iDataIndex iArrayIndex iCounter hoQtyArray
+        integer hoQty1Array hoQty2Array hoQty3Array hoFlagArray
+        number  nValue
+        string  sFlags
+        //
+        move OpcodeDataStorageArray to hData
+        move oQty1Array             to hoQty1Array
+        move oQty2Array             to hoQty2Array
+        move oQty3Array             to hoQty3Array
+        move oFlagArray             to hoFlagArray
+        // clear the arrays
+        if (NOT(iLinkLevel)) send ClearArrayValues 0 iLinkLevel
+        // load stored variable values
+        for iDataIndex from 1 to 9
+            get Number_Value of hData item (iDataIndex + (iKeyIndex * 38)) to nValue
+            for iCounter from 1 to 3
+                if      (iCounter = 1) move hoQty1Array to hoQtyArray
+                else if (iCounter = 2) move hoQty2Array to hoQtyArray
+                else if (iCounter = 3) move hoQty3Array to hoQtyArray
+                set Array_Value of hoQtyArray item ;
+                    (iArrayIndex + (iLinkLevel * 23)) to nValue
+                if (NOT(bMultiValue)) break
+            loop
+            increment iArrayIndex
+        loop
+        // load stored Calc Units values
+        move 18 to iArrayIndex
+        for iDataIndex from 10 to 12
+            get Number_Value of hData item (iDataIndex + (iKeyIndex * 38)) to nValue
+            if      (iDataIndex = 10) move hoQty1Array to hoQtyArray
+            else if (iDataIndex = 11) move hoQty2Array to hoQtyArray
+            else if (iDataIndex = 12) move hoQty3Array to hoQtyArray
+            set Array_Value of hoQtyArray item ;
+                (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Table values
+        move 19 to iArrayIndex
+        for iDataIndex from 13 to 15
+            get Number_Value of hData item (iDataIndex + (iKeyIndex * 38)) to nValue
+            if      (iDataIndex = 13) move hoQty1Array to hoQtyArray
+            else if (iDataIndex = 14) move hoQty2Array to hoQtyArray
+            else if (iDataIndex = 15) move hoQty3Array to hoQtyArray
+            set Array_Value of hoQtyArray item ;
+                (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Prod Units values
+        move 20 to iArrayIndex
+        for iDataIndex from 16 to 18
+            get Number_Value of hData item (iDataIndex + (iKeyIndex * 38)) to nValue
+            if      (iDataIndex = 16) move hoQty1Array to hoQtyArray
+            else if (iDataIndex = 17) move hoQty2Array to hoQtyArray
+            else if (iDataIndex = 18) move hoQty3Array to hoQtyArray
+            set Array_Value of hoQtyArray item ;
+                (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Est$ values
+        move 21 to iArrayIndex
+        for iDataIndex from 19 to 21
+            get Number_Value of hData item (iDataIndex + (iKeyIndex * 38)) to nValue
+            if      (iDataIndex = 19) move hoQty1Array to hoQtyArray
+            else if (iDataIndex = 20) move hoQty2Array to hoQtyArray
+            else if (iDataIndex = 21) move hoQty3Array to hoQtyArray
+            set Array_Value of hoQtyArray item ;
+                (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Sell$ values
+        move 22 to iArrayIndex
+        for iDataIndex from 22 to 24
+            get Number_Value of hData item (iDataIndex + (iKeyIndex * 38)) to nValue
+            if      (iDataIndex = 22) move hoQty1Array to hoQtyArray
+            else if (iDataIndex = 23) move hoQty2Array to hoQtyArray
+            else if (iDataIndex = 24) move hoQty3Array to hoQtyArray
+            set Array_Value of hoQtyArray item ;
+                (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Var flag values
+        move 0 to iArrayIndex
+        for iDataIndex from 25 to 33
+            get String_Value of hData item (iDataIndex + (iKeyIndex * 38)) to sFlags
+            set Array_Value of hoFlagArray item ;
+                (iArrayIndex + (iLinkLevel * 23)) to sFlags
+            increment iArrayIndex
+        loop
+        //
+    end_procedure // LoadStorageToArrays
+
+//    object oLinkLevelDataArray is an Array
+//        // used to store properties of any interrupted Opcode calculation
+//        item_property_list
+//            item_property integer piProcessIndex
+//            item_property string  psLinkSymbol
+//            item_property string  psLinkedFrom
+//            item_property integer pbMultiValue
+//            item_property integer pbReturnValue
+//            item_property integer piOpcodeRow
+//        end_item_property_list
+//    end_object
+//
+//    object oCalcStatusArray is an Array
+//        // used to store progress status
+//        item_property_list
+//            item_property integer piLinkOpcode
+//            item_property integer piLinkLevel
+//            item_property string  psLinkSymbol
+//        end_item_property_list
+//        //
+//        procedure DoAddItem integer iLinkOpcode integer iLinkLevel string sLinkSymbol
+//            integer iRow
+//            //
+//            get Row_Count         to iRow
+//            set piLinkOpcode iRow to iLinkOpcode
+//            set piLinkLevel  iRow to iLinkLevel
+//            set psLinkSymbol iRow to sLinkSymbol
+//        end_procedure
+//        //
+//    end_object
+
+    procedure InitializeCalcEngineArrays
+        send Delete_Data of oQty1Array
+        send Delete_Data of oFlagArray
+        send Delete_Data of oQty2Array
+        send Delete_Data of oQty3Array
+        send Delete_Data of oOpcodeArray
+        send Delete_Data of oLinkLevelDataArray
+        send Delete_Data of oCalcStatusArray
+        //
+        send Delete_Data of oComponentArray
+        send Delete_Data of OpcodeKeyStorageArray
+        send Delete_Data of OpcodeDataStorageArray
+        //
+        send Delete_Data of oBatchCreatedOpcodeArray
+        //
+        set piLinkLevel         to 0
+        set pbCanceled          to FALSE
+        set pbCalcError         to FALSE
+        set psCalcError         to ""
+        set pbAutoSave          to FALSE
+        set piBatchCreatedCount to 0
+        //
+    end_procedure // InitializeCalcEngineArrays
+
+    // include the file/array handling functions/procedures
+    // for Orders, Estimates, Libraries as appropriate
+    #INCLUDE StdFuncs.pkg
+    //
+
+//    procedure Activating
+//        integer iRet iObj
+//        if (NOT(Active_State(self))) begin
+//            get Focus to iObj
+//            set piInvokingObject to iObj
+//        end
+//        forward get MSG_Activating to iRet
+//        procedure_return iRet
+//    end_procedure // Activating
+
+
+    // Rounding
+    function RoundCalculation string sRoundflag number nValue returns number
+        integer bHalfway
+        number  nRounded nDecimal
+        string  sValue
+        //
+        move DFFALSE to bHalfway
+        //
+        //BC: 03/07 support both "0" and "+" or "-" flag in rounding
+        //if (sRoundflag = "0") begin
+        //    if (nValue < 0) move 0 to nRounded
+        //    else move nValue       to nRounded
+        //    function_return nRounded
+        //end
+        if (sRoundflag contains "0" and (nValue < 0) ) Begin
+            move 0 to nRounded
+            function_return nRounded
+        end
+        //BC 5/24/07 next line added because in case of rounding negative values to zero
+        //           rounding of positive values should not be assumed!
+        //           this logic doesn't know if "R" applies to Calc units or Prod Units
+        //           basic problem is insufficient symbols have been defined for the complete requirement
+        if (not(sRoundflag contains "R")) function_return nValue
+        //
+        move nValue to sValue
+        // if no decimal involved in number then we're done
+        //if NOT "." in sValue function_return nValue
+        if (NOT(sValue contains ".")) function_return nValue
+        pos "." in sValue
+        mid sValue to nDecimal 5 STRMARK // decimal place + 4 digits = 5 characters
+        //BC: 12/19/06 added missing logic for rounding in .5 increments
+        if (sRoundflag contains ".") begin
+           if (nDecimal = 0 or nDecimal = .5000)    Function_Return  nValue
+           else if (nDecimal > 0 and nDecimal < .5) Function_Return (nValue + (.5-nDecimal))
+           else                                     Function_return (nValue + (1.0 -nDecimal)) 
+        end
+        //
+        move (nDecimal >= .5) to bHalfway
+        move (round(nValue)) to nRounded
+        if (NOT(bHalfway) AND (sRoundflag contains "+")) ;
+            move (round(nRounded + 0.6)) to nRounded
+        if    ((bHalfway) AND (sRoundflag contains "-")) ;
+            move (round(nRounded - 0.6)) to nRounded
+        function_return nRounded
+    end_function // RoundCalculation
+
+    // Calc Units & Prod Units formula processing
+    function CalculateFormula ;
+        integer hoQtyArray ;
+        string  sFormula   ;
+        boolean bRound     ;
+        string  sRoundflag ;
+        number  nStockRate ;
+        returns number
+        //
+        integer hStandardsArray iOpcodeRow iFormulaLength iPosition iArrayIndex
+        string  sInstruction sCalculation
+        number  nValue nStandard
+        //
+        move oStandardsArray to hStandardsArray
+        get  piOpcodeRow     to iOpcodeRow
+        // to trap an error
+        set  psFormula       to sFormula
+        //
+        get IsStandard of hStandardsArray iOpcodeRow to nStandard
+        //  start fresh
+        move 1  to iPosition
+        move "" to sCalculation
+        //showln sCalculation
+        move (length(sFormula)) to iFormulaLength
+        //  compile the math & variables as individual array items
+        while (iPosition <= iFormulaLength)
+            mid sFormula to sInstruction 1 iPosition
+            //showln sInstruction
+            // if it's math
+            if sInstruction in "+-*/()<>=MW" begin
+                // look for <>, MIN, MAX
+                if sInstruction in "<M" begin
+                    // not equal?
+                    if sInstruction eq "<" begin
+                        mid sFormula to sInstruction 2 iPosition
+                        if sInstruction eq "<>" begin
+                            append sCalculation " " sInstruction
+                            increment iPosition
+                        end
+                        else append sCalculation " <"
+                    end
+                    // Min or Max?
+                    else begin
+                        mid sFormula to sInstruction 3 iPosition
+                        append sCalculation " " sInstruction
+                        move (iPosition + 2) to iPosition
+                    end
+                end
+                else if (sInstruction="W") append sCalculation "INTEGER"
+                else append sCalculation " " sInstruction
+
+            end
+            // if it's the Standard
+            // 12/03 BC commented out this block
+            // S is not allowed in Calc or Prod units formula
+            // and never meant to reference nStandard in formula
+            // Jcoper.Standard is retrieved via one of the Var's of contants
+            //if sInstruction eq "S" begin
+            //    append sCalculation " " nStandard
+            //    If not "." in (string(nStandard)) Append sCalculation "."
+            //end
+            // if it's a Variable or Constant
+            if sInstruction in "123456789ABCDEFGHI" begin
+                pos sInstruction in "123456789ABCDEFGHI"
+                move ((STRMARK - 1) + (piLinkLevel(self) * 23)) ;
+                    to iArrayIndex
+                get Number_Value of hoQtyArray item iArrayIndex to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Calc Formula value
+            if sInstruction eq "0" begin
+                move (18 + (piLinkLevel(self) * 23)) to iArrayIndex
+                get Number_Value of hoQtyArray item iArrayIndex to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Table
+            if sInstruction eq "T" begin
+                move (19 + (piLinkLevel(self) * 23)) to iArrayIndex
+                get Number_Value of hoQtyArray item iArrayIndex to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Prod Units value
+            if (sInstruction = "P") begin
+                move (20 + (piLinkLevel(self) * 23)) to iArrayIndex
+                get Number_Value of hoQtyArray item iArrayIndex to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Est$ value
+            if (sInstruction = "$") begin
+                move (21 + (piLinkLevel(self) * 23)) to iArrayIndex
+                get Number_Value of hoQtyArray item iArrayIndex to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the global helper value
+            if (sInstruction = "O") begin
+                move Jcpars.HSell_Rate to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Jccntr.FullRate value
+            if (sInstruction = "J") begin
+                get IsCenterFullrate of hStandardsArray iOpcodeRow to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Jccntr.SellRate value
+            if (sInstruction = "S") begin
+                get IsCenterSellrate of hStandardsArray iOpcodeRow to nValue
+                append sCalculation " " nValue
+                If not "." in (String(nValue)) Append sCalculation "."
+            end
+            // if it's the Stock Rate value
+            if (sInstruction = "R") begin
+                append sCalculation " " nStockRate
+                //If not "." in (String(nValue)) Append sCalculation "."
+                If not "." in (String(nStockRate)) Append sCalculation "."
+            end
+            //
+            //showln sCalculation
+            increment iPosition
+            //
+        end // while iPosition le iFormulaLength
+        //
+        move (real(sCalculation)) to nValue
+        // round according to calc flags
+        if (bRound) get RoundCalculation sRoundflag nValue to nValue
+        // clear the property
+        set psFormula to ""
+        //
+        function_return nValue
+    end_function // CalculateFormula
+
+
+    object TableValueCalculator is an Array
+        //
+        property integer pbMultiRow   FALSE
+        property integer pbMultiCol   FALSE
+        property integer pbProrateRow FALSE
+        property integer pbProrateCol FALSE
+
+        function CalculateTableValue ;
+            integer hoStandards      ;
+            integer iOpcodeRow       ;
+            integer hoQtyArray       ;
+            integer iLinkLevel       ;
+            returns number
+            //
+            integer iTableRowNo iTableColNo iArrayIndex
+            integer iGetOpcode iGetOpcodeRow iFieldIndex
+            number  nLookupValue nBracketValue nTableRowKey nTableColKey
+            number  nProRowValue nProRowValue2 nProColValue
+            number  nPrevRowValue nPrevColValue nTableStdValue nProStdValue
+            number  nRowLookupValue nColBracketValue nRowLookupValue2 nColBracketValue2
+            number  nProrateRowFactor nProrateColFactor
+            string  sRoundflag sProrateLookup sLookupVar sProrateBracket sBracketVar
+            string  sCalcFlags sTableStdDesc
+            //
+            set pbMultiRow   to FALSE
+            set pbMultiCol   to FALSE
+            set pbProrateRow to FALSE
+            set pbProrateCol to FALSE
+            //
+            get IsLookupValue  of hoStandards iOpcodeRow 1 to nLookupValue
+            get IsBracketValue of hoStandards iOpcodeRow 1 to nBracketValue
+            //
+            set pbMultiRow to (nLookupValue  <> 0)
+            set pbMultiCol to (nBracketValue <> 0)
+            //
+            if (pbMultiRow(self)) begin
+                get IsProrateLookup of hoStandards iOpcodeRow to sProrateLookup
+                set pbProrateRow to (sProrateLookup = "Y")
+                //
+                get IsLookupVar of hoStandards iOpcodeRow to sLookupVar
+                if (sLookupVar = "0") get Number_Value of hoQtyArray ;
+                    item (18 + (iLinkLevel * 23)) to nTableRowKey
+                //
+                else begin
+                    move (pos(sLookupVar,"123456789ABCDEFGHI")) to iArrayIndex
+                    decrement iArrayIndex
+                    get Number_Value of hoQtyArray item ;
+                        (iArrayIndex + (iLinkLevel * 23)) to nTableRowKey
+                end
+                // determine row to use in standards table
+                move 0 to iFieldIndex
+                repeat
+                    get IsLookupValue of hoStandards iOpcodeRow iFieldIndex to nLookupValue
+                    if nTableRowKey le nLookupValue break
+                    // if end of table rows
+                    if nLookupValue eq 0 break
+                    // maximum 10 rows in table
+                    if iFieldIndex eq 9 break
+                    // save now in case prorate
+                    move nLookupValue to nRowLookupValue2
+                    increment iFieldIndex
+                loop
+                move iFieldIndex                                        to iTableRowNo
+                get IsLookupValue of hoStandards iOpcodeRow iFieldIndex to nLookupValue
+                if nLookupValue eq 0 move (iFieldIndex -1)              to iTableRowNo
+                move iTableRowNo                                        to iFieldIndex
+                get IsLookupValue of hoStandards iOpcodeRow iFieldIndex to nLookupValue
+                // save now in case prorate
+                move nLookupValue to nRowLookupValue
+            end // if (pbMultiRow(self)) begin
+            //
+            if (pbMultiCol(self)) begin
+                get IsProrateBracket of hoStandards iOpcodeRow to sProrateBracket
+                set pbProrateCol                               to (sProrateBracket = "Y")
+                get IsBracketVar of hoStandards iOpcodeRow     to sBracketVar
+                if (sBracketVar = "0") get Number_Value of ;
+                    hoQtyArray item (18 + (iLinkLevel * 23)) to nTableColKey
+                else begin
+                    move (pos(sBracketVar,"123456789ABCDEFGHI")) to iArrayIndex
+                    decrement iArrayIndex
+                    get Number_Value of hoQtyArray item ;
+                        (iArrayIndex + (iLinkLevel * 23)) to nTableColKey
+                end
+                // determine column to use for standards brackets
+                move 0 to iFieldIndex
+                repeat
+                    get IsBracketValue of hoStandards iOpcodeRow iFieldIndex to nBracketValue
+                    if nTableColKey le nBracketValue break
+                    // end of table columns
+                    if nBracketValue eq 0 break
+                    // maximum 5 columns in table
+                    if iFieldIndex eq 4 break
+                    //save now in case prorate
+                    move nBracketValue to nColBracketValue2
+                    increment iFieldIndex
+                loop
+                move iFieldIndex to iTableColNo
+                get IsBracketValue of hoStandards iOpcodeRow iFieldIndex to nBracketValue
+                if nBracketValue eq 0 move (iFieldIndex -1) to iTableColNo
+                move iTableColNo to iFieldIndex
+                //save now in case prorate
+                get IsBracketValue of hoStandards iOpcodeRow iFieldIndex to nBracketValue
+                move nBracketValue to nColBracketValue
+            end // if (pbMultiCol(self)) begin
+            //
+            move (iTableRowNo * 5 + iTableColNo) to iFieldIndex
+
+            get IsL1B1Std of hoStandards iOpcodeRow iFieldIndex to nTableStdValue
+            //
+            //  now for the tough part of pro-rating intermediate table values
+            if (pbProrateRow(self) and pbMultiRow(self)) begin
+                // begin test fix code 4/6/95
+                // comment out next line
+                //   If nRowLookupValue2 EQ 0 Exit
+                // lookup in first row, nothing to prorate
+                // add next line to prohibit prorating prior to 1st row.
+
+                get IsLookupValue of hoStandards iOpcodeRow 0 to nLookupValue
+                if nTableRowKey lt nLookupValue move nLookupValue to nTableRowKey
+                // to allow prorating in rows beyond column 5 when last row is LT 10
+                // comment out next line and add following line, and add line after calc to prorate-row-factor
+                // If nRowLookupValue2 EQ nRowLookupValue Exit // lookup beyond last row, stop prorating
+                // end test fix code
+                ///get prorating factor, i.e. decimal% of lookup value that the lookup key was measured from lower lookup value
+                calc ((nTableRowKey - nRowLookupValue2) ;
+                    / (nRowLookupValue - nRowLookupValue2)) to nProrateRowFactor
+                if nProrateRowFactor eq 0 move 1 to nProrateRowFactor
+                // now get table standard from previous row
+                move (iFieldIndex - 5) to iFieldIndex
+                get IsL1B1Std of hoStandards iOpcodeRow iFieldIndex to nPrevRowValue
+                move (iFieldIndex + 5) to iFieldIndex // restore orig. value
+                // now apply factor to difference between standards and subtract
+                // from orig. std.
+                calc ((ABS(nTableStdValue - nPrevRowValue)) ;
+                    * nProrateRowFactor) to nProRowValue
+                if nTableStdValue lt nPrevRowValue ;
+                    calc (nPrevRowValue -nProRowValue) to nProRowValue
+                else calc (nPrevRowValue +nProRowValue) to nProRowValue
+                move nProRowValue to nProStdValue
+                move nProStdValue to nTableStdValue
+                // now if we have to prorate in both directions, prorate
+                // between rows for previous column
+                // duplicate above procedure but shifted left 1 column,
+                // then prorate between these 2 values
+                if (pbProrateCol(self) and ;
+                    pbMultiCol(self)) begin
+                    // lookup in first column, nothing to prorate
+                    if nColBracketValue2 eq 0 break
+                    // lookup beyond last column, ditto
+                    if nColBracketValue2 eq nColBracketValue break
+                    move (iFieldIndex -1) to iFieldIndex
+                    // replace orig. std selected
+                    get IsL1B1Std of hoStandards iOpcodeRow iFieldIndex to nTableStdValue
+                    move (iFieldIndex -5) to iFieldIndex
+                    // replace lower std point
+                    get IsL1B1Std of hoStandards iOpcodeRow iFieldIndex to nPrevRowValue
+                    // restore orig. value
+                    move (iFieldIndex +6 ) to iFieldIndex
+                    calc ((ABS(nTableStdValue -nPrevRowValue)) ;
+                        * nProrateRowFactor) to nProRowValue2
+                    if nTableStdValue lt nPrevRowValue ;
+                        calc (nPrevRowValue - nProRowValue2) to nProRowValue2
+                    else calc (nPrevRowValue + nProRowValue2) to nProRowValue2
+                    // now prorate between these two columns
+                    calc ((nTableColKey - nColBracketValue2) ;
+                        / (nColBracketValue - nColBracketValue2)) to nProrateColFactor
+                    calc ((ABS(nProRowValue - nProRowValue2)) ;
+                        * nProrateColFactor) to nProColValue
+                    if nProRowValue lt nProRowValue2 ;
+                        calc (nProRowValue2 - nProColValue) to nProColValue
+                    else calc (nProRowValue2 +nProColValue) to nProColValue
+                    move nProColValue to nProStdValue
+                    move nProStdValue to nTableStdValue
+                end // of prorating between rows for preceding column & then between columns
+            end
+            //
+            if (pbProrateRow(self)=0 and pbProrateCol(self) and pbMultiCol(self)) begin
+                // lookup in first column, nothing to prorate
+                if nColBracketValue2 eq 0 break
+                // lookup beyond last column, ditto
+                if nColBracketValue2 eq nColBracketValue break
+                calc ((nTableColKey - nColBracketValue2) / ;
+                    (nColBracketValue - nColBracketValue2)) to nProrateColFactor
+                decrement iFieldIndex
+                get IsL1B1Std of hoStandards iOpcodeRow iFieldIndex to nPrevColValue
+                increment iFieldIndex
+                calc ((ABS(nTableStdValue - nPrevColValue)) * nProrateColFactor) to nProColValue
+                if nTableStdValue lt nPrevColValue ;
+                    calc (nPrevColValue - nProColValue) to nProColValue
+                else calc (nPrevColValue + nProColValue) to nProColValue
+                move nProColValue to nProStdValue
+                move nProStdValue to nTableStdValue
+            end
+            //
+
+            get IsCalcFlags of hoStandards iOpcodeRow to sCalcFlags
+            //BC: 12/19/06 add missing code in support of .5 rounding function
+            //BC: 03/07 STILL doesn't work reliably; inserted next "else" & removed "0" from contains test below
+            //BC: 03/07 ignore the "R", the "+" or "-" must immediately follow the C or P
+            // rewrote this block....
+            if (sCalcFlags CONTAINS "A") begin
+                move "" to sRoundFlag
+                // 5/24/07 "R" required to round AND zero neg values, otherwise zero'ing neg values
+                //          shouldn't round positive numbers.
+                //          current logic doesn't support Rounding 1 formula AND zeroing neg values in 
+                //          another formula without also rounding that formula
+                if (sCalcFlags contains "R")   move "R"  to sRoundflag
+                if (sCalcFlags contains "0A")  move (Append(sRoundflag,"0")) to sRoundflag
+                if (sCalcFlags contains "A.5") move (Append(sRoundflag,".")) to sRoundFlag
+                else ; 
+                if (sCalcFlags contains "A+")  move (Append(sRoundflag,"+")) to sRoundFlag
+                else ; 
+                if (sCalcFlags contains "A-")  move (Append(sRoundflag,"-")) to sRoundFlag
+                get tRoundCalculation sRoundflag nTableStdValue to nTableStdValue
+            end
+            //
+            get IsTableStdDesc of hoStandards iOpcodeRow to sTableStdDesc
+            if (sTableStdDesc = "JC_STANDARD") begin
+                move nTableStdValue to iGetOpcode
+                // we need Jcoper.Standard of iGetOpcode
+                // to get it, we need it's row
+                get IsOpcodeRow of hoStandards iGetOpcode    to iGetOpcodeRow
+                get IsStandard  of hoStandards iGetOpcodeRow to nTableStdValue
+            end
+            //
+            function_return nTableStdValue
+            //
+        end_function // CalculateTableValue
+
+        function tRoundCalculation string sRoundflag number nValue returns number
+            integer bHalfway
+            number  nRounded nDecimal
+            string  sValue
+            //
+            move DFFALSE to bHalfway
+            //
+            if (sRoundflag contains "0" and (nValue < 0) ) Begin
+                move 0 to nRounded
+                function_return nRounded
+            end
+            //BC 5/24/07 next line added because in case of rounding negative values to zero
+            //           rounding of positive values should not be assumed!
+            //           this logic doesn't know if "R" applies to Calc units or Prod Units
+            //           basic problem is insufficient symbols have been defined for the complete requirement
+            if (not(sRoundflag contains "R")) function_return nValue
+            //
+            move nValue to sValue
+            // if no decimal involved in number then we're done
+            //if NOT "." in sValue function_return nValue
+            if (NOT(sValue contains ".")) function_return nValue
+            pos "." in sValue
+            mid sValue to nDecimal 5 STRMARK // decimal place + 4 digits = 5 characters
+            //BC: 12/19/06 added missing logic for rounding in .5 increments
+            if (sRoundflag contains ".") begin
+            if (nDecimal = 0 or nDecimal = .5000)    Function_Return  nValue
+            else if (nDecimal > 0 and nDecimal < .5) Function_Return (nValue + (.5-nDecimal))
+            else                                     Function_return (nValue + (1.0 -nDecimal)) 
+            end
+            //
+            move (nDecimal >= .5) to bHalfway
+            move (round(nValue)) to nRounded
+            if (NOT(bHalfway) AND (sRoundflag contains "+")) ;
+                move (round(nRounded + 0.6)) to nRounded
+            if    ((bHalfway) AND (sRoundflag contains "-")) ;
+                move (round(nRounded - 0.6)) to nRounded
+            function_return nRounded
+        end_function //tRoundCalculation
+
+    end_object // TableValueCalculator
+
+
+    // batch mode status panel methods
+    procedure UpdateStatusPanel string sValue
+        integer hStatusPanel
+        //
+        Get phStatusPanel to hStatusPanel
+        if hStatusPanel ;
+            send Update_StatusPanel of hStatusPanel sValue
+    end_procedure
+    //
+    procedure StartStatusPanel
+        integer hStatusPanel
+        //
+        Get phStatusPanel to hStatusPanel
+        if hStatusPanel begin
+            send Initialize_StatusPanel of hStatusPanel ;
+                (psStatusCaption(self)) ;
+                (psStatusTitle(self))   ;
+                (psStatusMessage(self))
+            set Allow_Cancel_State of hStatusPanel to (NOT(pbNoBackout(self)))
+            send Start_StatusPanel of hStatusPanel
+        end
+    end_procedure
+    //
+    Procedure ReinitializeStatusPanel
+        Integer hStatusPanel
+        //
+        Get phStatusPanel to hStatusPanel
+        if hStatusPanel send Initialize_StatusPanel of hStatusPanel ;
+            (psStatusCaption(self)) ;
+            (psStatusTitle(self))   ;
+            (psStatusMessage(self))
+    End_Procedure
+    //
+    Procedure ResumeStatusPanel
+        Integer hStatusPanel
+        //
+        Get phStatusPanel to hStatusPanel
+        if hStatusPanel ;
+            send Start_StatusPanel of hStatusPanel
+    End_Procedure
+    //
+    procedure StopStatusPanel
+        integer hStatusPanel
+        //
+        Get phStatusPanel to hStatusPanel
+        if hStatusPanel ;
+            send Stop_StatusPanel of hStatusPanel
+    end_procedure
+    // end status panel methods
+
+    // batch mode methods
+    function StartingBatchCalculation returns integer
+        integer iDone bNext
+        move DFFALSE to bNext
+        get FindNextBatchItem bNext to iDone
+        if (iDone) function_return iDone
+        send StartStatusPanel
+    end_function // StartingBatchCalculation
+    //
+    procedure StoppingBatchCalculation integer bComplete
+        boolean bComponentId
+        //
+        send StopStatusPanel
+        //
+        if (bComplete) begin
+            get pbComponentId to bComponentId
+            send ResetNeedsCalcedFlag bComponentId
+            #IFDEF CE_CALC_ORDER
+            if (pbLogRecalc(self)) begin
+                send DoLogRecalcEvent of Jcjobs_DD (psHeaderId(self)) (psComponentId(self))
+                set pbLogRecalc to FALSE
+            end
+            #ENDIF
+        end
+    end_procedure // StoppingBatchCalculation
+    //
+    function BatchInterrupt returns integer
+        integer iQuit
+        string  sMessage
+        //
+        if (piErrorCheckState(self)) ;
+            move "An error has occurred.  Cancel the calculation?" to sMessage
+        else ;
+            move  "Cancel the calculation?" to sMessage
+        get YesNo_Box sMessage "Batch Interrupt" to iQuit
+        function_return (iQuit = MBR_YES)
+    end_function // BatchInterrupt
+    //
+    // If you augment this and you plan on doing ANY windows IO you should
+    // first shut of the status panel.
+    procedure Error_Report integer iErrorNum integer iErrorLine string sErrorMsg
+        integer iErrorObjectId bDone
+        string  sFormula
+        //
+        if (Error_Processing_State(self)) procedure_return
+        //
+        set Error_Processing_State to TRUE
+        get piErrorObjectId        to iErrorObjectId
+        //
+        if (pbBatchMode(self)) send StopStatusPanel // YOU MUST DO THIS!!!!
+        // check for calculation
+        get psFormula to sFormula
+        if (sFormula <> "") begin
+            send Stop_Box ("Error" * string(iErrorNum) * "in standard" * string(piOpcode(self)) ;
+                + "\n\n" + sFormula) "Formula Error - Notify your administrator"
+            //send Stop_Box ("Formula Error:" + "\n\nPlease switch to window labeled output for details.")
+            //showln ("Error" * string(iErrorNum) * "in standard" * string(piOpcode(self)))
+            //showln sFormula
+        end
+        //
+        else begin
+            set piErrorCheckState      to TRUE
+            if (iErrorObjectId) ;
+                send Error_Report      to iErrorObjectId iErrorNum iErrorLine sErrorMsg
+            else ;
+                forward send Error_Report iErrorNum iErrorLine sErrorMsg
+        end
+        //
+        set Error_Processing_State to FALSE
+        //
+        if (pbWizardMode(self)) procedure_return
+        //
+        get BatchInterrupt to bDone
+        if (bDone) begin
+            set pbCanceled to TRUE
+            send StoppingBatchCalculation FALSE
+        end
+        else send ResumeStatusPanel
+    end_procedure // Error_Report
+    // end batch mode methods
+
+
+    // Push/Pop Opcode methods
+    procedure CurrentStandardString integer iLinkOpcode integer iLinkLevel string sLinkSymbol boolean bDebugFile
+        integer hoStandards iOpcodeRow
+        string  sBars sLinks sCurrentStandard sCurrentSymbol sFilename sName sCalcFlags sTempDir
+        // maintain status array
+        send DoAddItem of oCalcStatusArray iLinkOpcode iLinkLevel sLinkSymbol
+        //
+        move oStandardsArray                       to hoStandards
+        get IsOpcodeRow of hoStandards iLinkOpcode to iOpcodeRow
+        get IsName      of hoStandards iOpcodeRow  to sName
+        get IsCalcFlags of hoStandards iOpcodeRow  to sCalcFlags
+        //
+        move "||||||||||||||||||||||||||||||||||||||||||||||||||" to sBars
+        if (iLinkLevel) move (left(sBars,iLinkLevel)) to sLinks
+        //move (pad(sName,40) + string(piOpcode(self))) to sCurrentStandard
+        move ("Std." * string(piOpcode(self)) + ":  " + sName ) to sCurrentStandard
+        //
+        if (piCalcMode(self) = CE_TEST) ;
+            move (sCurrentStandard * "Sym:" + sLinkSymbol * sLinks) to sCurrentStandard
+        //
+        set psCurrentStandard to sCurrentStandard
+//BC 2/15/08
+// setting CE_TRIGGER looks to be all about skipping items in a batch calc that are flagged as triggers
+// this is wrong; a trigger item should be calc'ed twice; once in whatever nested linkage called it;
+// and once as a link level 0 item, i.e. as if it were not called by any other std.
+//        if (iLinkLevel AND sCalcFlags CONTAINS "T") procedure_return
+        //
+        if (NOT(bDebugFile)) procedure_return
+        //
+        get psTempDir to sTempDir
+        if (NOT(pbDebug(self)) OR sTempDir = "") procedure_return
+        //
+        move (sCurrentStandard * "Sym:" + sLinkSymbol) to sCurrentStandard
+        move (trim(sTempDir)          + ;
+            "\"                       + ;
+            trim(psHeaderId(self))    + ;
+            trim(psComponentId(self)) + ;
+            ".TXT") to sFilename
+        append_output sFilename
+        if (psDebugFile(self) = "") set psDebugFile to sFilename
+        writeln (sLinks * sCurrentStandard)
+        close_output
+    end_procedure // CurrentStandardString
+
+    function GetPreviousLevel integer iArrayIndex returns integer
+        integer iLinkOpcode iRestoreProcess hoQtyArray bWasReturnValue
+        integer bConstrained bWasMultiValue iLinkLevel iFieldIndex
+        integer hoQty1Array hoQty2Array hoQty3Array
+        number  nValue1 nValue2 nValue3
+        string  sFlags sVarTagSymbl
+        //
+        get pbReturnValue to bWasReturnValue
+        get pbMultiValue  to bWasMultiValue
+        get piLinkLevel   to iLinkLevel
+        //
+        move oQty1Array   to hoQty1Array
+        move oQty2Array   to hoQty2Array
+        move oQty3Array   to hoQty3Array
+
+        // if CE_TEST and not Variable/Constant link
+//        if (piCalcMode(self)=CE_TEST) begin
+//            if NOT (psLinkSymbol(self)) in "123456789ABCDEFGHI" ;
+//                send Info_Box "Returning to calling standard."
+//        end
+
+        // dump the current level
+        //move (oQty1Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //move (oQty2Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //move (oQty3Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //send DumpFlags
+        // get the value we just stored to pass back up
+        if (bWasReturnValue) begin
+            get Number_Value of hoQty1Array item (iArrayIndex + (iLinkLevel * 23)) to nValue1
+            if (bWasMultiValue) begin
+                get Number_Value of hoQty2Array item (iArrayIndex + (iLinkLevel * 23)) to nValue2
+                get Number_Value of hoQty3Array item (iArrayIndex + (iLinkLevel * 23)) to nValue3
+            end
+        end
+        // find the previous Opcode and pop
+        get Integer_Value of (oOpcodeArray(self)) item (iLinkLevel - 1) to iLinkOpcode
+        get PopLinkOpcode iLinkOpcode to iRestoreProcess
+        move iRestoreProcess to iFieldIndex
+        //
+        get IsVarTagSymbl of oStandardsArray ;
+            (piOpcodeRow(self)) iRestoreProcess to sVarTagSymbl
+        // check for CC selection list
+        if ((bWasReturnValue) and iRestoreProcess <= 8) begin
+            // if batch mode break
+            if (pbBatchMode(self)) break
+            //
+            if (sVarTagSymbl CONTAINS "CC") begin
+                get StoreCostCenterValue iRestoreProcess nValue1 to iLinkOpcode
+                // reset piProcessIndex
+                if (iLinkOpcode <> CE_OP_LINK) increment iRestoreProcess
+                set piProcessIndex to iRestoreProcess
+                function_return iRestoreProcess
+            end
+            //
+            if (sVarTagSymbl CONTAINS "OP") begin
+                if (sVarTagSymbl CONTAINS "CC") break
+                get StoreOperationValue bConstrained iRestoreProcess nValue1 to iLinkOpcode
+                // reset piProcessIndex
+                if (NOT(iLinkOpcode)) increment iRestoreProcess
+                set piProcessIndex to iRestoreProcess
+                function_return iRestoreProcess
+            end
+            //
+        end // if ((bWasReturnValue) and iRestoreProcess <= 8) begin
+        // store the nValue at the current level
+        if (bWasReturnValue) begin
+            move "" to sFlags
+            move hoQty1Array to hoQtyArray
+            send StoreValue hoQtyArray iRestoreProcess nValue1 sFlags
+            if (pbMultiValue(self)) begin
+                if (NOT(bWasMultiValue)) begin
+                    move nValue1 to nValue2
+                    move nValue1 to nValue3
+                end
+                move hoQty2Array to hoQtyArray
+                send StoreValue hoQtyArray iRestoreProcess nValue2 sFlags
+                move hoQty3Array to hoQtyArray
+                send StoreValue hoQtyArray iRestoreProcess nValue3 sFlags
+            end
+        end
+        // dump the current level
+        //move (oQty1Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //move (oQty2Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //move (oQty3Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //send DumpFlags
+        //
+        if (pbWizardMode(self) AND iRestoreProcess <= 8) begin
+            if (NOT(sVarTagSymbl CONTAINS "D")) break
+            // 12/20/04 3 lines commented out to address cosmetic loss-of-context error
+            // illustrated by a test std. -1900, Var 3, using "|D",
+            // retrieving Panaprint's Std. 2250, Var 2.; calc wizard would display as if
+            // Std 2250 was executing, but showing Var 3's prompt from std. -1900
+        //    if (piLinkLevel(self)) ; //begin
+                set pbStoreDefault to (sVarTagSymbl CONTAINS "|") //TRUE
+            //    if (sVarTagSymbl CONTAINS "|") send StoreVariableValue iRestoreProcess FALSE
+            //end
+        //    else ;
+        //        send StoreVariableValue iRestoreProcess FALSE
+        end
+        //
+        set piProcessIndex to (iRestoreProcess + 1)
+        function_return iRestoreProcess
+    end_function // GetPreviousLevel
+
+    procedure PushCurrentSettings integer iProcessIndex
+        integer iOpcode iOpcodeRow iLinkLevel
+        integer bMultiValue bReturnValue hoQtyArray hLinkLevelData
+        string  sLinkSymbol sLinkedFrom sName
+        //
+        move oLinkLevelDataArray to hLinkLevelData
+        //
+        get piLinkLevel to iLinkLevel
+        // support the Backup logic
+        set pbReturn to FALSE
+        // store the current Opcode
+        get piOpcode to iOpcode
+        set Array_Value of oOpcodeArray item iLinkLevel to iOpcode
+        // store the current link level values
+        // remember that iProcessIndex was passed as iReturnProcess
+        get psLinkSymbol  to sLinkSymbol
+        get psLinkedFrom  to sLinkedFrom
+        get pbMultiValue  to bMultiValue
+        get pbReturnValue to bReturnValue
+        get piOpcodeRow   to iOpcodeRow
+        //
+        get IsName of oStandardsArray iOpcodeRow to sName
+        //
+        set piProcessIndex of hLinkLevelData iLinkLevel to iProcessIndex
+        set psLinkSymbol   of hLinkLevelData iLinkLevel to sLinkSymbol
+        set psLinkedFrom   of hLinkLevelData iLinkLevel to sLinkedFrom
+        set pbMultiValue   of hLinkLevelData iLinkLevel to bMultiValue
+        set pbReturnValue  of hLinkLevelData iLinkLevel to bReturnValue
+        set piOpcodeRow    of hLinkLevelData iLinkLevel to iOpcodeRow
+        // set the LinkFrom string to the Opcode we're leaving
+        move ("Linked from:  " + string(iOpcode) * sName) to sLinkedFrom
+        set psLinkedFrom                                  to sLinkedFrom
+        // dump the current level
+        //move (oQty1Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //move (oQty2Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //move (oQty3Array(self)) to hoQtyArray
+        //send DumpValues hoQtyArray
+        //send DumpFlags
+        //
+    end_procedure // PushCurrentSettings
+
+    function IsProcessIndex string sLinkSymbol returns integer
+        integer iProcessIndex iPos
+        // if a specific variable or constant
+        move (pos(sLinkSymbol,"123456789ABCDEFGHI")) to iPos
+        if (iPos) move (iPos - 1) to iProcessIndex
+        function_return iProcessIndex
+    end_function // IsProcessIndex
+
+    // this function currently does not return a value even
+    // though it is a function.  This is probably due to my
+    // having an idea that didn't pan out in the early days DW
+    //
+    // returns to integer iReturn
+    function GetLinkOpcode   ;
+        integer iLinkOpcode  ;
+        string  sLinkSymbol  ;
+        integer bReturnValue ;
+        returns boolean
+        //
+        boolean bFound
+        integer iProcessIndex iLinkLevel bMultiValue iExistingLevel iKeyIndex iOpcodeRow
+        integer hoStandards
+        string  sLinkedTo sSymbol sCalcFlags sName
+        //
+        move oStandardsArray to hoStandards
+        get  piLinkLevel     to iLinkLevel
+        // check the arrays for the new record
+        get ExistingArrayLevel iLinkOpcode iLinkLevel to iExistingLevel
+        move (iExistingLevel <> CE_FINDERR) to bFound
+        if (NOT(bFound)) begin
+            get ExistingStorageLevel iLinkOpcode to iKeyIndex
+            move (iKeyIndex <> CE_FINDERR) to bFound
+        end
+        //
+        #IFDEF CE_CALC_TEST
+        clear Jcoper
+        move iLinkOpcode to Jcoper.Opcode
+        find EQ Jcoper.Opcode
+        #ELSE
+        // the find is only necessary if the record
+        // was not found in the arrays
+        if (NOT(bFound)) send FindLinkedItem iLinkOpcode bReturnValue
+        #ENDIF
+        //
+        move (iLinkLevel + 1) to iLinkLevel
+        set  piLinkLevel      to iLinkLevel
+        set  piOpcode         to iLinkOpcode
+        //
+        get IsOpcodeRow of hoStandards iLinkOpcode to iOpcodeRow
+        set piOpcodeRow                            to iOpcodeRow
+        //
+        send CurrentStandardString iLinkOpcode iLinkLevel sLinkSymbol TRUE
+        // if BatchMode update status panel
+        if (pbBatchMode(self)) send UpdateStatusPanel (psCurrentStandard(self))
+        // use sLinkSymbol to set piProcessIndex
+        get IsProcessIndex sLinkSymbol to iProcessIndex
+        // set the variables for the current Link Level
+        set piProcessIndex to iProcessIndex
+        set psLinkSymbol   to sLinkSymbol
+        //
+        get IsCalcFlags of hoStandards iOpcodeRow to sCalcFlags
+        get IsName      of hoStandards iOpcodeRow to sName
+        // set the MultiValue flag
+        move (sCalcFlags CONTAINS "V") to bMultiValue
+        set pbMultiValue to bMultiValue
+        //
+        set pbReturnValue to bReturnValue
+        // set the LinkedTo property if appropriate
+        if (pbWizardMode(self)) begin
+            pos sLinkSymbol in "123456789ABCDEFGHI"
+            if (STRMARK) begin
+                move "Linked to:  " to sLinkedTo
+                append sLinkedTo iLinkOpcode " " sName
+                trim sLinkedTo to sLinkedTo
+                if STRMARK le 9 append sLinkedTo ", Variable"
+                else append sLinkedTo ", Constant"
+                mid "123456789ABCDEFGHI" to sSymbol 1 STRMARK
+                append sLinkedTo " " sSymbol
+                set psLinkedTo to sLinkedTo
+            end
+            else set psLinkedTo to ""
+        end // if (pbWizardMode(self)) begin
+        // clear the array
+        send ClearArrayValues iLinkLevel
+        // if CE_TEST we're done
+        #IFDEF CE_CALC_TEST
+        #ELSE
+        // load arrays from appropriate source
+        // return to calling link level and check existing levels
+        if (iExistingLevel = CE_FINDERR) begin
+            if (iKeyIndex <> CE_FINDERR) ;
+                send LoadStorageToArrays iKeyIndex iLinkLevel bMultiValue
+            else begin
+                send LoadFileToArrays iLinkLevel bMultiValue //FALSE
+                if (pbWizardMode(self)) send LoadFileToStorage
+            end
+        end
+        else ;
+            send LoadArraysToArrays iExistingLevel iLinkLevel bMultiValue
+        #ENDIF
+        function_return bFound
+    end_function // GetLinkOpcode
+
+    // going back to the previous link level
+    function PopLinkOpcode integer iLinkOpcode returns integer
+        integer iProcessIndex bMultiValue bReturnValue iLinkLevel hLinkLevelData
+        integer iOpcodeRow //iExistingLevel iKeyIndex bFound
+        string  sLinkSymbol sLinkedFrom
+        // find the old record if testing
+        // because we are moving in a reverse direction, any missing
+        // record would have been recreated & put in the arrays by
+        // the GetLinkOpcode method
+        #IFDEF CE_CALC_TEST
+        clear Jcoper
+        move iLinkOpcode to Jcoper.Opcode
+        find EQ Jcoper.Opcode
+        #ENDIF
+        //
+        move oLinkLevelDataArray to hLinkLevelData
+        //
+        set piLinkLevel to (piLinkLevel(self) - 1)
+        get piLinkLevel to iLinkLevel
+        //
+        get piProcessIndex of hLinkLevelData iLinkLevel to iProcessIndex
+        get psLinkSymbol   of hLinkLevelData iLinkLevel to sLinkSymbol
+        get psLinkedFrom   of hLinkLevelData iLinkLevel to sLinkedFrom
+        get pbMultiValue   of hLinkLevelData iLinkLevel to bMultiValue
+        get pbReturnValue  of hLinkLevelData iLinkLevel to bReturnValue
+        get piOpcodeRow    of hLinkLevelData iLinkLevel to iOpcodeRow
+        // set the variables for the current Link Level
+        set piOpcode       to iLinkOpcode
+        set piProcessIndex to iProcessIndex
+        set psLinkSymbol   to sLinkSymbol
+        set psLinkedFrom   to sLinkedFrom
+        set psLinkedTo     to ""
+        set pbMultiValue   to bMultiValue
+        set pbReturnValue  to bReturnValue
+        set piOpcodeRow    to iOpcodeRow
+        // the following removed 6/20/03 to un-clutter debug text file
+        send CurrentStandardString iLinkOpcode iLinkLevel sLinkSymbol FALSE
+        function_return iProcessIndex
+    end_function // PopLinkOpcode
+
+    procedure SaveBufferedOpcodeItems
+        boolean bWizardMode
+        integer iLinkLevel iKeyIndex iWasLevel iArrayIndex iReturnProcess
+        // current link level
+        get piLinkLevel to iLinkLevel
+        // fool the GetPreviousLevel function if in wizard mode
+        get pbWizardMode to bWizardMode
+        if (bWizardMode) set pbBatchMode to TRUE
+        if (pbMaintMode(self)) Procedure_Return
+        //
+        while (iLinkLevel >= 0)
+            // save the record
+            if (iLinkLevel = 0) begin
+                get ExistingStorageLevel (piOpcode(self)) to iKeyIndex
+                if (iKeyIndex <> CE_FINDERR) ;
+                    send SaveArraysToStorage iKeyIndex (piLinkLevel(self))
+                else ;
+                    send SaveArraysToFile (piOpcode(self)) (piLinkLevel(self))
+            end
+            else begin
+                get ExistingArrayLevel (piOpcode(self)) ;
+                    (piLinkLevel(self) - 1) to iWasLevel
+                if (iWasLevel <> CE_FINDERR) ;
+                    send LoadArraysToArrays (piLinkLevel(self)) ;
+                        iWasLevel (pbMultiValue(self))
+                else begin
+                    get ExistingStorageLevel (piOpcode(self)) to iKeyIndex
+                    if (iKeyIndex <> CE_FINDERR) ;
+                        send SaveArraysToStorage iKeyIndex (piLinkLevel(self))
+                    else ;
+                        send SaveArraysToFile (piOpcode(self)) (piLinkLevel(self))
+                end
+                // make the symbol string an integer
+                pos (psLinkSymbol(self)) in "123456789ABCDEFGHI"
+                // make iArrayIndex fit our scheme
+                move (STRMARK - 1) to iArrayIndex
+                // go back
+                get GetPreviousLevel iArrayIndex to iReturnProcess
+                //
+            end
+            decrement iLinkLevel
+            //
+        end // while (iLinkLevel >= 0)
+        // this was temporary
+        if (bWizardMode) set pbBatchMode to FALSE
+    end_procedure // SaveBufferedOpcodeItems
+
+
+    // the following process Variable/Constants
+    function CheckComparativeOperators string sTagsymbols Returns integer
+        integer iArrayIndex iFieldIndex
+        string  sOperator sValue1 sValue2 sComparison
+        number  nValue1 nValue2
+        // do we need to compare
+        if      ">" in sTagsymbols move ">" to sOperator
+        else if "<" in sTagsymbols move "<" to sOperator
+        else if "=" in sTagsymbols move "=" to sOperator
+        else if "~" in sTagsymbols move "~" to sOperator
+        // this shouldn't happen
+        if (sOperator = "") function_return
+        // if we need to compare
+        // get the Variable/Constant Symbols
+        pos sOperator in sTagsymbols
+        mid sTagsymbols to sValue1 1 (STRMARK + 1)
+        mid sTagsymbols to sValue2 1 (STRMARK + 1)
+        // get the numbers
+        pos sValue1 in "123456789"
+        move (STRMARK - 1) to iArrayIndex
+        get Number_Value of (oQty1Array(self)) item ;
+            (iArrayIndex + (piLinkLevel(self) * 23)) to nValue1
+        move 0 to nValue2
+        if sValue2 ne "0" begin
+            pos sValue2 in "123456789ABCDEFGHI"
+            // variables
+            if STRMARK le 9 begin
+                move (STRMARK - 1) to iArrayIndex
+                get Number_Value of (oQty1Array(self)) item ;
+                    (iArrayIndex + (piLinkLevel(self) * 23)) to nValue2
+            end
+            // constants
+            else begin
+                move (STRMARK - 10) to iFieldIndex
+                get IsConValue of oStandardsArray (piOpcodeRow(self)) iFieldIndex to nValue2
+            end
+        end // if sValue2 ne "0"
+        // if "~" convert to "<>"
+        if (sOperator = "~") move "<>" to sOperator
+        //
+        move "" to sComparison
+        append sComparison nValue1 " " sOperator " " nValue2
+        function_return (NOT(real(sComparison)))
+    end_function // CheckComparativeOperators
+
+    // supports YesNoCancel of link prompt
+    function PromptMessage integer iLinkCode string sLinkSymbol returns string
+        string sMessage
+        //
+        move "Level " to sMessage
+        append sMessage (piLinkLevel(self)) ", " ;
+            (piOpcode(self)) ", linking to standard "
+        //move "Link to standard " to sMessage
+        if sLinkSymbol ne "" ;
+            append sMessage iLinkCode ", link symbol " sLinkSymbol
+        else ;
+            append sMessage iLinkCode
+        function_return sMessage
+    end_function // PromptMessage
+
+    // supports YesNoCancel of link prompt
+    function PromptTitle integer iProcessIndex returns string
+        string sTitle sConstant
+        move "Processing " to sTitle
+        // variables
+        if iProcessIndex le 8 ;
+            append sTitle "variable " (iProcessIndex + 1)
+        // constants
+        else if iProcessIndex le 17 begin
+            move (iProcessIndex - 8) to iProcessIndex
+            mid "ABCDEFGHI" to sConstant 1 iProcessIndex
+            append sTitle "constant " sConstant
+        end
+        // table
+        else if iProcessIndex eq 19 ;
+            append sTitle "table value"
+        function_return sTitle
+    end_function // PromptTitle
+
+    // returns integer iMethodSymbol variable
+    function ProcessMethod integer iProcessIndex returns integer
+        boolean bReturn bGetValue bOperator bBatchMode
+        integer hoStandards iLinkCode iLinkLevel iIgnore iRet iOpcode iOpcodeRow iFieldIndex iPos
+        string  sTag sTagsymbols sMessage sTitle sFlags sLinkSymbl sConDesc sFilter
+        number  nValue nDefault
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        get  piLinkLevel     to iLinkLevel
+        get  pbBatchMode     to bBatchMode
+        // check the array
+        get Number_Value of oQty1Array item (iProcessIndex + (iLinkLevel * 23)) to nValue
+        // if linked for an existing value, we need to possibly ignore further processing
+        move ("123456789ABCDEFGHI" CONTAINS psLinkSymbol(self)) to bGetValue
+        // Variables
+        if (iProcessIndex <= 8) begin
+            // load the variables
+            move iProcessIndex to iFieldIndex
+            //
+            get IsVarTag       of hoStandards iOpcodeRow iFieldIndex to sTag
+            get IsVarTagSymbl  of hoStandards iOpcodeRow iFieldIndex to sTagsymbols
+            get IsVarLinkCode  of hoStandards iOpcodeRow iFieldIndex to iLinkCode
+            get IsVarLinkSymbl of hoStandards iOpcodeRow iFieldIndex to sLinkSymbl
+            If (sTagSymbols contains "CC" or sTagSymbols contains "OP") Begin
+                move iProcessIndex to fieldindex
+                Set psVarTag to Jcoper.Var1_Tag&
+            End
+            // if OP_? in sTagsymbols, we remove the letter after the ?
+            // so as not to disrupt existing logic
+            move (pos("OP_?",sTagsymbols)) to iPos
+            if (iPos) begin
+                move (mid(sTagsymbols,5,iPos)) to sFilter
+                move (replace(sFilter,sTagsymbols,"OP_?")) to sTagsymbols
+            end
+            // if (pbBackup) do it again
+            if (pbBackup(self)) begin
+                if (sTagsymbols CONTAINS "CC") break
+                if (sTagsymbols CONTAINS "OP") break
+                if (sTagsymbols CONTAINS "T" ) break
+                function_return CE_LOCAL
+            end
+            // if no more variables
+            if (sTag = "") function_return CE_FINISHED
+            // if not CE_TEST get the flag
+            #IFDEF CE_CALC_TEST
+            #ELSE
+            get String_Value of oFlagArray item ;
+                (iProcessIndex + (iLinkLevel * 23)) to sFlags
+            // if linked for a value only, check existing value & flags
+//BC: 05/16/07
+// Next two lines commented out because multivalue links were not retrieving qty2/3 values
+// when link pattern was Std A, varX links to Std B, varY, and Std B, varY links to multi-value calc.
+// these two lines got added for some reason between 8/23/04 and 3/30/05
+//            if ((bGetValue) AND (nValue <> 0 OR (nValue = 0 AND sFlags CONTAINS "X"))) ;
+//                function_return CE_IGNORE
+            // if there's a "D" in the flags, ignore
+            if (sFlags CONTAINS "D") function_return CE_IGNORE
+            #ENDIF
+            // check for an existing value
+            if (piCalcMode(self) = CE_ADD) begin
+                get pbReturn to bReturn
+                // if (nValue)
+                if (nValue <> 0) begin
+                    if (bReturn)                                                  break
+                    if (sTagsymbols CONTAINS "CC")                                break
+                    if (sTagsymbols CONTAINS "OP")                                break
+                    if (NOT(sFlags  CONTAINS "X") AND (sTagSymbols CONTAINS "|")) break
+                    if (iLinkCode = 0) function_return CE_IGNORE
+                end
+                // if entered as 0, keep it
+                if (nValue = 0 AND sFlags CONTAINS "X" AND NOT(bReturn)) function_return CE_IGNORE
+                // still 0, check for default
+                get IsVarDfltValue of hoStandards iOpcodeRow iFieldIndex to nDefault
+            end
+            // ignore @/T if not linked for a specific variable
+            if (sTagsymbols CONTAINS "@") begin
+                if (nDefault) function_return CE_STORE_DEFAULT
+                else          function_return CE_IGNORE
+            end
+            // check comparative operators
+            move (sTagsymbols CONTAINS "=" OR sTagsymbols CONTAINS ">" ;
+                OR sTagsymbols CONTAINS "<" OR sTagsymbols CONTAINS "~") to bOperator
+            if (bOperator) begin
+                get CheckComparativeOperators sTagsymbols to iIgnore
+                if (iIgnore) function_return CE_IGNORE
+            end // if bOperator
+            // if pushing
+            if (sTagsymbols CONTAINS "^") begin
+                if (piCalcMode(self) = CE_TEST) function_return CE_IGNORE
+                // in order to push, you must define a variable
+                // into which to push
+                if (NOT("123456789" CONTAINS sLinkSymbl)) function_return CE_IGNORE
+                else                                      function_return CE_PUSH
+            end
+            // check for Cost Center selection list
+            if (sTagsymbols CONTAINS "CC") begin
+                if (pbBatchMode(self)) function_return CE_IGNORE
+                if (iLinkCode = 0)     function_return CE_CC_SELECT
+            end
+            // check for Operations selection list
+            if (sTagsymbols CONTAINS "OP") begin
+                if (bBatchMode)        function_return CE_IGNORE
+                if (iLinkCode = 0)     function_return CE_OP_SELECT
+                get Integer_Value of oQty1Array item ;
+                    (iProcessIndex + (iLinkLevel * 23)) to iOpcode
+                if (iOpcode) function_return CE_OP_LINK
+            end
+            // if CE_ADD check for "E" modifier
+            if (piCalcMode(self) = CE_ADD AND sTagsymbols contains "E") begin
+                // if E is used with operator
+                if (bOperator) break
+                // otherwise
+                if (nDefault <> 0) function_return CE_STORE_DEFAULT
+                else function_return CE_IGNORE
+            end
+            //
+            if (sTagsymbols CONTAINS "T") function_return CE_IGNORE
+            //
+            if      (sLinkSymbl = "S") function_return CE_STANDARD
+            else if (sLinkSymbl = "#") function_return CE_INVENTORY_BASIS
+            else if (sLinkSymbl = "W") function_return CE_INVENTORY_WIDTH
+            else if (sLinkSymbl = "L") function_return CE_INVENTORY_LENGTH
+            else if (sLinkSymbl = "M") function_return CE_INVENTORY_MWGT
+            else if (sLinkSymbl = "$") function_return CE_INVENTORY_RATE
+            //BC 5/30/07 implement equivalent of "return" or "break" in var processing
+            else if (sLinkSymbl = "!") function_return CE_FINISHED
+            else if (sLinkSymbl = "X") begin
+                set pbCalcError to TRUE
+                set psCalcError to ("Specifications Error Detected" ;
+                    + "\n\n" + (psCurrentStandard(self))            ;
+                    + "\n\n" + sTag)
+                function_return CE_CANCEL
+            end
+            //
+            //if (iLinkCode = 0) begin
+            if (iLinkCode = 0 AND NOT(sTagsymbols CONTAINS "&")) begin
+                if (bBatchMode) function_return CE_IGNORE
+                if (iLinkLevel AND piCalcMode(self) = CE_ADD AND nDefault <> 0) begin
+                    if (NOT(sTagsymbols CONTAINS "|")) function_return CE_STORE_DEFAULT
+                end
+                if (pbAutoSave(self)) begin
+                    if (sTagsymbols CONTAINS "Z" AND nDefault = 0) set pbAutoSave to FALSE
+                    else function_return CE_LOCAL_SAVE
+                end
+                function_return CE_LOCAL
+            end
+            // at this point we know we MAY need to link
+            if (piCalcMode(self) = CE_ADD) begin
+                if (nValue <> 0 AND sFlags CONTAINS "X") function_return CE_IGNORE
+            end
+            //
+            // if retrieving a calculation and suppressing execution of the
+            // called std. (!), i.e. just return whatever calculation result
+            // is already there, then either stop (|) and allow the user to
+            // see and override the retrieved value (D), or not.
+            if (NOT("123456789" CONTAINS sLinkSymbl) AND sTagsymbols CONTAINS "!") begin
+                if (sTagsymbols CONTAINS "D" AND sTagsymbols CONTAINS "|") function_return CE_POP_DEFAULT
+                else                                                       function_return CE_POP
+            end
+            //
+            function_return CE_RETRIEVE
+            //
+        end // if (iProcessIndex <= 8) begin
+        // Constants
+        move (iProcessIndex - 9) to iFieldIndex
+        get IsConDesc      of hoStandards iOpcodeRow iFieldIndex to sConDesc
+        get IsConLinkSymbl of hoStandards iOpcodeRow iFieldIndex to sLinkSymbl
+        get IsConLinkCode  of hoStandards iOpcodeRow iFieldIndex to iLinkCode
+        //
+        if (sConDesc = "") function_return CE_FINISHED
+        //
+        if      (sLinkSymbl = "S") function_return CE_STANDARD
+        else if (sLinkSymbl = "#") function_return CE_INVENTORY_BASIS
+        else if (sLinkSymbl = "W") function_return CE_INVENTORY_WIDTH
+        else if (sLinkSymbl = "L") function_return CE_INVENTORY_LENGTH
+        else if (sLinkSymbl = "M") function_return CE_INVENTORY_MWGT
+        else if (sLinkSymbl = "$") function_return CE_INVENTORY_RATE
+        //BC 5/30/07 implement equivalent of "return" or "break" in var processing
+        else if (sLinkSymbl = "!") function_return CE_FINISHED
+        else if (sLinkSymbl = "X") begin
+            set pbCalcError to TRUE
+            set psCalcError to ("Specifications Error Detected" ;
+                + "\n\n" + (psCurrentStandard(self))            ;
+                + "\n\n" + sConDesc)
+            function_return CE_CANCEL
+        end
+        //
+        if (iLinkCode = 0) function_return CE_LOCAL
+        // at this point we know we MAY need to link
+        #IFDEF CE_CALC_TEST
+        // if piCalcMode is CE_TEST, prompt
+        get IsConDesc      of hoStandards iOpcodeRow iFieldIndex to sConDesc
+        get IsConLinkSymbl of hoStandards iOpcodeRow iFieldIndex to sLinkSymbl
+        get PromptMessage sConDesc sLinkSymbl to sMessage
+        get PromptTitle iProcessIndex to sTitle
+        move 0 to iRet
+        get YesNoCancel_Box sMessage sTitle to iRet
+        if iRet eq MBR_Yes    function_return CE_RETRIEVE
+        if iRet eq MBR_No     function_return CE_IGNORE
+        if iRet eq MBR_Cancel function_return CE_CANCEL
+        #ELSE
+        // not a test
+        if (NOT("ABCDEFGHI" CONTAINS sLinkSymbl) AND sConDesc CONTAINS "!")  function_return CE_POP
+        if (NOT("ABCDEFGHI" CONTAINS sLinkSymbl) AND left(sConDesc,1) = "^") function_return CE_PUSH
+        // if linked for a value only, check existing value & flags
+        //BC: 05/16/07
+        // Next line commented out as this looks to be wrong in light of other change made today 
+        // above. (This line got added for some reason between 8/23/04 and 3/30/05)
+        // Just because a var or constant value is being retrieved doesn't mean the current value
+        // is correct. The linked-to value may in turn retrieve a calculation and depending
+        // on the link level of that linked-to std. its value may not be current because
+        // it may not have yet been recalculated.
+        //if ((bGetValue) AND nValue <> 0) function_return CE_IGNORE
+        function_return CE_RETRIEVE
+        #ENDIF // CE_CALC_TEXT
+        //
+    end_function // ProcessMethod
+
+    function BackupIndex integer iProcessIndex returns integer
+        integer hoStandards iOpcodeRow iWasIndex bBackup iLinkCode
+        string  sTagSymbl
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        // backup only within this series
+        move iProcessIndex to iWasIndex
+        while (NOT(bBackup) AND iProcessIndex > 0)
+            decrement iProcessIndex
+            get IsVarLinkCode of hoStandards iOpcodeRow iProcessIndex to iLinkCode
+            get IsVarTagSymbl of hoStandards iOpcodeRow iProcessIndex to sTagSymbl
+            move (iLinkCode = 0 AND NOT(sTagSymbl CONTAINS "@")) to bBackup
+        end
+        if (NOT(bBackup)) function_return iWasIndex
+        else function_return iProcessIndex
+    end_function // BackupIndex
+
+    // returns to integer iProcessReturn
+    function StoreVariableValues ;
+        integer iProcessIndex    ;
+        string  sLinkSymbol      ;
+        returns integer
+        //
+        boolean bFormat bConstrained bSkip bIgnore
+        integer iMaxIndex iMethodSymbol iSelectedOpcode iRet iOpcodeRow
+        integer hoStandards iPos iInput iPosIndex
+        string  sMessage sTitle sStandard sPrompt sVarTagSymbl sName sVarTag
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        // always start with pbAutoSave set false
+        //BC: 12/12/06 no, don't always start here with this false
+        //commented next line out to allow "F2" accept all inputs function to continue processing
+        //after it encounters a link
+        // pbAutoSave is now reset in two places in the main docalculation procedure that calls this function
+        //set pbAutoSave to FALSE
+        // store starting point in case of pbBackup
+        move iProcessIndex to iMaxIndex
+        // we could be processing all 9, 1 specified, or returning from a link
+        while (iProcessIndex <= 8)
+            move DFFALSE to bSkip
+            move DFFALSE to bIgnore
+            //
+            if (pbBackup(self) AND iProcessIndex <> 0) ;
+                get BackupIndex iProcessIndex to iProcessIndex
+            move 0                            to iSelectedOpcode
+            //
+            get ProcessMethod iProcessIndex to iMethodSymbol
+            //
+            set pbBackup to FALSE
+            //
+            move (iProcessIndex < iMaxIndex AND iMethodSymbol <> CE_LOCAL ;
+                AND iMethodSymbol <> CE_CC_SELECT ;
+                AND iMethodSymbol <> CE_OP_SELECT) to bSkip
+            if (bSkip) increment iProcessIndex
+            if (bSkip) break BEGIN
+            //
+            if      (iMethodSymbol = CE_CANCEL)   function_return CE_CANCEL
+            else if (iMethodSymbol = CE_FINISHED) function_return CE_FINISHED
+            else if (iMethodSymbol <> CE_IGNORE) begin
+                if (iMethodSymbol = CE_RETRIEVE) function_return iProcessIndex
+                //
+                get IsVarTagSymbl of hoStandards iOpcodeRow iProcessIndex to sVarTagSymbl
+                move (pos("I",sVarTagSymbl))                              to iPos
+                if (iPos) move (mid(sVarTagSymbl,1,(iPos+1)))             to iInput
+                move (iInput = doFormat)                                  to bFormat
+                move (piOpcode(self))                                     to sStandard
+                get IsName of hoStandards iOpcodeRow                      to sName
+                move (sStandard * sName)                                  to sStandard
+                get IsVarTag of hoStandards iOpcodeRow iProcessIndex      to sPrompt
+                //
+                if ((iMethodSymbol = CE_CC_SELECT OR iMethodSymbol = CE_OP_SELECT) ;
+                    AND sVarTagSymbl CONTAINS "|") begin
+                    //
+                    // if the Link doesn't involve a calculation and is a variable
+                    // we need to correctly position the "retrieve" dialog
+                    if (piLinkLevel(self) AND "123456789" CONTAINS sLinkSymbol) ;
+                        get piProcessIndex of oLinkLevelDataArray (piLinkLevel(self)-1) to iPosIndex
+                    else move iProcessIndex                                             to iPosIndex
+                    //
+                    move (pos("I",sVarTagSymbl))                  to iPos
+                    if (iPos) move (mid(sVarTagSymbl,1,(iPos+1))) to iInput
+                    //
+                    if      (iInput = doCheckbox) get PauseCheckboxValue of oCalcWizard ;
+                        iProcessIndex    ;
+                        iPosIndex        ;
+                        sStandard        ;
+                        sPrompt          ;
+                        (piOpcode(self)) ;
+                        to bIgnore
+                    else if (iInput = doCombo)    get PauseComboValue    of oCalcWizard ;
+                        iProcessIndex    ;
+                        iPosIndex        ;
+                        sStandard        ;
+                        sPrompt          ;
+                        (piOpcode(self)) ;
+                        to bIgnore
+                    else                          get PauseNumericValue  of oCalcWizard ;
+                        iProcessIndex    ;
+                        iPosIndex        ;
+                        sStandard        ;
+                        sPrompt          ;
+                        (piOpcode(self)) ;
+                        bFormat          ;
+                        to bIgnore
+                    //
+                end
+                //
+                if (bIgnore OR pbBackup(self)) break
+                //
+                if (iMethodSymbol = CE_CC_SELECT) ;
+                    get StoreCostCenterValue iProcessIndex to iMethodSymbol
+                //
+                if (iMethodSymbol = CE_OP_SELECT or iMethodSymbol = CE_OP_LINK) begin
+                    if (iMethodSymbol = CE_OP_SELECT) get StoreOperationValue ;
+                        bConstrained iProcessIndex to iSelectedOpcode
+                    else get Integer_Value of (oQty1Array(self)) item ;
+                        (iProcessIndex + (piLinkLevel(self) * 23)) ;
+                        to iSelectedOpcode
+                    //
+                    if (iSelectedOpcode) begin
+                        if (piCalcMode(self) = CE_TEST) begin
+                            get PromptMessage iSelectedOpcode " " to sMessage
+                            get PromptTitle iProcessIndex         to sTitle
+                            move 0                                to iRet
+                            get YesNoCancel_Box sMessage sTitle   to iRet
+                            if      (iRet = MBR_Yes   ) function_return iProcessIndex
+                            else if (iRet = MBR_CANCEL) function_return CE_CANCEL
+                        end
+                        else function_return iProcessIndex
+                    end
+                end // (iMethodSymbol=CE_OP_SELECT or iMethodSymbol=CE_OP_LINK)
+                //
+                //BC: 12/26/06 trying to make CE_POP update wizard as does CE_POP_DEFAULT
+                //modified logic for iMethodSymbol = CE_POP - added message to displayvariablevalue
+                if      (iMethodSymbol = CE_STANDARD   ) send StoreStandardValue iProcessIndex
+                else if (iMethodSymbol = CE_PUSH       ) send PushVariableValue  iProcessIndex
+                // else if (iMethodSymbol = CE_POP        ) send PopVariableValue   iProcessIndex
+                else if (iMethodSymbol = CE_POP) begin
+                    send PopVariableValue   iProcessIndex
+                    if (pbWizardMode(self)) if NOT ("123456789" contains sLinkSymbol) ;
+                    send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+                End
+                else if (iMethodSymbol = CE_POP_DEFAULT) begin
+                    send PopVariableValue iProcessIndex
+                    if (pbWizardMode(self)) send StoreVariableValue iProcessIndex FALSE
+                end
+                else if (iMethodSymbol = CE_STORE_DEFAULT) send StoreDefaultValue      iProcessIndex
+                else if (iMethodSymbol = CE_LOCAL_SAVE   ) send StoreVariableSaveValue iProcessIndex
+                else if (iMethodSymbol = CE_LOCAL        ) send StoreVariableValue     iProcessIndex TRUE
+                //
+                else if (iMethodSymbol = CE_INVENTORY_BASIS ) send StoreInventoryParameterValue ;
+                    iProcessIndex CE_INVENTORY_BASIS  FALSE                       sStandard sPrompt bFormat
+                else if (iMethodSymbol = CE_INVENTORY_WIDTH ) send StoreInventoryParameterValue ;
+                    iProcessIndex CE_INVENTORY_WIDTH  FALSE                       sStandard sPrompt bFormat
+                else if (iMethodSymbol = CE_INVENTORY_LENGTH) send StoreInventoryParameterValue ;
+                    iProcessIndex CE_INVENTORY_LENGTH FALSE                       sStandard sPrompt bFormat
+                else if (iMethodSymbol = CE_INVENTORY_MWGT  ) send StoreInventoryParameterValue ;
+                    iProcessIndex CE_INVENTORY_MWGT   FALSE                       sStandard sPrompt bFormat
+                else if (iMethodSymbol = CE_INVENTORY_RATE  ) send StoreInventoryParameterValue ;
+                    iProcessIndex CE_INVENTORY_RATE   (sVarTagSymbl CONTAINS "D") sStandard sPrompt bFormat
+            end // if (iMethodSymbol <> CE_IGNORE)
+            //
+            if (pbCanceled(self)) function_return CE_CANCEL
+            //
+            if (pbBackup(self)) break BEGIN
+            if ("123456789" CONTAINS sLinkSymbol) function_return CE_FINISHED
+            increment iProcessIndex
+            //
+            if (iProcessIndex > iMaxIndex) increment iMaxIndex
+        end // while iProcessIndex le 8
+        function_return CE_FINISHED
+    end_function // StoreVariableValues
+
+    procedure StoreArrayValues integer iProcessIndex number nValue string sFlags
+        integer iCounter hoQtyArray
+        for iCounter from 1 to 3
+            if      (iCounter = 1) move oQty1Array to hoQtyArray
+            else if (iCounter = 2) move oQty2Array to hoQtyArray
+            else if (iCounter = 3) move oQty3Array to hoQtyArray
+            if (iCounter > 1) move "" to sFlags
+            send StoreValue hoQtyArray iProcessIndex nValue sFlags
+            if (NOT(pbMultiValue(self))) procedure_return
+        loop
+    end_procedure // StoreArrayValues
+
+    procedure StoreInventoryParameterValue ;
+        integer iProcessIndex ;
+        integer eParameter    ;
+        boolean bDefault      ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        boolean bFormat
+        //
+        integer iPosIndex
+        number  nValue nDefault
+        string  sLinkSymbol sFlags
+        //
+        get IsInventoryParameterValue (piOpcode(self)) eParameter to nValue
+        get psLinkSymbol                                          to sLinkSymbol
+        //
+        if (bDefault AND pbWizardMode(self)) begin
+            // if the Link doesn't involve a calculation and is a variable
+            // we need to correctly position the "retrieve" dialog
+            if (piLinkLevel(self) AND "123456789" CONTAINS sLinkSymbol) ;
+                get piProcessIndex of oLinkLevelDataArray (piLinkLevel(self)-1) to iPosIndex
+            else move iProcessIndex                                             to iPosIndex
+            //
+            move nValue to nDefault
+            get RetrieveNumericValue of oCalcWizard ;
+                iProcessIndex iPosIndex sStandard sPrompt nDefault (piOpcode(self)) FALSE bFormat to nValue
+            while (nValue = 0)
+                set pbAutoSave to False
+                send Stop_Box "Value cannot be zero."
+                get RetrieveNumericValue of oCalcWizard ;
+                    iProcessIndex iPosIndex sStandard sPrompt nDefault (piOpcode(self)) FALSE bFormat to nValue
+            loop
+        end // if (bDefault)
+        // set flags
+        move "X"                                                 to sFlags
+        if (bDefault AND nValue <> nDefault) move (sFlags + "D") to sFlags
+        // store it
+        //send StoreArrayValues iProcessIndex nValue "X"
+        //RAC 2/14/05 should save sflags!
+        send StoreArrayValues iProcessIndex nValue sFlags
+        // display it
+        if (pbWizardMode(self)) begin
+            if (NOT("123456789" CONTAINS sLinkSymbol)) ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+        end
+    end_procedure // StoreInventoryParameterValue
+
+    procedure StoreDefaultValue integer iProcessIndex
+        number nValue
+        string sLinkSymbol
+        //
+        get IsVarDfltValue of oStandardsArray (piOpcodeRow(self)) iProcessIndex to nValue
+        get psLinkSymbol                                                        to sLinkSymbol
+        // store it
+        send StoreArrayValues iProcessIndex nValue ""
+        // display it
+        if (pbWizardMode(self)) begin
+            if (NOT("123456789" CONTAINS sLinkSymbol)) ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+        end
+    end_procedure // StoreDefaultValue
+
+    procedure StoreVariableSaveValue integer iProcessIndex
+        number nValue
+        string sLinkSymbol
+        //
+        get Number_Value of oQty1Array ;
+            item (iProcessIndex + (piLinkLevel(self) * 23))                         to nValue
+        if (nValue = 0) ;
+            get IsVarDfltValue of oStandardsArray (piOpcodeRow(self)) iProcessIndex to nValue
+        get psLinkSymbol                                                            to sLinkSymbol
+        // store it
+        send StoreArrayValues iProcessIndex nValue "X"
+        // display it
+        if (pbWizardMode(self)) begin
+            if (NOT("123456789" CONTAINS sLinkSymbol)) ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+        end
+    end_procedure // StoreVariableSaveValue
+
+    procedure StoreVariableValue integer iProcessIndex boolean bAllowBackup
+        boolean bFormat bNozero
+        integer hoStandards iOpcode iOpcodeRow iCC iPos iInput iLinkLevel iPosIndex
+        number  nDefault nValue
+        string  sStandard sPrompt sFlags sName sVarTagSymbl sLinkSymbol
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        get  piOpcode        to iOpcode
+        get  piLinkLevel     to iLinkLevel
+        get  psLinkSymbol    to sLinkSymbol
+        //
+        get IsName of hoStandards iOpcodeRow                 to sName
+        move (string(piOpcode(self)) * sName)                to sStandard
+        get IsVarTag of hoStandards iOpcodeRow iProcessIndex to sPrompt
+        // set up default value
+        #IFDEF CE_CALC_TEST
+        get IsVarDfltValue of hoStandards iOpcodeRow iProcessIndex to nDefault
+        send HighlightVarTag of oCalcWizard iProcessIndex TRUE
+        #ELSE
+        get String_Value of oFlagArray item ;
+            (iProcessIndex + (piLinkLevel(self) * 23)) to sFlags
+        if (sFlags = "0") move "" to sFlags
+        get Number_Value of oQty1Array item ;
+            (iProcessIndex + (piLinkLevel(self) * 23)) to nDefault
+        if ((nDefault = 0) AND (sFlags = "")) ;
+            get IsVarDfltValue of hoStandards iOpcodeRow iProcessIndex to nDefault
+        #ENDIF // CE_CALC_TEST
+        // get it
+        set pbBackup to FALSE
+        //
+        get IsVarTagSymbl of hoStandards iOpcodeRow iProcessIndex to sVarTagSymbl
+        move (sVarTagSymbl CONTAINS "Z")                          to bNozero
+        //
+        move (pos("I",sVarTagSymbl))                  to iPos
+        if (iPos) move (mid(sVarTagSymbl,1,(iPos+1))) to iInput
+        move (iInput = doFormat)                      to bFormat
+        // support the help system
+        get IsCstCtrIdno of hoStandards iOpcodeRow to iCC
+        set piCC                                   to iCC
+        //
+        // if the Link doesn't involve a calculation and is a variable
+        // we need to correctly position the "retrieve" dialog
+        if ((iLinkLevel) AND "123456789" CONTAINS sLinkSymbol) begin
+            decrement iLinkLevel
+            get piProcessIndex of oLinkLevelDataArray iLinkLevel to iPosIndex
+        end
+        else move iProcessIndex to iPosIndex
+        //
+        if      (iInput = doCheckbox) get RetrieveCheckboxValue of oCalcWizard ;
+            iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup         to nValue
+        else if (iInput = doCombo)    get RetrieveComboValue    of oCalcWizard ;
+            iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup         to nValue
+        else                          get RetrieveNumericValue  of oCalcWizard ;
+            iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup bFormat to nValue
+        //
+        while (pbBackup(self) = 0 AND bNozero AND nValue = 0)
+            set pbAutoSave to False
+            send Stop_Box "Value cannot be zero."
+            get RetrieveNumericValue of oCalcWizard ;
+                iProcessIndex iPosIndex sStandard sPrompt nDefault iOpcode bAllowBackup bFormat to nValue
+        end // (bNozero and nValue=0)
+        //
+        #IFDEF CE_CALC_TEST
+        send HighlightVarTag of oCalcWizard iProcessIndex FALSE
+        #ENDIF
+        if (pbBackup(self)) procedure_return
+        //
+        if (pbCanceled(self)) procedure_return
+        // set flags
+        move "X"                                                                  to sFlags
+        if (sVarTagSymbl CONTAINS "D" AND nValue <> nDefault) move (sFlags + "D") to sFlags
+        // store it
+        send StoreArrayValues iProcessIndex nValue sFlags
+        // display it
+        if (pbWizardMode(self)) begin
+            if NOT (psLinkSymbol(self)) in "123456789" ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+        end
+    end_procedure // StoreVariableValue
+
+    register_object Jccntrce_SL
+    function StoreCostCenterValue ;
+        integer iProcessIndex ;
+        integer iDefault      ;
+        returns integer
+        //
+        integer hoStandards iOpcodeRow iCostCenter iOpcode iPos
+        string  sVarTagSymbl sCCPickListCode sListTitle
+        number  nValue
+        boolean bPickRequired // BC: 07/26/04
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        //
+        if (Num_Arguments = 1) ;
+            get IsVarDfltValue of hoStandards iOpcodeRow iProcessIndex to iCostCenter
+        else ;
+            move iDefault                                              to iCostCenter
+        //
+        get IsVarTagSymbl of hoStandards iOpcodeRow iProcessIndex to sVarTagSymbl
+        if (sVarTagSymbl CONTAINS "OP") move 1 to iOpcode
+        move (sVarTagSymbl CONTAINS "Z") to bPickRequired // BC: 07/26/04
+        if (sVarTagSymbl Contains "CC_") begin
+            move (pos("CC_",sVarTagSymbl)) to iPos
+            move (mid(sVarTagSymbl,1,(iPos+3))) to sCCPickListCode
+        end
+        //
+        Begin // BC: 07/26/04 re: enforce pick via "Z" flag
+            clear Jccntr
+            move iCostCenter to Jccntr.Idno
+            find EQ Jccntr.Idno
+            relate Jccntr
+            get psVarTag to sListTitle
+            send DoSelectCostCenter of oCalcWizard sCCPickListCode sListTitle
+            set psVarTag to ""
+            move Jccntr.Idno to nValue
+            if (bPickRequired AND nValue=0) send Stop_Box "You must select an item."
+            if (bPickRequired AND nValue=0) break BEGIN
+        End
+        // check for Opcode selection
+        if (iOpcode AND nValue) begin
+            get StoreOperationValue nValue iProcessIndex to iOpcode
+            if (iOpcode) function_return CE_OP_LINK
+        end
+        // store the value
+        send StoreArrayValues iProcessIndex nValue "X"
+        // display it
+        if (pbWizardMode(self)) begin
+            if not (psLinkSymbol(self)) in "123456789" ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+        end
+        //
+        function_return CE_CC_SELECT
+    end_function // StoreCostCenterValue
+
+
+    // the use of the Jcoper record buffer is okay in this method
+    // as it's only used in interactive mode
+    register_object Jcoperce_SL
+    function StoreOperationValue ;
+        integer bConstrained  ;
+        integer iProcessIndex ;
+        integer iDefault      ;
+        returns integer
+        //
+        integer hoStandards iOpcodeRow iCC iIsOperation iOperation iPos
+        number  nValue
+        string  sOptype sVarTagSymbl sListTitle
+        boolean bPickRequired // BC: 07/26/04
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        //
+        // the value of bConstrained is a Cost Center ID
+        move bConstrained to iCC
+        //
+        if (NOT(bConstrained)) ;
+            get IsVarDfltValue of hoStandards iOpcodeRow iProcessIndex to iOperation
+        if (Num_Arguments = 3) ;
+            move iDefault                                              to iOperation
+        // constrain as needed
+        get IsVarTagSymbl of hoStandards iOpcodeRow iProcessIndex to sVarTagSymbl
+        move (sVarTagSymbl CONTAINS "Z") to bPickRequired // BC: 07/26/04
+        //
+        if      (sVarTagSymbl CONTAINS "OP_L") move "L" to sOptype
+        else if (sVarTagSymbl CONTAINS "OP_M") move "M" to sOptype
+        else if (sVarTagSymbl CONTAINS "OP_P") move "P" to sOptype
+        else if (sVarTagSymbl CONTAINS "OP_?") begin
+            move (pos("OP_?",sVarTagSymbl)) to iPos
+            move (mid(sVarTagSymbl,1,(iPos+4))) to sOptype
+        end
+        // save the Opcode
+        get piOpcode to iIsOperation
+        //
+        if (bConstrained) clear Jcoper
+        else clear Jcoper Jccntr
+        //
+        // manage sListTitle for JcoperCE_SL based on calling Var's description, NOT the currently executing opcode's var
+        Move iProcessIndex to Fieldindex
+        if (iIsOperation <> iOperation) Begin
+            move iIsOperation to Jcoper.Opcode
+            find eq jcoper.opcode
+            Set psVarTag to Jcoper.Var1_Tag& 
+            clear jcoper
+        End
+        //
+        if (iOperation) begin
+            move iOperation to Jcoper.Opcode
+            find EQ Jcoper.Opcode
+            relate Jcoper
+            move Jccntr.Idno to iCC
+        end
+        get psVarTag to sListTitle
+        Begin // BC: 07/26/04 re: enforce pick via "Z" flag
+            send DoSelectOpcode of oCalcWizard sOptype iCC iOperation sListTitle
+            move Jcoper.Opcode to nValue
+            if (bPickRequired and nValue=0) Send Stop_Box "You must select an item."
+            if (bPickRequired and nValue=0) break BEGIN
+        End
+        set psVarTag to ""
+        // restore the Opcode
+        clear Jcoper
+        move iIsOperation to Jcoper.Opcode
+        find EQ Jcoper.Opcode
+        //
+        if (nValue = 0) function_return
+        // store the value
+        send StoreArrayValues iProcessIndex nValue "X"
+        // display it
+        if (pbWizardMode(self)) begin
+            if (NOT("123456789" CONTAINS psLinkSymbol(self))) ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+        end
+        // return the Opcode to be executed
+        function_return nValue
+        //
+    end_function // StoreOperationValue
+
+    procedure StoreStandardValue integer iProcessIndex
+        integer hoStandards iOpcodeRow iLinkOpcode
+        number  nStandard
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        //
+        if (iProcessIndex <= 8) ;
+            get IsVarLinkCode of hoStandards iOpcodeRow iProcessIndex to iLinkOpcode
+        else ;
+            get IsConLinkCode of hoStandards iOpcodeRow (iProcessIndex - 9) to iLinkOpcode
+        // if a link, find linked opcode row
+        if (iLinkOpcode) ;
+            get IsOpcodeRow of hoStandards iLinkOpcode to iOpcodeRow
+        // get & store the value
+        get IsStandard of hoStandards iOpcodeRow to nStandard
+        send StoreArrayValues iProcessIndex nStandard ""
+        // display it
+        if (pbWizardMode(self)) begin
+            if (psLinkSymbol(self)) in "123456789ABCDEFGHI" break
+            if (iProcessIndex <= 8) ;
+                send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iProcessIndex
+            else if (piCalcMode(self) = CE_TEST) ;
+                send DisplayConstantValue of oCalcWizard iProcessIndex
+        end
+    end_procedure // StoreStandardValue
+
+    procedure PushVariableValue integer iProcessIndex
+        boolean bVariable
+        integer iArrayLevel iPushOpcode iLinkLevel iPushIndex iPos
+        integer hoStandards iOpcodeRow iMath iKeyIndex
+        string  sTagSymbol sPushIndex sMath
+        number  nValue
+        //
+        move (iProcessIndex <= 8) to bVariable
+        move oStandardsArray      to hoStandards
+        get  piOpcodeRow          to iOpcodeRow
+        //
+        if (bVariable) begin
+            // get the default value
+            get Number_Value of oQty1Array item ;
+                (iProcessIndex + (piLinkLevel(self) * 23)) to nValue
+            // get the Tag Symbol
+            get IsVarTagSymbl of hoStandards iOpcodeRow iProcessIndex to sTagSymbol
+            // find the "pushed-to" variable
+            pos "^" in sTagSymbol to iPos
+            mid sTagSymbol to sPushIndex 1 (iPos+1)
+            mid sTagSymbol to sMath 1 (iPos+2)
+            move 0 to iMath
+            if (sMath = "+") move  1 to iMath
+            if (sMath = "-") move -1 to iMath
+            // if a Variable
+            if ("123456789V" CONTAINS sPushIndex) begin
+                if (sPushIndex = "V") move iProcessIndex to iPushIndex
+                else begin
+                    move (integer(sPushIndex)) to iPushIndex
+                    decrement iPushIndex
+                end
+                // hold the value to be pushed
+                get Number_Value of oQty1Array item ;
+                    (iPushIndex + (piLinkLevel(self) * 23)) to nValue
+                // if zero, check the default
+                if (nValue = 0) ;
+                    get IsVarDfltValue of hoStandards iOpcodeRow iProcessIndex to nValue
+            end
+            // if a Constant
+            if ("ABCDEFGHI" CONTAINS sPushIndex) begin
+                pos sPushIndex in "ABCDEFGHI" to iPushIndex
+                // hold the value to be pushed
+                get IsConValue of hoStandards iOpcodeRow (iPushIndex - 1) to nValue
+            end
+            // find the "pushed-to" opcode
+            get IsVarLinkCode  of hoStandards iOpcodeRow iProcessIndex to iPushOpcode
+            // find the "pushed-to" variable
+            get IsVarLinkSymbl of hoStandards iOpcodeRow iProcessIndex to iPushIndex
+        end // if (bVariable)
+        else begin
+            // find the value
+            get IsConValue     of hoStandards iOpcodeRow (iProcessIndex - 9) to nValue
+            // find the "pushed-to" opcode
+            get IsConLinkCode  of hoStandards iOpcodeRow (iProcessIndex - 9) to iPushOpcode
+            // find the "pushed-to" variable
+            get IsConLinkSymbl of hoStandards iOpcodeRow (iProcessIndex - 9) to iPushIndex
+        end // else
+        // save in pushing std
+        send StoreArrayValues iProcessIndex nValue ""
+        decrement iPushIndex
+        if (piLinkLevel(self)) begin
+            move (piLinkLevel(self)-1) to iLinkLevel
+            get ExistingArrayLevel iPushOpcode iLinkLevel to iArrayLevel
+            if (iArrayLevel = CE_FINDERR) break
+            send PushVariableValueToArray iArrayLevel iPushIndex nValue iMath
+            procedure_return
+        end
+        get ExistingStorageLevel iPushOpcode to iKeyIndex
+        if (iKeyIndex <> CE_FINDERR) ;
+            send PushVariableValueToStorage ;
+                iKeyIndex iPushOpcode iPushIndex nValue iMath
+        else ;
+            send PushVariableValueToFile ;
+                iPushOpcode iPushIndex nValue iMath
+    end_procedure // PushVariableValue
+
+    procedure PushCalculationValue ;
+        integer iPushOpcode ;
+        integer iPushIndex  ;
+        number  nValue      ;
+        integer iMath
+        //
+        integer iArrayLevel iLinkLevel
+        integer iKeyIndex
+        //
+        decrement iPushIndex
+        if (piLinkLevel(self)) begin
+            move (piLinkLevel(self)-1) to iLinkLevel
+            get ExistingArrayLevel iPushOpcode iLinkLevel to iArrayLevel
+            if (iArrayLevel = CE_FINDERR) break
+            send PushVariableValueToArray iArrayLevel iPushIndex nValue iMath
+            procedure_return
+        end
+        get ExistingStorageLevel iPushOpcode to iKeyIndex
+        if (iKeyIndex <> CE_FINDERR) ;
+            send PushVariableValueToStorage ;
+                iKeyIndex iPushOpcode iPushIndex nValue iMath
+        else ;
+            send PushVariableValueToFile ;
+                iPushOpcode iPushIndex nValue iMath
+    end_procedure // PushCalculationValue
+
+    procedure PushVariableValueToArray ;
+        integer iArrayLevel ;
+        integer iPushIndex  ;
+        number  nValue      ;
+        integer iMath
+        //
+        integer iCounter hoQtyArray
+        number  nCurrent
+        //
+        for iCounter from 1 to 3
+            if      (iCounter = 1) move oQty1Array to hoQtyArray
+            else if (iCounter = 2) move oQty2Array to hoQtyArray
+            else if (iCounter = 3) move oQty3Array to hoQtyArray
+            // store it
+            if (iMath) begin
+                get Array_Value of hoQtyArray item ;
+                    (iPushIndex + (iArrayLevel * 23)) to nCurrent
+                set Array_Value of hoQtyArray item ;
+                    (iPushIndex + (iArrayLevel * 23)) ;
+                    to (nCurrent + (nValue * iMath))
+            end
+            else set Array_Value of hoQtyArray item ;
+                (iPushIndex + (iArrayLevel * 23)) to nValue
+        loop
+    end_procedure // PushVariableValueToArray
+
+    procedure PushVariableValueToStorage ;
+        integer iKeyIndex   ;
+        integer iPushOpcode ;
+        integer iPushIndex  ;
+        number  nValue      ;
+        integer iMath
+        //
+        integer hData
+        number  nCurrent
+        //
+        move OpcodeDataStorageArray to hData
+        // make iPushIndex fit the array scheme
+        increment iPushIndex
+        // store it
+        if (iMath) begin
+            get Array_Value  of hData item (iPushIndex + (iKeyIndex * 38)) to nCurrent
+            set Array_Value  of hData item (iPushIndex + (iKeyIndex * 38)) to (nCurrent + (nValue * iMath))
+        end
+        else set Array_Value of hData item (iPushIndex + (iKeyIndex * 38)) to nValue
+    end_procedure // PushVariableValueToStorage
+
+    procedure PopVariableValue integer iProcessIndex
+        integer hoStandards iOpcodeRow iArrayLevel iPopOpcode iPopIndex iLinkLevel
+        integer iFieldIndex iKeyIndex iCounter bDefault bCurrent 
+        string  sLinkSymbol sTagSymbol sConDesc sTest
+        //
+        move oStandardsArray to hoStandards
+        get  piOpcodeRow     to iOpcodeRow
+        // find the "popped-from" opcode & symbol
+        if (iProcessIndex <= 8) begin
+            move iProcessIndex                                         to iFieldIndex
+            get IsVarLinkCode  of hoStandards iOpcodeRow iFieldIndex   to iPopOpcode
+            get IsVarLinkSymbl of hoStandards iOpcodeRow iFieldIndex   to sLinkSymbol
+            get IsVarTagSymbl  of hoStandards iOpcodeRow iFieldIndex   to sTagSymbol
+            move (sTagSymbol CONTAINS "D" AND sTagSymbol CONTAINS "|") to bDefault
+            //move (sTagSymbol CONTAINS "!!")                            to bCurrent
+            //BC: 12/28/06 above line tests true when only "!" is in string, bug in pos and contains commands with this character!
+            //workaround coding verified in debugger
+            Move (Replaces("!",sTagSymbol,"Q")) to sTest
+            Move (sTest CONTAINS "QQ") to bCurrent
+        end
+        else begin
+            move (iProcessIndex - 9)                                 to iFieldIndex
+            get IsConLinkCode  of hoStandards iOpcodeRow iFieldIndex to iPopOpcode
+            get IsConLinkSymbl of hoStandards iOpcodeRow iFieldIndex to sLinkSymbol
+            get IsConDesc      of hoStandards iOpcodeRow iFieldIndex to sConDesc
+            //move (sConDesc CONTAINS "!!")                            to bCurrent
+            //BC: 12/28/06 above line tests true when only "!" is in string, bug in pos and contains commands with this character!
+            //workaround coding verified in debugger
+            Move (Replaces("!",sConDesc,"Q")) to sTest
+            Move (sTest CONTAINS "QQ") to bCurrent
+        end
+        // see if the Opcode is already in memory
+        if (piLinkLevel(self)) begin
+            move (piLinkLevel(self)-1) to iLinkLevel
+            get ExistingArrayLevel iPopOpcode iLinkLevel to iArrayLevel
+            if (iArrayLevel = CE_FINDERR) break
+            send PopVariableValueFromArray iArrayLevel iProcessIndex sLinkSymbol
+            procedure_return
+        end // if (piLinkLevel(self))
+        get ExistingStorageLevel iPopOpcode to iKeyIndex
+        if (iKeyIndex <> CE_FINDERR) ;
+            send PopVariableValueFromStorage iKeyIndex iPopOpcode iProcessIndex sLinkSymbol
+        else ;
+            send PopVariableValueFromFile iPopOpcode iProcessIndex sLinkSymbol bCurrent
+    end_procedure // PopVariableValue
+
+    procedure PopVariableValueFromArray ;
+        integer iArrayLevel   ;
+        integer iProcessIndex ;
+        string  sLinkSymbol
+        //
+        integer iArrayIndex iCounter hoQtyArray
+        number  nValue
+        //
+        move 20                        to iArrayIndex
+        if (sLinkSymbol = "T") move 19 to iArrayIndex
+        if (sLinkSymbol = "0") move 18 to iArrayIndex
+        //
+        for iCounter from 1 to 3
+            if      (iCounter = 1) move oQty1Array to hoQtyArray
+            else if (iCounter = 2) move oQty2Array to hoQtyArray
+            else if (iCounter = 3) move oQty3Array to hoQtyArray
+            get Number_Value of hoQtyArray item ;
+                (iArrayIndex + (iArrayLevel * 23)) to nValue
+            // store it
+            send StoreValue hoQtyArray iProcessIndex nValue "" //FALSE  dw 11/25/03 should be a string
+        loop
+    end_procedure // PopVariableValueFromArray
+
+    procedure PopVariableValueFromStorage ;
+        integer iKeyIndex     ;
+        integer iPopOpcode    ;
+        integer iProcessIndex ;
+        string  sLinkSymbol
+        //
+        integer iCounter hoQtyArray hData iDataIndex bMultiValue
+        number  nValue
+        string  sOperFlags
+        // find linked record
+        move OpcodeDataStorageArray                            to hData
+        get String_Value of hData item (34 + (iKeyIndex * 38)) to sOperFlags
+        move (sOperFlags CONTAINS "V")                         to bMultiValue
+        // store the value to be popped                REVISIT
+        move 16                        to iDataIndex
+        if (sLinkSymbol = "T") move 13 to iDataIndex
+        if (sLinkSymbol = "0") move 10 to iDataIndex
+        //
+        for iCounter from 1 to 3
+            if      (iCounter = 1) move oQty1Array to hoQtyArray
+            else if (iCounter = 2) move oQty2Array to hoQtyArray
+            else if (iCounter = 3) move oQty3Array to hoQtyArray
+            get Number_Value of hData item ;
+                (iDataIndex + (iKeyIndex * 38)) to nValue
+            // store it
+            send StoreValue hoQtyArray iProcessIndex nValue "" //FALSE dw 11/25/03 should be a string
+            if (NOT(pbMultiValue(self))) break
+            if (bMultiValue) increment iDataIndex
+        loop
+        //
+    end_procedure // PopVariableValueFromStorage
+
+    function StoreConstantValues ;
+        integer iProcessIndex ;
+        string  sLinkSymbol   ;
+        returns integer
+        //
+        integer iMethodSymbol
+        // we could be processing all 9, 1 specified, or returning from a link
+        while (iProcessIndex <= 17)
+            get ProcessMethod iProcessIndex to iMethodSymbol
+            //
+            if      (iMethodSymbol = CE_FINISHED) function_return CE_FINISHED
+            else if (iMethodSymbol = CE_RETRIEVE) function_return iProcessIndex
+            else if (iMethodSymbol = CE_INVENTORY_BASIS ) ;
+                Send StoreInventoryParameterValue iProcessIndex CE_INVENTORY_BASIS False
+            else if (iMethodSymbol = CE_INVENTORY_WIDTH ) ;
+                send StoreInventoryParameterValue iProcessIndex CE_INVENTORY_WIDTH False
+            else if (iMethodSymbol = CE_INVENTORY_LENGTH) ;
+                send StoreInventoryParameterValue iProcessIndex CE_INVENTORY_LENGTH False
+            else if (iMethodSymbol = CE_INVENTORY_MWGT ) ;
+                send StoreInventoryParameterValue iProcessIndex CE_INVENTORY_MWGT False
+            else if (iMethodSymbol = CE_INVENTORY_RATE  ) ;
+                Send StoreInventoryParameterValue iProcessIndex CE_INVENTORY_RATE False
+            else if (iMethodSymbol = CE_STANDARD) send StoreStandardValue iProcessIndex
+            else if (iMethodSymbol = CE_POP     ) send PopVariableValue   iProcessIndex
+            else if (iMethodSymbol = CE_PUSH    ) send PushVariableValue  iProcessIndex
+            else if (iMethodSymbol = CE_LOCAL   ) send StoreConstantValue iProcessIndex
+            //
+            if ("ABCDEFGHI" CONTAINS sLinkSymbol) function_return CE_FINISHED
+            increment iProcessIndex
+        end // while (iProcessIndex <= 17)
+        function_return CE_FINISHED
+    end_function // StoreConstantValues
+
+    procedure StoreConstantValue integer iProcessIndex
+        number nValue
+        //
+        get IsConValue of oStandardsArray (piOpcodeRow(self)) (iProcessIndex - 9) to nValue
+        // store it
+        send StoreArrayValues iProcessIndex nValue ""
+        // display it
+        if (pbWizardMode(self)) begin
+            if (psLinkSymbol(self)) in "ABCDEFGHI" break
+            if (piCalcMode(self)=CE_TEST) ;
+                send DisplayConstantValue of oCalcWizard iProcessIndex
+        end
+    end_procedure // StoreConstantValue
+
+
+    // returns to the iProcessSymbol variable
+    function WhichProcess integer iProcessIndex returns integer
+        string sCalcFlags
+        //
+        get IsCalcFlags of oStandardsArray (piOpcodeRow(self)) to sCalcFlags
+        // check for trigger standard at other than link level 0
+//BC 2/15/08
+// setting CE_TRIGGER looks to be all about skipping items in a batch calc that are flagged as triggers
+// this is wrong; a trigger item should be calc'ed twice; once in whatever nested linkage called it;
+// and once as a link level 0 item, i.e. as if it were not called by any other std.
+//        if (pbBatchMode(self) AND piLinkLevel(self) AND ;
+//            sCalcFlags CONTAINS "T") function_return CE_TRIGGER
+        // else
+        if      (iProcessIndex >= 0 AND iProcessIndex <=  8) function_return CE_GET_VARIABLES
+        else if (iProcessIndex >= 9 AND iProcessIndex <= 17) function_return CE_GET_CONSTANTS
+        else if (iProcessIndex = 18)                         function_return CE_CALC_FORMULA
+        else if (iProcessIndex = 19)                         function_return CE_TABLE_VALUE
+        else                                                 function_return CE_PROD_FORMULA
+    end_function // WhichProcess
+    //
+    procedure DoCalculation
+        boolean bTestMode bMultiValue bRound bProdDollars bProdHours bHelper bGlobalHelperRate
+        boolean bBatchMode bWizardMode bReturnValue bWasReturnValue bConstrained bFound
+        Integer iOpcode iOpcodeRow iProcessSymbol iReturnProcess iLinkOpcode iPushedLink iNewMastOps
+        integer iReturn iArrayIndex iCounter iLinkLevel iDone iExLinkCode
+        integer hoStandards hoQty hoQty1 hoQty2 hoQty3 hoFlag hStatusPanel
+        integer iWasLevel iKeyIndex iExIndex iPos iMath iQty1 iQty2 iQty3
+        string  sLinkSymbol sFormula sEstFormulaType sMessage sTitle sRoundflag sOptype
+        String  sCalcFlags sPrintFlags sVarTagSymbl sTableStdDesc sExTagSymbl sExLinkSymbl sMath sFlag
+        number  nValue nProdUnits1 nProdUnits2 nProdUnits3 nEst1 nEst2 nEst3
+        number  nDMarkup nCMarkup nOMarkup nFullrate nSellrate nStockRate
+        //
+        move oStandardsArray to hoStandards
+        move oQty1Array      to hoQty1
+        move oQty2Array      to hoQty2
+        move oQty3Array      to hoQty3
+        move oFlagArray      to hoFlag
+        //
+        get pbBatchMode                   to bBatchMode
+        get pbWizardMode                  to bWizardMode
+        move (piCalcMode(self) = CE_TEST) to bTestMode
+        //
+        get piOpcode to iOpcode
+        //
+        send CurrentStandardString iOpcode 0 "" TRUE
+        // if BatchMode update status panel
+        if (bBatchMode) begin
+            send UpdateStatusPanel (psCurrentStandard(self))
+        end
+        if (bWizardMode) begin
+            //#IFDEF CE_CALC_TEST
+            //send EnableCalc FALSE
+            //#ENDIF
+            send UpdateWizard of oCalcWizard
+            send DisplayDefaults of oCalcWizard
+            if (iOpcode = piQtyOpcode(self)) begin
+                get piQty1 to iQty1
+                get piQty2 to iQty2
+                get piQty3 to iQty3
+                send DisplayDefaultQuantities of (oVariablesPage(oCalcWizard)) iQty1 iQty2 iQty3
+            end
+            #IFDEF CE_CALC_TEST
+            broadcast send DisplayValues of oCalcWizard
+            #ENDIF
+        end
+        Else Begin
+            Get phStatusPanel to hStatusPanel
+        End
+        //
+        get IsOpcodeRow of hoStandards iOpcode to iOpcodeRow
+        set piOpcodeRow                        to iOpcodeRow
+        //
+        set psLinkSymbol   to ""
+        set psLinkedFrom   to ""
+        set piProcessIndex to 0
+        //
+        get IsCalcFlags of hoStandards iOpcodeRow to sCalcFlags
+        set pbMultiValue to (sCalcFlags CONTAINS "V")
+        //
+        while (piProcessIndex(self) <= 20)
+            // if BatchMode check for user interruption
+            if (bBatchMode AND Check_StatusPanel(hStatusPanel)) begin
+                send StopStatusPanel
+                get BatchInterrupt to iDone
+                if (iDone) begin
+                    set pbCanceled to TRUE
+                    send StoppingBatchCalculation FALSE
+                    procedure_return
+                end
+                send ResumeStatusPanel
+            end
+            // check if Instruction/Inventory action is needed
+            if (piCalcMode(self) = CE_ADD) begin
+                Get IsPrintFlags of hoStandards (piOpcodeRow(Self)) to sPrintFlags
+                If (Right(String(Esitem.OPCODE),2)="35" and sPrintFlags contains "F" and Esitem.MastOpsIdno=0) Begin
+                    Boolean bSuccess
+                    While (not(bSuccess))
+                        Get DoMastOpsPrompt of MastOps_sl (&iNewMastOps) to bSuccess
+                    Loop
+                    Clear MastOps
+                    Move iNewMastOps            to MastOps.MastOpsIdno
+                    Find EQ MastOps by Index.1
+                    If ((Found) and MastOps.Status = "A") Begin
+                        // Adding Default Description and MastOps to the EsItem Record
+                        Move MastOps.MastOpsIdno to Esitem.MastOpsIdno
+                        Move MastOps.Description to Esitem.INSTRUCTION
+                        #IFNDEF CE_CALC_TEST 
+                        Move Escomp.NEXT_ITEM_NO to Esitem.Sequence
+                        #ENDIF
+                        
+                        SaveRecord Esitem    
+                    End
+                End
+                If (sPrintFlags contains "J" and Esitem.MastOpsIdno<>0 and Jcoper.MAST_OPS_IDNO>0) Begin // On Regular Item, If set Use Default MastOps
+                    Clear MastOps
+                    Move Jcoper.MAST_OPS_IDNO   to MastOps.MastOpsIdno
+                    Find EQ MastOps by Index.1
+                    If ((Found) and MastOps.Status = "A") Begin
+                        // Adding Default Description and MastOps to the EsItem Record
+                        Move MastOps.MastOpsIdno to Esitem.MastOpsIdno
+                        Move MastOps.Description to Esitem.INSTRUCTION
+                        #IFNDEF CE_CALC_TEST 
+                        Move Escomp.NEXT_ITEM_NO to Esitem.Sequence
+                        #ENDIF
+                        SaveRecord Esitem 
+                    End    
+                End 
+                Move "" to sPrintFlags
+                Get IsCalcFlags of hoStandards (piOpcodeRow(Self)) to sCalcFlags
+                if (NOT(sCalcFlags CONTAINS "I" OR sCalcFlags CONTAINS "S")) break
+                get String_Value of hoFlag item (9 + (piLinkLevel(self) * 23)) to sFlag
+                If (sFlag = "X") Break
+                if (sCalcFlags CONTAINS "S") send DoEnterItemInventory (piOpcode(self))
+                if (sCalcFlags CONTAINS "I") begin
+                    if (sCalcFlags CONTAINS ">") break
+                    send DoEnterItemInstruction (piOpcode(self)) FALSE
+                end
+                set Array_Value of hoFlag item (9 + (piLinkLevel(self) * 23)) to "X"
+            end // if (piCalcMode(self) = CE_ADD)
+            // this flag is used to start the While loop from the top
+            set pbProcessFlag to FALSE
+            // what am I doing?
+            get WhichProcess (piProcessIndex(self)) to iProcessSymbol
+            //
+            // begin processing Variables
+            if (iProcessSymbol = CE_GET_VARIABLES) begin
+                // this function will: 1) process all variables, 2) process
+                // one linked variable, or 3) process until it finds a link
+                get StoreVariableValues (piProcessIndex(self)) ;
+                    (psLinkSymbol(self)) to iReturnProcess
+                //
+                if (iReturnProcess = CE_CANCEL) begin
+                    if (pbWizardMode(self)) send Info_Box "Incomplete calculation"
+                    else begin
+                        send StopStatusPanel
+                        set pbCanceled to TRUE
+                        //BC: 12/13/06 I removed resetting this property in function StoreVariableValues and added here
+                        // and at end of CE_GET_VARIABLES below
+                        set pbAutoSave to FALSE
+                        send StoppingBatchCalculation FALSE
+                        procedure_return
+                    end
+                    #IFDEF CE_CALC_TEST
+                    #ELSE
+                    send SaveBufferedOpcodeItems
+                    #ENDIF
+                    if (bWizardMode) send Close_Panel of oCalcWizard
+                    //#IFDEF CE_CALC_TEST
+                    //send EnableCalc TRUE
+                    //#ENDIF
+                    procedure_return
+                end
+                //
+                if (iReturnProcess = CE_FINISHED) begin
+                    // proceed to constants
+                    set piProcessIndex to 9
+                    // unless we need to do the return thing
+                    while (psLinkSymbol(self)) in "123456789"
+                        // save the record if not CE_TEST
+                        #IFDEF CE_CALC_TEST
+                        #ELSE
+                        get ExistingArrayLevel (piOpcode(self)) ;
+                            (piLinkLevel(self)-1) to iWasLevel
+                        if (iWasLevel <> CE_FINDERR) ;
+                            send LoadArraysToArrays (piLinkLevel(self)) ;
+                                iWasLevel (pbMultiValue(self))
+                        else begin
+                            get ExistingStorageLevel ;
+                                (piOpcode(self)) to iKeyIndex
+                            if (iKeyIndex <> CE_FINDERR) ;
+                                send SaveArraysToStorage iKeyIndex ;
+                                    (piLinkLevel(self))
+                            else ;
+                                send SaveArraysToFile (piOpcode(self)) (piLinkLevel(self))
+                        end
+                        #ENDIF
+                        // make the symbol string an integer
+                        move (integer(psLinkSymbol(self))) to iArrayIndex
+                        // make iArrayIndex fit our scheme
+                        move (iArrayIndex - 1) to iArrayIndex
+                        // go back
+                        move (pbReturnValue(self)) to bWasReturnValue
+                        get GetPreviousLevel iArrayIndex to iReturnProcess
+                        send UpdateWizard of oCalcWizard
+                        send RestoreValues of oCalcWizard (piLinkLevel(self)) iReturnProcess
+                        // update the Wizard // 11/11/03
+                        if (bWizardMode) begin
+                            send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iReturnProcess
+                            if (pbStoreDefault(self)) begin
+                                send StoreVariableValue iReturnProcess FALSE
+                                set pbStoreDefault to FALSE
+                            end
+                        end
+
+                        //
+                        send DisplayLinks of oCalcWizard
+                        //
+                    end // while (psLinkSymbol(self)) in "123456789"
+                    //
+                end // if (iReturnProcess = CE_FINISHED)
+                // goto link
+                else begin
+                    send PushCurrentSettings iReturnProcess
+                    move iReturnProcess to FIELDINDEX
+                    move 0 to iLinkOpcode
+                    // see if there's an Opcode stored
+                    get IsVarTagSymbl of hoStandards ;
+                        (piOpcodeRow(self)) iReturnProcess to sVarTagSymbl
+                    if (sVarTagSymbl CONTAINS "OP") get Integer_Value of hoQty1 item ;
+                        (iReturnProcess + (piLinkLevel(self) * 23)) to iLinkOpcode
+                    move ""      to sLinkSymbol
+                    move DFFALSE to bReturnValue
+                    // if no link code if must be a non-selected Opcode
+                    if (iLinkOpcode = 0) begin
+                        // if the link is pushed
+                        if (sVarTagSymbl CONTAINS "&") begin
+                            move (pos("&",sVarTagSymbl))               to iPushedLink
+                            move (mid(sVarTagSymbl,1,(iPushedLink+1))) to iPushedLink
+                            // make the value 0 based
+                            move (iPushedLink - 1)                     to iPushedLink
+                            get Integer_Value of hoQty1 item (iPushedLink + (piLinkLevel(self) * 23)) to iLinkOpcode
+                        end
+                        else get IsVarLinkCode of hoStandards ;
+                            (piOpcodeRow(self)) iReturnProcess to iLinkOpcode
+                        //
+                        get IsVarLinkSymbl of hoStandards ;
+                            (piOpcodeRow(self)) iReturnProcess to sLinkSymbol
+                        move TRUE to bReturnValue
+                    end
+                    //
+                    get GetLinkOpcode iLinkOpcode sLinkSymbol bReturnValue to bFound
+                    // update the Wizard
+                    if (NOT(bWizardMode)) break
+                    if (NOT("123456789ABCDEFGHI" CONTAINS sLinkSymbol)) begin
+                        send ClearValues of oCalcWizard
+                        send DisplayTags of oCalcWizard
+                        if (NOT(bFound)) begin
+                            send DisplayDefaults of oCalcWizard
+                            if (iLinkOpcode = piQtyOpcode(self)) begin
+                                get piQty1 to iQty1
+                                get piQty2 to iQty2
+                                get piQty3 to iQty3
+                                send DisplayDefaultQuantities of (oVariablesPage(oCalcWizard)) iQty1 iQty2 iQty3
+                            end
+                        end
+                    end
+                    send DisplayLinks of oCalcWizard
+                end // if (iReturnProcess <> CE_FINISHED)
+                // the While loop will begin from the top after Variables are
+                // processed
+                set pbProcessFlag to TRUE
+                //
+            end // if (iProcessSymbol = CE_GET_VARIABLES)
+            if (pbProcessFlag(self)) break BEGIN
+            // end processing Variables
+            //BC: 12/13/06 takes the place of resetting this property in function StoreVariableValues
+            set pbAutoSave to FALSE
+            //
+            // begin processing Constants
+            if (iProcessSymbol = CE_GET_CONSTANTS) begin
+                // this function will: 1) process all constant, 2) process
+                // one linked constant, or 3) process until it finds a link
+                get StoreConstantValues (piProcessIndex(self)) ;
+                    (psLinkSymbol(self)) to iReturnProcess
+                //
+                if (iReturnProcess = CE_CANCEL) begin
+                    if (pbWizardMode(self)) send Info_Box "Incomplete calculation"
+                    else begin
+                        send StopStatusPanel
+                        set pbCanceled to TRUE
+                        send StoppingBatchCalculation FALSE
+                        procedure_return
+                    end
+                    #IFDEF CE_CALC_TEST
+                    //send EnableCalc TRUE
+                    #ELSE
+                    send SaveBufferedOpcodeItems
+                    send Close_Panel
+                    #ENDIF
+                    procedure_return
+                end // if (iReturnProcess = CE_CANCEL)
+                //
+                if (iReturnProcess = CE_FINISHED) begin
+                    // proceed to Calc Units Formula
+                    set piProcessIndex to 18
+                    // unless we need to do the return thing
+                    while (psLinkSymbol(self)) in "ABCDEFGHI"
+                        // save the record if not CE_TEST
+                        #IFDEF CE_CALC_TEST
+                        #ELSE
+                        get ExistingArrayLevel (piOpcode(self)) ;
+                            (piLinkLevel(self) - 1) to iWasLevel
+                        if (iWasLevel <> CE_FINDERR) ;
+                            send LoadArraysToArrays (piLinkLevel(self)) ;
+                                iWasLevel (pbMultiValue(self))
+                        else begin
+                            get ExistingStorageLevel ;
+                                (piOpcode(self)) to iKeyIndex
+                            if (iKeyIndex <> CE_FINDERR) ;
+                                send SaveArraysToStorage iKeyIndex ;
+                                    (piLinkLevel(self))
+                            else ;
+                                send SaveArraysToFile (piOpcode(self)) (piLinkLevel(self))
+                        end
+                        #ENDIF
+                        // make the symbol string an integer
+                        pos (psLinkSymbol(self)) in "ABCDEFGHI"
+                        // make iArrayIndex fit our scheme
+                        move (STRMARK + 8) to iArrayIndex
+                        // go back
+                        get GetPreviousLevel iArrayIndex to iReturnProcess
+                        // update the Wizard
+                        send UpdateWizard of oCalcWizard
+                        send RestoreValues of oCalcWizard (piLinkLevel(self)) iReturnProcess
+                        if (NOT(bWizardMode)) break
+                        if (iReturnProcess <= 8) ;
+                            send DisplayVariableValue of (oVariablesPage(oCalcWizard)) iReturnProcess
+                        #IFDEF CE_CALC_TEST
+                        else send DisplayConstantValue of oCalcWizard iReturnProcess
+                        #ENDIF
+                        send DisplayLinks of oCalcWizard
+                        //
+                    end
+                end // if (iReturnProcess = CE_FINISHED)
+                //  go to Link
+                else begin
+                    send PushCurrentSettings iReturnProcess
+                    move (iReturnProcess - 9)    to FIELDINDEX
+                    get IsConLinkCode of hoStandards ;
+                        (piOpcodeRow(self)) (iReturnProcess - 9) to iLinkOpcode
+                    get IsConLinkSymbl of hoStandards ;
+                        (piOpcodeRow(self)) (iReturnProcess - 9) to sLinkSymbol
+                    get GetLinkOpcode iLinkOpcode sLinkSymbol TRUE to bFound
+                    // update the Wizard
+                    if (NOT(bWizardMode)) break
+                    if (NOT("123456789ABCDEFGHI" CONTAINS sLinkSymbol)) begin
+                        send ClearValues of oCalcWizard
+                        send DisplayTags of oCalcWizard
+                        if (NOT(bFound)) send DisplayDefaults of oCalcWizard
+                    end
+                    send DisplayLinks of oCalcWizard
+                end // if (iReturnProcess <> CE_FINISHED)
+                // the While loop will begin from the top after Constants are processed
+                set pbProcessFlag to TRUE
+            end // if (iProcessSymbol = CE_GET_CONSTANTS)
+            if (pbProcessFlag(self)) break BEGIN
+            // end processing Constants
+            //
+            // begin execute Calculation Formula
+            if (iProcessSymbol = CE_CALC_FORMULA) begin
+                // get the Calc Units Formula
+                get IsFormula of hoStandards (piOpcodeRow(self)) to sFormula
+                // check for quantities
+                if (sFormula = "" AND pbMultiValue(self)) begin
+                    get piLinkLevel to iLinkLevel
+                    // variable 1
+                    move hoQty1 to hoQty
+                    get Number_Value of hoQty1 item (0 + (iLinkLevel * 23)) to nValue
+                    send StoreValue hoQty 18 nValue ""
+                    // variable 2
+                    move hoQty2 to hoQty
+                    get Number_Value of hoQty1 item (1 + (iLinkLevel * 23)) to nValue
+                    send StoreValue hoQty 18 nValue ""
+                    // variable 3
+                    move hoQty3 to hoQty
+                    get Number_Value of hoQty1 item (2 + (iLinkLevel * 23)) to nValue
+                    send StoreValue hoQty 18 nValue ""
+                    //
+                end
+                //
+                if (sFormula <> "") begin
+                    // do it!
+                    move DFFALSE to bRound
+                    get IsCalcFlags of hoStandards (piOpcodeRow(self)) to sCalcFlags
+                    //BC: 12/19/06 add missing code in support of .5 rounding function
+                    //BC: 03/07 STILL doesn't work reliably; inserted next "else" & removed "0" from contains test below
+                    //BC: 03/07 ignore the "R", the "+" or "-" must immediately follow the C or P
+                    // rewrote this block....
+                    if (sCalcFlags CONTAINS "C") begin
+                        move "" to sRoundFlag
+                        // 5/24/07 "R" required to round AND zero neg values, otherwise zero'ing neg values
+                        //          shouldn't round positive numbers.
+                        //          current logic doesn't support Rounding 1 formula AND zeroing neg values in 
+                        //          another formula without also rounding that formula
+                        if (sCalcFlags contains "R")   move "R"  to sRoundflag
+                        if (sCalcFlags contains "0C")  move (Append(sRoundflag,"0")) to sRoundflag
+                        if (sCalcFlags contains "C.5") move (Append(sRoundflag,".")) to sRoundFlag
+                        else ; 
+                        if (sCalcFlags contains "C+")  move (Append(sRoundflag,"+")) to sRoundFlag
+                        else ; 
+                        if (sCalcFlags contains "C-")  move (Append(sRoundflag,"-")) to sRoundFlag
+                        move TRUE to bRound
+                    end
+                    //
+                    for iCounter from 1 to 3
+                        if      (iCounter = 1) move hoQty1 to hoQty
+                        else if (iCounter = 2) move hoQty2 to hoQty
+                        else if (iCounter = 3) move hoQty3 to hoQty
+                        get CalculateFormula hoQty sFormula bRound sRoundflag nStockRate to nValue
+                        // store it
+                        send StoreValue hoQty 18 nValue ""
+                        //
+                        if (NOT(pbMultiValue(self))) break
+                    loop
+                end
+                // display it
+                #IFDEF CE_CALC_TEST
+                send DisplayCalcUnitsValue of (oVariablesPage(oCalcWizard))
+                #ENDIF
+                // set up for next process
+                set piProcessIndex to 19
+                set pbProcessFlag  to TRUE
+            end // if (iProcessSymbol = CE_CALC_FORMULA)
+            if (pbProcessFlag(self)) break BEGIN
+            // end execute Calculation Formula
+            //
+            // begin get Table Value
+            if (iProcessSymbol = CE_TABLE_VALUE) begin
+                // if there's a table standard, calc it
+                move 0 to nValue
+                get IsTableStdDesc of hoStandards (piOpcodeRow(self)) to sTableStdDesc
+                if (sTableStdDesc <> "") begin
+                    //
+                    for iCounter from 1 to 3
+                        if      (iCounter = 1) move hoQty1 to hoQty
+                        else if (iCounter = 2) move hoQty2 to hoQty
+                        else if (iCounter = 3) move hoQty3 to hoQty
+                        get piLinkLevel                    to iLinkLevel
+                        get CalculateTableValue of TableValueCalculator ;
+                            hoStandards (piOpcodeRow(self)) hoQty iLinkLevel to nValue
+                        send StoreValue hoQty 19 nValue ""
+                        if (NOT(pbMultiValue(self))) break
+                    loop
+                    //
+                    #IFDEF CE_CALC_TEST
+                    send DisplayTableValue of (oVariablesPage(oCalcWizard))
+                    #ENDIF
+                    //
+                end
+                //
+                set piProcessIndex to 20
+                //
+                if (sTableStdDesc = "OPCODE" AND nValue <> 0) begin
+                    move 0 to iReturn
+                    // if piCalcMode is CE_TEST, prompt
+                    #IFDEF CE_CALC_TEST
+                    get PromptMessage nValue " " to sMessage
+                    get PromptTitle 19 to sTitle
+                    get YesNoCancel_Box sMessage sTitle to iReturn
+                    if (iReturn = MBR_No) break
+                    if (iReturn = MBR_Cancel) begin
+                        send Info_Box "Incomplete calculation"
+                        if (NOT(bTestMode)) send Close_Panel
+                        //#IFDEF CE_CALC_TEST
+                        //send EnableCalc TRUE
+                        //#ENDIF
+                        procedure_return
+                    end
+                    #ENDIF
+                    if (iReturn = MBR_No) break
+                    //
+                    send PushCurrentSettings 19
+                    move nValue to iLinkOpcode
+                    move ""     to sLinkSymbol
+                    get GetLinkOpcode iLinkOpcode sLinkSymbol TRUE to bFound
+                    // update the Wizard
+                    if (bWizardMode) send UpdateWizard of oCalcWizard
+                end
+                //
+                set pbProcessFlag to TRUE
+            end // if (iProcessSymbol = CE_TABLE_VALUE)
+            if (pbProcessFlag(self)) break BEGIN
+            // end get Table Value
+            //
+            // begin execute Production Units Formula
+            if (iProcessSymbol = CE_PROD_FORMULA) begin
+                move 0 to nProdUnits1
+                move 0 to nProdUnits2
+                move 0 to nProdUnits3
+                // don't wear out the expression evaluator
+                get piOpcode     to iOpcode
+                get piOpcodeRow  to iOpcodeRow
+                get piLinkLevel  to iLinkLevel
+                get psLinkSymbol to sLinkSymbol
+                get pbMultiValue to bMultiValue
+                // get the Prod Units Formula & values used to calculate Est$
+                get IsEstFormula of hoStandards iOpcodeRow to sFormula
+                get IsCalcFlags  of hoStandards iOpcodeRow to sCalcFlags
+                // do it!
+                move DFFALSE to bRound
+                //BC: 12/19/06 add missing code in support of .5 rounding function
+                //BC: 03/07 STILL doesn't work reliably; inserted next "else" & removed "0" from contains test below
+                //BC: 03/07 ignore the "R", the "+" or "-" must immediately follow the C or P
+                // rewrote this block....
+                if (sCalcFlags CONTAINS "P") begin
+                    move "" to sRoundFlag
+                    // 5/24/07 "R" required to round AND zero neg values, otherwise zero'ing neg values
+                    //          shouldn't round positive numbers.
+                    //          current logic doesn't support Rounding 1 formula AND zeroing neg values in 
+                    //          another formula without also rounding that formula
+                    if (sCalcFlags contains "R")   move "R"  to sRoundflag
+                    if (sCalcFlags contains "0P")  move (Append(sRoundflag,"0")) to sRoundflag
+                    if (sCalcFlags contains "P.5") move (Append(sRoundflag,".")) to sRoundFlag
+                    else ; 
+                    if (sCalcFlags contains "P+")  move (Append(sRoundflag,"+")) to sRoundFlag
+                    else ; 
+                    if (sCalcFlags contains "P-")  move (Append(sRoundflag,"-")) to sRoundFlag
+                    move TRUE to bRound
+                end
+                //
+                if (sCalcFlags CONTAINS "S") ;
+                    get IsInventoryParameterValue iOpcode CE_INVENTORY_RATE to nStockRate
+                //
+                for iCounter from 1 to 3
+                    if      (iCounter = 1) move hoQty1 to hoQty
+                    else if (iCounter = 2) move hoQty2 to hoQty
+                    else if (iCounter = 3) move hoQty3 to hoQty
+                    get CalculateFormula hoQty sFormula bRound sRoundflag nStockRate to nValue
+                    // hold it
+                    if      (iCounter = 1) move nValue to nProdUnits1
+                    else if (iCounter = 2) move nValue to nProdUnits2
+                    else if (iCounter = 3) move nValue to nProdUnits3
+                    // store it
+                    send StoreValue hoQty 20 nValue ""
+                    if (NOT(bMultiValue)) break
+                loop
+                move 0 to nStockRate
+                //
+                // Calculate Est$ values
+                get IsEstFormulaType   of hoStandards iOpcodeRow to sEstFormulaType
+                get IsOptype           of hoStandards iOpcodeRow to sOptype
+                get IsDepartmentMarkup of hoStandards iOpcodeRow to nDMarkup
+                get IsCenterMarkup     of hoStandards iOpcodeRow to nCMarkup
+                get IsOperationMarkup  of hoStandards iOpcodeRow to nOMarkup
+                get IsCenterFullrate   of hoStandards iOpcodeRow to nFullrate
+                get IsCenterSellrate   of hoStandards iOpcodeRow to nSellrate
+                //
+                move (sEstFormulaType = "$")               to bProdDollars
+                move (sEstFormulaType = ":")               to bProdHours
+                move (sOptype CONTAINS "H")                to bHelper
+                move ((bHelper) AND Jcpars.Hfull_rate > 0) to bGlobalHelperRate
+                //
+                move 0 to nEst1
+                move 0 to nEst2
+                move 0 to nEst3
+                //
+                if (bProdDollars) begin
+                    move (nProdUnits1 * nOMarkup * nCMarkup * nDMarkup) to nEst1
+                    if (NOT(bMultiValue)) break
+                    move (nProdUnits2 * nOMarkup * nCMarkup * nDMarkup) to nEst2
+                    move (nProdUnits3 * nOMarkup * nCMarkup * nDMarkup) to nEst3
+                end
+                //
+                else if ((bProdHours) AND NOT(sCalcFlags CONTAINS "$")) begin
+                    if ((bHelper) AND (bGlobalHelperRate)) begin
+                        move (nProdUnits1 * Jcpars.HFull_Rate * nOMarkup * nCMarkup * nDMarkup) to nEst1
+                        if (NOT(bMultiValue)) break
+                        move (nProdUnits2 * Jcpars.HFull_Rate * nOMarkup * nCMarkup * nDMarkup) to nEst2
+                        move (nProdUnits3 * Jcpars.HFull_Rate * nOMarkup * nCMarkup * nDMarkup) to nEst3
+                    end
+                    if ((bHelper) AND NOT(bGlobalHelperRate)) begin
+                        move (nProdUnits1 * nFullrate * nOMarkup * nCMarkup * nDMarkup)         to nEst1
+                        if (NOT(bMultiValue)) break
+                        move (nProdUnits2 * nFullrate * nOMarkup * nCMarkup * nDMarkup)         to nEst2
+                        move (nProdUnits3 * nFullrate * nOMarkup * nCMarkup * nDMarkup)         to nEst3
+                    end
+                    if (NOT(bHelper)) begin
+                        move (nProdUnits1 * nFullrate * nOMarkup * nCMarkup * nDMarkup)         to nEst1
+                        if (NOT(bMultiValue)) break
+                        move (nProdUnits2 * nFullrate * nOMarkup * nCMarkup * nDMarkup)         to nEst2
+                        move (nProdUnits3 * nFullrate * nOMarkup * nCMarkup * nDMarkup)         to nEst3
+                    end
+                end
+                move (nEst1 * 100)       to nEst1
+                move (round(nEst1))      to nEst1
+                move (nEst1 / 100)       to nEst1
+                move (nEst2 * 100)       to nEst2
+                move (round(nEst2))      to nEst2
+                move (nEst2 / 100)       to nEst2
+                move (nEst3 * 100)       to nEst3
+                move (round(nEst3))      to nEst3
+                move (nEst3 / 100)       to nEst3
+                // store it
+                send StoreValue hoQty1 21 nEst1 ""
+                send StoreValue hoQty2 21 nEst2 ""
+                send StoreValue hoQty3 21 nEst3 ""
+                // sell formula
+                get IsSellFormula of hoStandards iOpcodeRow to sFormula
+                if (sFormula <> "") begin
+                    for iCounter from 1 to 3
+                        if      (iCounter = 1) move hoQty1 to hoQty
+                        else if (iCounter = 2) move hoQty2 to hoQty
+                        else if (iCounter = 3) move hoQty3 to hoQty
+                        get CalculateFormula hoQty sFormula FALSE "" nStockRate to nValue
+                        move (nValue * 100)   to nValue
+                        move (round(nValue))  to nValue
+                        move (nValue / 100)   to nValue
+                        send StoreValue hoQty 22 nValue ""
+                        if (NOT(bMultiValue)) break
+                    loop
+                end // if (sFormula <> "") begin
+                //
+                #IFDEF CE_CALC_TEST
+                send DisplayProdUnitsValue of (oVariablesPage(oCalcWizard))
+                #ELSE
+                // save the record if not CE_TEST
+                get ExistingArrayLevel iOpcode (iLinkLevel - 1) to iWasLevel
+                if (iWasLevel <> CE_FINDERR) ;
+                    send LoadArraysToArrays iLinkLevel iWasLevel bMultiValue
+                else begin
+                    get ExistingStorageLevel iOpcode to iKeyIndex
+                    if (iKeyIndex <> CE_FINDERR) ;
+                        send SaveArraysToStorage iKeyIndex iLinkLevel
+                    else ;
+                        send SaveArraysToFile iOpcode iLinkLevel
+                end
+                #ENDIF
+                // check if export of calculations is needed
+                move hoQty1 to hoQty
+                // determined by the presence of a link code for each c1-3
+                get IsC1LinkCode of hoStandards iOpcodeRow to iExLinkCode
+                if (iExLinkCode) begin
+                    get IsC1LinkSymbl of hoStandards iOpcodeRow to sExLinkSymbl
+                    if (NOT("123456789" CONTAINS sExLinkSymbl)) break
+                    //
+                    get IsC1TagSymbl  of hoStandards iOpcodeRow to sExTagSymbl
+                    if      (sExTagsymbl CONTAINS "0") begin
+                        move 18                                 to iExIndex
+                        move (pos("0",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else if (sExTagsymbl CONTAINS "T") begin
+                        move 19                                 to iExIndex
+                        move (pos("T",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else if (sExTagsymbl CONTAINS "P") begin
+                        move 20                                 to iExIndex
+                        move (pos("P",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else move 0                                 to iExIndex
+                    if (NOT(iExIndex)) break
+                    // get the calculation value
+                    get Number_Value of hoQty item (iExIndex + (iLinkLevel * 23)) to nValue
+                    // export the value
+                    send PushCalculationValue iExLinkCode sExLinkSymbl nValue iMath
+                end
+                //
+                get IsC2LinkCode of hoStandards iOpcodeRow to iExLinkCode
+                if (iExLinkCode) begin
+                    get IsC2LinkSymbl of hoStandards iOpcodeRow to sExLinkSymbl
+                    if (NOT("123456789" CONTAINS sExLinkSymbl)) break
+                    //
+                    get IsC2TagSymbl  of hoStandards iOpcodeRow to sExTagSymbl
+                    if      (sExTagsymbl CONTAINS "0") begin
+                        move 18                                 to iExIndex
+                        move (pos("0",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else if (sExTagsymbl CONTAINS "T") begin
+                        move 19                                 to iExIndex
+                        move (pos("T",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else if (sExTagsymbl CONTAINS "P") begin
+                        move 20                                 to iExIndex
+                        move (pos("P",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else move 0                                 to iExIndex
+                    if (NOT(iExIndex)) break
+                    // get the calculation value
+                    get Number_Value of hoQty item (iExIndex + (iLinkLevel * 23)) to nValue
+                    // export the value
+                    send PushCalculationValue iExLinkCode sExLinkSymbl nValue iMath
+                end
+                //
+                get IsC3LinkCode of hoStandards iOpcodeRow to iExLinkCode
+                if (iExLinkCode) begin
+                    get IsC3LinkSymbl of hoStandards iOpcodeRow to sExLinkSymbl
+                    if (NOT("123456789" CONTAINS sExLinkSymbl)) break
+                    //
+                    get IsC3TagSymbl  of hoStandards iOpcodeRow to sExTagSymbl
+                    if      (sExTagsymbl CONTAINS "0") begin
+                        move 18                                 to iExIndex
+                        move (pos("0",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else if (sExTagsymbl CONTAINS "T") begin
+                        move 19                                 to iExIndex
+                        move (pos("T",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else if (sExTagsymbl CONTAINS "P") begin
+                        move 20                                 to iExIndex
+                        move (pos("P",sExTagsymbl))             to iPos
+                        move (mid(sExTagsymbl,1,(iPos+1)))      to sMath
+                        if      (sMath = "+") move  1           to iMath
+                        else if (sMath = "-") move -1           to iMath
+                        else                  move  0           to iMath
+                    end
+                    else move 0                                 to iExIndex
+                    if (NOT(iExIndex)) break
+                    // get the calculation value
+                    get Number_Value of hoQty item (iExIndex + (iLinkLevel * 23)) to nValue
+                    // export the value
+                    send PushCalculationValue iExLinkCode sExLinkSymbl nValue iMath
+                end
+                // check if Instruction is needed
+                if (piCalcMode(self) = CE_ADD) begin
+                    get IsCalcFlags of hoStandards iOpcodeRow to sCalcFlags
+                    if (NOT(sCalcFlags CONTAINS "I>")) break
+                    send DoEnterItemInstruction iOpcode TRUE
+                end // if (piCalcMode(self) = CE_ADD)
+                // prepare to exit calc loop unless linked
+                set piProcessIndex to 21
+                //
+                if (iLinkLevel) begin
+                    //
+                    if (sLinkSymbol = "0") move 18 to iArrayIndex
+                    if (sLinkSymbol = "T") move 19 to iArrayIndex
+                    if (sLinkSymbol = " ") move 20 to iArrayIndex
+                    // go back
+                    get GetPreviousLevel iArrayIndex to iReturnProcess
+                    // update the Wizard
+                    if (bWizardMode) begin
+                        if (iArrayIndex = 19) send DisplayTableValue of (oVariablesPage(oCalcWizard))
+                        send UpdateWizard  of oCalcWizard
+                        send RestoreValues of oCalcWizard iLinkLevel iReturnProcess
+
+                        if (pbStoreDefault(self)) begin
+                            send StoreVariableValue iReturnProcess FALSE
+                            set pbStoreDefault to FALSE
+                        end
+
+                    end
+                    //
+                end
+                //
+            end // if (iProcessSymbol = CE_PROD_FORMULA)
+            // end execute Production Units Formula
+            // return if trigger record
+            if (iProcessSymbol = CE_TRIGGER) begin
+                //
+                move 20 to iArrayIndex
+                // go back
+                set pbReturnValue to FALSE
+                get GetPreviousLevel iArrayIndex to iReturnProcess
+                //
+            end // iProcessSymbol eq CE_TRIGGER
+            //
+        end // while (piProcessIndex(self)<=20)
+        //
+        #IFDEF CE_CALC_TEST
+        //send EnableCalc TRUE
+        #ELSE
+        if (piCalcMode(self) <> CE_BATCH) begin
+            send ClearValues of oCalcWizard
+            send SavingRecordsMessage of oCalcWizard
+            send WriteBatchItems
+            send Close_Panel of oCalcWizard
+        end
+        #ENDIF
+        //
+    end_procedure // DoCalculation
+
+    procedure DoInteractive
+        integer bQuit iOpcode iOpcodeRow iComponentRec iCalcMode iCompFile iItemCount
+        integer hStatusPanel fHeaderId fComponentId fItemCount
+        string  sHeaderId sComponentId sOptype sFilename sListTitle
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjcmp.File_number to iCompFile
+        move 2                  to fHeaderId
+        move 3                  to fComponentId
+        move 8                  to fItemCount
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Escomp.File_number to iCompFile
+        move 1                  to fHeaderId
+        move 2                  to fComponentId
+        move 7                  to fItemCount
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esclib.File_number to iCompFile
+        move 1                  to fHeaderId
+        move 2                  to fComponentId
+        move 5                  to fItemCount
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // clean slate
+        send ClearArrayValues 0
+        set piRangeStart to 0
+        set piRangeStop  to -1
+        set piAddOpcode  to 0
+        set psVarTag to ""
+        //
+        set pbWizardMode  to TRUE
+        set pbBatchMode   to FALSE
+        // save status panel object
+        get phStatusPanel to hStatusPanel
+        set phStatusPanel to 0
+        //
+        get piCalcMode    to iCalcMode
+        #IFDEF CE_CALC_TEST
+        move Jcoper.Opcode to iOpcode
+        #ELSE
+        // if CE_ADD
+        if (iCalcMode = CE_ADD OR iCalcMode = CE_ADD_MASTER ;
+            OR iCalcMode = CE_ADD_AGAIN) begin
+            //
+            get_field_value iCompFile 0            to iComponentRec
+            get_field_value iCompFile fHeaderId    to sHeaderId
+            get_field_value iCompFile fComponentId to sComponentId
+            get_field_value iCompFile fItemCount   to iItemCount
+            //
+            set piComponentRec                     to iComponentRec
+            set psHeaderId                         to sHeaderId
+            set psComponentId                      to sComponentId
+            set NewComponentFlag                   to (iItemCount <> 0)
+            // if in Debug mode, erase earier files
+            if (pbDebug(self)) begin
+                set psDebugFile to ""
+                get psTempDir   to sFilename
+                if (sFilename = "") break
+                move (sFilename + "\" + trim(sHeaderId) + "*.txt") to sFilename
+                erasefile sFilename
+            end
+            //
+            clear Jcdept //Jcoper Jccntr Jcdept
+            if (iCalcMode <> CE_ADD_MASTER) begin
+                set pbAddMaster to FALSE
+                //
+                if (iCalcMode = CE_ADD_AGAIN) begin
+                    get piAddOpcode to iOpcode
+                    move iOpcode    to Jcoper.Opcode
+                    find EQ Jcoper.Opcode
+                    relate Jcoper
+                end
+                if (iCalcMode = CE_ADD) begin
+                    //clear Jccntr
+                    //send Popup of Jccntrce_SL
+                    // BC: 12/06/06 use selectcc instead of popup, related to clearing list title when in interactive mode
+                    send SelectCC of Jccntrce_SL "" "" TRUE //true=filter code in cc list will be unshadowed
+                end
+                if (NOT(Jccntr.Recnum)) procedure_return
+                send DoSelectOpcode of oCalcWizard sOptype Jccntr.Idno iOpcode sListTitle
+                if (NOT(Jcoper.Recnum)) begin
+                    clear Jcdept //Jccntr
+                    move CE_ADD to iCalcMode
+                end
+                if (NOT(Jcoper.Recnum)) break BEGIN
+                move Jcoper.Opcode to iOpcode
+            end // if (iCalcMode <> CE_ADD_MASTER)
+            // CE_ADD_MASTER needs a trigger opcode
+            else begin
+                Set pbAddMaster                        to True
+                get piAltTrigger of ghoApplication     to iOpcode
+                If (not(iOpcode)) Begin
+                    get piPriTrigger of ghoApplication to iOpcode
+                End
+            End
+            send StartingQuantities
+            get AddNewItem iOpcode sComponentId sHeaderId to bQuit
+            if (bQuit) procedure_return
+            set piAddOpcode to iOpcode
+            set piCalcMode  to CE_ADD
+        end // if (piCalcMode(self) = CE_ADD)
+        #ENDIF // #IFDEF CE_CALC_TEST
+        //
+        set piOpcode                               to iOpcode
+        get IsOpcodeRow of oStandardsArray iOpcode to iOpcodeRow
+        set piOpcodeRow                            to iOpcodeRow
+        //
+        send UpdateWizard of oCalcWizard
+        Send Popup        of oCalcWizard
+        // Maybe interject popup here?
+        send DoCalculation
+        // restore status panel object
+        set phStatusPanel to hStatusPanel
+    end_procedure // DoInteractive
+
+    #IFDEF CE_CALC_TEST
+    #ELSE
+    procedure DoRecordElapsedTime datetime dtStart datetime dtStop
+        datetime dtElapsed
+        timespan tsElapsed
+        integer  iLength iMin iSec
+        string   sElapsed sMinutes sSeconds sCalcTime
+        //
+        move (dtStop - dtStart)              to dtElapsed
+        move (DateGetMinute(dtElapsed))      to iMin
+        move (DateGetSecond(dtElapsed))      to iSec
+        if (iMin) begin
+            if (iMin = 1) move "minute"    to sMinutes
+            else          move "minutes"   to sMinutes
+            move (string(iMin) * sMinutes) to sMinutes
+        end
+        move (string(iSec) * "seconds")      to sSeconds
+        if (iMin) move (sMinutes * sSeconds) to sCalcTime
+        else      move sSeconds              to sCalcTime
+        move ("Calc Time:" * sCalcTime)      to sCalcTime
+        set psCalcTime                       to sCalcTime
+    end_procedure
+
+    procedure DoBatch boolean bComponent 
+        datetime dtStart dtStop
+        boolean  bAllLinks bNoPreview
+        integer  bNext iDone iKeyCount iRangeStop iHeadFile iCompFile
+        integer  fHeadId fComponentId
+        integer  hOpcodeArray hNameArray iCount iItem iRow iVoid
+        string   sHeadId sComponentId sFilename sOpcode sName
+        handle   hWnd
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Jcjobs.File_number to iHeadFile
+        move 1                  to fHeadId
+        move Esjcmp.File_number to iCompFile
+        move 3                  to fComponentId
+        // should we log event?
+        set pbLogRecalc         to (Jcjobs.Schedule_flag)
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Eshead.File_number to iHeadFile
+        move 1                  to fHeadId
+        move Escomp.File_number to iCompFile
+        move 2                  to fComponentId
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esctyp.File_number to iHeadFile
+        move 1                  to fHeadId
+        move Esclib.File_number to iCompFile
+        move 2                  to fComponentId
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        set pbWizardMode  to FALSE
+        set pbBatchMode   to TRUE
+        set pbComponentId to bComponent
+        Set phStatusPanel to ghoStatusPanel // (Status_Panel(self))
+        //
+        get_field_value iHeadFile fHeadId to sHeadId
+        set psHeaderId                    to sHeadId
+        // if in Debug mode, erase earier files
+        if (pbDebug(self)) begin
+            set psDebugFile to ""
+            get psTempDir   to sFilename
+            if (sFilename = "") break
+            move (sFilename + "\" + trim(sHeadId) + "*.txt") to sFilename
+            erasefile sFilename
+        end
+        // order maintenance only
+        #IFDEF CE_CALC_ORDER
+        // 09-11-02 - DW - if we're doing a recalc, the schedule can't be locked
+        //                 if it belongs to the scheduler it must be returned
+        //                 to the CSR
+        send DoCsrScheduleFlag of Jcjobs_DD Jcjobs.Recnum
+        #ENDIF
+        //
+        if (bComponent) begin
+            get_field_value iCompFile fComponentId to sComponentId
+            set psComponentId                      to sComponentId
+        end
+        else set psComponentId to ""
+        // Preview default links?
+
+        //BC 08/07 added bNoPreview logic to support automated imports of job data where preview mode is undesirable
+        get pbNoPreview of ghoApplication to bNoPreview
+        if (not(bNoPreview)) Begin 
+            get IsPreviewLinksOption of oMsgBox to iDone
+            if (iDone = mbReplyCancel) begin
+                set pbCanceled to TRUE
+                procedure_return
+            end
+            if (iDone <> mbReplyOne) begin
+                move (iDone = mbReplyTwo) to bAllLinks
+                send PreviewDefaultLinks bAllLinks
+            end
+        end
+        // here's where the calculation really begin
+        move (CurrentDateTime()) to dtStart
+        // load item records by Line_number index
+        send ReadBatchItems
+        //
+        set piKeyIndex                          to 0
+        get Item_Count of OpcodeKeyStorageArray to iKeyCount
+        set piKeyCount                          to iKeyCount
+        set piComponentIndex                    to 0
+        set piRangeStart                        to 0
+        get piLastItem of oComponentArray 0     to iRangeStop
+        set piRangeStop                         to iRangeStop
+        set piBatchCreatedCount                 to 0
+        //
+        //get Window_Handle of Main to hWnd
+        //
+        get StartingBatchCalculation to iDone
+        if (iDone) begin
+            send Stop_Box "No items to calculate."
+            procedure_return
+        end
+        //
+        move TRUE to bNext
+        repeat
+            send DoCalculation
+            if (pbCanceled(self)) break
+            set piKeyIndex to (piKeyIndex(self) + 1)
+            get FindNextBatchItem bNext to iDone
+        until (iDone)
+        //
+        if (NOT(pbCanceled(self))) begin
+            send WriteBatchItems
+            send StoppingBatchCalculation TRUE
+        end
+        //
+        // here's where the calculation really ends
+        move (CurrentDateTime()) to dtStop
+        send DoRecordElapsedTime dtStart dtStop
+        //move (SetForegroundWindow(hWnd)) to iVoid
+        //
+        if (pbCalcError(self)) send Info_Box (psCalcError(self))
+        //
+        if (piBatchCreatedCount(self)) begin
+            move oBatchCreatedOpcodeArray to hOpcodeArray
+            get Row_Count of hOpcodeArray to iCount
+            for iItem from 1 to iCount
+                get piCode of hOpcodeArray iRow to sOpcode
+                get psName of hOpcodeArray iRow to sName
+                get psComponentID of hOpcodeArray iRow to sComponentId
+                send Info_Box ("WARNING!  Item created by recalculation." + ;
+                    "\nIn Component: " * sComponentId + ; 
+                    "\nOpcode" * sOpcode * sName)
+                increment iRow
+            loop
+        end // if (piBatchCreatedCount(self)) begin
+        //
+    end_procedure // DoBatch
+    #ENDIF // #IFDEF CE_CALC_TEST
+
+    #IFDEF CE_CALC_TEST
+    procedure DoTestCalculation
+        send DoInteractive
+    end_procedure
+    #ENDIF // #IFDEF CE_CALC_TEST
+
+    #IFDEF CE_CALC_TEST
+    procedure DoTestEngine
+        //
+        send InitializeCalcEngineArrays
+        //
+        set pbAutoSave to FALSE
+        set piCalcMode to CE_TEST
+        //
+        send DoReloadStandard of oStandardsArray
+        //
+        send DoTestCalculation
+        //
+    end_procedure // DoTestEngine
+    #ELSE
+    function DoCalcEngine  ;
+        integer iCalcMode  ;
+        integer bComponent ;
+        integer bDebug     ;
+        returns integer
+        //
+        integer iAddOpcode
+        string  sDebugFile sParameters
+        //
+        send InitializeCalcEngineArrays
+        set psCalcTime to ""
+        //
+        set pbDebug    to bDebug
+        set piCalcMode to iCalcMode
+        // use the local error object
+        set piErrorObjectId to Error_Object_Id
+        move self           to Error_Object_Id
+        //
+        if (iCalcMode <> CE_BATCH) send DoInteractive
+        else                       send DoBatch bComponent 
+        // restore previous error object
+        get piErrorObjectId to Error_Object_Id
+        set piErrorObjectId to 0
+        //
+        if (iCalcMode = CE_BATCH AND (pbCanceled(self))) function_return TRUE
+        //
+        #IFDEF CE_CALC_ORDER
+        //BPO-Start
+        if (iCalcMode = CE_BATCH) ;
+            send DoMakeJobSchedule of EditScheduleProcess (psHeaderId(self)) bComponent (psComponentId(self))
+        //BPO-Stop
+        #ENDIF
+        //
+        if (bDebug) begin
+            get psDebugFile to sDebugFile
+            if (sDebugFile = "") break
+            send DoStartDocument sDebugFile sParameters
+        end
+        //
+        if (piCalcMode(self) = CE_ADD) function_return (piAddOpcode(self))
+        //
+    end_function // DoCalcEngine
+    #ENDIF // #IFDEF CE_CALC_TEST
+
+    Procedure DoLoadStandards
+        Set phStatusPanel to ghoStatusPanel // (Status_Panel(self))
+        Send DoLoadStandardsArray of oStandardsArray
+    End_Procedure // DoLoadStandards
+
+End_Object // oCalcEngine

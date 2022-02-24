@@ -1,0 +1,7 @@
+#REPLACE FILE102 Locequip1
+#REPLACE Locequip1.Recnum |FN102,0
+#REPLACE Locequip1.LocequipIdno |FN102,1
+#REPLACE Locequip1.LocationIdno |FN102,2
+#REPLACE Locequip1.Description |FS102,3
+#REPLACE Locequip1.Quantity |FN102,4
+#REPLACE Locequip1.EmployerIdno |FN102,5

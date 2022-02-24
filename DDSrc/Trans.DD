@@ -1,0 +1,646 @@
+// Class Name: Trans_DataDictionary
+// Revision  : 19
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+Open Trans
+Open Employee
+Open Order
+Open Opers
+Open System
+Open Syslog
+Open MastOps
+Open WorkType
+Open Equipmnt
+Open Location
+
+
+Register_Function StartTimeValidation Integer iField String sTime Returns Integer
+Register_Function StopTimeValidation Integer iField String sTime Returns Integer
+Register_Function EquipmentIdValidation Integer iField String sEquipmentID Returns Integer
+Register_Function QtyValidation Integer iField Number nQty Returns Integer
+
+Class Trans_DataDictionary is a cGlblDataDictionary
+
+    // Construct_Object
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Main_File To Trans.File_Number
+
+        Set Add_Server_File to Order.File_Number
+        Set Add_Server_File to Employee.File_Number
+        Set Add_Server_File to Opers.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+        Set Add_System_File to Syslog.File_Number DD_Lock_On_All
+
+        Set Field_Auto_Increment Field Trans.Transidno to File_Field System.Lasttrans
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Trans.Transidno DD_AUTOFIND to True
+        Set Key_Field_State Field Trans.Transidno to True
+        
+        
+        //
+        Set Field_Validate_msg Field Trans.Starttime to get_StartTimeValidation
+
+        Set Field_Mask_Type Field Trans.StartDate to Mask_Date_Window
+        Set Field_Mask Field Trans.StartDate to "MM/DD/YYYY"
+        
+        Set Field_Validate_msg Field Trans.Stoptime to get_StopTimeValidation
+
+        Set Field_Mask_Type Field Trans.StopDate to Mask_Date_Window
+        Set Field_Mask Field Trans.StopDate to "MM/DD/YYYY"
+
+        Set Field_Validate_msg Field Trans.Quantity to get_QtyValidation
+
+        Set Field_Validate_msg Field Trans.EquipIdno to get_EquipmentIdValidation
+
+
+        Set Field_Mask_Type Field Trans.CurrentLaborRate to Mask_Currency_Window
+        Set Field_Mask Field Trans.CurrentLaborRate to "$ *0.00"
+
+
+        Set Field_Mask_Type Field Trans.CurrentContractorRate to Mask_Currency_Window
+        Set Field_Mask Field Trans.CurrentContractorRate to "$ *0.00"
+
+
+        Set Field_Mask_Type Field Trans.CurrentSellRate to Mask_Currency_Window
+        Set Field_Mask Field Trans.CurrentSellRate to "$ #,###,##0.0000"
+
+
+        Set Field_Mask_Type Field Trans.CurrentRentalRate to Mask_Currency_Window
+        Set Field_Mask Field Trans.CurrentRentalRate to "$ *0.00"
+
+
+        Set Field_Mask_Type Field Trans.CurrentOperatorRate to Mask_Currency_Window
+        Set Field_Mask Field Trans.CurrentOperatorRate to "$ *0.00"
+
+
+        //
+        property boolean pbAutoAttendant
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // Trans.TransIdno
+        Set piKey2 to 4 // Trans.JobNumber
+        Set piKey3 to 6 // Trans.EmployeeIdno
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+    End_Procedure
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   4 // Trans.JobNumber
+        Send DoAddArrayValue hArray   6 // Trans.EmployeeIdno
+        Send DoAddArrayValue hArray   7 // Trans.OpersIdno
+        Send DoAddArrayValue hArray   8 // Trans.StartTime
+        Send DoAddArrayValue hArray  12 // Trans.StopTime
+        Send DoAddArrayValue hArray  13 // Trans.StopDate
+        Send DoAddArrayValue hArray  17 // Trans.ElapsedHours
+        Send DoAddArrayValue hArray  18 // Trans.Quantity
+        Send DoAddArrayValue hArray  25 // Trans.EquipIdno
+        Send DoAddArrayValue hArray  33 // Trans.MastOpsIdno
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+
+//    // EquipmentIdValidation:
+//    Function EquipmentIdValidation integer iField String sEquipmentID Returns Integer
+//        Boolean bState
+//        Integer iLocationIdno iRecId iMastOpsIdno
+//        //
+//        If (OPERATION_MODE = MODE_WAITING) Begin
+//            Get Field_Changed_State iField to bState
+//            //
+//            If (bState) Begin
+//                Send Refind_Records
+//                // LocationIdno
+//                Move Location.LocationIdno to iLocationIdno
+//                If (iLocationIdno = 0) Begin
+//                    Send Stop_Box "No Job selected"
+//                    Function_Return 1
+//                End
+//                // is it equipment?
+//                Move MastOps.Recnum to iRecId
+//                Clear MastOps
+//                Move sEquipmentID to Equipmnt.EquipIdno //EquipmentID
+//                Find eq Equipmnt.EquipIdno //EquipmentID
+//                If (Found) Begin
+//                    Relate Equipmnt
+//                End
+//                Else Begin
+//                    Send Stop_Box "Invalid Equipment/Material ID"
+//                    Function_Return 1
+//                    //Clear MastOps
+//                    //Move sEquipmentID to MastOps.MastOpsIdno
+//                    //Find eq MastOps.MastOpsIdno
+//                End
+//                Move MastOps.MastOpsIdno to iMastOpsIdno
+//                If (Found) Begin
+//                    Clear Opers
+//                    Move iLocationIdno to Opers.LocationIdno
+//                    Move iMastOpsIdno  to Opers.MastOpsIdno
+//                    Find Eq Opers by Index.4
+//                End
+//                If (not(Found)) Begin
+//                    Send Stop_Box "Equipment/Material ID not found"
+//                    Function_Return 1
+//                End
+////                Send Request_Assign Opers.File_Number
+//                Send Find_By_Recnum Opers.File_Number Opers.Recnum
+//            End
+//        End
+//    End_Function   // EquipmentIdValidation
+
+
+//    Function TriggerErrorMessage String sErrorMessage
+//        
+//    End_Function
+
+
+    // EquipmentIdValidation:
+    Function EquipmentIdValidation Integer iField String sEquipmentID Returns Integer
+        Boolean bState
+        Integer iLocationIdno iRecId iMastOpsIdno
+        //
+        If (OPERATION_MODE = MODE_WAITING) Begin
+            Get Field_Changed_State iField to bState
+            //
+            If (bState) Begin
+                Send Refind_Records
+                // LocationIdno
+                Move Location.LocationIdno to iLocationIdno
+                If (iLocationIdno = 0) Begin
+                    Send Stop_Box "No Job selected"
+                    Function_Return 1
+                End
+                // is it equipment?
+                Move MastOps.Recnum to iRecId
+                Clear MastOps
+                Move sEquipmentID to Equipmnt.EquipIdno //EquipmentID
+                Find eq Equipmnt.EquipIdno //EquipmentID
+                If ((Found) and Equipmnt.Status = "A") Begin
+                    Relate Equipmnt
+                    Move MastOps.MastOpsIdno to iMastOpsIdno
+                    If ((Found) and MastOps.Status = "A") Begin
+                        Clear Opers
+                        Move iLocationIdno to Opers.LocationIdno
+                        Move iMastOpsIdno  to Opers.MastOpsIdno
+                        Find Eq Opers by Index.4
+                        If ((Found) and Opers.Status <> "I") Begin
+                            Send Find_By_Recnum Opers.File_Number Opers.Recnum      
+                            Function_Return 0                   
+                        End
+                        Else Begin
+                            Send Stop_Box "Operation not attached to Location or Operation is Inactive"
+                            Function_Return 1
+                        End
+                        
+                    End
+                    Else Begin
+                        Send Stop_Box "MasterOperation is Inactive"
+                        Function_Return 1
+                    End   
+                End
+                Else Begin
+                    Send Stop_Box "Invalid or Inactive Equipment/Material ID"
+                    Function_Return 1
+                    //Clear MastOps
+                    //Move sEquipmentID to MastOps.MastOpsIdno
+                    //Find eq MastOps.MastOpsIdno
+                End
+            End
+        End
+    End_Function   // EquipmentIdValidation
+
+//    Function JobValidation Integer iField String sJobNumber Returns Integer
+//        String sJobStatus
+//        Integer iLocIdno iAltJobNumber 
+//        Clear Order
+//        Move sJobNumber to Order.JobNumber
+//        Find eq Order.JobNumber
+//        If ((Found) and Order.JobNumber = sJobNumber) Begin
+//            Case Begin
+//                Case (Order.Status="O")
+//                    Move "Open" to sJobStatus
+//                    Case Break
+//                Case (Order.Status="C")
+//                    Move "Close" to sJobStatus
+//                    Case Break
+//                Case (Order.Status="X")
+//                    Move "Canceled" to sJobStatus
+//                    Case Break
+//                Case Else
+//                    Move "Unknown" to sJobStatus
+//            Case End
+//            If (sJobStatus = "Open") Begin
+//                Move Order.LocationIdno to iLocIdno
+//                Move Order.CEPM_JobNumber to iAltJobNumber
+//                Function_Return 0
+//            End            
+//            Else Begin
+//                Send Stop_Box ("This Job is"*sJobStatus) 
+//                Function_Return 1
+//            End            
+//        End
+//        Else Begin
+//            Send Stop_Box  "Job# not found"
+//            Function_Return 1
+//        End
+//    End_Function
+    
+    // IsTimeValid
+    Function IsTimeValid String ByRef sTime Integer ByRef iHr Integer ByRef iMin Returns Boolean
+        Integer iLength iPos
+        string  sHr sMin
+        //
+        Move (Trim(sTime))           to sTime
+        Move (Replace(":",sTime,"")) to sTime
+        //
+        Move (length(sTime)) to iLength
+        If (iLength < 1 or iLength > 4) Begin
+            Function_Return True
+        End
+        //
+        If (iLength < 3) Begin
+            Move sTime to iHr
+        End
+        Else Begin
+            Move     (right(sTime,2)) to iMin
+            If (iLength = 3) Begin
+                Move (left (sTime,1)) to iHr
+            End
+            Else Begin
+                Move (left (sTime,2)) to iHr
+            End
+        End
+        //
+        if (iHr > 23 or iMin > 59) begin
+            function_return True
+        end
+        //
+        move iHr                       to sHr
+        if (length(sHr) = 1) begin
+            move ("0" + sHr )          to sHr
+        end
+        move iMin                      to sMin
+        If (length(sMin) = 1) Begin
+            move ("0" + sMin)          to sMin
+        end
+        Move (sHr + ":" + sMin)        to sTime
+    End_Function  // IsTimeValid
+
+    // StartTimeValidation:
+    Function StartTimeValidation integer iField string sTime Returns Integer
+        Boolean bError
+        Integer iHr iMin
+        //
+        If (sTime <> "") Begin
+            Get IsTimeValid (&sTime) (&iHr) (&iMin) to bError
+            If (Should_Save(Self) and not(bError)) Begin
+                Set Field_Changed_Value Field Trans.StartHr  to iHr
+                Set Field_Changed_Value Field Trans.StartMin to iMin
+                Set Field_Changed_Value iField               to sTime
+            End
+        End
+        Function_Return bError
+    End_Function   // StartTimeValidation
+
+    // StopTimeValidation:
+    Function StopTimeValidation Integer iField String sTime Returns Integer
+        Boolean bError
+        Integer iHr iMin
+        //
+        If (sTime <> "") Begin
+            Get IsTimeValid (&sTime) (&iHr) (&iMin) to bError
+            If (Should_Save(Self) and not(bError)) Begin
+                Set Field_Changed_Value Field Trans.StopHr  to iHr
+                Set Field_Changed_Value Field Trans.StopMin to iMin
+                Set Field_Changed_Value iField              to sTime
+            End
+        End
+        Function_Return bError
+    End_Function   // StopTimeValidation
+
+    Function StartStopLenghtErrorValidation Date dStartDate String sStartTime Date dStopDate String sStopTime String ByRef sReturnMsg Returns Boolean
+        Boolean bError
+        DateTime dtStartDateTime dtStopDateTime dtNow
+        TimeSpan tsDifference
+        Integer iHr iMin 
+        Number nTotalHours
+        //
+        Move (CurrentDateTime()) to dtNow
+        // The StopDate can only be equal or greater than the StartDate
+        // The Time difference between StartTime and StopTime has to be equal or greater than 0 min
+        // The StopDate and Time can not be in the future.
+        // - In addition, a single transaction shall not be longer than 80h.
+        // Generate dtStartDate
+        Get IsTimeValid (&sStartTime) (&iHr) (&iMin) to bError
+        If (bError) Begin
+            Move "Start Time was not valid. Please check your entry." to sReturnMsg
+            Function_Return False
+        End
+        Move (dStartDate) to dtStartDateTime
+        Move (DateAddHour(dtStartDateTime,iHr)) to dtStartDateTime
+        Move (DateAddMinute(dtStartDateTime,iMin)) to dtStartDateTime
+        
+        // Generate dtStopDate
+        Get IsTimeValid (&sStopTime) (&iHr) (&iMin) to bError
+        If (bError) Begin
+            Move "Stop Time was not valid. Please check your entry." to sReturnMsg
+            Function_Return False
+        End
+        Move (dStopDate) to dtStopDateTime
+        Move (DateAddHour(dtStopDateTime,iHr)) to dtStopDateTime
+        Move (DateAddMinute(dtStopDateTime,iMin)) to dtStopDateTime
+        //
+        If (dtStartDateTime<=dtStopDateTime) Begin
+            //Showln ("dtNow:"*String(dtNow)*"- dtStartDateTime:"*String(dtStartDateTime)*"- dtStopDateTime:"*String(dtStopDateTime))
+            Move (dtStartDateTime-dtStopDateTime) to tsDifference
+            //Showln ("tsDifference:"*String(tsDifference))
+            Move ((SpanTotalMinutes(tsDifference))/60.00) to nTotalHours
+            //Showln ("nTotalHours:"*String(nTotalHours))
+            // Make sure StopDate and time is not in the future - thats not possible.
+            If (dtStopDateTime<dtNow) Begin
+                Move "Date and Time is Valid" to sReturnMsg
+                Function_Return True
+            End
+            Else Begin
+                Move "Stop Date and Time cannot be in the Future!" to sReturnMsg
+                Function_Return False
+            End
+        End
+        Else Begin
+            Move "Stop Date and Time cannot be before the Start Time" to sReturnMsg
+            Function_Return False
+        End
+    End_Function
+    
+    Function VendorBillingValidation Integer iEmployerIdno Date dStartDate String ByRef sVendInvNumber String ByRef sWeekNumber Returns Boolean
+        Clear VendInvHdr
+        Move iEmployerIdno to VendInvHdr.EmployerIdno
+        Find GE VendInvHdr by 2
+        While ((Found) and VendInvHdr.EmployerIdno = iEmployerIdno)
+            If (dStartDate>=VendInvHdr.StartDateRange and dStartDate<VendInvHdr.StopDateRange and VendInvHdr.VoidFlag=0) Begin
+                Move VendInvHdr.VendInvHdrIdno to sVendInvNumber
+                Move VendInvHdr.WeekNumber to sWeekNumber
+                Function_Return False
+            End
+            Find GT VendInvHdr by 2
+        Loop
+        Function_Return True
+    End_Function
+
+//    Function ICPayrollValidation Integer iEmployerIdno Date dStartDate String ByRef Payroll String ByRef sWeekNumber Returns Boolean
+//        Clear VendInvHdr
+//        Move iEmployerIdno to VendInvHdr.EmployerIdno
+//        Find GE VendInvHdr by 2
+//        While ((Found) and VendInvHdr.EmployerIdno = iEmployerIdno)
+//            If (dStartDate>=VendInvHdr.StartDateRange and dStartDate<VendInvHdr.StopDateRange and VendInvHdr.VoidFlag=0) Begin
+//                Move VendInvHdr.VendInvHdrIdno to sVendInvNumber
+//                Move VendInvHdr.WeekNumber to sWeekNumber
+//                Function_Return False
+//            End
+//            Find GT VendInvHdr by 2
+//        Loop
+//        Function_Return True
+//    End_Function
+
+    // QuantityValidation:
+    Function QtyValidation Integer iField Number nQty Returns Integer
+        Boolean bError
+        String sErrMsg
+        // Only validate for PerTime and Material cost type.
+        Case Begin
+            Case (Trim(MastOps.CostType)='PerTime')
+                Move ("PerTime qty can only be 1") to sErrMsg
+                Move (nQty<>1) to bError
+                Case Break
+            Case (Trim(MastOps.CostType)='Material')
+                Move ("Material quantity has to be greater than 0") to sErrMsg
+                Move (nQty<=0) to bError
+                Case Break
+            Case Else
+                Move False to bError
+                Case Break
+        Case End
+        If (bError) Begin
+            Send UserError sErrMsg "Validation Error"
+            //Error DFERR_OPERATOR sErrMsg
+        End
+        Function_Return bError
+    End_Function   // QuantityValidation
+
+    Procedure Backout
+        Number nQty
+        Forward Send Backout
+        
+        #IFDEF Is$WebApp
+        #ELSE
+        //ORDER LEVEL JOB COSTING 
+        If (Order.JobNumber <> "333") Begin
+            // Labor
+            If (MastOps.CostType <> "Material") Begin
+                Move (Trans.ElapsedMinutes / 60)                         to nQty
+            End
+            // Material
+            If (MastOps.CostType = "Material") Begin
+                Move Trans.Quantity                                      to nQty
+                If (MastOps.QtyDivisor <> 0) Begin
+                    Move (nQty / MastOps.QtyDivisor)                         to nQty
+                End
+            End
+            // Calculate cost
+            If (Opers.ExcludeCostFlag <> "1") Begin    
+                Subtract (Trans.CurrentContractorRate * nQty)  from Order.LaborCost
+            End
+            // Record all LaborMinutes universally
+            Subtract Trans.ElapsedMinutes from Order.LaborMinutes
+        End// Job Costing
+        #ENDIF
+    End_Procedure
+
+    Procedure Update
+        datetime dtStart dtStop
+        timespan tsElapsed
+        Integer  iDay iHr iMin
+        Number nLaborHr nTravelHr nQty nElapsedMin nElapsedHour
+        
+        //
+        Forward Send Update
+        //
+        Move Order.CustomerIdno     to Trans.CustomerIdno
+        Move Order.LocationIdno     to Trans.LocationIdno
+        Move Order.CEPM_JobNumber   to Trans.CEPM_JobNumber
+        Move Location.Areanumber    to Trans.AreaNumber
+        Move MastOps.ReportCategory to Trans.ReportCategory
+        Move MastOps.MastOpsIdno    to Trans.MastOpsIdno
+        Move Employee.EmployerIdno  to Trans.EmployerIdno
+                
+        //
+        If (Trans.StopHr + Trans.StopMin > 0) Begin
+            If (Trans.StopDate = 0) Begin
+                If (Trans.StopHr < Trans.StartHr) Begin
+                    Move (Trans.StartDate + 1)             to Trans.StopDate
+                End
+                Else Begin
+                    Move  Trans.StartDate                  to Trans.StopDate
+                End
+            End
+            Move (DateSetMinute(dtStart, Trans.StartMin )) to dtStart
+            move (DateSetHour  (dtStart, Trans.StartHr  )) to dtStart
+            move (DateSetDay   (dtStart, Trans.StartDate)) to dtStart
+            //
+            Move (DateSetMinute(dtStop,  Trans.StopMin  )) to dtStop
+            Move (DateSetHour  (dtStop,  Trans.StopHr   )) to dtStop
+            Move (DateSetDay   (dtStop,  Trans.StopDate )) to dtStop
+            //
+            Move (dtStop - dtStart)                        to tsElapsed
+            Move (DateGetDay   (tsElapsed))                to iDay
+            Move (DateGetHour  (tsElapsed))                to iHr
+            Move ((iDay * 24) + iHr)                       to iHr
+            Move (DateGetMinute(tsElapsed))                to iMin
+            Move ((iHr * 60) + iMin)                       to nElapsedMin
+            Move nElapsedMin                               to Trans.ElapsedMinutes
+            // Convert into decimal hours x.xxh
+            Move (nElapsedMin/60.00)                       to nElapsedHour
+            Move nElapsedHour                              to Trans.ElapsedHours
+        End
+        //
+        If (Trans.StartDate = 0) Begin
+            Sysdate Trans.StartDate
+        End
+        //Transaction Detail Expansion (Ben)
+        //Recording of LaborRate only when Employer is Interstate
+        If (Employer.EmployerIdno = "101") Begin
+            //Move System.Labor_Rate to Trans.CurrentLaborRate
+            // FUTURE USE BELOW
+            Move WorkType.HourlyCost to Trans.CurrentLaborRate
+        End
+        Clear Equipmnt
+        If (Trans.AttachEquipIdno<>0) Begin
+            Move Trans.AttachEquipIdno to Equipmnt.EquipIdno
+            Find EQ Equipmnt by Index.1
+            If (Found) Begin
+                Move Equipmnt.ContractorRate to Trans.CurrAttachContrRate
+                Move Equipmnt.OperatedBy        to Trans.AttachEquipOwner
+            End
+        End
+        
+        Clear Equipmnt
+        Move Trans.EquipIdno to Equipmnt.EquipIdno
+        Find EQ Equipmnt by Index.1
+        Move Equipmnt.OperatedBy        to Trans.EquipOwner
+        Move Equipmnt.ContractorRate    to Trans.CurrentContractorRate
+        Move Equipmnt.RentalRate        to Trans.CurrentRentalRate
+        Move Employee.OperatorRate      to Trans.CurrentOperatorRate
+        Move Opers.SellRate             to Trans.CurrentSellRate        
+
+        #IFDEF Is$WebApp
+        #ELSE
+        //ORDER LEVEL JOB COSTING 
+        If (Order.JobNumber <> "333") Begin
+            // Labor
+            If (MastOps.CostType <> "Material") Begin
+                Move (Trans.ElapsedHours)                         to nQty
+            End
+            // Material
+            If (MastOps.CostType = "Material") Begin
+                Move Trans.Quantity                                      to nQty
+                If (MastOps.QtyDivisor <> 0) Begin
+                    Move (nQty / MastOps.QtyDivisor)                         to nQty
+                End
+            End
+            // Minimum QTY Calc
+            
+            // Calculate cost
+            If (Opers.ExcludeCostFlag <> "1") Begin    
+                Add (Trans.CurrentContractorRate * nQty)  to Order.LaborCost
+            End
+            // Record all LaborMinutes universally
+            Add Trans.ElapsedMinutes to Order.LaborMinutes
+        End// Job Costing
+        #ENDIF
+    End_Procedure  // Update
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+    Function Validate_Save Returns Integer
+        Integer iRetVal
+        //
+        #IFDEF TEMPUS
+        String sErrorMsg sWeekNumber sVendInvNumber
+        Boolean bTimeValid bVendBillValid bICPayrollValid
+        // Validate Time Entry
+        Get StartStopLenghtErrorValidation Trans.StartDate Trans.StartTime Trans.StopDate Trans.StopTime (&sErrorMsg) to bTimeValid
+        If (not(bTimeValid)) Begin
+            Error DFERR_OPERATOR (sErrorMsg)
+        End
+        // Has the Vendor invoiced this timeframe?
+        Get VendorBillingValidation Trans.EmployerIdno Trans.StartDate (&sVendInvNumber) (&sWeekNumber) to bVendBillValid
+        If (not(bVendBillValid)) Begin
+            Error DFERR_OPERATOR ("Vendor Invoice exsists, please VOID VendInv#"*sVendInvNumber*"| Week#"*sWeekNumber*"before adding further transactions.")
+        End
+        //ToDo: IC PAYROLL Validation here
+        #ENDIF
+        #IFDEF TEMPUS_FIELD
+        #ENDIF
+        //
+        Forward Get Validate_Save to iRetVal
+        
+        Function_Return iRetVal
+    End_Function
+
+//    Procedure Request_Save
+//        Boolean bChanged bWorked
+//        Get Field_Changed_State Field Trans.EquipIdno to bChanged
+//        Forward Send Request_Save
+//        If (bChanged) Begin
+//            Send OnPostSave
+//        End
+//        
+//    End_Procedure
+
+End_Class    // Trans_DataDictionary
+

@@ -1,0 +1,12 @@
+// tWorkType.pkg
+// used to update remote server data
+
+Struct tWorkType
+    Integer    iRecId
+    String     sWorkTypeIdno
+    String     sDescription
+    Integer    iManagedBy
+    Integer    iChangedFlag
+    String     sHourlyCost
+End_Struct
+    

@@ -1,0 +1,7 @@
+#REPLACE FILE68 SalesTaxGroup
+#REPLACE SalesTaxGroup.Recnum |FN68,0
+#REPLACE SalesTaxGroup.SalesTaxIdno |FN68,1
+#REPLACE SalesTaxGroup.Name |FS68,2
+#REPLACE SalesTaxGroup.Rate |FN68,3
+#REPLACE SalesTaxGroup.QBItemSalesTaxID |FS68,4
+#REPLACE SalesTaxGroup.ChangedFlag |FS68,5

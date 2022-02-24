@@ -1,0 +1,49 @@
+Use cGlblDataDictionary.pkg
+
+Open Reqtypes
+Open Locnotes
+
+Register_Object Reqtypes_sl
+Register_Object oReqtypesWebLookup
+
+Class cReqtypesDataDictionary is a cGlblDataDictionary
+
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Reqtypes.ChangedFlag
+        End
+    End_Procedure   // Update
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Reqtypes.File_Number
+
+        Set Add_Client_File to Locnotes.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field Reqtypes.ReqtypesCode DD_CAPSLOCK to True
+        Set Key_Field_State Field Reqtypes.ReqtypesCode to True
+        Set Field_Option Field Reqtypes.ReqtypesCode DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Reqtypes.ReqtypesCode to Reqtypes_sl
+        Set Field_WebPrompt_Object Field Reqtypes.ReqtypesCode to oReqtypesWebLookup
+        Set Cascade_Delete_State to False
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$MobileWebApp
+Use ReqtypesWebLookup.wo
+#ELSE
+#ENDIF
+
+#IFDEF Is$WebApp
+#ELSE
+Use Reqtypes.sl
+#ENDIF

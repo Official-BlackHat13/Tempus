@@ -1,0 +1,338 @@
+// bpEstTtl.pkg
+// Zero Order subtotals utility
+//
+// Values totaled in component record fields do not have corresponding
+// fields in the item records.  If the user changes the Jcoper.Optype
+// field, incorrect subtotaling in the component record may occur.
+// This process zeroes the subtotal fields, causing the estimate totals
+// to be zero.
+//
+// 12-03-03: BC updated to maintain new _sell fields
+
+//use Eshead.dd
+//use Escomp.dd
+
+Object ZeroEstimateTotalsProcess is a BusinessProcess
+
+    //property integer piComponentCount 0
+    //property string  psEstimateId     ""
+    //
+    //// we need a complete DDO structure
+    //Object Eshead_DD is a Eshead_DataDictionary
+    //End_Object    // Eshead_DD
+    //
+    //Object Escomp_DD is a Escomp_DataDictionary
+    //    Set DDO_Server to (Eshead_DD(self))
+    //    set Constrain_File to Eshead.File_number
+    //    set psProcess to "bpEstTtl01"
+    //End_Object    // Escomp_DD
+    //
+    //// status log stuff
+    //set Status_Log_State to TRUE
+    //set Status_Log_Id    to (Escomp_DD(self))
+    ////
+    //
+    //
+    //procedure OnProcess
+    //    integer hEscompDD bFailed
+    //    string  sEstimateId
+    //    number  nBuffer
+    //    //
+    //    get psEstimateId to sEstimateId
+    //    move Escomp_DD to hEscompDD
+    //    send Clear_All of hEscompDD
+    //    move sEstimateId to Eshead.Estimate_id
+    //    send Request_Find of hEscompDD EQ Eshead.File_number 1
+    //    if (NOT(FOUND)) procedure_return
+    //    send Find of hEscompDD FIRST_RECORD 1
+    //    if (NOT(FOUND)) procedure_return
+    //    repeat
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_art_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_art_hrs   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_art_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_art_hrs   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_art_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_art_hrs   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_prep_$    to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_prep_hrs  to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_prep_$    to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_prep_hrs  to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_prep_$    to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_prep_hrs  to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_press_$   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_press_hrs to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_press_$   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_press_hrs to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_press_$   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_press_hrs to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_bind_$    to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_bind_hrs  to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_bind_$    to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_bind_hrs  to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_bind_$    to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_bind_hrs  to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_lbr_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_lbr_hrs   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_lbr_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_lbr_hrs   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_lbr_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_lbr_hrs   to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_mtl_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_mtl_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_mtl_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_pp_$      to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_pp_$      to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_pp_$      to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_pur_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_pur_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_pur_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_x_$       to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_x_$       to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_x_$       to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_frt_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_frt_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_frt_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q1_ttl_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q2_ttl_$     to 0
+    //        set Field_Changed_Value of hEscompDD field Escomp.Q3_ttl_$     to 0
+    //        get Request_Validate of hEscompDD to bFailed
+    //        if (NOT(bFailed)) send Request_Save to hEscompDD
+    //        send Update_Status Escomp.Component_id
+    //        //move (ERR) to bFailed
+    //        set piComponentCount to (piComponentCount(self) + 1)
+    //        send Find of hEscompDD GT 1
+    //        if (NOT(FOUND)) break
+    //    loop
+    //end_procedure
+
+    procedure DoZeroEstimateTotals string sEstimateId
+        clear Eshead Escomp
+        move sEstimateId to Eshead.Estimate_id
+        find EQ Eshead.Estimate_id
+        if (NOT(FOUND)) procedure_return
+        reread Eshead
+            move 0   to Eshead.Q1_art_$
+            move 0   to Eshead.Q1_art_hrs
+            move 0   to Eshead.Q2_art_$
+            move 0   to Eshead.Q2_art_hrs
+            move 0   to Eshead.Q3_art_$
+            move 0   to Eshead.Q3_art_hrs
+            move 0   to Eshead.Q1_prep_$
+            move 0   to Eshead.Q1_prep_hrs
+            move 0   to Eshead.Q2_prep_$
+            move 0   to Eshead.Q2_prep_hrs
+            move 0   to Eshead.Q3_prep_$
+            move 0   to Eshead.Q3_prep_hrs
+            move 0   to Eshead.Q1_press_$
+            move 0   to Eshead.Q1_press_hrs
+            move 0   to Eshead.Q2_press_$
+            move 0   to Eshead.Q2_press_hrs
+            move 0   to Eshead.Q3_press_$
+            move 0   to Eshead.Q3_press_hrs
+            move 0   to Eshead.Q1_bind_$
+            move 0   to Eshead.Q1_bind_hrs
+            move 0   to Eshead.Q2_bind_$
+            move 0   to Eshead.Q2_bind_hrs
+            move 0   to Eshead.Q3_bind_$
+            move 0   to Eshead.Q3_bind_hrs
+            move 0   to Eshead.Q1_lbr_$
+            move 0   to Eshead.Q1_lbr_hrs
+            move 0   to Eshead.Q2_lbr_$
+            move 0   to Eshead.Q2_lbr_hrs
+            move 0   to Eshead.Q3_lbr_$
+            move 0   to Eshead.Q3_lbr_hrs
+            move 0   to Eshead.Q1_mtl_$
+            move 0   to Eshead.Q2_mtl_$
+            move 0   to Eshead.Q3_mtl_$
+            move 0   to Eshead.Q1_pp_$
+            move 0   to Eshead.Q2_pp_$
+            move 0   to Eshead.Q3_pp_$
+            move 0   to Eshead.Q1_pur_$
+            move 0   to Eshead.Q2_pur_$
+            move 0   to Eshead.Q3_pur_$
+            move 0   to Eshead.Q1_x_$
+            move 0   to Eshead.Q2_x_$
+            move 0   to Eshead.Q3_x_$
+            move 0   to Eshead.Q1_frt_$
+            move 0   to Eshead.Q2_frt_$
+            move 0   to Eshead.Q3_frt_$
+            move 0   to Eshead.Q1_ttl_$
+            move 0   to Eshead.Q2_ttl_$
+            move 0   to Eshead.Q3_ttl_$
+            // BC 12/03
+            move 0   to Eshead.Q1_art_Sell
+            move 0   to Eshead.Q1_art_hrs
+            move 0   to Eshead.Q2_art_Sell
+            move 0   to Eshead.Q2_art_hrs
+            move 0   to Eshead.Q3_art_Sell
+            move 0   to Eshead.Q3_art_hrs
+            move 0   to Eshead.Q1_prep_Sell
+            move 0   to Eshead.Q1_prep_hrs
+            move 0   to Eshead.Q2_prep_Sell
+            move 0   to Eshead.Q2_prep_hrs
+            move 0   to Eshead.Q3_prep_Sell
+            move 0   to Eshead.Q3_prep_hrs
+            move 0   to Eshead.Q1_press_Sell
+            move 0   to Eshead.Q1_press_hrs
+            move 0   to Eshead.Q2_press_Sell
+            move 0   to Eshead.Q2_press_hrs
+            move 0   to Eshead.Q3_press_Sell
+            move 0   to Eshead.Q3_press_hrs
+            move 0   to Eshead.Q1_bind_Sell
+            move 0   to Eshead.Q1_bind_hrs
+            move 0   to Eshead.Q2_bind_Sell
+            move 0   to Eshead.Q2_bind_hrs
+            move 0   to Eshead.Q3_bind_Sell
+            move 0   to Eshead.Q3_bind_hrs
+            move 0   to Eshead.Q1_lbr_Sell
+            move 0   to Eshead.Q1_lbr_hrs
+            move 0   to Eshead.Q2_lbr_Sell
+            move 0   to Eshead.Q2_lbr_hrs
+            move 0   to Eshead.Q3_lbr_Sell
+            move 0   to Eshead.Q3_lbr_hrs
+            move 0   to Eshead.Q1_mtl_Sell
+            move 0   to Eshead.Q2_mtl_Sell
+            move 0   to Eshead.Q3_mtl_Sell
+            move 0   to Eshead.Q1_pp_Sell
+            move 0   to Eshead.Q2_pp_Sell
+            move 0   to Eshead.Q3_pp_Sell
+            move 0   to Eshead.Q1_pur_Sell
+            move 0   to Eshead.Q2_pur_Sell
+            move 0   to Eshead.Q3_pur_Sell
+            move 0   to Eshead.Q1_x_Sell
+            move 0   to Eshead.Q2_x_Sell
+            move 0   to Eshead.Q3_x_Sell
+            move 0   to Eshead.Q1_frt_Sell
+            move 0   to Eshead.Q2_frt_Sell
+            move 0   to Eshead.Q3_frt_Sell
+            move 0   to Eshead.Q1_ttl_Sell
+            move 0   to Eshead.Q2_ttl_Sell
+            move 0   to Eshead.Q3_ttl_Sell
+            clear Esitem
+            move Eshead.Estimate_id to Esitem.Estimate_Id
+            Find GE Esitem by Index.2
+            if (Found and Esitem.Estimate_Id = Eshead.Estimate_Id) ; 
+                move "Y" to Eshead.Needs_calced
+            saverecord Eshead
+        unlock
+        clear esitem
+        move Eshead.Estimate_id to Escomp.Estimate_id
+        Find GE Escomp.ESTIMATE_ID //by Index.1
+        while (Escomp.Estimate_id = Eshead.Estimate_id)
+            reread Escomp
+                move 0   to Escomp.Q1_art_$
+                move 0   to Escomp.Q1_art_hrs
+                move 0   to Escomp.Q2_art_$
+                move 0   to Escomp.Q2_art_hrs
+                move 0   to Escomp.Q3_art_$
+                move 0   to Escomp.Q3_art_hrs
+                move 0   to Escomp.Q1_prep_$
+                move 0   to Escomp.Q1_prep_hrs
+                move 0   to Escomp.Q2_prep_$
+                move 0   to Escomp.Q2_prep_hrs
+                move 0   to Escomp.Q3_prep_$
+                move 0   to Escomp.Q3_prep_hrs
+                move 0   to Escomp.Q1_press_$
+                move 0   to Escomp.Q1_press_hrs
+                move 0   to Escomp.Q2_press_$
+                move 0   to Escomp.Q2_press_hrs
+                move 0   to Escomp.Q3_press_$
+                move 0   to Escomp.Q3_press_hrs
+                move 0   to Escomp.Q1_bind_$
+                move 0   to Escomp.Q1_bind_hrs
+                move 0   to Escomp.Q2_bind_$
+                move 0   to Escomp.Q2_bind_hrs
+                move 0   to Escomp.Q3_bind_$
+                move 0   to Escomp.Q3_bind_hrs
+                move 0   to Escomp.Q1_lbr_$
+                move 0   to Escomp.Q1_lbr_hrs
+                move 0   to Escomp.Q2_lbr_$
+                move 0   to Escomp.Q2_lbr_hrs
+                move 0   to Escomp.Q3_lbr_$
+                move 0   to Escomp.Q3_lbr_hrs
+                move 0   to Escomp.Q1_mtl_$
+                move 0   to Escomp.Q2_mtl_$
+                move 0   to Escomp.Q3_mtl_$
+                move 0   to Escomp.Q1_pp_$
+                move 0   to Escomp.Q2_pp_$
+                move 0   to Escomp.Q3_pp_$
+                move 0   to Escomp.Q1_pur_$
+                move 0   to Escomp.Q2_pur_$
+                move 0   to Escomp.Q3_pur_$
+                move 0   to Escomp.Q1_x_$
+                move 0   to Escomp.Q2_x_$
+                move 0   to Escomp.Q3_x_$
+                move 0   to Escomp.Q1_frt_$
+                move 0   to Escomp.Q2_frt_$
+                move 0   to Escomp.Q3_frt_$
+                move 0   to Escomp.Q1_ttl_$
+                move 0   to Escomp.Q2_ttl_$
+                Move 0   to Escomp.Q3_ttl_$
+                // BC 12/03
+                move 0   to Escomp.Q1_art_Sell
+                move 0   to Escomp.Q1_art_hrs
+                move 0   to Escomp.Q2_art_Sell
+                move 0   to Escomp.Q2_art_hrs
+                move 0   to Escomp.Q3_art_Sell
+                move 0   to Escomp.Q3_art_hrs
+                move 0   to Escomp.Q1_prep_Sell
+                move 0   to Escomp.Q1_prep_hrs
+                move 0   to Escomp.Q2_prep_Sell
+                move 0   to Escomp.Q2_prep_hrs
+                move 0   to Escomp.Q3_prep_Sell
+                move 0   to Escomp.Q3_prep_hrs
+                move 0   to Escomp.Q1_press_Sell
+                move 0   to Escomp.Q1_press_hrs
+                move 0   to Escomp.Q2_press_Sell
+                move 0   to Escomp.Q2_press_hrs
+                move 0   to Escomp.Q3_press_Sell
+                move 0   to Escomp.Q3_press_hrs
+                move 0   to Escomp.Q1_bind_Sell
+                move 0   to Escomp.Q1_bind_hrs
+                move 0   to Escomp.Q2_bind_Sell
+                move 0   to Escomp.Q2_bind_hrs
+                move 0   to Escomp.Q3_bind_Sell
+                move 0   to Escomp.Q3_bind_hrs
+                move 0   to Escomp.Q1_lbr_Sell
+                move 0   to Escomp.Q1_lbr_hrs
+                move 0   to Escomp.Q2_lbr_Sell
+                move 0   to Escomp.Q2_lbr_hrs
+                move 0   to Escomp.Q3_lbr_Sell
+                move 0   to Escomp.Q3_lbr_hrs
+                move 0   to Escomp.Q1_mtl_Sell
+                move 0   to Escomp.Q2_mtl_Sell
+                move 0   to Escomp.Q3_mtl_Sell
+                move 0   to Escomp.Q1_pp_Sell
+                move 0   to Escomp.Q2_pp_Sell
+                move 0   to Escomp.Q3_pp_Sell
+                move 0   to Escomp.Q1_pur_Sell
+                move 0   to Escomp.Q2_pur_Sell
+                move 0   to Escomp.Q3_pur_Sell
+                move 0   to Escomp.Q1_x_Sell
+                move 0   to Escomp.Q2_x_Sell
+                move 0   to Escomp.Q3_x_Sell
+                move 0   to Escomp.Q1_frt_Sell
+                move 0   to Escomp.Q2_frt_Sell
+                move 0   to Escomp.Q3_frt_Sell
+                move 0   to Escomp.Q1_ttl_Sell
+                move 0   to Escomp.Q2_ttl_Sell
+                move 0   to Escomp.Q3_ttl_Sell
+                clear Esitem
+                Move Escomp.ESTIMATE_ID to Esitem.ESTIMATE_ID
+                Move Escomp.COMPONENT_ID to Esitem.COMPONENT_ID
+                Find GE Esitem by Index.2
+                If (Found and Esitem.ESTIMATE_ID = Escomp.ESTIMATE_ID and Esitem.COMPONENT_ID = Escomp.COMPONENT_ID) ; 
+                    move "Y" to Escomp.Needs_calced
+                saverecord Escomp
+            unlock
+            find GT Escomp by Index.1
+            if (NOT(FOUND)) break
+        loop
+        //set piComponentCount to 0
+        //set psEstimateId     to sEstimateId
+        //send DoProcess
+        //if (NOT(piComponentCount(self))) ;
+        //    send Info_Box "No components were processed."
+    end_procedure
+
+end_object // ZeroEstimateTotalsProcess

@@ -1,0 +1,408 @@
+// Class Name: Employee_DataDictionary
+// Revision  : 19
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Employee
+Open Trans
+Open Empltime
+Open Employer
+Open System
+Open Syslog
+Open Crmember
+Open InsClass
+Open WebAppUser
+Open WebAppUserRights
+
+
+Register_Object Employee_Phonetype1_VT
+Register_Object Employee_Phonetype2_VT
+Register_Object Employee_Status_VT
+
+Object Employee_WebAppUserRights_VT is a FileValidationTable
+    Set Validate_State to True
+    Set Allow_Blank_State to False
+    Set Static_State to False
+    Set Main_File         to WebAppUserRights.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 2 // description is in field 2
+    Set Ordering          to 1 // load by index 1
+End_Object
+
+
+Object Employee_Phonetype1_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Employee_Phonetype1_VT
+
+Object Employee_Phonetype2_VT  is a CodeValidationTable
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Employee_Phonetype2_VT
+
+Object Employee_Status_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "A" "Active"
+        Send Add_Table_Value "P" "Paperwork Missing"
+        Send Add_Table_Value "I" "Inactive"
+        Send Add_Table_Value "T" "Terminated"
+    End_Procedure    // Fill_List
+End_Object   // Employee_Status_VT
+Register_Object Employee_sl
+
+Register_Function ValidateEmployeeWebAppUserRights Integer iColumn Integer iValue Returns Boolean
+
+Class Employee_DataDictionary is a cGlblDataDictionary
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Employee.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    
+    Procedure Creating
+        Forward Send Creating
+    End_Procedure
+    
+    Procedure OnSaveRecord
+        If (OPERATION_ORIGIN = Self) Begin
+            //Update Changes to Employee Name, PIN etc. to the WebAppUser table
+            Clear WebAppUser
+            Move Employee.EmployeeIdno to WebAppUser.LoginName
+            Find EQ WebAppUser by 1
+            If ((Found) and Employee.EmployeeIdno = WebAppUser.LoginName) Begin
+                Move (Trim(Employee.FirstName)*Trim(Employee.LastName))     to WebAppUser.FullName
+                Move Employee.BillingAccessFlag                             to WebAppUser.BillingAccessFlag
+                Move Employee.PIN                                           to WebAppUser.Password
+                Move Employee.EmployeeIdno                                  to WebAppUser.EmployeeIdno
+                Move Employee.Status                                        to WebAppUser.Status
+                Move Employee.WebAppUserRights                              to WebAppUser.Rights
+                Move 1                                                      to WebAppUser.ChangedFlag
+                SaveRecord WebAppUser
+            End
+            Else Begin //Does not exists yet, therefor create
+                Clear WebAppUser
+                Move Employee.EmployeeIdno                              to WebAppUser.LoginName
+                Move Employee.BillingAccessFlag                         to WebAppUser.BillingAccessFlag
+                Move Employer.EmployerIdno                              to WebAppUser.EmployerIdno
+                Move (Trim(Employee.FirstName)*Trim(Employee.LastName)) to WebAppUser.FullName
+                Move Employee.PIN                                       to WebAppUser.Password
+                Move Employee.EmployeeIdno                              to WebAppUser.EmployeeIdno
+                Move Employee.Status                                    to WebAppUser.Status
+                Move Employee.WebAppUserRights                          to WebAppUser.Rights
+                Move 1                                                  to WebAppUser.ChangedFlag
+                SaveRecord WebAppUser
+            End
+        End
+    End_Procedure
+    
+    // Update:
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Employee.ChangedFlag
+//            If (Employee.WebAppUserRights=0) Begin
+//                Send DoDefaultWebAppUserRights Employer.EmployerIdno
+//            End
+        End
+    End_Procedure   // Update
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Employee.File_Number
+
+        Set Add_Server_File to Employer.File_Number
+        Set Add_Server_File to WebAppUserRights.File_Number
+
+        Set Add_Client_File to Trans.File_Number
+        Set Add_Client_File to Empltime.File_Number
+        Set Add_Client_File to Crmember.File_Number
+        Set ParentNullAllowed WebAppUserRights.File_Number to True
+
+        
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to WebAppUser.File_Number DD_Lock_on_All
+        Set Add_System_File to Syslog.File_Number DD_Lock_on_All
+
+        Set Field_Auto_Increment Field Employee.Employeeidno to File_Field System.Lastemployee
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Employee.Employeeidno DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Employee.Employeeidno to Employee_sl
+        Set Key_Field_State Field Employee.Employeeidno To TRUE
+
+        Set Field_Prompt_Object Field Employee.LastName to Employee_sl
+
+        Set Field_Prompt_Object Field Employee.FirstName to Employee_sl
+
+
+        Set Field_Option Field Employee.State DD_CAPSLOCK to True
+
+
+        Set Field_Validate_msg Field Employee.Phone1 To get_PhoneValidation
+
+        Set Field_Class_Name Field Employee.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Option Field Employee.Phonetype1 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employee.Phonetype1 to Employee_Phonetype1_VT
+
+        Set Field_Validate_msg Field Employee.Phone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Employee.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Option Field Employee.Phonetype2 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employee.Phonetype2 to Employee_Phonetype2_VT
+
+
+        Set Field_Class_Name Field Employee.Status To "cGlblDbComboForm"
+        Set Field_Option Field Employee.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Employee.Status to Employee_Status_VT
+
+        Set Field_Class_Name Field Employee.CallCenterFlag to "cGlblDbCheckBox"
+
+        Set Field_Mask_Type Field Employee.OperatorRate to Mask_Currency_Window
+        Set Field_Mask Field Employee.OperatorRate to "$ *0.00"
+
+        Set Field_Class_Name Field Employee.IsManager to "DbCheckBox"
+        Set Field_Label_Long Field Employee.IsManager to "Is Manager:"
+        Set Field_Label_Short Field Employee.IsManager to "Is Manager:"
+
+        Set Field_Class_Name Field Employee.BillingAccessFlag to "Checkbox"
+        Set Field_Class_Name Field Employee.WebAppUserRights to "Form"
+
+        Set Field_Class_Name Field Employee.GEOExclusionFlag to "Checkbox"
+        Set piPrimaryIndex to 1
+
+        #IFDEF Is$WebApp
+        #ELSE
+        // System Log functionality
+        Set pbUsesSystemLog   to True
+        // when TRUE logging is only active if
+        // changes are made locally
+        Set pbLocalOriginOnly to True
+        // declare a log file
+        Set piLogfile to Syslog.File_number
+        // these hold the field number of key fields
+        // stored as part of the Syslog record
+        // Set the Key Field properties
+        Set piKey1 to 1 // Employee.EmployeeIdno
+        //Set piKey2 to 2 //
+        //Set piKey3 to 3 //
+        //
+        Send DoInitializeWatchedFields
+        #ENDIF
+
+    End_Procedure    // Construct_Object
+
+
+    Procedure DoInitializeWatchedFields
+        #IFDEF Is$WebApp
+        #ELSE
+        // this procedure is intended for augmentation
+        // at the File subclass level in the following manner
+        Integer hArray
+        //
+        Send DoCreateSystemLogArrays
+        Move (oWatchedFieldsArray(Self)) to hArray
+        // Load the watched fields array where iField is
+        // the field number from FILE.DEF
+        Send DoAddArrayValue hArray   1 // Employee.EmployeeIdno
+        Send DoAddArrayValue hArray   2 // Employee.LastName
+        Send DoAddArrayValue hArray   3 // Employee.FirstName
+        Send DoAddArrayValue hArray   4 // Employee.MiddleName
+        Send DoAddArrayValue hArray  16 // Employee.EmailAddress
+        Send DoAddArrayValue hArray  17 // Employee.EmployerIdno
+        Send DoAddArrayValue hArray  18 // Employee.PIN
+        Send DoAddArrayValue hArray  19 // Employee.Status
+        Send DoAddArrayValue hArray  23 // Employee.CallCenterFlag
+        Send DoAddArrayValue hArray  26 // Employee.ManagedBy
+        Send DoAddArrayValue hArray  27 // Employee.ExcludePayroll
+        Send DoAddArrayValue hArray  29 // Employee.OperatorRate
+        Send DoAddArrayValue hArray  32 // Employee.ManagedBy
+        Send DoAddArrayValue hArray  33 // Employee.IsManager
+        Send DoAddArrayValue hArray  34 // Employee.StartDate
+        Send DoAddArrayValue hArray  35 // Employee.CallCenterNSIFlag
+        Send DoAddArrayValue hArray  36 // Employee.BillingAccessFlag
+        Send DoAddArrayValue hArray  38 // Employee.WebAppUserRights
+        Send DoAddArrayValue hArray  39 // Employee.GEOExclusionFlag
+        #ENDIF
+    End_Procedure // DoInitializeWatchedFields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Employee.Phonetype1 To "H"
+        Set Field_Changed_Value   Field Employee.Phonetype2 to "C"
+        Set Field_Changed_Value   Field Employee.Status to (If(Employer.EmployerIdno = 101,"P","A"))
+        Set Field_Changed_Value   Field Employee.GEOExclusionFlag to (Employer.GEOExclusionFlag)
+        //Sets defaul user WebAppUserRights to IC-Laborer (when Interstate) or Vendor Laborer (When Subcontractor)
+        //Set Field_Changed_Value   Field Employee.WebAppUserRights to "30" //(If(Employer.EmployerIdno = 101,"30","20"))
+    End_Procedure    // Field_Defaults
+
+    Function IsEmployeeValid Integer iEmployeeIdno Integer ByRef iAltEmployeeIdno String ByRef sErrorMsg Returns Boolean
+        Clear Employee
+        
+        Move iEmployeeIdno to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        If (Found) Begin
+            If (Employee.Status = "A" or Employee.Status = "P") Begin
+                Clear Employer
+                Move Employee.EmployerIdno to Employer.EmployerIdno
+                Find eq Employer.EmployerIdno
+                If ((Found) and Employer.Status = "A") Begin
+                    Move Employee.CEPM_EmployeeIdno to iAltEmployeeIdno
+                    Function_Return (True)
+                End
+                Else Begin
+                    Move "Employer is Inactive" to sErrorMsg
+                    Function_Return
+                End
+            End
+            Else Begin
+                Move "Employee is Inactive" to sErrorMsg
+                Function_Return
+            End
+            
+        End
+        Else Begin
+            Move "Employee was not found" to sErrorMsg
+            Function_Return
+        End
+    End_Function //IsEmployeeValid
+
+    #IFDEF TEMPUS
+    Function ValidateEmployeeWebAppUserRights Integer iColumn Integer iValue Returns Boolean
+        Boolean bErr bHasMinOpsRights
+        Move (giUserRights>=60) to bHasMinOpsRights
+        //Only Operations or highter can adjust rights
+        If (bHasMinOpsRights) Begin
+            //User can only elevate rights to his current level, not above
+            If (giUserRights<iValue) Begin
+                Error DFERR_OPERATOR "Higher or equal elevation of userrights not allowed - contact your supervisor!"
+                Move True to bErr
+            End
+            Else Begin
+                If (iValue<20) Begin
+                    Error DFERR_OPERATOR "WebApp User Rights can only be in Vendor or IC category"
+                    Move True to bErr
+                End
+                Else Begin
+                    // Interstate Employee can only be in IC category
+                    If (Employee.EmployerIdno = 101) Begin
+                        If (iValue<30) Begin
+                            Error DFERR_OPERATOR "Interstate Employee can only be in IC category"
+                            Move True to bErr
+                        End
+                    End
+                    Else Begin
+                        If (iValue<20 and iValue>=30) Begin
+                            Error DFERR_OPERATOR "Employees of Subcontractors can only be in Vendor category"
+                            Move True to bErr
+                        End
+                    End
+                End
+            End
+        End
+        Else Begin
+            Error DFERR_OPERATOR "You don't have permissions to change userrights!"
+            Move True to bErr
+        End
+        Function_Return bErr
+    End_Function
+
+    Procedure Clear
+        Integer iParent
+        Move Employer.EmployerIdno to iParent
+        //
+        Forward Send Clear
+        //
+        Send DoDefaultWebAppUserRights iParent False
+    End_Procedure
+
+    Procedure Clear_All
+        Integer iParent
+//        Move Employer.EmployerIdno to iParent
+        //
+        Forward Send Clear_All
+        //
+        Send DoDefaultWebAppUserRights iParent False
+    End_Procedure
+
+    Procedure DoDefaultWebAppUserRights Integer iParent Boolean bChangedState
+        Clear Employer
+        Move iParent to Employer.EmployerIdno
+        Find EQ Employer.EmployerIdno
+        If (Found) Begin
+            Send Request_Assign Employer.File_Number
+            Set Changed_State to False
+        End
+        // Only change when WebAppRights are not set
+        If (Employee.WebAppUserRights=0) Begin
+            Clear WebAppUserRights
+            Case Begin
+                Case (Employer.EmployerIdno=101)
+                    Move 30 to WebAppUserRights.RightLevel
+                    Case Break
+                Case Else
+                    Move 20 to WebAppUserRights.RightLevel
+                    Case Break
+            Case End
+            //
+            Find EQ WebAppUserRights.RightLevel
+            If (Found) Begin
+                Send Request_Assign WebAppUserRights.File_Number
+                Set Changed_State to (bChangedState)
+            End
+        End
+        Procedure_Return
+    End_Procedure
+
+    Procedure OnPostFind Integer eMessage Boolean bFound
+        Forward Send OnPostFind eMessage bFound
+        If (Found) Begin
+            //
+            Send DoDefaultWebAppUserRights Employer.EmployerIdno (Employee.WebAppUserRights=0)
+        End
+    End_Procedure
+
+    #ELSE
+    #ENDIF
+
+
+End_Class
+#IFDEF Is$WebApp
+#ELSE
+
+Use Employee.sl      // Employee_sl
+
+#ENDIF
+

@@ -1,0 +1,98 @@
+-----------------------------------------------------------------------------
+  DATE: 12/10/2016      TIME: 06:07                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Invhdr (# 14)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:INVHDR
+  USER DISPLAY NAME         : Invoice Header
+  DATAFLEX FILE NAME        : Invhdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16882     ( USED: 16882 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 22413 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  InvoiceIdno      NUM    8.0     1  1   
+  2  LocationIdno     NUM    8.0    12  5   
+  3  CustomerIdno     NUM    8.0    23      
+  4  EventIdno        NUM    8.0    34      
+  5  InvoiceDate      DAT     10    45      
+  6  Terms            ASC     25    68      
+  7  TotalAmount      NUM    6.4    93      
+  8  PrintCount       NUM    2.0   105      
+  9  PostFlag         NUM    2.0   111  3   
+ 10  PrintFlag        NUM    2.0   117  4   
+ 11  JobNumber        NUM    8.0   123  2   Order.FIELD_3 (8,3)
+ 12  EditFlag         NUM    2.0   134  8   
+ 13  VoidFlag         NUM    2.0   140  8   
+ 14  ChangedFlag      NUM    2.0   146  6   
+ 15  CreatedDate      DAT     10   152  7   
+ 16  CreatedTime      ASC     10   175  7   
+ 17  PostReady        NUM    2.0   185  3   
+ 18  InvoiceType      ASC      1   191      
+ 19  InvMessage       TEX    512   192      
+ 20  SalesInitials    ASC      5 16575      
+ 21  QBInvoiceNumber  NUM    8.0 16580  9   
+ 22  QBPaidFlag       NUM    2.0 16591 10   
+ 23  StartDateRange   DAT     10 16597      
+ 24  StopDateRange    DAT     10 16620      
+ 25  TotalCost        NUM    8.2 16643      
+ 26  QBInvoiceTxnId   ASC     50 16655      
+ 27  TaxTotal         NUM    8.4 16705      
+ 28  SubTotal         NUM    8.4 16719      
+ 29  QBAppliedAmount  NUM    8.2 16733      
+ 30  RecordOwner      NUM    8.0 16745      
+ 31  InvEditorFlag    ASC      2 16756      
+ 32  QBPaidDate       DAT     10 16758      
+ 33  CompleteFlag     NUM    2.0 16781      
+ 34  CompleteDate     DAT     10 16787      
+ 35  CompletedBy      ASC     50 16810      
+ 36  CompleteTotalAmount  NUM    6.4 16860      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    InvoiceIdno     NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       2     ON-LINE
+       InvoiceIdno     NO  NO 
+
+  3    PostFlag        NO  NO       0      0       3     ON-LINE
+       PostReady       NO  NO 
+       InvoiceIdno     NO  NO 
+
+  4    PrintFlag       NO  NO       0      0       2     ON-LINE
+       InvoiceIdno     NO  NO 
+
+  5    LocationIdno    NO  NO       0      0       2     ON-LINE
+       InvoiceIdno     NO  NO 
+
+  6    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       InvoiceIdno     NO  NO 
+
+  7    CreatedDate     NO  NO       0      0       3     ON-LINE
+       CreatedTime     NO  NO 
+       InvoiceIdno     NO  NO 
+
+  8    EditFlag        NO  NO       0      0       4     ON-LINE
+       VoidFlag        NO  NO 
+       PostFlag        NO  NO 
+       InvoiceIdno     NO  NO 
+
+  9    QBInvoiceNumber NO  NO       0      0       3     ON-LINE
+       QBPaidFlag      NO  NO 
+       InvoiceIdno     NO  NO 
+
+  10   QBPaidFlag      NO  NO       0      0       3     ON-LINE
+       QBInvoiceNumber NO  NO 
+       InvoiceIdno     NO  NO 
+

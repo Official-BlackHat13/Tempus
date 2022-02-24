@@ -1,0 +1,45 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: oBudgetSales (# 66)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:oBudgetSales
+  USER DISPLAY NAME         : oBudgetSales
+  DATAFLEX FILE NAME        : oBudgetSales
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 155       ( USED: 155 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 13 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Budget_Hdr_Idno  NUM   10.0     1      BudgetHdr.FIELD_1 (67,1)
+  2  Budget_Idno      NUM   10.0    12  1   
+  3  Budget_Yr        DAT     10    23  2   
+  4  Rep_Idno         NUM   10.0    46  2   SalesRep.FIELD_1 (5,1)
+  5  Snow_Amt         NUM   10.0    57      
+  6  Melt_Amt         NUM   10.0    68      
+  7  Pave_Amt         NUM   10.0    79      
+  8  Concrete_Amt     NUM   10.0    90      
+  9  Excavation_Amt   NUM   10.0   101      
+ 10  Sweep_Amp        NUM   10.0   112      
+ 11  Mark_Amt         NUM   10.0   123      
+ 12  Other_Amt        NUM   10.0   134      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Budget_Idno     NO  NO       0      0       1     ON-LINE
+
+  2    Budget_Yr       NO  NO       0      0       3     ON-LINE
+       Rep_Idno        NO  NO 
+       Budget_Idno     NO  NO 
+

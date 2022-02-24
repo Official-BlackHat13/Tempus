@@ -1,0 +1,4 @@
+#REPLACE FILE61 BillingType
+#REPLACE BillingType.Recnum |FN61,0
+#REPLACE BillingType.TypeIdno |FS61,1
+#REPLACE BillingType.Description |FS61,2

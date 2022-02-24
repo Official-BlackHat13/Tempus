@@ -1,0 +1,44 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Areas (# 19)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:AREAS
+  USER DISPLAY NAME         : Area Standards
+  DATAFLEX FILE NAME        : Areas
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 145       ( USED: 145 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 16 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  AreaNumber       NUM    5.0     1  1   
+  2  Name             ASC     50     7  2   
+  3  Manager          ASC     50    57  3   
+  4  ChangedFlag      NUM    5.0   107  4   
+  5  EmployeeIdno     NUM   10.0   113      
+  6  RecordOwner      NUM   10.0   124      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    AreaNumber      NO  NO       0      0       1     ON-LINE
+
+  2    Name            NO  NO       0      0       2     ON-LINE
+       AreaNumber      NO  NO 
+
+  3    Manager         NO  NO       0      0       2     ON-LINE
+       AreaNumber      NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       AreaNumber      NO  NO 
+

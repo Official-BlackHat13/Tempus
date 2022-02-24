@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Locequip (# 40)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Locequip
+  USER DISPLAY NAME         : Locequip
+  DATAFLEX FILE NAME        : Locequip
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 101       ( USED: 101 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 832 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LocequipIdno     NUM   10.0     1  1   
+  2  LocationIdno     NUM   10.0    12  2   Location.FIELD_2 (3,2)
+  3  Description      ASC     40    23      
+  4  Quantity         NUM    5.0    63      
+  5  EmployerIdno     NUM   10.0    69      Employer.FIELD_1 (4,1)
+  6  RecordOwner      NUM   10.0    80      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LocequipIdno    NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       LocequipIdno    NO  NO 
+

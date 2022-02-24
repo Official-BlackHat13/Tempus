@@ -1,0 +1,233 @@
+//DDB-FileStart
+//DDB-HeaderStart
+
+// File Name : TransDTL.DD
+// Class Name: Transdtl_DataDictionary
+// Revision  : 9
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  DataDict.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Transdtl
+Open Transhdr
+Open Employee
+Open Location
+Open Opsmats
+Open Ir_Sys
+
+//DDB-HeaderEnd
+
+Class Transdtl_DataDictionary  is a DataDictionary
+
+    // IsTimeValid
+    Function IsTimeValid String ByRef sTime Integer ByRef iHr Integer ByRef iMin Returns Boolean
+        Integer iLength
+        string  sHr sMin
+        //
+        move (length(sTime)) to iLength
+        if (iLength < 1 or iLength > 5) begin
+            function_return True
+        end
+        //
+        if (iLength < 3) begin
+            Move sTime to iHr
+        end
+        Else Begin
+            Move     (right(sTime,2)) to iMin
+            If (iLength = 3) Begin
+                Move (left (sTime,1)) to iHr
+            End
+            Else Begin
+                Move (left (sTime,2)) to iHr
+            End
+        End
+        //
+        if (iHr > 23 or iMin > 59) begin
+            function_return True
+        end
+        //
+        move iHr                       to sHr
+        if (length(sHr) = 1) begin
+            move ("0" + sHr )          to sHr
+        end
+        move iMin                      to sMin
+        If (length(sMin) = 1) Begin
+            move ("0" + sMin)          to sMin
+        end
+        Move (sHr + ":" + sMin)        to sTime
+    End_Function  // IsTimeValid
+
+    // StartTimeValidation:
+    Function StartTimeValidation integer iField string sTime Returns Integer
+        boolean bError
+        Integer iHr iMin
+        //
+        get IsTimeValid (&sTime) (&iHr) (&iMin) to bError
+        if (not(bError)) begin
+            set Field_Changed_Value field Transdtl.Start_hr  to iHr
+            set Field_Changed_Value field Transdtl.Start_min to iMin
+            set Field_Changed_Value iField                   to sTime
+        end
+        Function_Return bError
+    End_Function   // StartTimeValidation
+
+    // StopTimeValidation:
+    Function StopTimeValidation integer iField string sTime Returns Integer
+        boolean bError
+        Integer iHr iMin
+        //
+        get IsTimeValid (&sTime) (&iHr) (&iMin) to bError
+        if (not(bError)) begin
+            set Field_Changed_Value field Transdtl.Stop_hr  to iHr
+            set Field_Changed_Value field Transdtl.Stop_min to iMin
+            set Field_Changed_Value iField                  to sTime
+        end
+        Function_Return bError
+    End_Function   // StopTimeValidation
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Update
+        datetime dtStart dtStop
+        timespan tsElapsed
+        Integer  iHr iMin
+        //
+        Forward Send Update
+        //
+        Move TransHDR.TDate           to TransDtl.Start_date
+        if (Transdtl.Stop_hr < Transdtl.Start_hr) begin
+            move (Transhdr.Tdate + 1) to Transdtl.Stop_date
+        End
+        Else Begin
+            move  Transhdr.Tdate      to Transdtl.Stop_date
+        end
+        //
+        If (Transdtl.Stop_hr + Transdtl.Stop_min > 0) Begin
+            Move (DateSetMinute(dtStart, Transdtl.Start_min  )) to dtStart
+            move (DateSetHour  (dtStart, Transdtl.Start_hr   )) to dtStart
+            move (DateSetDay   (dtStart, Transdtl.Start_date )) to dtStart
+            //
+            Move (DateSetMinute(dtStop,  Transdtl.Stop_min ))   to dtStop
+            Move (DateSetHour  (dtStop,  Transdtl.Stop_hr  ))   to dtStop
+            Move (DateSetDay   (dtStop,  Transdtl.Stop_date))   to dtStop
+            //
+            Move (dtStop - dtStart)                             to tsElapsed
+            Move (DateGetHour  (tsElapsed))                     to iHr
+            Move (DateGetMinute(tsElapsed))                     to iMin
+            Move ((iHr * 60) + iMin)                            to Transdtl.Elapsed_minutes
+        end
+
+//        Sysdate4 dToday // there's no need for this now DW
+//        Move (TransDtl.Stop - TransDtl.Start) to nBaseHours
+//        Move (nBaseHours - 40) to Num1
+//        Move (Right(Num1, 2)) to Num2
+           
+//        If (Num2 >= 60) Begin
+//            Move (((Num1 - Num2) / 100) + (Num2 / 60)) to TransDtl.Hours
+//        End
+           
+//        Else Begin
+//            Move (nBaseHours) to Num3
+//            Move (Right (Num3, 2)) to Num4
+//            Move (((Num3 - Num4) / 100) + (Num4 / 60)) to TransDtl.Hours
+//        End
+//        //
+//        If (OpsMats.Mat_Rate >0) Begin
+//            Move (OpsMats.Mat_rate * TransDtl.Quantity) to TransDtl.Line_Total
+//            Move 0 to TransDtl.Hours
+//        End
+//        //
+//        If (OpsMats.Visit_rate > 0) Begin
+//            Move OpsMats.Visit_rate to TransDtl.Line_Total
+//        End
+//        //
+//        If (OpsMats.Mat_Rate= 0 and OpsMats.Visit_Rate = 0) Begin
+//            Move (TransDtl.Hours * OpsMats.Hr_rate) to TransDtl.Line_Total
+//        End
+//        //
+//        Move Location.Customer_Number to TransDTL.Cust_Idno
+    End_Procedure
+
+    Procedure Define_Fields
+        Forward Send Define_Fields
+        //DDB-Generated-Code-Location
+        //DDB-DefineFieldStart
+
+        Set Main_File            To Transdtl.File_Number
+
+        Set Foreign_Field_Options  DD_KEYFIELD   To DD_AUTOFIND    DD_NOPUT       DD_FINDREQ    
+        Set Foreign_Field_Options  DD_INDEXFIELD To DD_NOPUT       DD_FINDREQ    
+        Set Foreign_Field_Options  DD_DEFAULT    To DD_DISPLAYONLY
+
+        // Parent (Server) file structure...............
+        Send Add_Server_File  Transhdr.File_Number
+        Send Add_Server_File  Employee.File_Number
+        Send Add_Server_File  Location.File_Number
+        Send Add_Server_File  Opsmats.File_Number
+
+        // External (System) file structure.............
+        Send Add_System_File  Ir_Sys.File_Number  DD_LOCK_ON_ALL
+
+        Define_Auto_Increment  Ir_Sys.Last_Tdetail  To Transdtl.Idno
+
+        // Field-based properties.......................
+
+        // Transdtl.Idno
+        Set Field_Options          Field Transdtl.Idno To DD_AUTOFIND    DD_NOPUT      
+        Set Key_Field_State        Field Transdtl.Idno To TRUE
+
+        // Transdtl.Hdr_Idno
+
+        // Transdtl.Emp_Idno
+
+        // Transdtl.Start_Time
+        Set Field_Validate_msg     Field Transdtl.Start_Time To get_StartTimeValidation
+
+        // Transdtl.Location_Idno
+
+        // Transdtl.Opsmat_Idno
+
+        // Transdtl.Start_Date
+        Set Field_Options          Field Transdtl.Start_Date To DD_ZERO_SUPPRESS
+
+        // Transdtl.Start_Hr
+
+        // Transdtl.Start_Min
+
+        // Transdtl.Stop_Time
+        Set Field_Validate_msg     Field Transdtl.Stop_Time To get_StopTimeValidation
+
+        // Transdtl.Stop_Date
+
+        // Transdtl.Stop_Hr
+        Set Field_Options          Field Transdtl.Stop_Hr To DD_ZERO_SUPPRESS
+
+        // Transdtl.Stop_Min
+
+        // Transdtl.Quantity
+        Set Field_Options          Field Transdtl.Quantity To DD_ZERO_SUPPRESS
+
+        // Transdtl.Comment
+
+        // Transdtl.Elapsed_Minutes
+
+        // Transdtl.Line_Total
+
+        // Transdtl.Cust_Idno
+
+        //DDB-DefineFieldEnd
+    End_Procedure    // Define_Fields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        //DDB-Generated-Code-Location
+        //DDB-FieldDefaultStart
+        //DDB-FieldDefaultEnd
+    End_Procedure    // Field_Defaults
+
+End_Class    // Transdtl_DataDictionary
+//DDB-FileEnd

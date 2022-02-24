@@ -1,0 +1,15 @@
+// tWebAppUser.pkg
+// used to update remote server data
+Struct tWebAppUser
+    Integer    iRecId
+    String     sLoginName
+    String     sPassword
+    String     sFullName
+    Date       dLastLogin
+    Integer    iRights
+    Integer    iEmployerIdno
+    Integer    iEmployeeIdno
+    Integer    iChangedFlag    
+    String     sStatus
+    Integer    iBillingAccessFlag
+End_Struct 

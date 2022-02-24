@@ -1,0 +1,14 @@
+#REPLACE FILE72 BudgetHdr2
+#REPLACE BudgetHdr2.Recnum |FN72,0
+#REPLACE BudgetHdr2.Budget_Hdr_Idno |FN72,1
+#REPLACE BudgetHdr2.Budget_Yr |FM72,2
+#REPLACE BudgetHdr2.Budget_Mo |FS72,3
+#REPLACE BudgetHdr2.Snow_TTL |FN72,4
+#REPLACE BudgetHdr2.Melt_TTL |FN72,5
+#REPLACE BudgetHdr2.Pave_TTL |FN72,6
+#REPLACE BudgetHdr2.Concrete_TTL |FN72,7
+#REPLACE BudgetHdr2.Excavation_TTL |FN72,8
+#REPLACE BudgetHdr2.Sweep_TTL |FN72,9
+#REPLACE BudgetHdr2.Mark_TTL |FN72,10
+#REPLACE BudgetHdr2.Other_TTL |FN72,11
+#REPLACE BudgetHdr2.Grand_TTL |FN72,12

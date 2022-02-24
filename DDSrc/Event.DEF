@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Event (# 9)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Event
+  USER DISPLAY NAME         : Event
+  DATAFLEX FILE NAME        : Event
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 94        ( USED: 94 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  EventIdno        NUM   10.0     1  1   
+  2  StartDate        DAT     10    12  2   
+  3  StopDate         DAT     10    35  2   
+  4  Planner          ASC      3    58      
+  5  EnteredDate      DAT     10    61      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    EventIdno       NO  NO       0      0       1     ON-LINE
+
+  2    StartDate       NO  NO       0      0       3     ON-LINE
+       StopDate        NO  NO 
+       EventIdno       NO  NO 
+

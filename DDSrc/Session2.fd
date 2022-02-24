@@ -1,0 +1,11 @@
+#REPLACE FILE126 Session2
+#REPLACE Session2.Recnum |FN126,0
+#REPLACE Session2.SessionId |FN126,1
+#REPLACE Session2.SessionKey |FS126,2
+#REPLACE Session2.CreateDate |FM126,3
+#REPLACE Session2.CreateTime |FS126,4
+#REPLACE Session2.LastAccessDate |FM126,5
+#REPLACE Session2.LastAccessTime |FS126,6
+#REPLACE Session2.RemoteAddress |FS126,7
+#REPLACE Session2.UserId |FN126,8
+#REPLACE Session2.UseCount |FN126,9

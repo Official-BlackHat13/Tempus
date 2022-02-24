@@ -1,0 +1,9 @@
+#REPLACE FILE77 CalendarWeeks
+#REPLACE CalendarWeeks.File_Number |CI77
+#REPLACE CalendarWeeks.week_of_year |FS77,1
+#REPLACE CalendarWeeks.WeekDates |FS77,2
+#REPLACE CalendarWeeks.YearWeek |FS77,3
+#REPLACE CalendarWeeks.first_day_in_week |FM77,4
+#REPLACE CalendarWeeks.last_day_in_week |FM77,5
+#REPLACE CalendarWeeks.year_week |FS77,6
+#REPLACE CalendarWeeks.calendar_year |FS77,7

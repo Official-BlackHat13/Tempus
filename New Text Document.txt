@@ -1,0 +1,13 @@
+SELECT DISTINCT 
+                      TOP (100) PERCENT CAST(week_of_year AS VARCHAR) AS week_of_year, 'Wk. ' + (LEFT(CAST(year_week AS VARCHAR), 4) + '/' + RIGHT(CAST(year_week AS VARCHAR),
+                       2)) + ' | ' + RTRIM(CONVERT(char, first_day_in_week, 1)) + ' - ' + RTRIM(CONVERT(char, last_day_in_week, 1)) AS WeekDates, LEFT(CAST(year_week AS VARCHAR), 4) 
+                      + '/' + RIGHT(CAST(year_week AS VARCHAR), 2) AS YearWeek, CONVERT(char, first_day_in_week, 101) AS first_day_in_week, CONVERT(char, last_day_in_week, 101) 
+                      AS last_day_in_week, CAST(year_week AS VARCHAR) AS year_week, LEFT(CAST(calendar_year AS VARCHAR), 4) AS calendar_year, 
+                      CASE WHEN YEAR(first_day_in_week) = calendar_year AND YEAR(last_day_in_week) = calendar_year THEN first_day_in_week WHEN YEAR(first_day_in_week) 
+                      = calendar_year AND YEAR(last_day_in_week) <> calendar_year THEN first_day_in_week WHEN YEAR(first_day_in_week) <> calendar_year AND 
+                      YEAR(last_day_in_week) = calendar_year THEN first_day_in_week ELSE 0 END AS first_day_in_week_new
+FROM         (SELECT DISTINCT year_week, first_day_in_week, last_day_in_week, week_of_year, calendar_year
+                       FROM          dbo.date_calendar AS D) AS derivedtbl_1
+WHERE     (year_week BETWEEN DATEPART(yyyy, GETDATE() - 365) * 100 + DATEPART(wk, GETDATE() - 365) AND DATEPART(yyyy, GETDATE() + 21) * 100 + DATEPART(wk, 
+                      GETDATE() + 21))
+ORDER BY YearWeek, first_day_in_week

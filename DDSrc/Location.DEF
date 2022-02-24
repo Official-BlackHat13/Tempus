@@ -1,0 +1,128 @@
+-----------------------------------------------------------------------------
+  DATE: 11/15/2016      TIME: 06:32                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Location (# 3)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Location
+  USER DISPLAY NAME         : Location
+  DATAFLEX FILE NAME        : Location
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 83233     ( USED: 83233 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 6940 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CustomerIdno     NUM    8.0     1  2   Customer.FIELD_1 (2,1)
+  2  LocationIdno     NUM    8.0    12  1   
+  3  LocationNbr      NUM    4.0    23      
+  4  Name             ASC     40    29  5   
+  5  Address1         ASC     50    69  6   
+  6  Address2         ASC     50   119      
+  7  City             ASC     35   169      
+  8  State            ASC      2   204      
+  9  Zip              ASC     10   206      
+ 10  Phone1           ASC     14   216      
+ 11  PhoneType1       ASC      1   230      
+ 12  Phone2           ASC     14   231      
+ 13  PhoneType2       ASC      1   245      
+ 14  Phone3           ASC     14   246      
+ 15  PhoneType3       ASC      1   260      
+ 16  ContactName      ASC     40   261      
+ 17  ContactPhone1    ASC     14   301      
+ 18  ContactPhnType1  ASC      1   315      
+ 19  ContactPhone2    ASC     14   316      
+ 20  ContactPhnType2  ASC      1   330      
+ 21  EstimatedHours   NUM    6.2   331      
+ 22  PhoneExt1        ASC      6   341      
+ 23  PhoneExt2        ASC      6   347      
+ 24  PhoneExt3        ASC      6   353      
+ 25  ContactPhnExt1   ASC      6   359      
+ 26  ContactPhnExt2   ASC      6   365      
+ 27  ContactPhnExt3   ASC      6   371      
+ 28  ContactEmail     ASC     50   377      
+ 29  ContactComment   TEX    512   427      
+ 30  Status           ASC      1 16810      
+ 31  AreaNumber       NUM    4.0 16811      Areas.FIELD_1 (19,1)
+ 32  InvoiceLocation  NUM    2.0 16817      
+ 33  ChangedFlag      NUM    2.0 16823  3   
+ 34  OrderCount       NUM    6.0 16829      
+ 35  StartTime        ASC     10 16840      
+ 36  StopTime         ASC     10 16850      
+ 37  ContactIdno      NUM    8.0 16860  4   
+ 38  BillingName      ASC     50 16871      
+ 39  BillingAddress1  ASC     50 16921      
+ 40  BillingAddress2  ASC     50 16971      
+ 41  BillingCity      ASC     35 17021      
+ 42  BillingState     ASC      2 17056      
+ 43  BillingZip       ASC     10 17058      
+ 44  BillingAttn      ASC     50 17068      
+ 45  PropmgrIdno      NUM    8.0 17118  7   
+ 46  ListID           ASC     36 17129      
+ 47  BillingAddress   ASC      1 17165      
+ 48  DocumentFolder   ASC     80 17166      
+ 49  Header           TEX   1024 17246      
+ 50  Openup           TEX   1024 33629      
+ 51  FullPlow         TEX   1024 50012      
+ 52  AreaMgr          ASC     30 66395      
+ 53  AreaMgrPhn       ASC     14 66425      
+ 54  BuildingType     ASC     20 66439      
+ 55  MajTenant        ASC     30 66459      
+ 56  PlowTrigger      ASC     20 66489      
+ 57  ParkSqFeet       NUM    8.0 66509      
+ 58  SWTrigger        ASC     20 66520      
+ 59  SWSqFeet         NUM    8.0 66540      
+ 60  Hauling          ASC     20 66551      
+ 61  Parking_Stalls   NUM    6.0 66571      
+ 62  Melting          ASC     20 66582      
+ 63  Awnings          ASC     20 66602      
+ 64  SpcEquipment     ASC     20 66622      
+ 65  Special          TEX   3072 66642      
+ 66  CityWalks        ASC     20 83025      
+ 67  DeIcing          ASC     20 83045      
+ 68  Image1           ASC     16 83065      
+ 69  Image2           ASC     16 83081      
+ 70  Image3           ASC     16 83097      
+ 71  Image4           ASC     16 83113      
+ 72  Image5           ASC     16 83129      
+ 73  Latitude         NUM    4.6 83145      
+ 74  Longitude        NUM    4.6 83157      
+ 75  SalesTaxIdno     NUM    6.0 83169      SalesTaxGroup.FIELD_1 (68,1)
+ 76  RecordOwner      NUM    8.0 83180      
+ 77  AntBulkUsage     NUM    6.2 83191      
+ 78  BulkManualFlag   NUM    2.0 83201      
+ 79  AntBagUsage      NUM    6.2 83207      
+ 80  BagManualFlag    NUM    2.0 83217      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LocationIdno    NO  NO       0      0       1     ON-LINE
+
+  2    CustomerIdno    NO  NO       0      0       3     ON-LINE
+       Name            NO  NO 
+       LocationIdno    NO  NO 
+
+  3    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       LocationIdno    NO  NO 
+
+  4    ContactIdno     NO  NO       0      0       2     ON-LINE
+       LocationIdno    NO  NO 
+
+  5    Name            NO  NO       0      0       2     ON-LINE
+       LocationIdno    NO  NO 
+
+  6    Address1        NO  NO       0      0       2     ON-LINE
+       LocationIdno    NO  NO 
+
+  7    PropmgrIdno     NO  NO       0      0       2     ON-LINE
+       LocationIdno    NO  NO 
+

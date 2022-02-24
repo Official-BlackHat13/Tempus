@@ -1,0 +1,1889 @@
+//Test
+
+// Register all objects
+Register_Object Test
+Register_Object oQuotehdrRecnumGroup
+Register_Object oFromQuotehdrRecnum
+Register_Object oToQuotehdrRecnum
+Register_Object oQuotehdrQuotehdridGroup
+Register_Object oFromQuotehdrQuotehdrid
+Register_Object oToQuotehdrQuotehdrid
+Register_Object oQuotehdrLocationidnoGroup
+Register_Object oFromQuotehdrLocationidno
+Register_Object oToQuotehdrLocationidno
+Register_Object oQuotehdrContactidnoGroup
+Register_Object oFromQuotehdrContactidno
+Register_Object oToQuotehdrContactidno
+Register_Object oQuotehdrRepidnoGroup
+Register_Object oFromQuotehdrRepidno
+Register_Object oToQuotehdrRepidno
+Register_Object oQuotehdrQuotedateGroup
+Register_Object oFromQuotehdrQuotedate
+Register_Object oToQuotehdrQuotedate
+Register_Object oQuotehdrExpirationdateGroup
+Register_Object oFromQuotehdrExpirationdate
+Register_Object oToQuotehdrExpirationdate
+Register_Object oQuotehdrAmountGroup
+Register_Object oFromQuotehdrAmount
+Register_Object oToQuotehdrAmount
+Register_Object oQuotehdrOrganizationGroup
+Register_Object oFromQuotehdrOrganization
+Register_Object oToQuotehdrOrganization
+Register_Object oQuotehdrJobnumberGroup
+Register_Object oFromQuotehdrJobnumber
+Register_Object oToQuotehdrJobnumber
+Register_Object oQuotehdrOrderdateGroup
+Register_Object oFromQuotehdrOrderdate
+Register_Object oToQuotehdrOrderdate
+Register_Object oQuotehdrStatusGroup
+Register_Object oFromQuotehdrStatus
+Register_Object oToQuotehdrStatus
+Register_Object oQuotehdrQuotelostmemoGroup
+Register_Object oFromQuotehdrQuotelostmemo
+Register_Object oToQuotehdrQuotelostmemo
+Register_Object oQuotehdrClonereferenceGroup
+Register_Object oFromQuotehdrClonereference
+Register_Object oToQuotehdrClonereference
+Register_Object oQuotehdrCustomeridnoGroup
+Register_Object oFromQuotehdrCustomeridno
+Register_Object oToQuotehdrCustomeridno
+Register_Object oQuotehdrLocationnameGroup
+Register_Object oFromQuotehdrLocationname
+Register_Object oToQuotehdrLocationname
+Register_Object oQuotehdrWorktypeGroup
+Register_Object oFromQuotehdrWorktype
+Register_Object oToQuotehdrWorktype
+Register_Object oQuotehdrOrderhrGroup
+Register_Object oFromQuotehdrOrderhr
+Register_Object oToQuotehdrOrderhr
+Register_Object oQuotehdrOrderminGroup
+Register_Object oFromQuotehdrOrdermin
+Register_Object oToQuotehdrOrdermin
+Register_Object oQuotehdrOrdersecGroup
+Register_Object oFromQuotehdrOrdersec
+Register_Object oToQuotehdrOrdersec
+Register_Object oQuotehdrChangedateGroup
+Register_Object oFromQuotehdrChangedate
+Register_Object oToQuotehdrChangedate
+Register_Object oQuotehdrChangehrGroup
+Register_Object oFromQuotehdrChangehr
+Register_Object oToQuotehdrChangehr
+Register_Object oQuotehdrChangeminGroup
+Register_Object oFromQuotehdrChangemin
+Register_Object oToQuotehdrChangemin
+Register_Object oQuotehdrChangesecGroup
+Register_Object oFromQuotehdrChangesec
+Register_Object oToQuotehdrChangesec
+Register_Object oQuotehdrProbabilityGroup
+Register_Object oFromQuotehdrProbability
+Register_Object oToQuotehdrProbability
+Register_Object oQuotehdrClosedateGroup
+Register_Object oFromQuotehdrClosedate
+Register_Object oToQuotehdrClosedate
+Register_Object oDestinationGroup
+Register_Object oScreenRadio
+Register_Object oPrinterRadio
+Register_Object oFileRadio
+Register_Object oSortOrderGroup
+Register_Object QuotehdrRecnumRadio
+Register_Object QuotehdrQuotehdridRadio
+Register_Object QuotehdrLocationidnoRadio
+Register_Object QuotehdrContactidnoRadio
+Register_Object QuotehdrRepidnoRadio
+Register_Object QuotehdrQuotedateRadio
+Register_Object QuotehdrExpirationdateRadio
+Register_Object QuotehdrAmountRadio
+Register_Object QuotehdrOrganizationRadio
+Register_Object QuotehdrJobnumberRadio
+Register_Object QuotehdrOrderdateRadio
+Register_Object QuotehdrStatusRadio
+Register_Object QuotehdrQuotelostmemoRadio
+Register_Object QuotehdrClonereferenceRadio
+Register_Object QuotehdrCustomeridnoRadio
+Register_Object QuotehdrLocationnameRadio
+Register_Object QuotehdrWorktypeRadio
+Register_Object QuotehdrOrderhrRadio
+Register_Object QuotehdrOrderminRadio
+Register_Object QuotehdrOrdersecRadio
+Register_Object QuotehdrChangedateRadio
+Register_Object QuotehdrChangehrRadio
+Register_Object QuotehdrChangeminRadio
+Register_Object QuotehdrChangesecRadio
+Register_Object QuotehdrProbabilityRadio
+Register_Object QuotehdrClosedateRadio
+Register_Object oDescendingCheckBox
+Register_Object oPrintButton
+Register_Object oCancelButton
+Register_Object oCrystalTest
+
+
+
+
+
+Use DFAllEnt.pkg
+Use cCrystal.pkg
+
+ACTIVATE_VIEW Activate_Test FOR Test
+
+Object Test is a ReportView
+    Set Label To "Test"
+    
+    
+    
+    
+    Object oQuotehdrRecnumGroup is a Group
+        Set Label to "Select Recnum"
+        Set Location to 5 5
+        
+        Object oFromQuotehdrRecnum is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrRecnum
+        
+        Object oToQuotehdrRecnum is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrRecnum
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrRecnumGroup
+    
+    Object oQuotehdrQuotehdridGroup is a Group
+        Set Label to "Select Quotehdrid"
+        Set Location to 53 5
+        
+        Object oFromQuotehdrQuotehdrid is a Form
+            Set Size to 13 67
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+            Set Prompt_Button_Mode to pb_PromptOn
+            Set Prompt_Object to Quotehdr_sl
+            
+            // This procedure is called if Move_Value_Out_state is true, we use the SelectBestColumn
+            // function to retrieve the column for the passed file and field number. After retrieving
+            // the column we setup the list.
+            
+            Procedure Prompt_CallBack Integer hPrompt
+                Integer iColumn
+                // 25 and 1 are the file and field numbers for Quotehdr.QuotehdrID
+                Get SelectBestColumn of hPrompt 25 1 to iColumn
+                Set peUpdateMode of hPrompt to umPromptValue
+                Set piUpdateColumn of hPrompt to iColumn
+                Set piInitialColumn of hPrompt to iColumn
+            End_Procedure // Prompt_CallBack
+            
+            
+        End_Object // FromQuotehdrQuotehdrid
+        
+        Object oToQuotehdrQuotehdrid is a Form
+            Set Size to 13 67
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+            Set Prompt_Button_Mode to pb_PromptOn
+            Set Prompt_Object to Quotehdr_sl
+            
+            // This procedure is called if Move_Value_Out_state is true, we use the SelectBestColumn
+            // function to retrieve the column for the passed file and field number. After retrieving
+            // the column we setup the list.
+            
+            Procedure Prompt_CallBack Integer hPrompt
+                Integer iColumn
+                // 25 and 1 are the file and field numbers for Quotehdr.QuotehdrID
+                Get SelectBestColumn of hPrompt 25 1 to iColumn
+                Set peUpdateMode of hPrompt to umPromptValue
+                Set piUpdateColumn of hPrompt to iColumn
+                Set piInitialColumn of hPrompt to iColumn
+            End_Procedure // Prompt_CallBack
+            
+            
+        End_Object // ToQuotehdrQuotehdrid
+        
+        Set Size to 43 138
+    
+    End_Object // QuotehdrQuotehdridGroup
+    
+    Object oQuotehdrLocationidnoGroup is a Group
+        Set Label to "Select Locationidno"
+        Set Location to 101 5
+        
+        Object oFromQuotehdrLocationidno is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrLocationidno
+        
+        Object oToQuotehdrLocationidno is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrLocationidno
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrLocationidnoGroup
+    
+    Object oQuotehdrContactidnoGroup is a Group
+        Set Label to "Select Contactidno"
+        Set Location to 149 5
+        
+        Object oFromQuotehdrContactidno is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrContactidno
+        
+        Object oToQuotehdrContactidno is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrContactidno
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrContactidnoGroup
+    
+    Object oQuotehdrRepidnoGroup is a Group
+        Set Label to "Select Repidno"
+        Set Location to 197 5
+        
+        Object oFromQuotehdrRepidno is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrRepidno
+        
+        Object oToQuotehdrRepidno is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrRepidno
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrRepidnoGroup
+    
+    Object oQuotehdrQuotedateGroup is a Group
+        Set Label to "Select Quotedate"
+        Set Location to 245 5
+        
+        Object oFromQuotehdrQuotedate is a Form
+            Set Size to 13 42
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // FromQuotehdrQuotedate
+        
+        Object oToQuotehdrQuotedate is a Form
+            Set Size to 13 42
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // ToQuotehdrQuotedate
+        
+        Set Size to 43 113
+    
+    End_Object // QuotehdrQuotedateGroup
+    
+    Object oQuotehdrExpirationdateGroup is a Group
+        Set Label to "Select Expirationdate"
+        Set Location to 293 5
+        
+        Object oFromQuotehdrExpirationdate is a Form
+            Set Size to 13 42
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // FromQuotehdrExpirationdate
+        
+        Object oToQuotehdrExpirationdate is a Form
+            Set Size to 13 42
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // ToQuotehdrExpirationdate
+        
+        Set Size to 43 113
+    
+    End_Object // QuotehdrExpirationdateGroup
+    
+    Object oQuotehdrAmountGroup is a Group
+        Set Label to "Select Amount"
+        Set Location to 341 5
+        
+        Object oFromQuotehdrAmount is a Form
+            Set Size to 13 66
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 2
+            
+        End_Object // FromQuotehdrAmount
+        
+        Object oToQuotehdrAmount is a Form
+            Set Size to 13 66
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 2
+            
+        End_Object // ToQuotehdrAmount
+        
+        Set Size to 43 137
+    
+    End_Object // QuotehdrAmountGroup
+    
+    Object oQuotehdrOrganizationGroup is a Group
+        Set Label to "Select Organization"
+        Set Location to 389 5
+        
+        Object oFromQuotehdrOrganization is a Form
+            Set Size to 13 366
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+        End_Object // FromQuotehdrOrganization
+        
+        Object oToQuotehdrOrganization is a Form
+            Set Size to 13 366
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+        End_Object // ToQuotehdrOrganization
+        
+        Set Size to 43 437
+    
+    End_Object // QuotehdrOrganizationGroup
+    
+    Object oQuotehdrJobnumberGroup is a Group
+        Set Label to "Select Jobnumber"
+        Set Location to 437 5
+        
+        Object oFromQuotehdrJobnumber is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrJobnumber
+        
+        Object oToQuotehdrJobnumber is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrJobnumber
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrJobnumberGroup
+    
+    Object oQuotehdrOrderdateGroup is a Group
+        Set Label to "Select Orderdate"
+        Set Location to 485 5
+        
+        Object oFromQuotehdrOrderdate is a Form
+            Set Size to 13 42
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // FromQuotehdrOrderdate
+        
+        Object oToQuotehdrOrderdate is a Form
+            Set Size to 13 42
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // ToQuotehdrOrderdate
+        
+        Set Size to 43 113
+    
+    End_Object // QuotehdrOrderdateGroup
+    
+    Object oQuotehdrStatusGroup is a Group
+        Set Label to "Select Status"
+        Set Location to 533 5
+        
+        Object oFromQuotehdrStatus is a ComboForm
+            Set Size to 13 26
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            // This procedure is called for each value in the validation table, we simply add the supplied
+            // value to the combo list.
+            
+            Procedure AddItem Integer iItem String sData String sDesc Integer iFile Integer iRec
+                Send Combo_Add_Item sData
+            End_Procedure // AddItem
+            
+            // This procedure is called when the combo list is to be filled. We use Request_Fill_From_List
+            // to instruct the validation table to send AddItem for each value in the validation table.
+            
+            Procedure Combo_Fill_List
+                Integer hSelf
+                Move Self to hSelf
+                Send Request_Fill_From_List to oQuotehdrStatusValidation hSelf Msg_AddItem
+            End_Procedure // Combo_Fill_List
+            
+            
+        End_Object // FromQuotehdrStatus
+        
+        Object oToQuotehdrStatus is a ComboForm
+            Set Size to 13 26
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            // This procedure is called for each value in the validation table, we simply add the supplied
+            // value to the combo list.
+            
+            Procedure AddItem Integer iItem String sData String sDesc Integer iFile Integer iRec
+                Send Combo_Add_Item sData
+            End_Procedure // AddItem
+            
+            // This procedure is called when the combo list is to be filled. We use Request_Fill_From_List
+            // to instruct the validation table to send AddItem for each value in the validation table.
+            
+            Procedure Combo_Fill_List
+                Integer hSelf
+                Move Self to hSelf
+                Send Request_Fill_From_List to oQuotehdrStatusValidation hSelf Msg_AddItem
+            End_Procedure // Combo_Fill_List
+            
+            
+        End_Object // ToQuotehdrStatus
+        
+        Set Size to 43 97
+    
+    End_Object // QuotehdrStatusGroup
+    
+    Object oQuotehdrQuotelostmemoGroup is a Group
+        Set Label to "Select Quotelostmemo"
+        Set Location to 581 5
+        
+        Object oFromQuotehdrQuotelostmemo is a Form
+            Set Size to 13 306
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+        End_Object // FromQuotehdrQuotelostmemo
+        
+        Object oToQuotehdrQuotelostmemo is a Form
+            Set Size to 13 306
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+        End_Object // ToQuotehdrQuotelostmemo
+        
+        Set Size to 43 377
+    
+    End_Object // QuotehdrQuotelostmemoGroup
+    
+    Object oQuotehdrClonereferenceGroup is a Group
+        Set Label to "Select Clonereference"
+        Set Location to 629 5
+        
+        Object oFromQuotehdrClonereference is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrClonereference
+        
+        Object oToQuotehdrClonereference is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrClonereference
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrClonereferenceGroup
+    
+    Object oQuotehdrCustomeridnoGroup is a Group
+        Set Label to "Select Customeridno"
+        Set Location to 677 5
+        
+        Object oFromQuotehdrCustomeridno is a Form
+            Set Size to 13 54
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // FromQuotehdrCustomeridno
+        
+        Object oToQuotehdrCustomeridno is a Form
+            Set Size to 13 54
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 8 0
+            
+        End_Object // ToQuotehdrCustomeridno
+        
+        Set Size to 43 125
+    
+    End_Object // QuotehdrCustomeridnoGroup
+    
+    Object oQuotehdrLocationnameGroup is a Group
+        Set Label to "Select Locationname"
+        Set Location to 725 5
+        
+        Object oFromQuotehdrLocationname is a Form
+            Set Size to 13 246
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+        End_Object // FromQuotehdrLocationname
+        
+        Object oToQuotehdrLocationname is a Form
+            Set Size to 13 246
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+        End_Object // ToQuotehdrLocationname
+        
+        Set Size to 43 317
+    
+    End_Object // QuotehdrLocationnameGroup
+    
+    Object oQuotehdrWorktypeGroup is a Group
+        Set Label to "Select Worktype"
+        Set Location to 773 5
+        
+        Object oFromQuotehdrWorktype is a ComboForm
+            Set Size to 13 26
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            // This procedure is called for each value in the validation table, we simply add the supplied
+            // value to the combo list.
+            
+            Procedure AddItem Integer iItem String sData String sDesc Integer iFile Integer iRec
+                Send Combo_Add_Item sData
+            End_Procedure // AddItem
+            
+            // This procedure is called when the combo list is to be filled. We use Request_Fill_From_List
+            // to instruct the validation table to send AddItem for each value in the validation table.
+            
+            Procedure Combo_Fill_List
+                Integer hSelf
+                Move Self to hSelf
+                Send Request_Fill_From_List to QuotehdrWorkTypeVT hSelf Msg_AddItem
+            End_Procedure // Combo_Fill_List
+            
+            
+        End_Object // FromQuotehdrWorktype
+        
+        Object oToQuotehdrWorktype is a ComboForm
+            Set Size to 13 26
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            // This procedure is called for each value in the validation table, we simply add the supplied
+            // value to the combo list.
+            
+            Procedure AddItem Integer iItem String sData String sDesc Integer iFile Integer iRec
+                Send Combo_Add_Item sData
+            End_Procedure // AddItem
+            
+            // This procedure is called when the combo list is to be filled. We use Request_Fill_From_List
+            // to instruct the validation table to send AddItem for each value in the validation table.
+            
+            Procedure Combo_Fill_List
+                Integer hSelf
+                Move Self to hSelf
+                Send Request_Fill_From_List to QuotehdrWorkTypeVT hSelf Msg_AddItem
+            End_Procedure // Combo_Fill_List
+            
+            
+        End_Object // ToQuotehdrWorktype
+        
+        Set Size to 43 97
+    
+    End_Object // QuotehdrWorktypeGroup
+    
+    Object oQuotehdrOrderhrGroup is a Group
+        Set Label to "Select Orderhr"
+        Set Location to 821 5
+        
+        Object oFromQuotehdrOrderhr is a Form
+            Set Size to 13 20
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // FromQuotehdrOrderhr
+        
+        Object oToQuotehdrOrderhr is a Form
+            Set Size to 13 20
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // ToQuotehdrOrderhr
+        
+        Set Size to 43 91
+    
+    End_Object // QuotehdrOrderhrGroup
+    
+    Object oQuotehdrOrderminGroup is a Group
+        Set Label to "Select Ordermin"
+        Set Location to 869 5
+        
+        Object oFromQuotehdrOrdermin is a Form
+            Set Size to 13 20
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // FromQuotehdrOrdermin
+        
+        Object oToQuotehdrOrdermin is a Form
+            Set Size to 13 20
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // ToQuotehdrOrdermin
+        
+        Set Size to 43 91
+    
+    End_Object // QuotehdrOrderminGroup
+    
+    Object oQuotehdrOrdersecGroup is a Group
+        Set Label to "Select Ordersec"
+        Set Location to 917 5
+        
+        Object oFromQuotehdrOrdersec is a Form
+            Set Size to 13 20
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // FromQuotehdrOrdersec
+        
+        Object oToQuotehdrOrdersec is a Form
+            Set Size to 13 20
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // ToQuotehdrOrdersec
+        
+        Set Size to 43 91
+    
+    End_Object // QuotehdrOrdersecGroup
+    
+    Object oQuotehdrChangedateGroup is a Group
+        Set Label to "Select Changedate"
+        Set Location to 965 5
+        
+        Object oFromQuotehdrChangedate is a Form
+            Set Size to 13 42
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // FromQuotehdrChangedate
+        
+        Object oToQuotehdrChangedate is a Form
+            Set Size to 13 42
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // ToQuotehdrChangedate
+        
+        Set Size to 43 113
+    
+    End_Object // QuotehdrChangedateGroup
+    
+    Object oQuotehdrChangehrGroup is a Group
+        Set Label to "Select Changehr"
+        Set Location to 1013 5
+        
+        Object oFromQuotehdrChangehr is a Form
+            Set Size to 13 20
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // FromQuotehdrChangehr
+        
+        Object oToQuotehdrChangehr is a Form
+            Set Size to 13 20
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // ToQuotehdrChangehr
+        
+        Set Size to 43 91
+    
+    End_Object // QuotehdrChangehrGroup
+    
+    Object oQuotehdrChangeminGroup is a Group
+        Set Label to "Select Changemin"
+        Set Location to 1061 5
+        
+        Object oFromQuotehdrChangemin is a Form
+            Set Size to 13 20
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // FromQuotehdrChangemin
+        
+        Object oToQuotehdrChangemin is a Form
+            Set Size to 13 20
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // ToQuotehdrChangemin
+        
+        Set Size to 43 91
+    
+    End_Object // QuotehdrChangeminGroup
+    
+    Object oQuotehdrChangesecGroup is a Group
+        Set Label to "Select Changesec"
+        Set Location to 1109 5
+        
+        Object oFromQuotehdrChangesec is a Form
+            Set Size to 13 20
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // FromQuotehdrChangesec
+        
+        Object oToQuotehdrChangesec is a Form
+            Set Size to 13 20
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 2 0
+            
+        End_Object // ToQuotehdrChangesec
+        
+        Set Size to 43 91
+    
+    End_Object // QuotehdrChangesecGroup
+    
+    Object oQuotehdrProbabilityGroup is a Group
+        Set Label to "Select Probability"
+        Set Location to 1157 5
+        
+        Object oFromQuotehdrProbability is a Form
+            Set Size to 13 34
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 4 0
+            
+        End_Object // FromQuotehdrProbability
+        
+        Object oToQuotehdrProbability is a Form
+            Set Size to 13 34
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Numeric_Mask 0 to 4 0
+            
+        End_Object // ToQuotehdrProbability
+        
+        Set Size to 43 105
+    
+    End_Object // QuotehdrProbabilityGroup
+    
+    Object oQuotehdrClosedateGroup is a Group
+        Set Label to "Select Closedate"
+        Set Location to 1205 5
+        
+        Object oFromQuotehdrClosedate is a Form
+            Set Size to 13 42
+            Set Location to 10 66
+            Set Label_Justification_Mode To jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "From:"
+            Set Status_Help to "First value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // FromQuotehdrClosedate
+        
+        Object oToQuotehdrClosedate is a Form
+            Set Size to 13 42
+            Set Location to 25 66
+            Set Label_Justification_Mode to jMode_Right
+            Set Label_Col_Offset to 2
+            Set Label_Row_Offset to 0
+            Set Label to "To:"
+            Set Status_Help to "Last value in selection range."
+            
+            
+            Set Form_DataType 0 to Mask_Date_Window
+            
+        End_Object // ToQuotehdrClosedate
+        
+        Set Size to 43 113
+    
+    End_Object // QuotehdrClosedateGroup
+    
+    Object oDestinationGroup is a RadioGroup
+        Set Label to "Output destination"
+        Set Location to 1253 5
+        Set Size to 346 77
+        
+        Object oScreenRadio is a Radio
+            Set Label to "Preview"
+            Set Size to 10 60
+            Set Location to 10 6
+            Set Status_Help to "Print the report to screen"
+        End_Object // oScreenRadio
+        
+        Object oPrinterRadio is a Radio
+            Set Label to "Printer"
+            Set Size to 10 60
+            Set Location to 22 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object // oPrinterRadio
+        
+        Object oFileRadio is a Radio
+            Set Label to "Export"
+            Set Size to 10 60
+            Set Location to 34 6
+            Set Status_Help to "Outputs the report to disk file, application or email"
+        End_Object // oFileRadio
+        
+        
+        // This function returns the output destination constant.
+        
+        Function PrintDestination Returns Integer
+            Integer iCurrentRadio eDestination
+            Get Current_Radio to iCurrentRadio
+            If (iCurrentRadio=0)  Move PRINT_TO_WINDOW  to eDestination
+            If (iCurrentRadio=1)  Move PRINT_TO_PRINTER to eDestination
+            If (iCurrentRadio=2)  Move PRINT_TO_FILE    to eDestination
+            Function_Return eDestination
+        End_Function // PrintDestination
+        
+    End_Object // oDestinationGroup
+    
+    Object oSortOrderGroup is a RadioGroup
+        Set Label to "Sort order"
+        Set Location to 1253 87
+        Set Size to 346 77
+        
+        Object QuotehdrRecnumRadio is a Radio
+            Set Label to "Recnum"
+            Set Size to 10 61
+            Set Location to 10 6
+            Set Status_Help to "Sort by Recnum"
+        End_Object // QuotehdrRecnumRadio
+        
+        Object QuotehdrQuotehdridRadio is a Radio
+            Set Label to "Quotehdrid"
+            Set Size to 10 61
+            Set Location to 22 6
+            Set Status_Help to "Sort by Quotehdrid"
+        End_Object // QuotehdrQuotehdridRadio
+        
+        Object QuotehdrLocationidnoRadio is a Radio
+            Set Label to "Locationidno"
+            Set Size to 10 61
+            Set Location to 34 6
+            Set Status_Help to "Sort by Locationidno"
+        End_Object // QuotehdrLocationidnoRadio
+        
+        Object QuotehdrContactidnoRadio is a Radio
+            Set Label to "Contactidno"
+            Set Size to 10 61
+            Set Location to 46 6
+            Set Status_Help to "Sort by Contactidno"
+        End_Object // QuotehdrContactidnoRadio
+        
+        Object QuotehdrRepidnoRadio is a Radio
+            Set Label to "Repidno"
+            Set Size to 10 61
+            Set Location to 58 6
+            Set Status_Help to "Sort by Repidno"
+        End_Object // QuotehdrRepidnoRadio
+        
+        Object QuotehdrQuotedateRadio is a Radio
+            Set Label to "Quotedate"
+            Set Size to 10 61
+            Set Location to 70 6
+            Set Status_Help to "Sort by Quotedate"
+        End_Object // QuotehdrQuotedateRadio
+        
+        Object QuotehdrExpirationdateRadio is a Radio
+            Set Label to "Expirationdate"
+            Set Size to 10 61
+            Set Location to 82 6
+            Set Status_Help to "Sort by Expirationdate"
+        End_Object // QuotehdrExpirationdateRadio
+        
+        Object QuotehdrAmountRadio is a Radio
+            Set Label to "Amount"
+            Set Size to 10 61
+            Set Location to 94 6
+            Set Status_Help to "Sort by Amount"
+        End_Object // QuotehdrAmountRadio
+        
+        Object QuotehdrOrganizationRadio is a Radio
+            Set Label to "Organization"
+            Set Size to 10 61
+            Set Location to 106 6
+            Set Status_Help to "Sort by Organization"
+        End_Object // QuotehdrOrganizationRadio
+        
+        Object QuotehdrJobnumberRadio is a Radio
+            Set Label to "Jobnumber"
+            Set Size to 10 61
+            Set Location to 118 6
+            Set Status_Help to "Sort by Jobnumber"
+        End_Object // QuotehdrJobnumberRadio
+        
+        Object QuotehdrOrderdateRadio is a Radio
+            Set Label to "Orderdate"
+            Set Size to 10 61
+            Set Location to 130 6
+            Set Status_Help to "Sort by Orderdate"
+        End_Object // QuotehdrOrderdateRadio
+        
+        Object QuotehdrStatusRadio is a Radio
+            Set Label to "Status"
+            Set Size to 10 61
+            Set Location to 142 6
+            Set Status_Help to "Sort by Status"
+        End_Object // QuotehdrStatusRadio
+        
+        Object QuotehdrQuotelostmemoRadio is a Radio
+            Set Label to "Quotelostmemo"
+            Set Size to 10 61
+            Set Location to 154 6
+            Set Status_Help to "Sort by Quotelostmemo"
+        End_Object // QuotehdrQuotelostmemoRadio
+        
+        Object QuotehdrClonereferenceRadio is a Radio
+            Set Label to "Clonereference"
+            Set Size to 10 61
+            Set Location to 166 6
+            Set Status_Help to "Sort by Clonereference"
+        End_Object // QuotehdrClonereferenceRadio
+        
+        Object QuotehdrCustomeridnoRadio is a Radio
+            Set Label to "Customeridno"
+            Set Size to 10 61
+            Set Location to 178 6
+            Set Status_Help to "Sort by Customeridno"
+        End_Object // QuotehdrCustomeridnoRadio
+        
+        Object QuotehdrLocationnameRadio is a Radio
+            Set Label to "Locationname"
+            Set Size to 10 61
+            Set Location to 190 6
+            Set Status_Help to "Sort by Locationname"
+        End_Object // QuotehdrLocationnameRadio
+        
+        Object QuotehdrWorktypeRadio is a Radio
+            Set Label to "Worktype"
+            Set Size to 10 61
+            Set Location to 202 6
+            Set Status_Help to "Sort by Worktype"
+        End_Object // QuotehdrWorktypeRadio
+        
+        Object QuotehdrOrderhrRadio is a Radio
+            Set Label to "Orderhr"
+            Set Size to 10 61
+            Set Location to 214 6
+            Set Status_Help to "Sort by Orderhr"
+        End_Object // QuotehdrOrderhrRadio
+        
+        Object QuotehdrOrderminRadio is a Radio
+            Set Label to "Ordermin"
+            Set Size to 10 61
+            Set Location to 226 6
+            Set Status_Help to "Sort by Ordermin"
+        End_Object // QuotehdrOrderminRadio
+        
+        Object QuotehdrOrdersecRadio is a Radio
+            Set Label to "Ordersec"
+            Set Size to 10 61
+            Set Location to 238 6
+            Set Status_Help to "Sort by Ordersec"
+        End_Object // QuotehdrOrdersecRadio
+        
+        Object QuotehdrChangedateRadio is a Radio
+            Set Label to "Changedate"
+            Set Size to 10 61
+            Set Location to 250 6
+            Set Status_Help to "Sort by Changedate"
+        End_Object // QuotehdrChangedateRadio
+        
+        Object QuotehdrChangehrRadio is a Radio
+            Set Label to "Changehr"
+            Set Size to 10 61
+            Set Location to 262 6
+            Set Status_Help to "Sort by Changehr"
+        End_Object // QuotehdrChangehrRadio
+        
+        Object QuotehdrChangeminRadio is a Radio
+            Set Label to "Changemin"
+            Set Size to 10 61
+            Set Location to 274 6
+            Set Status_Help to "Sort by Changemin"
+        End_Object // QuotehdrChangeminRadio
+        
+        Object QuotehdrChangesecRadio is a Radio
+            Set Label to "Changesec"
+            Set Size to 10 61
+            Set Location to 286 6
+            Set Status_Help to "Sort by Changesec"
+        End_Object // QuotehdrChangesecRadio
+        
+        Object QuotehdrProbabilityRadio is a Radio
+            Set Label to "Probability"
+            Set Size to 10 61
+            Set Location to 298 6
+            Set Status_Help to "Sort by Probability"
+        End_Object // QuotehdrProbabilityRadio
+        
+        Object QuotehdrClosedateRadio is a Radio
+            Set Label to "Closedate"
+            Set Size to 10 61
+            Set Location to 310 6
+            Set Status_Help to "Sort by Closedate"
+        End_Object // QuotehdrClosedateRadio
+        
+        Object oDescendingCheckBox is a CheckBox
+            Set Label to "Descending"
+            Set Size to 10 61
+            Set Location to 334 6
+            Set Status_Help to "Sort descending"
+        End_Object // oDescendingCheckBox
+        
+        // This function returns the number of the selected sort field radio.
+        
+        Function SortField Returns Integer
+            Integer iCurrentRadio
+            Get Current_Radio to iCurrentRadio
+            Function_Return iCurrentRadio
+        End_Function // SortField
+        
+        // This function returns True if Descending is checked.
+        
+        Function IsDescending Returns Boolean
+            Boolean bState
+            Get Checked_State of oDescendingCheckBox to bState
+            Function_Return bState
+        End_Function // IsDescending
+        
+        
+    End_Object // oSortOrderGroup
+    
+    Object oPrintButton is a Button
+        Set Label to "Print"
+        Set Size to 14 50
+        Set Location to 1604 337
+        Set Status_Help to "Print the report"
+        Set Default_State to True
+        
+        // This procedure outputs the report by sending RunReport.
+        
+        Procedure OnClick
+            Send RunReport of oCrystalTest
+        End_Procedure // OnClick
+        
+    End_Object // oPrintButton
+    
+    Object oCancelButton is a Button
+        Set Label to "Cancel"
+        Set Size to 14 50
+        Set Location to 1604 392
+        Set Status_Help to "Cancel this Panel"
+        
+        // This procedure closes the view.
+        
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure // OnClick
+        
+    End_Object // oCancelButton
+    
+    
+    Object oCrystalTest is a cCrystal
+        Set psReportName to "Snow Proposals 2012-13.rpt"
+        
+        
+        // This event is sent when the report is run and the cCrystalReport COM object has been created.
+        Procedure OnInitializeReport handle hoReport
+            Integer eDestination
+            String  sSelection
+            Integer iFromQuotehdrRecnum iToQuotehdrRecnum
+            Integer iFromQuotehdrQuotehdrid iToQuotehdrQuotehdrid
+            Integer iFromQuotehdrLocationidno iToQuotehdrLocationidno
+            Integer iFromQuotehdrContactidno iToQuotehdrContactidno
+            Integer iFromQuotehdrRepidno iToQuotehdrRepidno
+            Date    dFromQuotehdrQuotedate dToQuotehdrQuotedate
+            Date    dFromQuotehdrExpirationdate dToQuotehdrExpirationdate
+            Number  nFromQuotehdrAmount nToQuotehdrAmount
+            String  sFromQuotehdrOrganization sToQuotehdrOrganization
+            Integer iFromQuotehdrJobnumber iToQuotehdrJobnumber
+            Date    dFromQuotehdrOrderdate dToQuotehdrOrderdate
+            String  sFromQuotehdrStatus sToQuotehdrStatus
+            String  sFromQuotehdrQuotelostmemo sToQuotehdrQuotelostmemo
+            Integer iFromQuotehdrClonereference iToQuotehdrClonereference
+            Integer iFromQuotehdrCustomeridno iToQuotehdrCustomeridno
+            String  sFromQuotehdrLocationname sToQuotehdrLocationname
+            String  sFromQuotehdrWorktype sToQuotehdrWorktype
+            Integer iFromQuotehdrOrderhr iToQuotehdrOrderhr
+            Integer iFromQuotehdrOrdermin iToQuotehdrOrdermin
+            Integer iFromQuotehdrOrdersec iToQuotehdrOrdersec
+            Date    dFromQuotehdrChangedate dToQuotehdrChangedate
+            Integer iFromQuotehdrChangehr iToQuotehdrChangehr
+            Integer iFromQuotehdrChangemin iToQuotehdrChangemin
+            Integer iFromQuotehdrChangesec iToQuotehdrChangesec
+            Integer iFromQuotehdrProbability iToQuotehdrProbability
+            Date    dFromQuotehdrClosedate dToQuotehdrClosedate
+            Integer iSortField
+            Boolean bDescending
+            
+            Forward Send OnInitializeReport hoReport
+            
+            // Set the print destination.
+            
+            Get PrintDestination of oDestinationGroup to eDestination
+            Set peOutputDestination to eDestination
+            
+            // Create the selection formula string.
+            
+            Get Value of oFromQuotehdrRecnum to iFromQuotehdrRecnum
+            Get Value of oToQuotehdrRecnum   to iToQuotehdrRecnum
+            If (iFromQuotehdrRecnum<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Recnum} >= "+(String(iFromQuotehdrRecnum))) to sSelection
+            End
+            If (iToQuotehdrRecnum<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Recnum} <= "+(String(iToQuotehdrRecnum))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrQuotehdrid to iFromQuotehdrQuotehdrid
+            Get Value of oToQuotehdrQuotehdrid   to iToQuotehdrQuotehdrid
+            If (iFromQuotehdrQuotehdrid<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.QuotehdrID} >= "+(String(iFromQuotehdrQuotehdrid))) to sSelection
+            End
+            If (iToQuotehdrQuotehdrid<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.QuotehdrID} <= "+(String(iToQuotehdrQuotehdrid))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrLocationidno to iFromQuotehdrLocationidno
+            Get Value of oToQuotehdrLocationidno   to iToQuotehdrLocationidno
+            If (iFromQuotehdrLocationidno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.LocationIdno} >= "+(String(iFromQuotehdrLocationidno))) to sSelection
+            End
+            If (iToQuotehdrLocationidno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.LocationIdno} <= "+(String(iToQuotehdrLocationidno))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrContactidno to iFromQuotehdrContactidno
+            Get Value of oToQuotehdrContactidno   to iToQuotehdrContactidno
+            If (iFromQuotehdrContactidno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ContactIdno} >= "+(String(iFromQuotehdrContactidno))) to sSelection
+            End
+            If (iToQuotehdrContactidno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ContactIdno} <= "+(String(iToQuotehdrContactidno))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrRepidno to iFromQuotehdrRepidno
+            Get Value of oToQuotehdrRepidno   to iToQuotehdrRepidno
+            If (iFromQuotehdrRepidno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.RepIdno} >= "+(String(iFromQuotehdrRepidno))) to sSelection
+            End
+            If (iToQuotehdrRepidno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.RepIdno} <= "+(String(iToQuotehdrRepidno))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrQuotedate to dFromQuotehdrQuotedate
+            Get Value of oToQuotehdrQuotedate   to dToQuotehdrQuotedate
+            If (dFromQuotehdrQuotedate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.QuoteDate} >= "+(CrystalDate(Self ,dFromQuotehdrQuotedate))) to sSelection
+            End
+            If (dToQuotehdrQuotedate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.QuoteDate} <= "+(CrystalDate(Self ,dToQuotehdrQuotedate))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrExpirationdate to dFromQuotehdrExpirationdate
+            Get Value of oToQuotehdrExpirationdate   to dToQuotehdrExpirationdate
+            If (dFromQuotehdrExpirationdate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ExpirationDate} >= "+(CrystalDate(Self ,dFromQuotehdrExpirationdate))) to sSelection
+            End
+            If (dToQuotehdrExpirationdate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ExpirationDate} <= "+(CrystalDate(Self ,dToQuotehdrExpirationdate))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrAmount to nFromQuotehdrAmount
+            Get Value of oToQuotehdrAmount   to nToQuotehdrAmount
+            If (nFromQuotehdrAmount<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Amount} >= ToNumber("+'"'+(String(nFromQuotehdrAmount))+'"'+")") to sSelection
+            End
+            If (nToQuotehdrAmount<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Amount} <= ToNumber("+'"'+(String(nToQuotehdrAmount))+'"'+")") to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrOrganization to sFromQuotehdrOrganization
+            Get Value of oToQuotehdrOrganization   to sToQuotehdrOrganization
+            Move (Trim(sToQuotehdrOrganization))   to sToQuotehdrOrganization
+            Move (Trim(sFromQuotehdrOrganization)) to sFromQuotehdrOrganization
+            If (sFromQuotehdrOrganization<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Organization} >= "+'"'+(sFromQuotehdrOrganization)+'"') to sSelection
+            End
+            If (sToQuotehdrOrganization<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Organization} <= "+'"'+(sToQuotehdrOrganization)+'"') to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrJobnumber to iFromQuotehdrJobnumber
+            Get Value of oToQuotehdrJobnumber   to iToQuotehdrJobnumber
+            If (iFromQuotehdrJobnumber<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.JobNumber} >= "+(String(iFromQuotehdrJobnumber))) to sSelection
+            End
+            If (iToQuotehdrJobnumber<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.JobNumber} <= "+(String(iToQuotehdrJobnumber))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrOrderdate to dFromQuotehdrOrderdate
+            Get Value of oToQuotehdrOrderdate   to dToQuotehdrOrderdate
+            If (dFromQuotehdrOrderdate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderDate} >= "+(CrystalDate(Self ,dFromQuotehdrOrderdate))) to sSelection
+            End
+            If (dToQuotehdrOrderdate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderDate} <= "+(CrystalDate(Self ,dToQuotehdrOrderdate))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrStatus to sFromQuotehdrStatus
+            Get Value of oToQuotehdrStatus   to sToQuotehdrStatus
+            Move (Trim(sToQuotehdrStatus))   to sToQuotehdrStatus
+            Move (Trim(sFromQuotehdrStatus)) to sFromQuotehdrStatus
+            If (sFromQuotehdrStatus<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Status} >= "+'"'+(sFromQuotehdrStatus)+'"') to sSelection
+            End
+            If (sToQuotehdrStatus<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Status} <= "+'"'+(sToQuotehdrStatus)+'"') to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrQuotelostmemo to sFromQuotehdrQuotelostmemo
+            Get Value of oToQuotehdrQuotelostmemo   to sToQuotehdrQuotelostmemo
+            Move (Trim(sToQuotehdrQuotelostmemo))   to sToQuotehdrQuotelostmemo
+            Move (Trim(sFromQuotehdrQuotelostmemo)) to sFromQuotehdrQuotelostmemo
+            If (sFromQuotehdrQuotelostmemo<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.QuoteLostMemo} >= "+'"'+(sFromQuotehdrQuotelostmemo)+'"') to sSelection
+            End
+            If (sToQuotehdrQuotelostmemo<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.QuoteLostMemo} <= "+'"'+(sToQuotehdrQuotelostmemo)+'"') to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrClonereference to iFromQuotehdrClonereference
+            Get Value of oToQuotehdrClonereference   to iToQuotehdrClonereference
+            If (iFromQuotehdrClonereference<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.CloneReference} >= "+(String(iFromQuotehdrClonereference))) to sSelection
+            End
+            If (iToQuotehdrClonereference<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.CloneReference} <= "+(String(iToQuotehdrClonereference))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrCustomeridno to iFromQuotehdrCustomeridno
+            Get Value of oToQuotehdrCustomeridno   to iToQuotehdrCustomeridno
+            If (iFromQuotehdrCustomeridno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.CustomerIdno} >= "+(String(iFromQuotehdrCustomeridno))) to sSelection
+            End
+            If (iToQuotehdrCustomeridno<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.CustomerIdno} <= "+(String(iToQuotehdrCustomeridno))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrLocationname to sFromQuotehdrLocationname
+            Get Value of oToQuotehdrLocationname   to sToQuotehdrLocationname
+            Move (Trim(sToQuotehdrLocationname))   to sToQuotehdrLocationname
+            Move (Trim(sFromQuotehdrLocationname)) to sFromQuotehdrLocationname
+            If (sFromQuotehdrLocationname<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.LocationName} >= "+'"'+(sFromQuotehdrLocationname)+'"') to sSelection
+            End
+            If (sToQuotehdrLocationname<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.LocationName} <= "+'"'+(sToQuotehdrLocationname)+'"') to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrWorktype to sFromQuotehdrWorktype
+            Get Value of oToQuotehdrWorktype   to sToQuotehdrWorktype
+            Move (Trim(sToQuotehdrWorktype))   to sToQuotehdrWorktype
+            Move (Trim(sFromQuotehdrWorktype)) to sFromQuotehdrWorktype
+            If (sFromQuotehdrWorktype<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.WorkType} >= "+'"'+(sFromQuotehdrWorktype)+'"') to sSelection
+            End
+            If (sToQuotehdrWorktype<>"") Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.WorkType} <= "+'"'+(sToQuotehdrWorktype)+'"') to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrOrderhr to iFromQuotehdrOrderhr
+            Get Value of oToQuotehdrOrderhr   to iToQuotehdrOrderhr
+            If (iFromQuotehdrOrderhr<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderHr} >= "+(String(iFromQuotehdrOrderhr))) to sSelection
+            End
+            If (iToQuotehdrOrderhr<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderHr} <= "+(String(iToQuotehdrOrderhr))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrOrdermin to iFromQuotehdrOrdermin
+            Get Value of oToQuotehdrOrdermin   to iToQuotehdrOrdermin
+            If (iFromQuotehdrOrdermin<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderMin} >= "+(String(iFromQuotehdrOrdermin))) to sSelection
+            End
+            If (iToQuotehdrOrdermin<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderMin} <= "+(String(iToQuotehdrOrdermin))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrOrdersec to iFromQuotehdrOrdersec
+            Get Value of oToQuotehdrOrdersec   to iToQuotehdrOrdersec
+            If (iFromQuotehdrOrdersec<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderSec} >= "+(String(iFromQuotehdrOrdersec))) to sSelection
+            End
+            If (iToQuotehdrOrdersec<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.OrderSec} <= "+(String(iToQuotehdrOrdersec))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrChangedate to dFromQuotehdrChangedate
+            Get Value of oToQuotehdrChangedate   to dToQuotehdrChangedate
+            If (dFromQuotehdrChangedate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeDate} >= "+(CrystalDate(Self ,dFromQuotehdrChangedate))) to sSelection
+            End
+            If (dToQuotehdrChangedate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeDate} <= "+(CrystalDate(Self ,dToQuotehdrChangedate))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrChangehr to iFromQuotehdrChangehr
+            Get Value of oToQuotehdrChangehr   to iToQuotehdrChangehr
+            If (iFromQuotehdrChangehr<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeHr} >= "+(String(iFromQuotehdrChangehr))) to sSelection
+            End
+            If (iToQuotehdrChangehr<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeHr} <= "+(String(iToQuotehdrChangehr))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrChangemin to iFromQuotehdrChangemin
+            Get Value of oToQuotehdrChangemin   to iToQuotehdrChangemin
+            If (iFromQuotehdrChangemin<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeMin} >= "+(String(iFromQuotehdrChangemin))) to sSelection
+            End
+            If (iToQuotehdrChangemin<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeMin} <= "+(String(iToQuotehdrChangemin))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrChangesec to iFromQuotehdrChangesec
+            Get Value of oToQuotehdrChangesec   to iToQuotehdrChangesec
+            If (iFromQuotehdrChangesec<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeSec} >= "+(String(iFromQuotehdrChangesec))) to sSelection
+            End
+            If (iToQuotehdrChangesec<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.ChangeSec} <= "+(String(iToQuotehdrChangesec))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrProbability to iFromQuotehdrProbability
+            Get Value of oToQuotehdrProbability   to iToQuotehdrProbability
+            If (iFromQuotehdrProbability<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Probability} >= "+(String(iFromQuotehdrProbability))) to sSelection
+            End
+            If (iToQuotehdrProbability<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.Probability} <= "+(String(iToQuotehdrProbability))) to sSelection
+            End
+            
+            
+            Get Value of oFromQuotehdrClosedate to dFromQuotehdrClosedate
+            Get Value of oToQuotehdrClosedate   to dToQuotehdrClosedate
+            If (dFromQuotehdrClosedate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.CloseDate} >= "+(CrystalDate(Self ,dFromQuotehdrClosedate))) to sSelection
+            End
+            If (dToQuotehdrClosedate<>0) Begin
+                Move (sSelection+(If(sSelection<>""," and ",""))+"{QUOTEHDR.CloseDate} <= "+(CrystalDate(Self ,dToQuotehdrClosedate))) to sSelection
+            End
+            
+            // Set the selection formula.
+            Set ComRecordSelectionFormula of hoReport to sSelection
+            
+            
+            // Set the Sort Order.
+            
+            // Delete the existing sort order.
+            Send DeleteSortOrder of hoReport
+            // Create the new sort order.
+            Get SortField    of oSortOrderGroup to iSortField
+            Get IsDescending of oSortOrderGroup to bDescending
+            If (iSortField=0) Send AppendSortField of hoReport "QUOTEHDR" "Recnum" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=1) Send AppendSortField of hoReport "QUOTEHDR" "QuotehdrID" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=2) Send AppendSortField of hoReport "QUOTEHDR" "LocationIdno" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=3) Send AppendSortField of hoReport "QUOTEHDR" "ContactIdno" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=4) Send AppendSortField of hoReport "QUOTEHDR" "RepIdno" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=5) Send AppendSortField of hoReport "QUOTEHDR" "QuoteDate" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=6) Send AppendSortField of hoReport "QUOTEHDR" "ExpirationDate" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=7) Send AppendSortField of hoReport "QUOTEHDR" "Amount" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=8) Send AppendSortField of hoReport "QUOTEHDR" "Organization" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=9) Send AppendSortField of hoReport "QUOTEHDR" "JobNumber" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=10) Send AppendSortField of hoReport "QUOTEHDR" "OrderDate" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=11) Send AppendSortField of hoReport "QUOTEHDR" "Status" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=12) Send AppendSortField of hoReport "QUOTEHDR" "QuoteLostMemo" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=13) Send AppendSortField of hoReport "QUOTEHDR" "CloneReference" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=14) Send AppendSortField of hoReport "QUOTEHDR" "CustomerIdno" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=15) Send AppendSortField of hoReport "QUOTEHDR" "LocationName" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=16) Send AppendSortField of hoReport "QUOTEHDR" "WorkType" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=17) Send AppendSortField of hoReport "QUOTEHDR" "OrderHr" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=18) Send AppendSortField of hoReport "QUOTEHDR" "OrderMin" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=19) Send AppendSortField of hoReport "QUOTEHDR" "OrderSec" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=20) Send AppendSortField of hoReport "QUOTEHDR" "ChangeDate" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=21) Send AppendSortField of hoReport "QUOTEHDR" "ChangeHr" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=22) Send AppendSortField of hoReport "QUOTEHDR" "ChangeMin" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=23) Send AppendSortField of hoReport "QUOTEHDR" "ChangeSec" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=24) Send AppendSortField of hoReport "QUOTEHDR" "Probability" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            If (iSortField=25) Send AppendSortField of hoReport "QUOTEHDR" "CloseDate" (If(bDescending,crDescendingOrder,crAscendingOrder))
+            
+        End_Procedure // OnInitializeReport
+        
+        
+        // Event is called when report is sent to previewer
+        Procedure OnDisplayReport Handle hoReport
+            Handle hoViewer
+            
+            Forward Send OnDisplayReport hoReport
+            
+            // Viewer options can be customized by setting properties of the active/x viewer object
+            //Get ActiveXReportViewerObject of hoReport to hoViewer // handle of active/x viewer
+            
+            //Set ComDisplayToolbar           of hoViewer to True
+            //Set ComDisplayTabs              of hoViewer to False
+            //Set ComDisplayGroupTree         of hoViewer to False
+            //Set ComEnableGroupTree          of hoViewer to False
+            //Set ComEnablePrintButton        of hoViewer to True
+            //Set ComEnableCloseButton        of hoViewer to False
+            //Set ComEnableRefreshButton      of hoViewer to False
+            //Set ComEnableExportButton       of hoViewer to True
+            //Set ComEnableSearchExpertButton of hoViewer to True
+            //Set ComEnableHelpButton         of hoViewer to False
+            //Set ComEnableZoomControl        of hoViewer to True
+            //Set ComEnableProgressControl    of hoViewer to True
+            //Set ComEnableSearchControl      of hoViewer to True
+            //Set ComEnableNavigationControls of hoViewer to True
+            //Set ComEnableDrillDown          of hoViewer to False
+            //Set ComEnableAnimationCtrl      of hoViewer to True
+            //Set ComEnableSelectExpertButton of hoViewer to False
+            //Set ComLaunchHTTPHyperlinksInNewBrowser of hoViewer to True
+            
+        End_Procedure // OnDisplayReport
+        
+        
+        // Event is called when report is sent to Export
+        Procedure OnExportReport Handle hoReport
+            Handle hoExport
+            
+            Forward Send OnExportReport hoReport
+            
+            // By default Export options will be prompted when report is run.
+            
+            // Or, Export can be set up within the program
+            //Set pbExportPrompt of hoReport to False // suppress prompt for all export information
+            //Get ExportObject of hoReport to hoExport
+            
+            // Sample for export to disk file (word)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport to "Report.dat"
+            
+            // Sample for export to disk file (XML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTXML
+            //Set ComXMLFileName     of hoExport to "Report.xml"
+            
+            // Sample for export to disk file (HTML)
+            //Set ComDestinationType of hoExport to crEDTDiskFile
+            //Set ComFormatType      of hoExport to crEFTHTML40
+            //Set ComHTMLFileName    of hoExport to "Report.html"
+            
+            // Sample for export to mapi
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTEMailMAPI
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            //Set ComDiskFileName    of hoExport to "Report.dat"
+            //Set ComMailToList      of hoExport to "Add-name@name.net"
+            //Set ComMailSubject     of hoExport to "Add-Subject"
+            //Set ComMailMessage     of hoExport to "Add-Message"
+            //Set ComMailBccList     of hoExport to "Add-name@name.net"
+            
+            // Sample for export to application (Word)
+            //Get ExportObject of hoReport to hoExport
+            //Set ComDestinationType of hoExport to crEDTApplication
+            //Set ComFormatType      of hoExport to crEFTWordForWindows
+            
+        End_Procedure // OnExportReport
+        
+        
+        // procedure is called when report is sent to printer
+        Procedure OnPrintReport Handle hoReport
+            
+            Forward Send OnPrintReport hoReport
+            
+            Set pbPrinterPrompt of hoReport to True // will prompt to set-up printer
+            
+            // Or... printer can be set up within the program
+            //Send ComSelectPrinter of hoReport "sDriverName" "sPrinterName" "sPortName"
+            //Set piPrinterCopies   of hoReport to 1
+            //Set pbPrinterCollate  of hoReport to True
+            
+        End_Procedure // OnPrintReport
+        
+        
+    
+    End_Object // oCrystalTest
+    
+    Set Location to 6 6
+    Set Size to 1638 447
+    
+End_Object // Test
+

@@ -1,0 +1,273 @@
+Use GlobalAllEnt.pkg
+Use sql.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Location
+Open Order
+Open Invhdr
+
+Function IsSqlDate Date dSource Returns String
+    String sYYYY sMM sDD
+    //
+    Move (mid(String(dSource),2,1)) to sMM
+    Move (mid(String(dSource),2,4)) to sDD
+    Move (mid(String(dSource),4,7)) to sYYYY
+    Function_Return (sYYYY + "-" + sMM + "-" + sDD)
+End_Function
+
+Function DoExecuteSqlStatement Handle hDbc String sQuery Returns Boolean
+    Boolean bError
+    Handle  hStmt
+    //
+    Showln sQuery
+    SQLOpen hDbc to hStmt
+    SQLExecDirect hStmt sQuery
+    Move (ERR) to bError
+    SQLClose hStmt
+    Function_Return bError
+End_Function
+
+Function IsCustomerColumnString Returns String
+    String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08 sC09
+    //
+    Move "Name,"                  to sC01
+    Move "BillAddressAddr1,"      to sC02
+    Move "BillAddressAddr2,"      to sC03
+    Move "BillAddressCity,"       to sC04
+    Move "BillAddressState,"      to sC05
+    Move "BillAddressPostalCode," to sC06
+    Move "Phone,"                 to sC07
+    Move "Fax,"                   to sC08
+    Move "AccountNumber"          to sC09
+    Function_Return (sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08 * sC09)
+End_Function
+
+Function IsCustomerValueString Returns String
+    String sV01 sV02 sV03 sV04 sV05 sV06 sV07 sV08 sV09
+    String sAddr1 sAddr2
+    //
+    Move (trim(Location.Address1))                  to sAddr1
+    Move (trim(Location.Address2))                  to sAddr2
+    If (sAddr1 = "") Begin
+        Move sAddr2                                 to sAddr1
+        Move ""                                     to sAddr2
+    End
+    //
+    Move ("'" + trim(Location.Name)         + "',") to sV01
+    Move ("'" + trim(sAddr1)                + "',") to sV02
+    Move ("'" + trim(sAddr2)                + "',") to sV03
+    Move ("'" + trim(Location.City)         + "',") to sV04
+    Move ("'" + trim(Location.State)        + "',") to sV05
+    Move ("'" + trim(Location.Zip)          + "',") to sV06
+    Move ("'" + trim(Location.Phone1)       + "',") to sV07
+    Move ("'" + trim(Location.Phone2)       + "',") to sV08
+    Move ("'" + trim(Location.LocationIdno) + "'" ) to sV09
+    Function_Return (sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08 * sV09)
+End_Function
+
+Function IsCustomerListId Handle hDbc String sNumber String ByRef sError Returns String
+    String sQuery sListId
+    Handle hStmt
+    //
+    SQLOpen hDbc                                                                       to hStmt
+    Move ("SELECT ListID FROM Customer WHERE AccountNumber = '" + trim(sNumber) + "'") to sQuery
+    SQLExecDirect hStmt sQuery
+    If (ERR) Begin
+        Move "Customer Query error" to sError
+        Function_Return
+    End
+    SQLFetch hStmt
+    If (SQLResult) SQLGetData hStmt 1 to sListId
+    SQLClose hStmt
+    Function_Return sListId
+End_Function
+
+Function IsLocationListId Handle hDbc String sNumber String ByRef sError Returns String
+    Boolean bError
+    String  sListId sColumns sValues sQuery
+    // confirm existence of Location in QB Customer file
+//    If (Dealers.List_id = "") Begin
+        // first confirm that Location.LocationIdno does not exist as a Customer AccountNumber
+        Get IsCustomerListId hDbc sNumber sError to sListId
+        If (sError <> "") Begin
+            Function_Return
+        End
+//        If (sListId = "") Begin
+//            // create the Customer record
+//            Get IsCustomerColumnString                                                to sColumns
+//            Get IsCustomerValueString                                                 to sValues
+//            //showln sColumns
+//            //showln sValues
+//            Move ("INSERT INTO Customer (" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+//            Get DoExecuteSqlStatement hDbc sQuery                                     to bError
+//            If (bError) Begin
+//                Set pbError   to True
+//                Set psMessage to "Customer creation error"
+//                Function_Return
+//            End
+//            // get & save the ListID
+//            Get IsCustomerListId Dealers.Number to sListId
+//            If (pbError(Self)) Procedure_Return
+//        End
+//        If (sListId <> "") Begin
+//            // update the dealer record
+//            Reread
+//            Move sListId to Dealers.List_id
+//            SaveRecord Dealers
+//            Unlock
+//        End // update dealer record
+//        Else Procedure_Return
+//    End // if (Dealers.List_id = "") begin
+//    Else Begin
+//        Move (trim(Dealers.List_id)) to sListId
+//    End
+    Function_Return sListId
+End_Function
+
+Function IsInvoiceLineColumnString Returns String
+    String sC01 sC02 sC03 sC04 sC05 sC06 sC07 //sC08
+    //
+    Move "CustomerRefListID,"                to sC01
+    Move "InvoiceLineItemRefListID,"         to sC02
+    Move "InvoiceLineDesc,"                  to sC03
+    Move "InvoiceLineRate,"                  to sC04
+    Move "InvoiceLineAmount,"                to sC05
+    Move "InvoiceLineSalesTaxCodeRefListID," to sC06
+    Move "FQSaveToCache"                     to sC07
+    Function_Return (sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07)
+End_Function
+
+Function IsInvoiceColumnString Returns String
+    String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08 sC09
+    String sC10 sC11 sC12 sC13 //sC14 //sC15 sC16 //sC17
+    //
+    Move "ARAccountRefListID,"               to sC01
+    Move "TxnDate,"                          to sC02
+    Move "RefNumber,"                        to sC03
+    Move "BillAddressAddr1,"                 to sC04
+    Move "BillAddressAddr2,"                 to sC05
+    Move "BillAddressAddr3,"                 to sC06
+    Move "BillAddressCity,"                  to sC07
+    Move "BillAddressState,"                 to sC08
+    Move "BillAddressPostalCode,"            to sC09
+    Move "PONumber,"                         to sC10
+    Move "IsPending,"                        to sC11
+    Move "TermsRefListID,"                   to sC12
+//    Move "ShipDate,"                         to sC13
+//    Move "ItemSalesTaxRefListID,"            to sC13
+//    Move "Memo,"                             to sC15
+    Move "IsToBePrinted"                     to sC13
+    Function_Return ( ;
+        sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08 * sC09 * ;
+        sC10 * sC11 * sC12 * sC13)
+End_Function
+
+Procedure DoQodbcTest
+    Boolean bCancel bError
+    Integer eStatus
+    String  sError sListId sClass sColumns sValues sTable sQuery
+    String  sInvoiceDate sName sAddr1 sAddr2
+    String  sV01 sV02 sV03 sV04 sV05 sV06 sV07 sV08
+    String  sV09 sV10 sV11 sV12 sV13 sV14 sV15 sV16
+    Handle  hDbc
+    //
+    Get Confirm "Do Test?" to bCancel
+    If bCancel Procedure_Return
+    //
+    // make the connections to the ODBC driver and the DSN that you set up with the
+    // QODBC Administrator
+    SQLConnect "ODBC_DRV" ("DSN=QuickBooks Data") to hDbc
+    If (not(hDbc)) Begin
+        Send Stop_Box "Unable to connect to data source."
+        Procedure_Return
+    End
+    Send Info_Box "Connected"
+    //
+    Clear Invhdr Order Location
+    Move 107870 to Invhdr.InvoiceIdno
+    Find eq Invhdr.InvoiceIdno
+    If (Found) Begin
+        Relate Invhdr
+        Get_Attribute DF_FILE_STATUS of Location.File_Number to eStatus
+        If (eStatus = DF_FILE_ACTIVE and Location.ListID = "") Begin
+            Get IsLocationListId hDbc Location.LocationIdno (&sError) to sListId
+            If (sListId <> "") Begin
+                Reread Location
+                Move sListId to Location.ListID
+                SaveRecord Location
+                Unlock
+                Showln sListId
+            End
+            Else Begin
+                Showln sError
+            End
+        End
+        If (Location.ListID <> "") Begin
+            Move "InvoiceLine"                                           to sTable
+            Move (Trim(Location.ListID))                                 to sListId
+            Get IsInvoiceLineColumnString                                to sColumns
+            Move ("'" + sListId + "',")                                  to sV01
+//            Move ("'" + sClass + "',")                                   to sV02
+            Move ("'8000033A-1228324959',")                              to sV02
+            Move ("'Snow removal',")                                     to sV03
+            Move ("1.000,")                                                               to sV04
+            Move (String(Invhdr.TotalAmount) + ",")                                       to sV05
+            Move ("'20000-1046219236',")                                                  to sV06
+            Move ("1")                                                                    to sV07
+            Move (sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07)                  to sValues
+            Move ("INSERT INTO" * sTable * "(" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+            //
+            Get DoExecuteSqlStatement hDbc sQuery                                         to bError
+            If (bError) Begin
+                SQLDisconnect hDbc
+                Send Info_Box "Invoice line creation error"
+                Procedure_Return
+            End
+            //
+            Move (Trim(Location.Name))     to sName
+            Move (Replaces("'",sName,""))  to sName
+            Move (Trim(Location.Address1)) to sAddr1
+            Move (Replaces("'",sAddr1,"")) to sAddr1
+            Move (Trim(Location.Address2)) to sAddr2
+            Move (Replaces("'",sAddr2,"")) to sName
+            Move "Invoice"                                           to sTable
+            Get IsInvoiceColumnString                                to sColumns
+            Get IsSqlDate 9/8/2010                                   to sInvoiceDate
+            Move ("'3E0000-951967379',")                                                  to sV01
+            Move ("{d'" + sInvoiceDate + "'},")                                           to sV02
+            Move ("'" + String(Invhdr.InvoiceIdno) + "',")                                to sV03
+            Move ("'" + sName  + "',")                                                    to sV04
+            Move ("'" + sAddr1 + "',")                                                    to sV05
+            Move ("'" + sAddr2 + "',")                                                    to sV06
+            Move ("'" + trim(Location.City) + "',")                                       to sV07
+            Move ("'" + trim(Location.State) + "',")                                      to sV08
+            Move ("'" + trim(Location.Zip) + "',")                                        to sV09
+            Move ("'" + Trim(Order.PO_Number) + "',")                                     to sV10
+            Move "0,"                                                                     to sV11
+            Move ("'20000-951965624',")                                                   to sV12
+            Move "0"                                                                      to sV13
+            move ( ;
+                sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08 * sV09 * ;
+                sV10 * sV11 * sV12 * sV13)             to sValues
+            move ("INSERT INTO" * sTable * "(" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+            //
+            Get DoExecuteSqlStatement hDbc sQuery                                         to bError
+            If (bError) Begin
+                SQLDisconnect hDbc
+                Send Info_Box "Invoice line creation error - Header"
+                Procedure_Return
+            End
+        End
+    End
+    // close the connection
+    SQLDisconnect hDbc
+End_Procedure
+
+Send DoQodbcTest

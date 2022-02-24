@@ -1,0 +1,35 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Ref_Hdr (# 45)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Ref_Hdr
+  USER DISPLAY NAME         : Ref_Hdr
+  DATAFLEX FILE NAME        : Ref_Hdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 102       ( USED: 102 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 10 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Ref_Hdr_Idno     NUM   10.0     1  1   
+  2  Description      ASC     50    12  2   
+  3  SalesRep         ASC     30    62      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Ref_Hdr_Idno    NO  NO       0      0       1     ON-LINE
+
+  2    Description     NO  NO       0      0       2     ON-LINE
+       Recnum          NO  NO 
+

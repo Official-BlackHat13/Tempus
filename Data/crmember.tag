@@ -1,0 +1,5 @@
+CrewMemberId
+CrewId
+CrewDate
+EmployeeId
+CrewChiefFlag

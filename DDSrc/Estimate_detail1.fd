@@ -1,0 +1,8 @@
+#REPLACE FILE90 Estimate_detail1
+#REPLACE Estimate_detail1.Recnum |FN90,0
+#REPLACE Estimate_detail1.EstDtlIdno |FN90,1
+#REPLACE Estimate_detail1.EstHeadIdno |FN90,2
+#REPLACE Estimate_detail1.MastOpsIdno |FN90,3
+#REPLACE Estimate_detail1.SellRate |FN90,4
+#REPLACE Estimate_detail1.BasisQty |FN90,5
+#REPLACE Estimate_detail1.Description |FS90,6

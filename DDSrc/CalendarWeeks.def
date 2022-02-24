@@ -1,0 +1,35 @@
+-----------------------------------------------------------------------------
+  DATE: 11/15/2016      TIME: 15:36                                  PAGE:  1
+  FILE DEFINITION FOR FILE: CalendarWeeks (# 77)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CalendarWeeks
+  USER DISPLAY NAME         : CalendarWeeks
+  DATAFLEX FILE NAME        : CalendarWeeks
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 147       ( USED: 147 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 52 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 3 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  week_of_year     NUM   10.0     1      
+  2  WeekDates        ASC     77    12      
+  3  YearWeek         ASC      7    89  1   
+  4  first_day_in_week  DTM     26    96      
+  5  last_day_in_week  DTM     26   119      
+  6  year_week        ASC      6   142      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    YearWeek        YES NO       0      0       1     ON-LINE
+

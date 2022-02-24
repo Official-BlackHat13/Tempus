@@ -1,0 +1,18 @@
+Global_Variable Integer giSalesRepId
+Global_Variable Integer giEmployeeId
+Global_Variable Integer giUserRights
+// 0 - Not Yet Specified
+// 50 - Sales (50)
+// 55 - Sales Special (55)
+// 60 - Operations (60)
+// 65 - Operations - Temp Changed (65)
+// 70 - Administration (70)
+// 80 - Management (80)
+// 90 - System Admin (90)
+Global_Variable String gsUserGroup
+Global_Variable Integer giCompanyIdno
+Global_Variable String gsCompanyName
+Global_Variable String gsUserFullName
+Global_Variable Integer giUserId
+Global_Variable String gsUsername
+Global_Variable String gsPassword

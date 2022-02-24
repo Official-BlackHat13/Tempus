@@ -1,0 +1,15 @@
+Use cCJCommandBarSystem.pkg
+
+Class cCJMenuItem_IC is a cCJMenuItem
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+
+    End_Procedure
+
+End_Class

@@ -1,0 +1,314 @@
+// HEADERS as required by API: https://docs.lab-api.insuresign.io/?version=latest#b86b0958-7354-4982-af0c-da2c5b158014
+// OTHER https://lab-docs-api-v2.insuresign.io/#_headers_3
+
+Use cHttpTransfer.pkg
+Use cJsonObject.pkg
+Use cCharTranslate.pkg
+
+Struct tAuth
+    String access_token
+    Number expires_in
+    String token_type
+End_Struct
+
+    Object oHttp is a cHttpTransfer
+        
+        Property UChar[] pucaData
+        Property String psContentType
+        
+        Set pbShowErrorDialog to True
+    
+        Procedure OnDataReceived String sContentType String sData
+            UChar[] ucaData
+              
+            Get pucaData                                            to ucaData
+            Move (AppendArray(ucaData, StringToUCharArray(sData)))  to ucaData
+            Set pucaData                                            to ucaData
+            Set psContentType                                       to sContentType
+        End_Procedure
+
+        Procedure Reset
+            UChar[] empty
+              
+            Set pucaData        to empty
+            Set psContentType   to ""
+            Set peTransferFlags to 0
+            Set psAcceptTypes   to "*"
+            Send ClearHeaders
+        End_Procedure
+    
+    End_Object
+
+    Function ClientCredentialsAuthorization String ByRef sAccessToken String ByRef sResponse Integer ByRef iStatus Returns Boolean
+        String sClientId sClientSecret sPath sData sToken 
+        Address pData pCreds
+        Boolean bOK
+        Integer iOK iSize i iArraySize
+        UChar[] ucaReq ucaResp
+        Handle  hoReq hoJson
+        tAuth tAuthData
+        // Build Token from ClientId and ClientSecret
+        Move ("s1rv7r8upmvj47pf7eh631rqc") to sClientId
+        Move ("6la6bn42p24ut32kv9cg26rb3upr1uvepgdm016b0trvfkbkm9j") to sClientSecret
+        Move (sClientId+":"+sClientSecret) to sToken
+        Move (Length(sToken)) to iSize
+        Move (Base64Encode(AddressOf(sToken), iSize)) to pCreds
+        Move pCreds to sToken
+        //
+        Send Reset of oHttp
+        Set piRemotePort of oHttp to rpHttpSSL
+        Set peTransferFlags of oHttp to ifSecure
+        Set psRemoteHost of oHttp to "auth.insuresign.io"
+        Move "/oauth2/token" to sPath
+        // HEADER
+        Get AddHeader of oHttp "Authorization" ("Basic" * sToken) to bOK
+        Get AddHeader of oHttp "Content-Type" "application/x-www-form-urlencoded" to bOk
+        // BODY
+        Move ("grant_type=client_credentials&client_id="+sClientId) to sData
+        Move (Length(sData)) to iSize
+        Move (AddressOf(sData)) to pData
+        // Prep and Execute Request
+        Get HTTPPostAddrRequest of oHttp sPath pData iSize False to iOK
+        If iOK Begin
+            Get ResponseStatusCode of oHttp to iStatus
+            Get pucaData of oHttp to ucaResp
+            If not ((iStatus >= 200) and (iStatus < 300)) Begin
+                Send Info_Box ("Http status:" * String(iStatus)) "Error"
+                Function_Return (False)
+            End
+            Else Begin
+                If (SizeOfArray(ucaResp)) Begin
+                    Get Create (RefClass(cJsonObject))  to hoJson // Created
+                    Set peWhiteSpace of hoJson          to jpWhitespace_Pretty
+                    Set pbEscapeForwardSlash of hoJson  to False
+                    Get ParseUtf8 of hoJson ucaResp     to bOK
+                     
+                    If bOK Begin
+                        Move (Stringify(hoJson)) to sResponse
+                        Set pbRequireAllMembers of hoJson to False
+                        Get JsonToDataType of hoJson to tAuthData
+                        If (Length(tAuthData.access_token)>0) Begin
+                            Move (tAuthData.access_token) to sAccessToken
+                        End
+                    End
+                    Else Begin
+                        Move ("Invalid JSON received," * psParseError(hoJson)) to sResponse
+                    End
+                    Send Destroy of hoJson                       // Destroyed
+                End
+            End
+        End
+        Else Begin
+            Send Info_Box "HTTP request failed" "Error"
+        End
+        // Free Memory
+        Move (Free(pCreds)) to bOK
+        Function_Return (bOK)
+    End_Procedure
+
+    Object oCharTranslate is a cCharTranslate
+    End_Object
+
+    Function UploadFile String sAccessToken String sFile String ByRef sResponse Returns Boolean
+        Boolean bSuccess bOk
+        String sPath sData
+        Integer iSize iOK iStatus iVoid
+        Address pData aBinData
+        String sVar
+        UChar[] ucaReq ucaResp
+        Handle hoJson
+        //
+        Send Reset of oHttp
+        Set piRemotePort of oHttp to rpHttpSSL
+        Set peTransferFlags of oHttp to ifSecure
+        Set psRemoteHost of oHttp to "api-v2.insuresign.io"
+        Move "/upload" to sPath
+        // HEADER
+        Get AddHeader of oHttp "Content-Type" "multipart/form-data" to bOk
+        Get AddHeader of oHttp "Content-Type" "application/json;charset=UTF-8" to bOk
+        Get AddHeader of oHttp "Authorization" ("Bearer"*sAccessToken) to bOk
+        // DATA
+        Get FileSize sFile to iSize
+        Move ("file="+sFile) to sData
+        Move (AddressOf(sData)) to pData
+        //
+        Get HTTPPostAddrRequest of oHttp sPath pData iSize False to iOK
+        If iOK Begin
+            Get ResponseStatusCode of oHttp to iStatus
+            Get pucaData of oHttp to ucaResp
+            If not ((iStatus >= 200) and (iStatus < 300)) Begin
+                Send Info_Box ("Http status:" * String(iStatus)) "Error"
+                Function_Return (False)
+            End
+            Else Begin
+                If (SizeOfArray(ucaResp)) Begin
+                    Get Create (RefClass(cJsonObject))  to hoJson // Created
+                    Set peWhiteSpace of hoJson          to jpWhitespace_Pretty
+                    Set pbEscapeForwardSlash of hoJson  to False
+                    Get ParseUtf8 of hoJson ucaResp     to bOK
+                     
+                    If bOK Begin
+                        Move (Stringify(hoJson)) to sResponse
+                        Set pbRequireAllMembers of hoJson to False
+//                        Get JsonToDataType of hoJson to tAuthData
+//                        If (Length(tAuthData.access_token)>0) Begin
+//                            Move (tAuthData.access_token) to sAccessToken
+//                        End
+                    End
+                    Else Begin
+                        Move ("Invalid JSON received," * psParseError(hoJson)) to sResponse
+                    End
+                    Send Destroy of hoJson                       // Destroyed
+                End
+            End
+        End
+        Else Begin
+            Send Info_Box "HTTP request failed" "Error"
+        End
+        //
+        Move (Free(pData)) to iVoid
+    End_Function
+
+    Procedure GetDocuments String sAccessToken String ByRef sResponse Integer ByRef iStatus
+        String sPath sData sVerb sClientId sClientSecret sToken sUUID sLastResponse
+        Address pData pCreds
+        Boolean bOK
+        Integer iSize iOK
+        UChar[] ucaReq ucaResp
+        Handle  hoReq hoResp
+        //
+        Send Reset of oHttp
+        Set piRemotePort of oHttp to rpHttpSSL
+        Set peTransferFlags of oHttp to ifSecure
+
+        Set psRemoteHost of oHttp to "api-v2.insuresign.io"
+        Move "/my/documents" to sPath
+        // HEADER
+        Get AddHeader of oHttp "Content-Type" "application/json;charset=UTF-8" to bOK
+        Get AddHeader of oHttp "Authorization" ("Bearer"*sAccessToken) to bOK
+        // Execute Request
+        Get HTTPGetRequest of oHttp sPath to iOK
+        If iOK Begin
+            Get ResponseStatusCode of oHttp to iStatus
+            Get pucaData of oHttp to ucaResp
+             
+            // Do we have some response?
+            If (SizeOfArray(ucaResp)) Begin
+                Get Create (RefClass(cJsonObject))  to hoResp // Created
+                Set peWhiteSpace of hoResp          to jpWhitespace_Pretty
+                Set pbEscapeForwardSlash of hoResp  to False
+                Get ParseUtf8 of hoResp ucaResp     to bOK
+                 
+                If bOK Begin
+                    Move (Stringify(hoResp)) to sResponse
+                End
+                Else Begin
+                    Move ("Invalid JSON received," * psParseError(hoResp)) to sResponse
+                End
+                Send Destroy of hoResp                       // Destroyed
+            End
+             
+        End
+        Else Begin
+            Send Info_Box "HTTP request failed" "Error"
+        End
+
+    End_Procedure
+    
+    Procedure GetTemplates String sAccessToken String ByRef sResponse Integer ByRef iStatus
+        String sPath sData sVerb sClientId sClientSecret sToken sUUID sLastResponse
+        Address pData pCreds
+        Boolean bOK
+        Integer iSize iOK
+        UChar[] ucaReq ucaResp
+        Handle  hoReq hoResp
+        //
+        Send Reset of oHttp
+        
+        Set piRemotePort of oHttp to rpHttpSSL
+        Set peTransferFlags of oHttp to ifSecure
+
+        Set psRemoteHost of oHttp to "api-v2.insuresign.io"
+        Move "/templates" to sPath
+        // HEADER
+        Get AddHeader of oHttp "Content-Type" "application/json;charset=UTF-8" to bOK
+        Get AddHeader of oHttp "Authorization" ("Bearer"*sAccessToken) to bOK
+        // Execute Request
+        Get HTTPGetRequest of oHttp sPath to iOK
+        If iOK Begin
+            Get ResponseStatusCode of oHttp to iStatus
+            Get pucaData of oHttp to ucaResp
+             
+            // Do we have some response?
+            If (SizeOfArray(ucaResp)) Begin
+                Get Create (RefClass(cJsonObject))  to hoResp // Created
+                Set peWhiteSpace of hoResp          to jpWhitespace_Pretty
+                Set pbEscapeForwardSlash of hoResp  to False
+                Get ParseUtf8 of hoResp ucaResp     to bOK
+                 
+                If bOK Begin
+                    Move (Stringify(hoResp)) to sResponse
+                End
+                Else Begin
+                    Move ("Invalid JSON received," * psParseError(hoResp)) to sResponse
+                End
+                Send Destroy of hoResp                       // Destroyed
+            End
+             
+        End
+        Else Begin
+            Send Info_Box "HTTP request failed" "Error"
+        End
+
+    End_Procedure
+    
+    Procedure CreateDocument String sClientId String sClientSecret String ByRef sResponse Integer ByRef iStatus
+        String sPath sData sVerb sToken sUUID sLastResponse sAccessToken
+        Address pData pCreds
+        Boolean bOK
+        Integer iSize iOK
+        UChar[] ucaReq ucaResp
+        Handle  hoReq hoResp
+        //
+        Send Reset of oHttp
+        
+        Set piRemotePort of oHttp to rpHttpSSL
+        Set peTransferFlags of oHttp to ifSecure
+
+        Set psRemoteHost of oHttp to "api-v2.insuresign.io"
+        Move "/documents" to sPath
+        // HEADER
+        Get AddHeader of oHttp "Content-Type" "multipart/form-data" to bOK
+        Get AddHeader of oHttp "Content-Type" "application/json;charset=UTF-8" to bOK
+        Get AddHeader of oHttp "Authorization" ("Bearer"*sAccessToken) to bOK
+        // BODY / DETAIL
+        //ToDo: BuildJason for Data.
+        // Execute Request
+        Get HttpPostRequest of oHttp sPath sData False to iOK
+        If iOK Begin
+            Get ResponseStatusCode of oHttp to iStatus
+            Get pucaData of oHttp to ucaResp
+             
+            // Do we have some response?
+            If (SizeOfArray(ucaResp)) Begin
+                Get Create (RefClass(cJsonObject))  to hoResp // Created
+                Set peWhiteSpace of hoResp          to jpWhitespace_Pretty
+                Set pbEscapeForwardSlash of hoResp  to False
+                Get ParseUtf8 of hoResp ucaResp     to bOK
+                 
+                If bOK Begin
+                    Move (Stringify(hoResp)) to sResponse
+                End
+                Else Begin
+                    Move ("Invalid JSON received," * psParseError(hoResp)) to sResponse
+                End
+                Send Destroy of hoResp                       // Destroyed
+            End
+             
+        End
+        Else Begin
+            Send Info_Box "HTTP request failed" "Error"
+        End
+        // Free Memory
+        Move (Free(pCreds)) to bOK
+    End_Procedure

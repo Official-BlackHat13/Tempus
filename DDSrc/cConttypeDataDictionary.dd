@@ -1,0 +1,31 @@
+Use cGlblDataDictionary.pkg
+
+Open Conttype
+Open Contact
+
+Register_Object Conttype_sl
+
+Class cConttypeDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Conttype.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field Conttype.Code DD_CAPSLOCK to True
+        Set Field_Prompt_Object Field Conttype.Code to Conttype_sl
+
+        Set Field_Prompt_Object Field Conttype.Description to Conttype_sl
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Conttype.sl
+#ENDIF

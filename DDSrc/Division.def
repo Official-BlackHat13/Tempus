@@ -1,0 +1,31 @@
+-----------------------------------------------------------------------------
+  DATE: 04/20/2013      TIME: 09:34                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Division (# 43)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : DATAFLEX
+  FILE ROOT NAME            : Division
+  USER DISPLAY NAME         : Division
+  DATAFLEX FILE NAME        : Division
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 34        ( USED: 34 )
+  MAX NUMBER OF RECORDS     : 10000     ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : FILE
+  HEADER INTEGRITY CHECKING : YES
+  TRANSACTION TYPE          : CLIENT ATOMIC
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : 
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  DivIdno          NUM    8.0     1  1   
+  2  Name             ASC     30     5      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    DivIdno         NO  NO       4      2       1     ON-LINE
+

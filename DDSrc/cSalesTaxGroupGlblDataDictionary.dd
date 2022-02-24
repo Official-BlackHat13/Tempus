@@ -1,0 +1,53 @@
+Use cGlblDataDictionary.pkg
+
+Open SalesTaxGroup
+Open Location
+Open System
+
+Register_Object SalesTaxGroup_sl
+
+Class cSalesTaxGroupGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to SalesTaxGroup.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Client_File to Location.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+        
+        Set Field_Auto_Increment Field SalesTaxGroup.SalesTaxIdno to File_Field System.LastSalesTaxId
+        Set Field_Prompt_Object Field SalesTaxGroup.SalesTaxIdno to SalesTaxGroup_sl
+        Set Key_Field_State Field SalesTaxGroup.SalesTaxIdno to True
+        Set Field_Option Field SalesTaxGroup.SalesTaxIdno DD_AUTOFIND to True
+        Set Field_Option Field SalesTaxGroup.SalesTaxIdno DD_REQUIRED to True
+        
+
+        Set Field_Prompt_Object Field SalesTaxGroup.Name to SalesTaxGroup_sl
+        Set Field_Option Field SalesTaxGroup.Name DD_AUTOFIND to True
+        Set Field_Option Field SalesTaxGroup.Name DD_REQUIRED to True
+
+        Set Field_Option Field SalesTaxGroup.Rate DD_REQUIRED to True
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to SalesTaxGroup.ChangedFlag  
+        End
+
+    End_Procedure
+    
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use SalesTaxGroup.sl
+#ENDIF

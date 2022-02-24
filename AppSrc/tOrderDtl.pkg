@@ -1,0 +1,25 @@
+Struct tOrderDtl
+    Integer    iOrdDtlIdno
+    Integer    iJobNumber
+    Integer    iEsitemIdno
+    Integer    iMastOpsIdno
+    Integer    iOpersIdno
+    Number     nCompSeq
+    Number     nSequence
+    Number     nQty
+    Number     nPrice
+    Number     nTaxRate
+    Number     nTaxAmount
+    Number     nAmount
+    String     sInvoiceDescription
+    String     sInstructions
+    Date       dCreatedOn
+    Date       dLastModifyedOn
+    Integer    iRecordOwner
+    Number     nSqft
+    Number     nLnft
+    Number     nMatQty
+    Number     nTotManHrs
+    Number     nOSCost
+    Number     nMatCost
+End_Struct

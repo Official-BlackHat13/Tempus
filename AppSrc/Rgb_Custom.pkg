@@ -1,0 +1,11 @@
+//************************************************************************
+//--- RGB_CUSTOM.pkg
+//
+//--- Custom Color Additions for use with Tempus
+//
+//--- Benjamin Bungarten 02/01/2016
+//************************************************************************
+
+#Replace clOrange  |CI$000099FF
+#Replace clLtBlue  |CI$0062C2CC
+

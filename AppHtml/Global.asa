@@ -1,0 +1,93 @@
+<OBJECT RUNAT=Server SCOPE=Session ID=WebAppServerSession PROGID="WebAppServer.Session.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oEmployeeHistoryReport PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oEventEntry PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oEventOverview PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oInvoiceHistoryReport PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oOpenCallCenterItems PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oOpenTransactions PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oPropertyManagerLocations PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oRecentActivity PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oTest PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oTransactionEntry PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oTransactionHistory PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<OBJECT RUNAT=Server SCOPE=Session ID=oZipLatLong PROGID="WebAppServer.WebBusinessProcess.19.1">
+</OBJECT>
+
+<SCRIPT LANGUAGE=VBScript RUNAT=Server>
+SUB Session_OnStart
+    WebAppServerSession.PageScopedSession=True
+    WebAppServerSession.Initialize("ISC")
+    oEmployeeHistoryReport.Name="oEmployeeHistoryReport"
+    oEventEntry.Name="oEventEntry"
+    oEventOverview.Name="oEventOverview"
+    oInvoiceHistoryReport.Name="oInvoiceHistoryReport"
+    oOpenCallCenterItems.Name="oOpenCallCenterItems"
+    oOpenTransactions.Name="oOpenTransactions"
+    oPropertyManagerLocations.Name="oPropertyManagerLocations"
+    oRecentActivity.Name="oRecentActivity"
+    oTest.Name="oTest"
+    oTransactionEntry.Name="oTransactionEntry"
+    oTransactionHistory.Name="oTransactionHistory"
+    oZipLatLong.Name="oZipLatLong"
+    Session.Timeout=1
+
+    ' This defines the style to be used through out the application.
+    'Session("Style")="css/WebApp.css"
+    'Session("Style")="css/WebAppSample.css"
+    'Session("Style")="css/WebAppStyle1.css"
+    'Session("Style")="css/WebAppStyle2.css"
+    'Session("Style")="css/AppFocus.css"
+    'Session("Style")="css/TheBlues.css"
+    'Session("Style")="css/Comtempo.css"
+    'Session("Style")="css/Rustic.css"
+    'Session("Style")="css/WebSchema.css"
+END SUB
+</SCRIPT>
+
+<SCRIPT LANGUAGE=VBScript RUNAT=Server>
+SUB Application_OnStart
+END SUB
+</SCRIPT>
+
+<SCRIPT LANGUAGE=VBScript RUNAT=Server>
+SUB Application_OnEnd
+END SUB
+</SCRIPT>
+
+<SCRIPT LANGUAGE=VBScript RUNAT=Server>
+SUB Session_OnEnd
+END SUB
+</SCRIPT>
+
+
+
+
+
+
+
+
+

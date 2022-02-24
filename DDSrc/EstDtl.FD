@@ -1,0 +1,8 @@
+#REPLACE FILE13 EstDtl
+#REPLACE EstDtl.Recnum |FN13,0
+#REPLACE EstDtl.EstDtlIdno |FN13,1
+#REPLACE EstDtl.EstHeadIdno |FN13,2
+#REPLACE EstDtl.MastOpsIdno |FN13,3
+#REPLACE EstDtl.SellRate |FN13,4
+#REPLACE EstDtl.BasisQty |FN13,5
+#REPLACE EstDtl.Description |FS13,6

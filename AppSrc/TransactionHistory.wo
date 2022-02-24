@@ -1,0 +1,220 @@
+// TransactionHistory.wo
+// Transaction History
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use MastOps.DD
+Use Opers.DD
+Use Order.DD
+Use Trans.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Object oTransactionHistory Is A cWebBusinessProcess
+    Set psDescription To "Transaction History"
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+
+    Object oEmployer_DD Is A Employer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oEmployer_DD
+
+    Object oEmployee_DD Is A Employee_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oEmployer_DD
+    End_Object // oEmployee_DD
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+    End_Object // oLocation_DD
+
+    Object oMastops_DD Is A Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+        Send DefineAllExtendedFields
+    End_Object // oMastops_DD
+
+    Object oOpers_DD Is A Opers_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+        Set DDO_Server To oMastops_DD
+    End_Object // oOpers_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+    Object oTrans_DD Is A Trans_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oEmployee_DD
+        Set DDO_Server To oOrder_DD
+        Set DDO_Server To oOpers_DD
+        Property Number pnStartJobNumber
+        Property Number pnStopJobNumber
+        Property Date pdStartStartDate
+        Property Date pdStopStartDate
+
+        Procedure OnConstrain 
+            Number nStart nStop
+            Date dStart dStop
+            //
+            Get pnStartJobNumber to nStart
+            Get pnStopJobNumber To nStop
+
+            If (nStart <> 0 And nStop <> 0) Begin
+                Constrain Trans.Jobnumber Between nStart And nStop
+            End
+            Else Begin
+                If (nStart <> 0) Begin
+                    Constrain Trans.Jobnumber Ge nStart
+                End
+                Else Begin
+                    If (nStop <> 0) Begin
+                        Constrain Trans.Jobnumber Le nStop
+                    End
+                End
+            End
+
+            Get pdStartStartDate To dStart
+            Get pdStopStartDate To dStop
+
+            If (dStart <> 0 And dStop <> 0) Begin
+                Constrain Trans.Startdate Between dStart And dStop
+            End
+            Else Begin
+                If (dStart <> 0) Begin
+                    Constrain Trans.Startdate Ge dStart
+                End
+                Else Begin
+                    If (dStop <> 0) Begin
+                        Constrain Trans.Startdate Le dStop
+                    End
+                End
+            End
+        End_Procedure // OnConstrain
+    End_Object // oTrans_DD
+
+    Set Main_DD To oTrans_DD
+
+
+    Object oReport Is A cWebReport
+
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCellHeader 'Startdate' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Starttime' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Stopdate' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Stoptime' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Quantity' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Equipmentid' 'class="Header" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText
+            String sTransStartdate
+            String sTransStarttime
+            String sTransStopdate
+            String sTransStoptime
+            String sTransQuantity
+            String sTransEquipmentid
+
+            Get ddValueEncode "Trans.Startdate" To sTransStartdate
+            Get ddValueEncode "Trans.Starttime" To sTransStarttime
+            Get ddValueEncode "Trans.Stopdate" To sTransStopdate
+            Get ddValueEncode "Trans.Stoptime" To sTransStoptime
+            Get ddValueEncode "Trans.Quantity" To sTransQuantity
+            Get ddValueEncode "Trans.Equipmentid" To sTransEquipmentid
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCell sTransStartdate 'class="Data" align="left"'
+                Send WriteHtmlCell sTransStarttime 'class="Data" align="left"'
+                Send WriteHtmlCell sTransStopdate 'class="Data" align="left"'
+                Send WriteHtmlCell sTransStoptime 'class="Data" align="left"'
+                Send WriteHtmlCell (FormatNumber (sTransQuantity,2)) 'class="Data" align="right"'
+                Send WriteHtmlCell sTransEquipmentid 'class="Data" align="left"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunTransactionHistory Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunTransactionHistory
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetTrans_Jobnumber String sStart String sStop
+        Set pnStartJobNumber of oTrans_DD To sStart
+        Set pnStopJobNumber  of oTrans_DD To sStop
+    End_Procedure // SetTrans_Jobnumber
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetTrans_Startdate String sStart String sStop
+        Set pdStartStartDate of oTrans_DD To sStart
+        Set pdStopStartDate  of oTrans_DD To sStop
+    End_Procedure // SetTrans_Startdate
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunTransactionHistory Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunTransactionHistory of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunTransactionHistory
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oTransactionHistory

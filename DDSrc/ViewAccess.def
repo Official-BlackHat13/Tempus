@@ -1,0 +1,45 @@
+-----------------------------------------------------------------------------
+  DATE: 06/02/2020      TIME: 14:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: ViewAccess (# 84)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:ViewAccess
+  USER DISPLAY NAME         : ViewAccess
+  DATAFLEX FILE NAME        : ViewAccess
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 525       ( USED: 525 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-149\SQLEXPRESS;Trusted_Connection=yes;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ViewName         ASC    100     1  1   
+  2  Application      ASC    100   101  1   
+  3  Full             ASC    100   201      
+  4  Modify           ASC    100   301      
+  5  ReadOnly         ASC    100   401      
+  6  ChangedFlag      NUM    2.0   501  2   
+  7  Sequence         NUM    4.2   507  3   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ViewName        NO  NO       0      0       2     ON-LINE
+       Application     NO  NO 
+
+  2    ChangedFlag     NO  NO       0      0       3     ON-LINE
+       ViewName        NO  NO 
+       Application     NO  NO 
+
+  3    Sequence        NO  NO       0      0       3     ON-LINE
+       ViewName        NO  NO 
+       Application     NO  NO 
+

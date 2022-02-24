@@ -1,0 +1,11 @@
+#REPLACE FILE87 CustomerContracts
+#REPLACE CustomerContracts.Recnum |FN87,0
+#REPLACE CustomerContracts.ContractIdno |FN87,1
+#REPLACE CustomerContracts.CustomerIdno |FN87,2
+#REPLACE CustomerContracts.DisplayName |FS87,3
+#REPLACE CustomerContracts.FileName |FS87,4
+#REPLACE CustomerContracts.StartDate |FD87,5
+#REPLACE CustomerContracts.ExpiryDate |FD87,6
+#REPLACE CustomerContracts.TempFlag |FN87,7
+#REPLACE CustomerContracts.AssignedCount |FN87,8
+#REPLACE CustomerContracts.ChangedFlag |FN87,9

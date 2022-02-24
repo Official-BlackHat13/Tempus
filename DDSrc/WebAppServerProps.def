@@ -1,0 +1,46 @@
+-----------------------------------------------------------------------------
+  DATE: 05/08/2020      TIME: 14:09                                  PAGE:  1
+  FILE DEFINITION FOR FILE: WebAppServerProps (# 265)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:WebAppServerProps
+  USER DISPLAY NAME         : WebApp Server Props
+  DATAFLEX FILE NAME        : WebAppServerProps
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16549     ( USED: 16549 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 1 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 1 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-149\SQLEXPRESS;Trusted_Connection=yes;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Key              ASC     64     1  1   
+  2  CreateDate       DAT     10    65      
+  3  CreateTime       ASC     12    81      
+  4  ExpiresDate      DAT     10    93  2   
+  5  ExpiresTime      ASC     12   109  2   
+  6  Locked           NUM    2.0   121      
+  7  LockedDate       DAT     10   127      
+  8  LockedTime       ASC     12   143      
+  9  Page             NUM    4.0   155  1   
+ 10  Pages            NUM    4.0   161      
+ 11  Data             TEX  1048576   167      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Key             NO  NO       0      0       2     ON-LINE
+       Page            NO  NO 
+
+  2    ExpiresDate     YES NO       0      0       4     ON-LINE
+       ExpiresTime     YES NO 
+       Key             NO  NO 
+       Page            NO  NO 
+

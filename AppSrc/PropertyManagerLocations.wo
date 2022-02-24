@@ -1,0 +1,359 @@
+// PropertyManagerLocations.wo
+// Property Manager Locations
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Contact.DD
+
+Use cZipGeoGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Open ZipGeo
+
+Open Order
+Open Trans
+Open Invhdr
+Open Contact
+
+
+Object oPropertyManagerLocations Is A cWebBusinessProcess
+
+    Set psDescription to "Property Manager Locations"
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+
+        Property Integer piPropmgrIdno
+
+        Procedure OnConstrain
+            Constrain Location.PropmgrIdno eq (piPropmgrIdno(Self))
+        End_Procedure
+    End_Object // oLocation_DD
+
+    Set Main_DD To oLocation_DD
+
+    Function AddInvoiceHistoryLink Integer iJob String sValue Returns String
+        String sRefName sUrl sLocationId sSep
+        //
+        Move "InvoiceHistoryReport.asp"                  to sRefName
+        Move (If(pos("?",sRefName),"&","?"))             to sSep
+        Move (String(iJob))                              to sLocationId
+        Move (sRefName-sSep-"SelStart1=" - sLocationId ) to sUrl
+        Move (sUrl + "&RunReport=1")                     to sUrl
+        Get HtmlLink sUrl sValue                         to sValue
+        //
+        Function_Return sValue
+    End_Function
+
+    Function AddRecentActivityLink Integer iJob String sValue Returns String
+        String sRefName sUrl sLocationId sSep
+        //
+        Move "RecentActivity.asp"                        to sRefName
+        Move (If(pos("?",sRefName),"&","?"))             to sSep
+        Move (String(iJob))                              to sLocationId
+        Move (sRefName-sSep-"SelStart1=" - sLocationId ) to sUrl
+        Move (sUrl + "&RunReport=1")                     to sUrl
+        Get HtmlLinkButton sUrl sValue                         to sValue
+        //
+        Function_Return sValue
+    End_Function
+ 
+    Function IsLocationStatus Integer iLocId Integer ByRef iJob Returns String
+        Boolean bActive
+        String  sStatus
+        //
+        Move "Inactive" to sStatus
+        //
+        Clear Order
+        Move iLocId to Order.LocationIdno
+        Find ge Order.LocationIdno
+        While ((Found) and Order.LocationIdno = iLocId)
+            Move (Order.WorkType = "S" and Order.JobCloseDate = 0) to bActive
+            If (bActive) Move Order.JobNumber                      to iJob
+            If (bActive) Break
+            Find gt Order.LocationIdno
+        Loop
+        If (iJob) Begin
+            Clear Trans
+            Move iJob to Trans.JobNumber
+            Find ge Trans.JobNumber
+            While ((Found) and Trans.JobNumber = iJob)
+                Move (Trans.StartDate <> 0 and Trans.StartTime <> "" and Trans.StopDate = 0) to bActive
+                If (bActive) Move "Active"                                                   to sStatus
+                If (bActive) Break
+                Find gt Trans.JobNumber
+            Loop
+        End
+        //
+        Function_Return sStatus
+    End_Function
+
+    Function IsLocationInvoiced Integer iJob Returns Number
+        Number nInvoiced
+        //
+        Clear Invhdr
+        Move iJob to Invhdr.JobNumber
+        Find ge Invhdr.JobNumber
+        While ((Found) and Invhdr.JobNumber = iJob)
+            
+            // The lines have been added for sorting out the unposted invoices out of the report
+            // THIS HAS NOT BEEN TESTED - We decided to remove the YTD Total line and manipulate the DAI report instead
+            //For testing uncommend the following two lines of code
+            //If (Invhdr.VoidFlag = 0 and Invhdr.PostFlag = 1) Begin 
+                Add Invhdr.TotalAmount to nInvoiced
+                Find gt Invhdr.JobNumber
+            //End
+        Loop
+        Function_Return nInvoiced
+    End_Function
+
+    // http://www.accuweather.com/us/mn/forest-lake/55025/city-weather-forecast.asp?partner=accuweather&u=1&traveler=0
+    // http://www.accuweather.com/us/mn/forest-lake/55025/forecast-climo.asp?partner=accuweather&traveler=0&zipchg=1
+//    Function AddAccuWeatherLink String sState String sCity String sZip Returns String
+//        String sLink
+//        //
+//        Move (Trim(sCity))                                                            to sCity
+//        Move (Left(sZip,5))                                                           to sZip
+//        Move "http://www.accuweather.com/us/"                                         to sLink
+//        Move (sLink + Lowercase(sState) + "/")                                        to sLink
+//        Move (Lowercase(sCity))                                                       to sCity
+//        Move (Replaces(" ",sCity,"-"))                                                to sCity
+//        Move (sLink + sCity + "/")                                                    to sLink
+//        Move (sLink + sZip  + "/")                                                    to sLink
+//        Move (sLink + "city-weather-forecast.asp?partner=accuweather&u=1&traveler=0") to sLink
+////        Move (sLink + "forecast-climo.asp?partner=accuweather&traveler=0&zipchg=1") to sLink
+//        Get HtmlLinkBlank sLink sZip                                                  to sZip
+//        //
+//        Function_Return sZip
+//    End_Function
+
+//Ben - Added 08/13/2012
+    // http://forecast.weather.gov/MapClick.php?lat=45.2791243&lon=-92.99053140000001
+    Function NWSLink String sZip Returns String
+        Integer iCheckZip
+        String sLong sLat sLink
+        //
+        Move (Left(sZip,5))                                             to sZip
+        Move (Left(sZip,5))                                              to iCheckZip
+        Clear ZipGeo
+        Move iCheckZip to ZipGeo.ZipCode
+        Find EQ ZipGeo.ZipCode
+            If (Found  and ZipGeo.ZipCode = iCheckZip ) Begin
+                Move ZipGeo.Latitude                                    to sLong
+                Move ZipGeo.Longitude                                   to sLat
+                Move "http://forecast.weather.gov/MapClick.php?lat="    to sLink
+                Move (sLink + sLat + "&lon=")                           to sLink
+                Move (sLink + sLong )                                   to sLink           
+            End
+            Else Begin
+                //Move "http://forecast.weather.gov/MapClick.php?lat=45.011215&lon=-93.155360"                       to sLink
+                Move "Not Available"                       to sLink
+            End
+        Get HtmlLinkBlank sLink sZip                                    to sZip
+        //
+        Function_Return sZip
+    End_Function
+
+   Function HtmlLinkBlank String sURL String sDat Returns String
+       Function_Return ('<a href="' + sURL + '" target="_blank">' + sDat + '</a>')
+   End_Function
+   
+   Function HtmlLinkButton String sURL String sDat Returns String
+       Function_Return ('<a href="' + sURL + '">' + sDat + '</a>')
+   End_Function
+
+// Ben - Added 07/12/2012 - Combine City and State
+    Function CityAndState String sCity String sState Returns String
+        String sCityState
+       // If (sCity <> 0) Begin
+            Move ( sState + ", " +sCity)                         to sCityState
+       // End
+            Function_Return sCityState
+    End_Function
+    
+// Ben - Added 07/12/2012 - Create Link
+//      http://64.122.223.194:419/ai6/ai.asp?UID=nick&PW=friday13&DAI_R=1898 
+
+    Function CreateAILink String sUserID String sPassword Integer iJob Returns String
+        String sAILink
+            Move "http://64.122.223.194/ai6/ai.asp?UID="        to sAILink
+            //Move (sAILink + Trim(sUserID) + "&PW=" + trim(sPassword) + "&DAI_R=1898") to sAILink // Old one - retired 08/2014
+            Move (sAILink + Trim(sUserID) + "&PW=" + trim(sPassword) + "&DAI_R=2887&DAI_S_JOBNUMBER=" + String(iJob)) to sAILink
+            Get HtmlLinkBlank sAILink "Invoices"                 to sAILink
+            Function_Return sAILink
+    End_Function
+
+
+
+    Function AddEmailJobNumberLink Integer iJobno Returns String
+        String sValue sRefName sUrl sRowId sSep
+        RowID  riRowId
+        //
+        If (Order.JobNumber <> iJobno) Begin
+            Clear Order
+            Move iJobno to Order.JobNumber
+            Find eq Order.JobNumber
+        End
+        //
+        Move "Contact"                          to sValue
+        Move "LocationEmail.asp"                to sRefName
+        Move (If(pos("?",sRefName),"&","?"))    to sSep
+        Move (GetRowId(Order.File_Number))      to riRowId
+        Move (SerializeRowId(riRowId))          to sRowId
+        Move (sRefName-sSep-"RowId=" - sRowId ) to sUrl
+        Get HtmlLinkButton sUrl sValue                to sValue
+        //
+        Function_Return sValue
+    End_Function
+//    Function AddRowIdLink String sValue Returns String
+//        String sRefName sUrl sRowId sSep
+//        RowID riRowId
+//        Get psHRefName to sRefName
+//        If (sRefName<>"") Begin
+//            Move (If(pos("?",sRefName),"&","?")) to sSep
+//            Get CurrentRowId of (server(Self)) to riRowId
+//            Move (SerializeRowId(riRowId)) to sRowId
+//            Move (sRefName-sSep-"RowId=" - sRowId ) to sUrl
+//            Get HtmlLink sUrl sValue to sValue
+//        End
+//        //
+//        Function_Return sValue
+//    End_Function
+
+    Object oReport Is A cWebReport
+
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+
+                //Send WriteHtmlCellHeader 'Job No.'      'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Name'         'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'City'         'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Weather'          'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Service Status'       'class="Header" align="left"'
+                //Send WriteHtmlCellHeader 'YTD Invoiced' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Contact Us'   'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Invoices'   'class="Header" align="right"'
+                
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            Integer iJob
+            String sLat sLong
+            String  sText sID sName sCity sZip sStatus sInvoiced sEmail sJobNumber
+            String sState 
+            String sUserID sPassword sDynamicAILink
+            Number  nInvoiced
+
+            Get IsLocationStatus Location.LocationIdno (&iJob) to sStatus
+
+            If (not(iJob)) Begin
+                Procedure_Return
+            End
+            Move iJob                    to sID
+            Get IsLocationInvoiced iJob  to nInvoiced
+            Get FormatNumber nInvoiced 2 to sInvoiced
+
+            Get ddValueEncode "Location.Name"         to sName
+            Get ddValueEncode "Location.City"         to sCity
+            Get ddValueEncode "Location.Zip"          to sZip
+                        
+            Move Location.State                         to sState
+            
+            Move User.LoginName      to sUserID
+            Move User.Password      to sPassword
+            
+            Send WriteHtmlRowBegin
+                Get AddRecentActivityLink iJob sStatus           to sStatus
+                //Get AddInvoiceHistoryLink iJob sInvoiced         to sInvoiced
+                //Get AddAccuWeatherLink Location.State sCity sZip to sZip
+                Get NWSLink sZip                                  to sZip
+                Get AddEmailJobNumberLink iJob                   to sEmail
+                Get CityAndState sState sCity      to sCity
+                Get CreateAILink sUserID sPassword iJob    to sDynamicAILink
+           
+                //Send WriteHtmlCell sID       'class="Data" align="left"'
+                Send WriteHtmlCell sName     'class="Data" align="left"'
+                Send WriteHtmlCell sCity     'class="Data" align="left"'
+                Send WriteHtmlCell sZip      'class="Data" align="center"'
+                Send WriteHtmlCell sStatus   'class="Data" align="center"'
+                //Send WriteHtmlCell sInvoiced 'class="Data" align="right"'
+                Send WriteHtmlCell sEmail    'class="Data" align="center"'
+                Send WriteHtmlCell sDynamicAILink 'class="Data" align="center"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunPropertyManagerLocations Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunPropertyManagerLocations
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetPropmgrIdno String sContactIdno
+        Set piPropmgrIdno        of oLocation_DD to sContactIdno
+        Send Rebuild_Constraints of oLocation_DD
+    End_Procedure
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunPropertyManagerLocations Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        If (piPropmgrIdno(oLocation_DD) = 0) Begin
+            Function_Return sEndRowId
+        End
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunPropertyManagerLocations of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunPropertyManagerLocations
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oPropertyManagerLocations

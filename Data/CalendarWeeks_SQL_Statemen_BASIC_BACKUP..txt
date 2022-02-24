@@ -1,0 +1,8 @@
+SELECT     TOP (100) PERCENT week_of_year, 'Wk. ' + (LEFT(CAST(year_week AS VARCHAR), 4) + '/' + RIGHT(CAST(year_week AS VARCHAR), 2)) + ' | ' + RTRIM(CONVERT(char, 
+                      first_day_in_week, 1)) + ' - ' + RTRIM(CONVERT(char, last_day_in_week, 1)) AS WeekDates, LEFT(CAST(year_week AS VARCHAR), 4) 
+                      + '/' + RIGHT(CAST(year_week AS VARCHAR), 2) AS YearWeek, first_day_in_week, last_day_in_week, year_week
+FROM         (SELECT DISTINCT year_week, first_day_in_week, last_day_in_week, week_of_year
+                       FROM          dbo.date_calendar AS D) AS DAI_
+WHERE     (year_week BETWEEN DATEPART(yyyy, GETDATE() - 183) * 100 + DATEPART(wk, GETDATE() - 183) AND DATEPART(yyyy, GETDATE()) * 100 + DATEPART(wk, 
+                      GETDATE()))
+ORDER BY YearWeek

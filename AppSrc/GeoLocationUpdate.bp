@@ -1,0 +1,165 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+
+Use cJsonHttpTransfer.pkg
+Use cJsonPath.pkg
+
+Object oGeoLocationUpdate is a BusinessProcess
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Set Main_DD to oLocation_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Property Integer[] piLocIdno
+
+
+    Procedure OnProcess
+    End_Procedure
+
+    Object oJsonPath is a cJsonPath
+    End_Object
+    
+    Struct tProperties
+      String accuracy
+    End_Struct
+    
+    Struct tGeometry
+      String type
+      Number[] coordinates
+    End_Struct
+    
+    Struct tContext
+      String id
+      String text
+      String wikidata
+      String short_code
+    End_Struct
+    
+    Struct tFeature
+       String id
+       String type
+       String[] place_type
+       Number relevance
+       tProperties properties
+       String text
+       String place_name
+       Number[] center
+       tGeometry geometry
+       String Address
+       tContext[] context
+    End_Struct
+    
+    Struct tData
+      String type
+      String[] query
+      tFeature[] features
+      String attribution
+    End_Struct
+    
+    Function UpdatedGeoLocationDetails Integer iLocIdno String ByRef sLogMsg Returns Boolean
+        //Variables
+        String sAddress sAPIToken sResponse sName sLat sLon sRelev sbbox1_lat sbbox1_lon sbbox2_lat sbbox2_lon
+        Handle hoJson hoResp hoDD
+        Boolean bOk bErr bMatchFound
+        UChar[] ucaResp
+        Integer i iStatus iMem iType iFeatureCount iNoMatchCount iSingleMatchCount iMultiMatchCount
+        tData myData
+        //
+        Set Main_DD to oLocation_DD
+        Move oLocation_DD to hoDD
+        //Process
+        Send Clear_All of hoDD
+        Move iLocIdno to Location.LocationIdno
+        Send Request_Find of hoDD EQ Location.File_Number 1
+        If ((Found) and Location.LocationIdno = iLocIdno) Begin
+            Move (String(Customer.CustomerIdno)*'|'*Trim(Customer.Name)*'|'*String(Location.LocationIdno)*'|'*Trim(Location.Name)) to sLogMsg
+            // Make the API request for the found location
+            Move (Trim(Location.Address1)*Trim(Location.City)*Trim(Location.State)*Trim(Left(Location.Zip,5))) to sAddress
+            Move (Replaces(' ',sAddress,'%20')) to sAddress
+            Move 'pk.eyJ1IjoiYjAwbmdhcnRlbiIsImEiOiJja3B6azRqcHEwMXMzMnBvdTEyczJ0ZjJ0In0.AURnQqeSanOcoKOw5cx6fw' to sAPIToken
+            // Execute HTTPGetJson
+            // Create and Prept
+            Get Create (RefClass(cJsonHttpTransfer))  to hoJson // Created
+            Set piRemotePort of hoJson to rpHttpSSL //https
+            Set peTransferFlags of hoJson to ifSecure
+            Set pbShowErrorDialog of hoJson to True
+            Set psContentTypeExpected of hoJson to "application/vnd.geo+json" // allow any content type
+            // Execute
+            //
+            Get AddHeader of hoJson "Content-Type" "application/vnd.geo+json" to bOk
+            Get HttpGetJson of hoJson ('api.mapbox.com') ('/geocoding/v5/mapbox.places/'+sAddress+'.json?access_token='+sAPIToken) (&bOk) to hoResp //'&cachebuster=1623853108755&autocomplete=true'
+            // After Json received
+            If (bOk) Begin
+                Get Stringify of hoResp to sResponse
+                // Extract GPS Coordinates
+                Set pbRequireAllMembers of hoResp to False
+                Get JsonToDataType of hoResp to myData
+                // How accurate is the record?
+                // This API returns a relevance value grading how accurate the found address is.
+                // Forward geocodes: Returned features are ordered by relevance.
+                Move (SizeOfArray(myData.features)) to iFeatureCount
+                For i from 0 to (iFeatureCount-1 and not(iSingleMatchCount) and not(iNoMatchCount))
+                    Case Begin
+                        Case (myData.features[i].relevance >= 0.75) // A value greater than 85% match is considered acceptable - Ideally we want to use 100% accuracy.
+                            Increment iSingleMatchCount
+                            Move myData.features[i].geometry.coordinates[0] to sLon
+                            Move myData.features[i].geometry.coordinates[1] to sLat
+                            Move myData.features[i].relevance to sRelev
+                            // Update Location Record
+                            Set Field_Changed_Value of hoDD Field Location.Latitude to sLat
+                            Set Field_Changed_Value of hoDD Field Location.Longitude to sLon
+                            Set Field_Changed_Value of hoDD Field Location.GeoRelevance to sRelev
+                            Set Field_Changed_Value of hoDD Field Location.GeoFenceRadius to 0.5 //default Radius, can be changed any time
+                            // Validate and Save
+                            Get Request_Validate of hoDD to bErr
+                            If (not(bErr)) Begin
+                                Send Request_Save of hoDD
+                                Move (sLogMsg*'| GPS Lat:'*sLat*'| Lon: '*sLon* ' | Relevance:' *sRelev) to sLogMsg
+                                Move True to bMatchFound
+                            End
+                            Else Move 'Validation Error' to sLogMsg
+                            Case Break
+                        Case Else // Everything below 75% cant be considered usable due to inaccurate and incomplete address information - a manual input is required here.
+                            Increment iNoMatchCount
+                            //Send AppendTextLn of oOnScreenOutput ('NO MATCH - REVIEW AND UPDATE ADDRESS FOR:'*String(Location.LocationIdno)*'|'*Trim(Location.Name))
+                            Move (sLogMsg*'| NO MATCH - REVIEW AND UPDATE ADDRESS') to sLogMsg
+                            Case Break
+                    Case End
+                Loop
+            End
+            Else Begin
+//                Get TransferErrorDescription of hoJson to sLogMsg
+                Move (sLogMsg*'|'*TransferErrorDescription(hoJson)) to sLogMsg 
+            End
+            Send Destroy of hoJson
+
+        End
+        Function_Return (iSingleMatchCount>0)
+    End_Function
+
+End_Object
+

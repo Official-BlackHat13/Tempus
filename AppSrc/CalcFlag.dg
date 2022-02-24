@@ -1,0 +1,657 @@
+// CALCFLAG.DG
+
+Use dfdbmdpn.pkg
+Use Windows.pkg
+Use cGlblGroup.pkg
+Use cGlblCheckBox.pkg
+Use cGlblRadioGroup.pkg
+Use dfRadio.pkg
+Use cGlblRadio.pkg
+
+Object oDialogCalcFlags is a dbModalPanel
+
+    property integer Invoking_Object_Id 0
+    property string  psCalcFlags        ""
+    //
+    property boolean pbError            FALSE
+    
+    Set Label to "Calculation Flags"
+    Set Location to 5 5
+    Set Size to 284 395
+    Set Locate_Mode to CENTER_ON_PANEL
+
+    Object oBox is a Container3d
+        Set Size to 257 385
+        Set Location to 4 5
+        Set Border_Style to Border_StaticEdge
+        Object oGroup1 is a cGlblGroup
+            Set Size to 245 368
+            Set Location to 4 8
+            Object oCheckboxVFlag is a cGlblCheckBox
+                Set Label to "V = Variable cost item; calculations executed for each quantity"
+                Set Size to 10 212
+                Set Location to 10 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxVFlag
+
+            Object oCheckboxDFlag is a cGlblCheckBox
+                Set Label to "D = Dependent item, triggered by other item(s); no edits, exclude from pick-lists"
+                Set Size to 10 262
+                Set Location to 25 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    if (NOT(bChecked)) set Checked_State of oCheckboxOFlag to bChecked
+                    Set Enabled_State of oCheckboxOFlag to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxDFlag
+
+            Object oCheckboxOFlag is a cGlblCheckBox
+                Set Label to "O = Override no editing state of Dependent items and allow edits to item"
+                Set Size to 10 241
+                Set Location to 34 30
+                set Enabled_State to FALSE
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxOFlag
+
+            Object oCheckboxAtFlag is a cGlblCheckBox
+                Set Label to "@ = Flag item non-editable, allow in picklists"
+                Set Size to 10 155
+                Set Location to 50 10
+
+                //Procedure OnChange
+                //    Boolean bChecked
+                //    Get Checked_State to bChecked
+                //End_Procedure  // OnChange
+            End_Object    // oCheckboxAtFlag
+
+            Object oCheckboxIFlag is a cGlblCheckBox
+                Set Label to "I = Instruction - this item prompts for text input before processing the 9 variables"
+                Set Size to 10 264
+                Set Location to 65 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    if (NOT(bChecked)) set Checked_State of oCheckboxI2Flag to bChecked
+                    Set Enabled_State of oCheckboxI2Flag to (bChecked)
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxIFlag
+
+            Object oCheckboxI2Flag is a cGlblCheckBox
+                Set Label to "> = prompt for instruction text input after processing the 9 variables"
+                Set Size to 10 225
+                Set Location to 75 30
+                set Enabled_State to FALSE
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxI2Flag
+
+            Object oCheckboxSFlag is a cGlblCheckBox
+                Set Label to "S =  Stock / Inventory Item"
+                Set Size to 10 102
+                Set Location to 90 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxSFlag
+
+            Object oCheckboxTFlag is a cGlblCheckBox
+                Set Label to "T = Trigger execution of this item independently of link logic"
+                Set Size to 10 203
+                Set Location to 105 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxTFlag
+
+            Object oCheckboxEFlag is a cGlblCheckBox
+                Set Label to "E = Estimate header item; flag for use in filtering items in reporting, system assigned to items in CC -1"
+                Set Size to 10 327
+                Set Location to 120 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxEFlag
+
+            Object oCheckboxZFlag is a cGlblCheckBox
+                Set Label to "Z = don't display this item in estimate detail lists (Alt+F3 toggles list filtering off/on in such views)"
+                Set Size to 10 313
+                Set Location to 135 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxZFlag
+
+            Object oCheckboxDollarFlag is a cGlblCheckBox
+                Set Label to "$ = No labor dollars; do not extend calculated hours to dollars for this item"
+                Set Size to 10 246
+                Set Location to 150 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxDollarFlag
+
+            Object oCheckboxRFlag is a cGlblCheckBox
+                Set Label to "R = Round calculations"
+                Set Size to 10 91
+                Set Location to 165 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    if (NOT(bChecked)) begin
+                        set Checked_State of oCheckboxRCFlag to bChecked
+                        set Checked_State of oCheckboxRAFlag to bChecked
+                        set Checked_State of oCheckboxRPFlag to bChecked
+                    end
+                    set Enabled_State of oCheckboxRCFlag to (bChecked)
+                    set Enabled_State of oCheckboxRAFlag to (bChecked)
+                    set Enabled_State of oCheckboxRPFlag to (bChecked)
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxRFlag
+
+            Object oCheckboxRCFlag is a cGlblCheckBox
+                Set Label to "(C)alc Units"
+                Set Size to 10 53
+                Set Location to 165 110
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    send DoEnableRadioGroup of oRadioGroupRC
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxRCFlag
+
+            Object oRadioGroupRC is a cGlblRadioGroup
+                Set Size to 53 77
+                Set Location to 174 110
+                Object oRadioRC1 is a Radio
+                    Set Label to "default rounding"
+                    Set Size to 10 67
+                    Set Location to 8 5
+                End_Object    // oRadioRC1
+
+                Object oRadioRC2 is a Radio
+                    Set Label to "+ round up"
+                    Set Size to 10 51
+                    Set Location to 18 5
+                End_Object    // oRadioRC2
+
+                Object oRadioRC3 is a Radio
+                    Set Label to "- round down"
+                    Set Size to 10 58
+                    Set Location to 28 5
+                End_Object    // oRadioRC3
+
+                Object oRadioRC4 is a cGlblRadio
+                    Set Label to "up to nearest .5"
+                    Set Size to 10 66
+                    Set Location to 38 5
+                End_Object    // oRadioRC4
+
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                procedure DoEnableRadioGroup
+                    boolean bState
+                    string sType
+                    //
+                    get Checked_State of oCheckboxRCFlag to bState
+                    set Enabled_State to (bState)
+                end_procedure
+                
+                
+                Procedure Notify_Select_State integer iToItem integer iFromItem
+                    //for augmentation
+                End_Procedure
+                
+                // If you set Current_radio you must set this after the
+                // radio objects have been created AND after Notify_select_State has been
+                // created. i.e. Set in bottom-code at end!!
+                //Set Current_Radio to 0
+                
+                //AB-StoreEnd
+
+            End_Object    // oRadioGroupRC
+
+            Object oCheckboxRAFlag is a cGlblCheckBox
+                Set Label to "T(A)ble Units"
+                Set Size to 10 57
+                Set Location to 165 197
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    send DoEnableRadioGroup of oRadioGroupRA
+                
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxRAFlag
+
+            Object oRadioGroupRA is a cGlblRadioGroup
+                Set Size to 53 77
+                Set Location to 174 196
+                Object oRadioRA1 is a Radio
+                    Set Label to "default rounding"
+                    Set Size to 10 67
+                    Set Location to 8 5
+                End_Object    // oRadioRA1
+
+                Object oRadioRA2 is a Radio
+                    Set Label to "+ round up"
+                    Set Size to 10 51
+                    Set Location to 18 5
+                End_Object    // oRadioRA2
+
+                Object oRadioRA3 is a Radio
+                    Set Label to "- round down"
+                    Set Size to 10 58
+                    Set Location to 28 5
+                End_Object    // oRadioRA3
+
+                Object oRadioRA4 is a cGlblRadio
+                    Set Label to "up to nearest .5"
+                    Set Size to 10 66
+                    Set Location to 38 5
+                End_Object    // oRadioRA4
+
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                procedure DoEnableRadioGroup
+                    boolean bState
+                    string sType
+                    //
+                    get Checked_State of oCheckboxRAFlag to bState
+                    set Enabled_State to (bState)
+                end_procedure
+                
+                Procedure Notify_Select_State integer iToItem integer iFromItem
+                    //for augmentation
+                End_Procedure
+                
+                // If you set Current_radio you must set this after the
+                // radio objects have been created AND after Notify_select_State has been
+                // created. i.e. Set in bottom-code at end!!
+                //Set Current_Radio to 0
+                //AB-StoreEnd
+
+            End_Object    // oRadioGroupRA
+
+            Object oCheckboxRPFlag is a cGlblCheckBox
+                Set Label to "(P)rod. Units"
+                Set Size to 10 55
+                Set Location to 165 282
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    send DoEnableRadioGroup of oRadioGroupRP
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxRPFlag
+
+            Object oRadioGroupRP is a cGlblRadioGroup
+                Set Size to 53 77
+                Set Location to 174 282
+                set Enabled_State to FALSE
+
+                Object oRadioRP1 is a Radio
+                    Set Label to "default rounding"
+                    Set Size to 10 67
+                    Set Location to 8 5
+                End_Object    // oRadioRP1
+
+                Object oRadioRP2 is a Radio
+                    Set Label to "+ round up"
+                    Set Size to 10 51
+                    Set Location to 18 5
+                End_Object    // oRadioRP2
+
+                Object oRadioRP3 is a Radio
+                    Set Label to "- round down"
+                    Set Size to 10 58
+                    Set Location to 28 5
+                End_Object    // oRadioRP3
+
+                Object oRadioRP4 is a cGlblRadio
+                    Set Label to "up to nearest .5"
+                    Set Size to 10 66
+                    Set Location to 38 5
+                End_Object    // oRadioRP4
+
+                Procedure DoEnableRadioGroup
+                    boolean bState
+                    //
+                    get Checked_State of oCheckboxRPFlag to bState
+                    set Enabled_State to (bState)
+                end_procedure
+                
+                Procedure Notify_Select_State integer iToItem integer iFromItem
+                    //for augmentation
+                End_Procedure
+                
+                // If you set Current_radio you must set this after the
+                // radio objects have been created AND after Notify_select_State has been
+                // created. i.e. Set in bottom-code at end!!
+                //Set Current_Radio to 0
+                //AB-StoreEnd
+
+            End_Object    // oRadioGroupRP
+
+            Object oCheckbox0CFlag is a cGlblCheckBox
+                Set Label to "0C = zero -values"
+                Set Size to 10 71
+                Set Location to 230 110
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox0CFlag
+
+            Object oCheckbox0PFlag is a cGlblCheckBox
+                Set Label to "0P = zero -values"
+                Set Size to 10 71
+                Set Location to 230 282
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox0PFlag
+
+            Object oCheckbox0AFlag is a cGlblCheckBox
+                Set Label to "0A = zero -values"
+                Set Size to 10 71
+                Set Location to 230 197
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox0AFlag
+
+
+            //AB-StoreStart
+            function IsRoundingMethodRC returns string
+                integer iRadio
+                string  sType
+                //
+                get Current_Radio of oRadioGroupRC to iRadio
+                if (iRadio) begin
+                    if      (iRadio = 1) move "+"  to sType
+                    else if (iRadio = 2) move "-"  to sType
+                    else if (iRadio = 3) move ".5" to sType
+                end
+                function_return sType
+            end_function
+            function IsRoundingMethodRA returns string
+                integer iRadio
+                string  sType
+                //
+                get Current_Radio of oRadioGroupRA to iRadio
+                if (iRadio) begin
+                    if      (iRadio = 1) move "+"  to sType
+                    else if (iRadio = 2) move "-"  to sType
+                    else if (iRadio = 3) move ".5" to sType
+                end
+                function_return sType
+            end_function
+            
+            function IsRoundingMethodRP returns string
+                integer iRadio
+                string  sType
+                //
+                get Current_Radio of oRadioGroupRP to iRadio
+                if (iRadio) begin
+                    if      (iRadio = 1) move "+"  to sType
+                    else if (iRadio = 2) move "-"  to sType
+                    else if (iRadio = 3) move ".5" to sType
+                end
+                function_return sType
+            end_function
+            
+            function IsInput returns string
+                string sInput sRoundingSymbol
+                //
+                if (Checked_State(oCheckboxVFlag(self)))  move "V"                  to sInput
+                if (Checked_State(oCheckboxDFlag(self))) move (sInput + "D")        to sInput
+                if (Checked_State(oCheckboxOFlag(self))) move (sInput + "O")        to sInput
+                if (Checked_State(oCheckboxAtFlag(self))) move (sInput + "@")       to sInput
+                if (Checked_State(oCheckboxIFlag(self))) move (sInput + "I")        to sInput
+                if (Checked_State(oCheckboxI2Flag(self))) move (sInput + ">")       to sInput
+                if (Checked_State(oCheckboxSFlag(self))) move (sInput + "S")        to sInput
+                if (Checked_State(oCheckboxTFlag(self))) move (sInput + "T")        to sInput
+                if (Checked_State(oCheckboxEFlag(self))) move (sInput + "E")        to sInput
+                if (Checked_State(oCheckboxZFlag(self))) move (sInput + "Z")        to sInput
+                if (Checked_State(oCheckboxDollarFlag(self))) move (sInput + "$")   to sInput
+                if (Checked_State(oCheckboxRFlag(self))) move (sInput + "R")        to sInput
+                if (Checked_State(oCheckboxRCFlag(self))) begin
+                    get isRoundingMethodRC to sRoundingSymbol
+                    if (sInput contains "C") ; 
+                         move (insert(sRoundingSymbol,sInput,(pos("C",sInput)+1))) to sInput
+                    else move (sInput +"C" +sRoundingsymbol)                       to sInput
+                end
+                if (Checked_State(oCheckboxRAFlag(self))) begin
+                    get isRoundingMethodRA to sRoundingSymbol
+                    if (sInput contains "A") ; 
+                         move (insert(sRoundingSymbol,sInput,(pos("A",sInput)+1))) to sInput
+                    else move (sInput +"A" +sRoundingsymbol)                       to sInput
+                end
+                if (Checked_State(oCheckboxRPFlag(self))) begin
+                    get isRoundingMethodRP to sRoundingSymbol
+                    if (sInput contains "P") ; 
+                         move (insert(sRoundingSymbol,sInput,(pos("P",sInput)+1))) to sInput
+                    else move (sInput +"P" +sRoundingsymbol)                       to sInput
+                end
+                if (Checked_State(oCheckbox0CFlag(self))) Begin
+                    if (sInput contains "C") ; 
+                         move (insert("0",sInput,(pos("C",sInput)))) to sInput
+                    else move (sInput + "0C")                        to sInput
+                End
+                if (Checked_State(oCheckbox0AFlag(self))) Begin 
+                    if (sInput contains "A") ; 
+                         move (insert("0",sInput,(pos("A",sInput)))) to sInput
+                    else move (sInput + "0A")                        to sInput
+                End
+                if (Checked_State(oCheckbox0PFlag(self))) Begin 
+                    if (sInput contains "P") ; 
+                         move (insert("0",sInput,(pos("P",sInput)))) to sInput
+                    else move (sInput + "0P")                        to sInput
+                End
+                //
+                function_return sInput
+            end_function
+            
+            procedure DoReset string sCurrent
+                boolean bChecked
+                //
+                move (sCurrent CONTAINS "V") to bChecked
+                set Checked_State of oCheckboxVFlag  to bChecked
+                move (sCurrent CONTAINS "D") to bChecked
+                set Checked_State of oCheckboxDFlag  to bChecked
+                if (not(bchecked)) set Checked_State of oCheckboxOFlag to bChecked
+                else begin
+                    move (sCurrent CONTAINS "O") to bChecked
+                    set Checked_State of oCheckboxOFlag  to bChecked
+                end
+                move (sCurrent CONTAINS "@") to bChecked
+                set Checked_State of oCheckboxAtFlag  to bChecked
+                move (sCurrent CONTAINS "I") to bChecked
+                set Checked_State of oCheckboxIFlag  to bChecked
+                move (sCurrent CONTAINS ">") to bChecked
+                set Checked_State of oCheckboxI2Flag  to bChecked
+                move (sCurrent CONTAINS "S") to bChecked
+                set Checked_State of oCheckboxSFlag  to bChecked
+                move (sCurrent CONTAINS "T") to bChecked
+                set Checked_State of oCheckboxTFlag  to bChecked
+                move (sCurrent CONTAINS "E") to bChecked
+                set Checked_State of oCheckboxEFlag  to bChecked
+                move (sCurrent CONTAINS "Z") to bChecked
+                set Checked_State of oCheckboxZFlag  to bChecked
+                move (sCurrent CONTAINS "$") to bChecked
+                set Checked_State of oCheckboxDollarFlag  to bChecked
+                move (sCurrent CONTAINS "R") to bChecked
+                set Checked_State of oCheckboxRFlag  to bChecked
+                if (not(bChecked)) begin
+                    set Checked_State of oCheckboxRCFlag  to bChecked
+                    set Checked_State of oCheckboxRAFlag  to bChecked
+                    set Checked_State of oCheckboxRPFlag  to bChecked
+                end
+                else begin
+                    move (sCurrent CONTAINS "R" ;
+                        and sCurrent CONTAINS "C") to bChecked
+                    set Checked_State of oCheckboxRCFlag  to bChecked
+                    If (bChecked) begin
+                        If (sCurrent CONTAINS "C+") set Current_Radio of oRadioGroupRC to 1
+                        else if (sCurrent CONTAINS "C-") set Current_Radio of oRadioGroupRC to 2
+                             else if (sCurrent CONTAINS "C.5") set Current_Radio of oRadioGroupRC to 3
+                                  else set Current_Radio of oRadioGroupRC to 0
+                    end
+                    move (sCurrent CONTAINS "R" ;
+                        and sCurrent CONTAINS "A") to bChecked
+                    set Checked_State of oCheckboxRAFlag  to bChecked
+                    If (bChecked) begin
+                        If (sCurrent CONTAINS "A+") set Current_Radio of oRadioGroupRA to 1
+                        else if (sCurrent CONTAINS "A-") set Current_Radio of oRadioGroupRA to 2
+                             else if (sCurrent CONTAINS "A.5") set Current_Radio of oRadioGroupRA to 3
+                                  else set Current_Radio of oRadioGroupRA to 0
+                    end
+                    move (sCurrent CONTAINS "R" ;
+                        and sCurrent CONTAINS "P") to bChecked
+                    set Checked_State of oCheckboxRPFlag  to bChecked
+                    If (bChecked) begin
+                        If (sCurrent CONTAINS "P+") set Current_Radio of oRadioGroupRP to 1
+                        else if (sCurrent CONTAINS "P-") set Current_Radio of oRadioGroupRP to 2
+                             else if (sCurrent CONTAINS "P.5") set Current_Radio of oRadioGroupRP to 3
+                                  else set Current_Radio of oRadioGroupRP to 0
+                    end
+                end
+                move (sCurrent CONTAINS "0C") to bChecked
+                set Checked_State of oCheckbox0CFlag  to bChecked
+                move (sCurrent CONTAINS "0P") to bChecked
+                set Checked_State of oCheckbox0PFlag  to bChecked
+                move (sCurrent CONTAINS "0A") to bChecked
+                set Checked_State of oCheckbox0AFlag  to bChecked
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // oGroup1
+
+        function IsReturnString returns string
+            string sInput
+            //
+            get IsInput       of oGroup1       to sInput
+            function_return sInput
+        end_function
+        
+        procedure DoReset string sCurrent
+            send DoReset of oGroup1       sCurrent
+            //send DoReset of oConditionalControlGroup sCurrent
+        end_procedure
+
+    End_Object    // oBox
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Location to 267 285
+
+        procedure OnClick
+            send DoReturnString
+        end_procedure
+    End_Object    // oOK_bn
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Location to 267 340
+
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+    End_Object    // oCancel_bn
+    
+    on_key kCancel       send KeyAction of oCancel_bn
+    on_key Key_Alt+Key_O send KeyAction of oOK_bn
+    on_key Key_Alt+Key_C send KeyAction of oCancel_bn
+    
+    procedure DoReturnString
+        string sCalcFlags
+        set pbError  to FALSE
+        //
+        get IsReturnString of oBox to sCalcFlags
+        //
+        if (pbError(self)) begin
+            send Stop_Box sCalcFlags
+            procedure_return
+        end
+        //
+        set psCalcFlags to sCalcFlags
+        send Close_Panel
+    end_procedure
+    
+    function IsCalcFlags string sCurrent returns string
+        set psCalcFlags to "CANCEL"
+        //
+        send DoReset of oBox sCurrent
+        send Popup_Modal
+        function_return (psCalcFlags(self))
+    end_function
+
+End_Object    // oDialogCalcFlags

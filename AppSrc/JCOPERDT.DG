@@ -1,0 +1,1257 @@
+//AB/ Project Operation Estimating Details
+//AB/ Object prj is a Dialog_Project
+//AB/     Set ProjectName to "Operation Estimating Details"
+//AB/     Set ProjectFileName to "JcoperDt.DG"
+//AB/     Set GenerateFileName to "NONAME"
+
+//AB-IgnoreStart
+
+USE DFAllEnt.pkg
+
+//AB-IgnoreEnd
+
+
+//Use JCDEPT.DD
+//Use JCCNTR.DD
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+
+//AB-IgnoreEnd
+
+Object JcoperDetailDialog is a dbModalPanel
+
+    set Locate_Mode to CENTER_ON_PANEL
+    Set Minimize_Icon to FALSE
+    Set Label to "Estimating Standards Details"
+    Set Location to 4 3
+    Set Size to 258 413
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(Current_Object))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to (Jccntr_DD(Current_Object))
+    End_Object    // Jcoper_DD
+
+    Set Main_DD to (Jcoper_DD(Current_Object))
+    Set Server to (Jcoper_DD(Current_Object))
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Location to 240 304
+        Procedure OnClick
+            send Close_Panel
+        End_Procedure
+    End_Object    // oOK_bn
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Location to 240 358
+        Procedure OnClick
+            send Close_Panel
+        End_Procedure
+    End_Object    // oCancel_bn
+
+    Object DetailGroup is a dbGroup
+        Set Size to 59 401
+        Set Location to 5 6
+        Object Jcoper_Formula is a dbForm
+            Entry_Item Jcoper.Formula
+            Set Label to "Calc Units Formula"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 210
+            Set Location to 10 96
+            //AB-StoreStart
+            set Shadow_State to true
+            //AB-StoreEnd
+        End_Object    // Jcoper_Formula
+
+        Object Jcoper_Table_Std_Desc is a dbForm
+            Entry_Item Jcoper.Table_std_desc
+            Set Label to "Table Standard Represents"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 132
+            Set Location to 40 96
+            //AB-StoreStart
+            set Shadow_State to true
+            //AB-StoreEnd
+        End_Object    // Jcoper_Table_Std_Desc
+
+        Object Jcoper_Calc_Units_Desc is a dbForm
+            Entry_Item Jcoper.Calc_units_desc
+            Set Label to "="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 76
+            Set Location to 10 318
+            //AB-StoreStart
+            set Shadow_State to true
+            //AB-StoreEnd
+        End_Object    // Jcoper_Calc_Units_Desc
+
+        Object Jcoper_Est_Formula is a dbForm
+            Entry_Item Jcoper.Est_formula
+            Set Label to "Prod Units Formula"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 210
+            Set Location to 25 96
+            //AB-StoreStart
+            set Shadow_State to true
+            //AB-StoreEnd
+        End_Object    // Jcoper_Est_Formula
+
+        Object Jcoper_Calc_Std_Desc is a dbForm
+            Entry_Item Jcoper.Calc_std_desc
+            Set Label to "="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 76
+            Set Location to 25 318
+            //AB-StoreStart
+            set Shadow_State to true
+            //AB-StoreEnd
+        End_Object    // Jcoper_Calc_Std_Desc
+
+    End_Object    // DetailGroup
+
+    Object dbTabDialog1 is a dbTabDialog
+        Set Size to 166 402
+        Set Location to 71 6
+        Set Rotate_Mode to RM_Rotate
+        Object TP_Variables is a dbTabPage
+            Set Label to "Variables"
+            Object Jcoper_Var1_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var1_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "1)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 15 15
+                //Set TextColor to clRed
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var1_Tag
+
+            Object Jcoper_Var2_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var2_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "2)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 30 15
+                //Set TextColor to clBlack
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var2_Tag
+
+            Object Jcoper_Var3_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var3_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "3)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 45 15
+                Set TextColor to clBlack
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var3_Tag
+
+            Object Jcoper_Var4_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var4_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "4)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 60 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var4_Tag
+
+            Object Jcoper_Var5_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var5_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "5)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 74 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var5_Tag
+
+            Object Jcoper_Var6_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var6_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "6)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 90 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var6_Tag
+
+            Object Jcoper_Var7_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var7_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "7)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 105 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var7_Tag
+
+            Object Jcoper_Var8_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var8_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "8)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 120 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var8_Tag
+
+            Object Jcoper_Var9_Tag is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Var9_tag
+                Set Form_Border Item 0 to Border_None
+                Set Label to "9)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 170
+                Set Location to 135 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Var9_Tag
+
+            Object Jcoper_Var1_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var1_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 15 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var1_Tag_Symbl
+
+            Object Jcoper_Var2_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var2_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 30 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var2_Tag_Symbl
+
+            Object Jcoper_Var3_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var3_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 45 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var3_Tag_Symbl
+
+            Object Jcoper_Var4_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var4_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 60 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var4_Tag_Symbl
+
+            Object Jcoper_Var5_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var5_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 75 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var5_Tag_Symbl
+
+            Object Jcoper_Var6_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var6_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 90 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var6_Tag_Symbl
+
+            Object Jcoper_Var7_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var7_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 105 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var7_Tag_Symbl
+
+            Object Jcoper_Var8_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var8_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 120 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var8_Tag_Symbl
+
+            Object Jcoper_Var9_Tag_Symbl is a dbForm
+                Entry_Item Jcoper.Var9_tag_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 60
+                Set Location to 135 188
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var9_Tag_Symbl
+
+            Object Jcoper_Var1_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var1_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 15 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var1_Dflt_Value
+
+            Object Jcoper_Var2_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var2_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 30 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var2_Dflt_Value
+
+            Object Jcoper_Var3_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var3_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 45 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var3_Dflt_Value
+
+            Object Jcoper_Var4_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var4_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 60 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var4_Dflt_Value
+
+            Object Jcoper_Var5_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var5_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 75 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var5_Dflt_Value
+
+            Object Jcoper_Var6_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var6_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 90 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var6_Dflt_Value
+
+            Object Jcoper_Var7_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var7_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 105 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var7_Dflt_Value
+
+            Object Jcoper_Var8_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var8_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 120 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var8_Dflt_Value
+
+            Object Jcoper_Var9_Dflt_Value is a dbForm
+                Entry_Item Jcoper.Var9_dflt_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 74
+                Set Location to 135 252
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var9_Dflt_Value
+
+            Object Jcoper_Var1_Link_Code is a dbForm
+                Entry_Item Jcoper.Var1_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 15 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var1_Link_Code
+
+            Object Jcoper_Var2_Link_Code is a dbForm
+                Entry_Item Jcoper.Var2_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 30 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var2_Link_Code
+
+            Object Jcoper_Var3_Link_Code is a dbForm
+                Entry_Item Jcoper.Var3_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 45 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var3_Link_Code
+
+            Object Jcoper_Var4_Link_Code is a dbForm
+                Entry_Item Jcoper.Var4_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 60 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var4_Link_Code
+
+            Object Jcoper_Var5_Link_Code is a dbForm
+                Entry_Item Jcoper.Var5_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 75 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var5_Link_Code
+
+            Object Jcoper_Var6_Link_Code is a dbForm
+                Entry_Item Jcoper.Var6_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 90 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var6_Link_Code
+
+            Object Jcoper_Var7_Link_Code is a dbForm
+                Entry_Item Jcoper.Var7_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 105 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var7_Link_Code
+
+            Object Jcoper_Var8_Link_Code is a dbForm
+                Entry_Item Jcoper.Var8_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 120 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var8_Link_Code
+
+            Object Jcoper_Var9_Link_Code is a dbForm
+                Entry_Item Jcoper.Var9_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 135 330
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var9_Link_Code
+
+            Object Jcoper_Var1_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var1_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 15 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var1_Link_Symbl
+
+            Object Jcoper_Var2_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var2_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 30 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var2_Link_Symbl
+
+            Object Jcoper_Var3_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var3_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 45 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var3_Link_Symbl
+
+            Object Jcoper_Var4_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var4_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 60 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var4_Link_Symbl
+
+            Object Jcoper_Var5_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var5_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 75 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var5_Link_Symbl
+
+            Object Jcoper_Var6_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var6_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 90 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var6_Link_Symbl
+
+            Object Jcoper_Var7_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var7_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 105 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var7_Link_Symbl
+
+            Object Jcoper_Var8_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var8_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 120 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var8_Link_Symbl
+
+            Object Jcoper_Var9_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Var9_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 135 376
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Var9_Link_Symbl
+
+            Object Textbox2 is a Textbox
+                Set Label to "Prompt                                                        Modifiers           Default Value          Link           Sym"
+                Set FontWeight to 600
+                Set FontSize to 4 0
+                Set Size to 10 325
+                Set Location to 2 15
+                Set TextColor to clBlue
+            End_Object    // Textbox2
+
+        End_Object    // TP_Variables
+
+        Object TP_Constants is a dbTabPage
+            Set Label to "Constants"
+            Object Jcoper_Con1_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con1_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "A)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 15 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con1_Desc
+
+            Object Jcoper_Con2_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con2_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "B)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 30 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con2_Desc
+
+            Object Jcoper_Con3_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con3_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "C)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 45 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con3_Desc
+
+            Object Jcoper_Con4_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con4_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "D)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 60 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con4_Desc
+
+            Object Jcoper_Con5_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con5_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "E)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 74 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con5_Desc
+
+            Object Jcoper_Con6_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con6_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "F)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 90 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con6_Desc
+
+            Object Jcoper_Con7_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con7_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "G)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 105 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con7_Desc
+
+            Object Jcoper_Con8_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con8_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "H)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 120 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con8_Desc
+
+            Object Jcoper_Con9_Desc is a dbForm
+
+                //AB-StoreTopStart
+
+                //AB-StoreTopEnd
+
+                Entry_Item Jcoper.Con9_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label to "I)"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 186
+                Set Location to 135 15
+
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+
+            End_Object    // Jcoper_Con9_Desc
+
+            Object Jcoper_Con1_Value is a dbForm
+                Entry_Item Jcoper.Con1_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 15 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con1_Value
+
+            Object Jcoper_Con2_Value is a dbForm
+                Entry_Item Jcoper.Con2_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 30 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con2_Value
+
+            Object Jcoper_Con3_Value is a dbForm
+                Entry_Item Jcoper.Con3_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 45 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con3_Value
+
+            Object Jcoper_Con4_Value is a dbForm
+                Entry_Item Jcoper.Con4_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 60 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con4_Value
+
+            Object Jcoper_Con5_Value is a dbForm
+                Entry_Item Jcoper.Con5_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 75 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con5_Value
+
+            Object Jcoper_Con6_Value is a dbForm
+                Entry_Item Jcoper.Con6_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 90 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con6_Value
+
+            Object Jcoper_Con7_Value is a dbForm
+                Entry_Item Jcoper.Con7_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 105 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con7_Value
+
+            Object Jcoper_Con8_Value is a dbForm
+                Entry_Item Jcoper.Con8_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 120 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con8_Value
+
+            Object Jcoper_Con9_Value is a dbForm
+                Entry_Item Jcoper.Con9_value
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 78
+                Set Location to 135 205
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con9_Value
+
+            Object Jcoper_Con1_Link_Code is a dbForm
+                Entry_Item Jcoper.Con1_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 15 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con1_Link_Code
+
+            Object Jcoper_Con2_Link_Code is a dbForm
+                Entry_Item Jcoper.Con2_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 30 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con2_Link_Code
+
+            Object Jcoper_Con3_Link_Code is a dbForm
+                Entry_Item Jcoper.Con3_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 45 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con3_Link_Code
+
+            Object Jcoper_Con4_Link_Code is a dbForm
+                Entry_Item Jcoper.Con4_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 60 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con4_Link_Code
+
+            Object Jcoper_Con5_Link_Code is a dbForm
+                Entry_Item Jcoper.Con5_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 75 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con5_Link_Code
+
+            Object Jcoper_Con6_Link_Code is a dbForm
+                Entry_Item Jcoper.Con6_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 90 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con6_Link_Code
+
+            Object Jcoper_Con7_Link_Code is a dbForm
+                Entry_Item Jcoper.Con7_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 105 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con7_Link_Code
+
+            Object Jcoper_Con8_Link_Code is a dbForm
+                Entry_Item Jcoper.Con8_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 120 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con8_Link_Code
+
+            Object Jcoper_Con9_Link_Code is a dbForm
+                Entry_Item Jcoper.Con9_link_code
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOff
+                Set Size to 13 42
+                Set Location to 135 290
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con9_Link_Code
+
+            Object Jcoper_Con1_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con1_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 15 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con1_Link_Symbl
+
+            Object Jcoper_Con2_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con2_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 30 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con2_Link_Symbl
+
+            Object Jcoper_Con3_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con3_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 45 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con3_Link_Symbl
+
+            Object Jcoper_Con4_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con4_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 60 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con4_Link_Symbl
+
+            Object Jcoper_Con5_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con5_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 75 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con5_Link_Symbl
+
+            Object Jcoper_Con6_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con6_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 90 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con6_Link_Symbl
+
+            Object Jcoper_Con7_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con7_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 105 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con7_Link_Symbl
+
+            Object Jcoper_Con8_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con8_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 120 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con8_Link_Symbl
+
+            Object Jcoper_Con9_Link_Symbl is a dbForm
+                Entry_Item Jcoper.Con9_link_symbl
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 16
+                Set Location to 135 336
+                //AB-StoreStart
+                set Shadow_State to true
+                //AB-StoreEnd
+            End_Object    // Jcoper_Con9_Link_Symbl
+
+            Object Textbox3 is a Textbox
+                Set Label to "Prompt                                                               Value                       Link           Sym"
+                Set FontWeight to 600
+                Set FontSize to 4 0
+                Set Size to 10 291
+                Set Location to 2 15
+                Set TextColor to clBlue
+            End_Object    // Textbox3
+
+        End_Object    // TP_Constants
+
+    End_Object    // dbTabDialog1
+
+
+    //AB-StoreStart
+    procedure DoDisplayDetails integer iOperRec
+        local integer hJcoperDD
+        get Server to hJcoperDD
+        send Clear to hJcoperDD
+        send Find_By_Recnum to hJcoperDD Jcoper.File_number iOperRec
+        set Label to ("Estimating Standards Details for" * string(Jcoper.Opcode) *Jcoper.Name)
+        send Popup
+    end_procedure
+
+    procedure LinkSymbolPrompt integer iOpcode
+        local integer hJcoperDD
+        get Server to hJcoperDD
+        send Clear to hJcoperDD
+        move iOpcode to Jcoper.Opcode
+        send Find to hJcoperDD EQ 2
+        if (FINDERR) procedure_return
+        set Label to ("Estimating Standards Details for" * string(Jcoper.Opcode) *Jcoper.Name)
+        send Popup
+    end_procedure
+    //AB-StoreEnd
+
+End_Object    // JcoperDetailDialog
+
+//AB/ End_Object    // prj
+

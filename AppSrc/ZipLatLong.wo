@@ -1,0 +1,129 @@
+// ZipLatLong.wo
+// ZipLatLong
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use cZipGeoGlblDataDictionary.dd
+
+Object oZipLatLong Is A cWebBusinessProcess
+    Set psDescription To "ZipLatLong"
+
+
+    Object oZipGeo_DD Is A cZipGeoGlblDataDictionary
+        Send DefineAllExtendedFields
+        Property Number pnStartZipCode
+        Property Number pnStopZipCode
+
+        Procedure OnConstrain 
+            Number nStart nStop
+
+            Get pnStartZipCode To nStart
+            Get pnStopZipCode To nStop
+
+            If (nStart <> 0 And nStop <> 0) Begin
+                Constrain ZipGeo.ZipCode Between nStart And nStop
+            End
+            Else Begin
+                If (nStart <> 0) Begin
+                    Constrain ZipGeo.ZipCode Ge nStart
+                End
+                Else Begin
+                    If (nStop <> 0) Begin
+                        Constrain ZipGeo.ZipCode Le nStop
+                    End
+                End
+            End
+        End_Procedure // OnConstrain
+    End_Object // oZipGeo_DD
+
+    Set Main_DD To oZipGeo_DD
+
+
+    Object oReport Is A cWebReport
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCellHeader 'ZipCode' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'City' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'State' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Longitude' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Latitude' 'class="Header" align="right"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText
+            String sZipGeoZipCode
+            String sZipGeoCity
+            String sZipGeoState
+            String sZipGeoLongitude
+            String sZipGeoLatitude
+
+            Get ddValueEncode "ZipGeo.ZipCode" To sZipGeoZipCode
+            Get ddValueEncode "ZipGeo.City" To sZipGeoCity
+            Get ddValueEncode "ZipGeo.State" To sZipGeoState
+            Get ddValueEncode "ZipGeo.Longitude" To sZipGeoLongitude
+            Get ddValueEncode "ZipGeo.Latitude" To sZipGeoLatitude
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCell (FormatNumber (sZipGeoZipCode,0)) 'class="Data" align="right"'
+                Send WriteHtmlCell sZipGeoCity 'class="Data" align="left"'
+                Send WriteHtmlCell sZipGeoState 'class="Data" align="left"'
+                Send WriteHtmlCell (FormatNumber (sZipGeoLongitude,6)) 'class="Data" align="right"'
+                Send WriteHtmlCell (FormatNumber (sZipGeoLatitude,6)) 'class="Data" align="right"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunZipLatLong Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunZipLatLong
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetZipGeo_ZipCode String sStart String sStop
+        Set pnStartZipCode of oZipGeo_DD To sStart
+        Set pnStopZipCode  of oZipGeo_DD To sStop
+    End_Procedure // SetZipGeo_ZipCode
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunZipLatLong Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunZipLatLong of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunZipLatLong
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oZipLatLong

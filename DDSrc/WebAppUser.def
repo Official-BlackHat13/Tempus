@@ -1,0 +1,51 @@
+-----------------------------------------------------------------------------
+  DATE: 08/02/2018      TIME: 13:01                                  PAGE:  1
+  FILE DEFINITION FOR FILE: WebAppUser (# 264)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:WebAppUser
+  USER DISPLAY NAME         : WebAppUser
+  DATAFLEX FILE NAME        : WebAppUser
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 145       ( USED: 145 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 14 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LoginName        ASC     20     1  1   
+  2  Password         ASC     20    21      
+  3  Rights           NUM    2.0    41      WebAppUserRights.FIELD_1 (82,1)
+  4  FullName         ASC     30    47  2   
+  5  LastLogin        DAT     10    77      
+  6  EmployerIdno     NUM    8.0   100  3   
+  7  EmployeeIdno     NUM    8.0   111  4   
+  8  ChangedFlag      NUM    2.0   122  5   
+  9  Status           ASC      1   128      
+ 10  BillingAccessFlag  NUM    2.0   129      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LoginName       NO  NO       0      0       1     ON-LINE
+
+  2    FullName        NO  NO       0      0       2     ON-LINE
+       LoginName       NO  NO 
+
+  3    EmployerIdno    NO  NO       0      0       2     ON-LINE
+       LoginName       NO  NO 
+
+  4    EmployeeIdno    NO  NO       0      0       2     ON-LINE
+       LoginName       NO  NO 
+
+  5    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       LoginName       NO  NO 
+

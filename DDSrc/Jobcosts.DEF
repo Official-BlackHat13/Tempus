@@ -1,0 +1,43 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Jobcosts (# 39)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Jobcosts
+  USER DISPLAY NAME         : Jobcosts
+  DATAFLEX FILE NAME        : Jobcosts
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16502     ( USED: 16502 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 26079 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  JobcostsId       NUM   10.0     1  1   
+  2  JobNumber        NUM   10.0    12  2   Order.FIELD_3 (8,3)
+  3  WorkDate         DAT     10    23  2   
+  4  CostType         ASC     10    46      
+  5  MastOpsIdno      NUM   10.0    56      MastOps.FIELD_1 (11,1)
+  6  Quantity         NUM    8.2    67      
+  7  UnitCost         NUM    8.2    79      
+  8  TotalCost        NUM    8.2    91      
+  9  Notes            TEX    512   103      
+ 10  ExcludeFlag      NUM    5.0 16486      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    JobcostsId      NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       3     ON-LINE
+       WorkDate        NO  NO 
+       JobcostsId      NO  NO 
+

@@ -1,0 +1,42 @@
+Use cGlblDataDictionary.pkg
+
+Open SalesRep
+Open Snowrep
+Open Contact
+
+Set_Attribute DF_FILE_ALIAS of Salesrep.File_number    to DF_FILE_IS_MASTER
+Set_Attribute DF_FILE_ALIAS of Snowrep.File_number to DF_FILE_IS_ALIAS
+
+Register_Object Snowrep_sl
+
+Class cSnowrepDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Snowrep.File_Number
+
+        Set Add_Client_File to Contact.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+//        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Prompt_Object Field Snowrep.RepIdno to Snowrep_sl
+        Set Field_Option Field Snowrep.RepIdno DD_AUTOFIND to True
+        Set Field_Option Field Snowrep.RepIdno DD_ZERO_SUPPRESS to True
+        Set Key_Field_State Field Snowrep.RepIdno to True
+
+        Set Field_Prompt_Object Field Snowrep.LastName to Snowrep_sl
+
+        Set pbAllowNullRelateState      to True
+        Set Validate_Foreign_File_State to False
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Snowrep.sl
+#ENDIF

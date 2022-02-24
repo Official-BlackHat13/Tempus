@@ -1,0 +1,32 @@
+Use cGlblDataDictionary.pkg
+
+Open Referenc
+Open System
+
+Register_Object Referenc_sl
+
+Class cReferencGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Referenc.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Referenc.ReferenceIdno to File_Field System.CrewMemberId
+        Set Field_Prompt_Object Field Referenc.ReferenceIdno to Referenc_sl
+        Set Field_Mask Field Referenc.Phone to " "
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Reference_sl.sl
+#ENDIF

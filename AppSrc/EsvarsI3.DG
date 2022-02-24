@@ -1,0 +1,125 @@
+// EsvarsI3.DG
+
+Use dfdbmdpn.pkg
+Use DataDict.pkg
+Use Windows.pkg
+Use cGlblDbContainer3d.pkg
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+Use ESVARS.DD
+
+
+Object odgEsvarsI3 is a dbModalPanel
+
+    property integer piVarnum 0
+    
+    Set Label to "Input Type 3 Settings"
+    Set Location to 12 16
+    Set Size to 146 186
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to Jcdept_DD
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to Jccntr_DD
+    End_Object    // Jcoper_DD
+
+    Object Esvars_DD is a Esvars_DataDictionary
+        Set DDO_Server to Jcoper_DD
+        Set Constrain_File to Jcoper.File_Number
+
+        Procedure OnConstrain
+            integer iVarnum
+            get piVarnum to iVarnum
+            Constrain ESVARS.Input_Type EQ 3
+            Constrain Esvars.Varnum EQ iVarnum
+        End_Procedure
+        
+        Procedure Update
+            integer iVarnum
+            get piVarnum to iVarnum
+            Forward send Update
+            Move iVarnum to Esvars.Varnum
+            Move 3 to Esvars.Input_Type
+        End_Procedure
+    End_Object    // Esvars_DD
+
+    Set Main_DD to Esvars_DD
+    Set Server to Esvars_DD
+
+    Object oClosebutton is a Button
+        Set Label to "&Close"
+        Set Location to 128 121
+        Set peAnchors to anBottomRight
+
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+    End_Object    // oClosebutton
+
+    Object oDbContainer1 is a cGlblDbContainer3d
+        Set Size to 114 172
+        Set Location to 8 8
+        Set peAnchors to anAll
+        Set Border_Style to Border_StaticEdge
+
+        Object oDbGrid1 is a DbGrid
+            Set Main_File to Esvars.File_Number
+            Set Ordering to 2
+            Set Size to 108 158
+            Set Location to 5 6
+            Set peDisabledColor to clWindow
+            Set peAnchors to anAll
+            Set Autosize_height_state to TRUE
+            Set peResizeColumn to rcNone
+            Set Wrap_State to TRUE
+
+            Begin_Row
+                Entry_Item Esvars.Description
+                Entry_Item Esvars.Itemnum
+            End_Row
+
+            Set Form_Width    item 0 to 120
+            Set Header_Label  item 0 to "Description"
+            
+            Set Form_Width    item 1 to 30
+            Set Header_Label  item 1 to "Seq.#"
+            
+            //Set Auto_Regenerate_State to false
+            // this is ugly, as you down arrow it can repeat existing records in the grid
+            // making them appear to be duplicates
+        End_Object    // oDbGrid1
+
+    End_Object    // oDbContainer1
+
+    procedure DoEditEsvars integer iVarnum
+        integer hDD
+        set piVarnum to iVarnum
+        //
+        get Server          to hDD
+        send Clear      of hDD
+        move 3              to Esvars.Input_Type
+        move Jcoper.Opcode  to Esvars.Opcode
+        move iVarnum        to Esvars.Varnum
+        send Find of hDD GE 2
+        send Popup_Modal
+    end_procedure
+    
+    procedure Request_Clear
+        forward send Request_Clear
+        send Close_Panel
+    end_procedure
+    
+    procedure Request_Clear_All
+        send Request_Clear
+    end_procedure
+    
+    on_key Key_Alt+Key_C send KeyAction of oCloseButton
+
+End_Object    // odgEsvarsI3

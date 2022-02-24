@@ -1,0 +1,51 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: CreditHdr (# 69)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CreditHdr
+  USER DISPLAY NAME         : CreditHdr
+  DATAFLEX FILE NAME        : CreditHdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 236       ( USED: 236 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 25 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CreditIdno       NUM   10.0     1  1   
+  2  CustomerIdno     NUM   10.0    12      
+  3  LocationIdno     NUM   10.0    23      
+  4  InvoiceIdno      NUM   10.0    34      Invhdr.FIELD_1 (14,1)
+  5  QBInvoiceNumber  NUM   10.0    45      
+  6  JobNumber        NUM   10.0    56      
+  7  CreatedDate      DAT     10    67  2   
+  8  CreatedTime      ASC     10    90  2   
+  9  CreatedBy        ASC     20   100      
+ 10  SalesInitials    ASC      5   120      
+ 11  CreditSubTotal   NUM    6.2   125      
+ 12  CreditTaxTotal   NUM    6.4   135      
+ 13  CreditTotal      NUM    6.2   147      
+ 14  CreditDate       DAT     10   157      
+ 15  CreditPostingDate  DAT     10   180      
+ 16  PostReady        NUM    5.0   203      
+ 17  PostedFlag       NUM    5.0   209      
+ 18  QBCreditNumber   NUM   10.0   215      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CreditIdno      NO  NO       0      0       1     ON-LINE
+
+  2    CreatedDate     NO  NO       0      0       3     ON-LINE
+       CreatedTime     NO  NO 
+       CreditIdno      NO  NO 
+

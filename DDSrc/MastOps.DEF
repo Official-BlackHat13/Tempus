@@ -1,0 +1,69 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: MastOps (# 11)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:MastOps
+  USER DISPLAY NAME         : Master_Operations
+  DATAFLEX FILE NAME        : MastOps
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16685     ( USED: 16685 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 479 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  MastOpsIdno      NUM   10.0     1  1   
+  2  Name             ASC     50    12  2   
+  3  SellRate         NUM    6.4    62      
+  4  CostRate         NUM    6.4    74      
+  5  CostType         ASC     15    86      
+  6  CalcBasis        ASC     15   101      
+  7  ActivityType     ASC     20   116      WorkType.FIELD_1 (74,1)
+  8  StandardHours    NUM    2.4   136      
+  9  Description      TEX    512   144      
+ 10  Status           ASC      1 16527      
+ 11  DisplaySequence  NUM    4.2 16528  3   
+ 12  ChangedFlag      NUM    5.0 16536  4   
+ 13  QtyDivisor       NUM    8.4 16542      
+ 14  QtyDescription   ASC     10 16556      
+ 15  IsTaxable        NUM    5.0 16566      
+ 16  IsUniversal      NUM    5.0 16572  5   
+ 17  ReportCategory   ASC     10 16578      
+ 18  ListID           ASC     36 16588      
+ 19  RecordOwner      NUM   10.0 16624      
+ 20  IsAttachment     ASC     20 16635  6   
+ 21  NeedsAttachment  ASC     20 16655  7   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    MastOpsIdno     NO  NO       0      0       1     ON-LINE
+
+  2    Name            NO  NO       0      0       2     ON-LINE
+       MastOpsIdno     NO  NO 
+
+  3    DisplaySequence NO  NO       0      0       3     ON-LINE
+       Name            NO  NO 
+       MastOpsIdno     NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       MastOpsIdno     NO  NO 
+
+  5    IsUniversal     NO  NO       0      0       2     ON-LINE
+       MastOpsIdno     NO  NO 
+
+  6    IsAttachment    NO  NO       0      0       2     ON-LINE
+       MastOpsIdno     NO  NO 
+
+  7    NeedsAttachment NO  NO       0      0       2     ON-LINE
+       MastOpsIdno     NO  NO 
+

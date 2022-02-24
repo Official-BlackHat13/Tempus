@@ -1,0 +1,86 @@
+// Class Name: Areas_DataDictionary
+// Revision  : 5
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Areas
+Open Weather
+Open Location
+Open Areanote
+
+Register_Object Areas_sl
+
+Class Areas_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Main_File To Areas.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+//        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+        Set Add_Client_File to Weather.File_Number
+        Set Add_Client_File to Location.File_Number
+        Set Add_Client_File to Areanote.File_Number
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Areas.Areanumber DD_AUTOFIND to True
+        Set Field_Option Field Areas.Areanumber DD_REQUIRED to True
+        Set Field_Prompt_Object Field Areas.Areanumber to Areas_sl
+        Set Key_Field_State Field Areas.Areanumber To TRUE
+
+        Set Field_Prompt_Object Field Areas.Name to Areas_sl
+
+        Set pbAllowNullRelateState      to True
+        Set Validate_Foreign_File_State to False
+    End_Procedure    // Construct_Object
+    
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Areas.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    
+    // Update:
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+     
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Areas.Changedflag
+        End
+    End_Procedure   // Update
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // Areas_DataDictionary
+
+#IFDEF Is$WebApp
+#ELSE
+
+Use Areas.sl         // Areas_sl
+
+#ENDIF
+

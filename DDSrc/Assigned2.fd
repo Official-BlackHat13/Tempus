@@ -1,0 +1,6 @@
+#REPLACE FILE71 Assigned2
+#REPLACE Assigned2.Recnum |FN71,0
+#REPLACE Assigned2.AssignedCode |FS71,1
+#REPLACE Assigned2.Description |FS71,2
+#REPLACE Assigned2.Status |FS71,3
+#REPLACE Assigned2.ChangedFlag |FN71,4

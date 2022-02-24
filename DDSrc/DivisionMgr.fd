@@ -1,0 +1,9 @@
+#REPLACE FILE85 DivisionMgr
+#REPLACE DivisionMgr.Recnum |FN85,0
+#REPLACE DivisionMgr.DivMgrIdno |FN85,1
+#REPLACE DivisionMgr.FirstName |FS85,2
+#REPLACE DivisionMgr.LastName |FS85,3
+#REPLACE DivisionMgr.Email |FS85,4
+#REPLACE DivisionMgr.CellPhone |FS85,5
+#REPLACE DivisionMgr.Status |FS85,6
+#REPLACE DivisionMgr.ChangedFlag |FN85,7

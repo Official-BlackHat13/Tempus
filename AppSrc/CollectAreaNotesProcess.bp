@@ -1,0 +1,121 @@
+Use Batchdd.pkg
+Use Areas.DD
+Use cAreanoteDataDictionary.dd
+
+Object oCollectAreaNotesProcess is a BusinessProcess
+
+    Property tWStAreanote[] ptNotes
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oAreanote_DD is a cAreanoteDataDictionary
+        Set DDO_Server to oAreas_DD
+        Send DefineAllExtendedFields
+    End_Object
+
+    Set Main_DD to oAreanote_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        tWStAreanote[] tCollected tProcessed
+        //
+        Boolean bFail
+        Integer hoDD iItems iItem iCount
+        //
+        Get Main_DD                    to hoDD
+        Get ptNotes                    to tCollected
+        Move (SizeOfArray(tCollected)) to iItems
+        //
+        For iItem from 0 to (iItems - 1)
+            Send Clear        of hoDD
+            Move tCollected[iItem].iAreaNumber to Areas.AreaNumber
+            Send Request_Find of hoDD EQ Areas.File_Number 1
+            If (Found) Begin
+                Set Field_Changed_Value of hoDD Field Areanote.CreatedDate to tCollected[iItem].dCreatedDate
+                Set Field_Changed_Value of hoDD Field Areanote.CreatedTime to tCollected[iItem].sCreatedTime
+                Set Field_Changed_Value of hoDD Field Areanote.CreatedBy   to tCollected[iItem].iCreatedBy
+                Set Field_Changed_Value of hoDD Field Areanote.NoteDate    to tCollected[iItem].dNoteDate
+                Set Field_Changed_Value of hoDD Field Areanote.AreanoteRef to tCollected[iItem].iAreanoteId
+                Set Field_Changed_Value of hoDD Field Areanote.Note        to tCollected[iItem].sNote
+                Get Request_Validate    of hoDD                            to bFail
+                If (bFail) Break
+                Send Request_Save       of hoDD
+                If (Areanote.Recnum) Begin
+                    Move tCollected[iItem].iAreanoteId to tProcessed[iCount].iAreanoteId
+                    Move Areanote.AreanoteId           to tProcessed[iCount].iAreanoteRef
+                    Increment iCount
+                End
+            End
+        Loop
+        Set ptNotes to tProcessed
+    End_Procedure
+
+    Function DoCollectAndProcessAreaNotes String ByRef sError Returns Integer
+        tWStAreanote[] tNotes
+        //
+        Integer iItems iProcessed iUpdated eTransferStatus
+        //
+        Get wsGetNewAreaNotes of oWSTransactionService to tNotes
+        Get peTransferStatus  of oWSTransactionService to eTransferStatus
+        If (not(eTransferStatus = wssOK)) Begin
+            // Handle soap fault errors in a special way. Report all others as errors.
+            If (eTransferStatus=wssSoapFault) Begin
+                Get TransferErrorDescription of oWSTransactionService to sError
+                Function_Return
+            End
+            Else Begin
+                Send LastError of oWSTransactionService // this will generate an error
+            End
+        End
+        Move (SizeOfArray(tNotes))                     to iItems
+        If (iItems > 0) Begin
+            Set ptNotes                                to tNotes
+            Send DoProcess
+            Get ptNotes                                to tNotes
+            Move (SizeOfArray(tNotes))                 to iProcessed
+            If (iProcessed <> iItems) Begin
+                #IFDEF TEMPUS_LINK
+                #ELSE
+                Send Info_Box ("Not all" * String(iItems) * "collected Area notes were processed." * String(iItems - iProcessed) * "error(s).")
+                #ENDIF
+            End
+            If (iProcessed > 0) Begin
+                Get wsUpdateCollectedAreaNotes of oWSTransactionService tNotes to iUpdated
+                Get peTransferStatus           of oWSTransactionService        to eTransferStatus
+                If (not(eTransferStatus = wssOK)) Begin
+                    // Handle soap fault errors in a special way. Report all others as errors.
+                    If (eTransferStatus=wssSoapFault) Begin
+                        Get TransferErrorDescription of oWSTransactionService to sError
+                        Function_Return
+                    End
+                    Else Begin
+                        Send LastError of oWSTransactionService // this will generate an error
+                    End
+                End
+                If (iUpdated <> iProcessed) Begin
+                    #IFDEF TEMPUS_LINK
+                    #ELSE
+                    Send Info_Box ("Not all" * String(iProcessed) * "processed Area notes were updated." * String(iProcessed - iUpdated) * "error(s).")
+                    #ENDIF
+                End
+                Else Begin
+                    #IFDEF TEMPUS_LINK
+                    #ELSE
+                    Send Info_Box (String(iProcessed) * "Area notes were collected and saved.")
+                    #ENDIF
+                End
+            End
+        End
+        Function_Return iProcessed
+    End_Function
+
+End_Object

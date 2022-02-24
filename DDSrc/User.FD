@@ -1,0 +1,15 @@
+#REPLACE FILE220 User
+#REPLACE User.Recnum |FN220,0
+#REPLACE User.UserId |FN220,1
+#REPLACE User.LoginName |FS220,2
+#REPLACE User.Password |FS220,3
+#REPLACE User.FirstName |FS220,4
+#REPLACE User.LastName |FS220,5
+#REPLACE User.State |FS220,6
+#REPLACE User.EditRights |FS220,7
+#REPLACE User.ChangedFlag |FN220,8
+#REPLACE User.CustContactId |FN220,9
+#REPLACE User.SalesIdno |FN220,10
+#REPLACE User.EditLevel |FN220,11
+#REPLACE User.EmployeeIdno |FN220,12
+#REPLACE User.RecordOwner |FN220,13

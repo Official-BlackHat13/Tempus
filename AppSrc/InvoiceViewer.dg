@@ -1,0 +1,246 @@
+Use DFClient.pkg
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use Invhdr.DD
+Use MastOps.DD
+Use Opers.DD
+Use Invdtl.DD
+Use SalesRep.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+Use cGlblDbForm.pkg
+Use dfSelLst.pkg
+
+Register_Object oCustomerInvoice
+
+Object oInvoiceViewer is a dbModalPanel
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastops_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oInvhdr_DD is a Invhdr_DataDictionary
+        Set DDO_Server to oOrder_DD
+        Set Read_Only_State to True
+    End_Object
+
+    Object oInvdtl_DD is a Invdtl_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set Constrain_file to Invhdr.File_number
+        Set DDO_Server to oInvhdr_DD
+    End_Object
+
+    Set Main_DD to oInvhdr_DD
+    Set Server to oInvhdr_DD
+
+    Set Label to "Invoice Viewer"
+    Set Size to 243 545
+    Set piMinSize to 243 545
+    Set Location to 2 2
+    Set Border_Style to Border_Thick
+
+    Object oPrintButton is a Button
+        Set Label to "&Print"
+        Set Location to 221 420
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send DoPrintInvoice
+        End_Procedure
+    End_Object
+
+    Object oExitButton is a Button
+        Set Size to 14 50
+        Set Label to "&Exit"
+        Set Location to 221 475
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+    Object oInvhdr_InvoiceIdno is a cGlblDbForm
+        Entry_Item Invhdr.InvoiceIdno
+        Set Location to 10 76
+        Set Size to 13 44
+        Set Label to "Invoice Number:"
+        Set Enabled_State to False
+
+        Procedure Shadow_Display
+            Set Color     to clWindow
+            Set TextColor to clWindowText
+        End_Procedure
+    End_Object
+
+    Object oInvhdr_InvoiceDate is a cGlblDbForm
+        Entry_Item Invhdr.InvoiceDate
+        Set Location to 25 76
+        Set Size to 13 44
+        Set Label to "Invoice Date:"
+        Set Enabled_State to False
+
+        Procedure Shadow_Display
+            Set Color     to clWindow
+            Set TextColor to clWindowText
+        End_Procedure
+    End_Object
+
+    Object oInvhdr_JobNumber is a cGlblDbForm
+        Entry_Item Order.JobNumber
+        Set Location to 40 76
+        Set Size to 13 44
+        Set Label to "Job Number:"
+        Set Prompt_Button_Mode to PB_PromptOff
+        Set Enabled_State to False
+
+        Procedure Shadow_Display
+            Set Color     to clWindow
+            Set TextColor to clWindowText
+        End_Procedure
+    End_Object
+
+    Object oDetailList is a dbList
+        Set Server to oInvdtl_DD
+        Set Size to 125 527
+        Set Location to 62 10
+        Set Move_Value_Out_State to False
+
+        Begin_Row
+            Entry_Item Invdtl.Sequence
+            Entry_Item Invdtl.StartDate
+            Entry_Item Opers.OpersIdno
+            Entry_Item Opers.Name
+            Entry_Item Invdtl.StartTime
+            Entry_Item Invdtl.StopTime
+            Entry_Item Invdtl.Quantity
+            Entry_Item Invdtl.Price
+            Entry_Item Invdtl.Total
+        End_Row
+
+        Set Main_File to Invdtl.File_number
+
+        Set Form_Width 0 to 28
+        Set Header_Label 0 to "Seq"
+        Set Header_Justification_Mode 0 to JMode_Right
+
+        Set Form_Width 1 to 46
+        Set Header_Label 1 to "Date"
+
+        Set Form_Width 2 to 50
+        Set Header_Label 2 to "Opcode"
+
+        Set Form_Width 3 to 158
+        Set Header_Label 3 to "Description"
+
+        Set Form_Width 4 to 46
+        Set Header_Label 4 to "StartTime"
+
+        Set Form_Width 5 to 46
+        Set Header_Label 5 to "StopTime"
+
+        Set Form_Width 6 to 48
+        Set Header_Label 6 to "Hrs/Qty"
+        Set Header_Justification_Mode 6 to JMode_Right
+
+        Set Form_Width 7 to 46
+        Set Header_Label 7 to "Rate"
+        Set Header_Justification_Mode 7 to JMode_Right
+
+        Set Form_Width 8 to 50
+        Set Header_Label 8 to "Total"
+        Set Header_Justification_Mode 8 to JMode_Right
+        Set Color to clWhite
+        Set peDisabledColor to clWhite
+        Set peDisabledTextColor to clBlack
+        Set TextColor to clBlack
+
+    End_Object
+
+    Object oInvdtl_Description is a cDbTextEdit
+        Entry_Item Invdtl.Description
+        Set Location to 195 84
+        Set Size to 38 296
+        Set Label to "Description:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 3
+        Set peAnchors to anBottomLeftRight
+        Set Read_Only_State to True
+
+        Procedure Next
+            Send Activate of oDetailList
+        End_Procedure
+    End_Object
+
+    Object oInvhdr_TotalAmount is a cGlblDbForm
+        Entry_Item Invhdr.TotalAmount
+        Set Location to 195 472
+        Set Size to 13 50
+        Set Label to "Total:"
+        Set Label_Col_Offset to 3
+        Set Label_Justification_Mode to JMode_Right
+    End_Object
+
+
+    Procedure DoViewInvoice Integer iInvoiceIdno
+        Send Request_Clear of oInvhdr_DD
+        Move iInvoiceIdno to Invhdr.InvoiceIdno
+        Send Find of oInvhdr_DD EQ 1
+        Send Popup
+    End_Procedure
+
+    Procedure DoPrintInvoice
+        #IFDEF TEMPUS_LINK
+        #ELSE
+        Boolean bCancel
+        Integer iInvId
+        //
+        Get Field_Current_Value of oInvhdr_DD Field Invhdr.InvoiceIdno to iInvId
+        Get Confirm ("Print invoice" * String(iInvId) + "?")           to bCancel
+        If (not(bCancel)) Begin
+            Send DoJumpStartReport of oCustomerInvoice iInvId
+        End
+        #ENDIF
+    End_Procedure
+
+    On_Key Key_Alt+Key_P Send KeyAction of oPrintButton
+    On_Key Key_Alt+Key_E Send KeyAction of oExitButton
+
+End_Object

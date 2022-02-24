@@ -1,0 +1,11 @@
+// tLocEquip.pkg
+
+Struct tLocEquip
+    Integer iRecId
+    Integer iLocequipIdno
+    Integer iLocationIdno
+    String sDescription
+    Decimal nQty
+    Integer iEmployerIdno
+    Integer iChangedFlag
+End_Struct

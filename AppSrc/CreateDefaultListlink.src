@@ -1,0 +1,46 @@
+Use GlobalAllEnt.pkg
+Use cHtmlHelp.pkg
+Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open System
+Open Contact
+Open Listlink
+Open Maillist
+
+Procedure DoCreate
+    Boolean bCancel
+    //
+    Get Confirm "Create GEN?" to bCancel
+    If (bCancel) Procedure_Return
+    //
+    Find ge Contact.Recnum
+    While (Found)
+        Clear Listlink
+        Move Contact.ContactIdno to Listlink.ContactIdno
+        Move "GEN"               to Listlink.ListCode
+        Find ge Listlink by Index.2
+        If (not((Found) and Listlink.ContactIdno = Contact.ContactIdno and Listlink.ListCode = "GEN")) Begin
+            Clear Listlink
+            Reread
+            Add 1 to System.ListlinkID
+            SaveRecord System
+            Clear Listlink
+            Move System.ListlinkID   to Listlink.ListlinkID
+            Move "GEN"               to Listlink.ListCode
+            Move Contact.ContactIdno to Listlink.ContactIdno
+            SaveRecord Listlink
+            Unlock
+        End
+        Find gt Contact.Recnum
+    Loop
+End_Procedure
+
+Send DoCreate

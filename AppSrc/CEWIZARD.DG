@@ -1,0 +1,777 @@
+use DFAllEnt.pkg
+Use CLCENGIN.PKG
+Use CalcEngineStatus.dg
+Use Cewizard.pkg
+
+declare_datafile Jcpars
+declare_datafile Esvars
+
+register_object oCalcEngine
+register_object oBackButton
+
+Object CalcValueDialog is a ModalPanel //Dialog
+    Set Size to 115 144
+
+    Property Number  pnValue
+    Property Number  pnDupe
+	//
+    Property String  psStandard
+    Property Integer piOpcode
+    //
+    Property Boolean pbPausebar
+    //
+    Property Boolean pbRange
+    Property Number  pnRangeLo
+    Property Number  pnRangeHi
+    Property Integer piCalcWizardLocation
+    //
+    set Locate_Mode to NO_LOCATE
+	//set SysMenu_Icon  To false
+    //set Minimize_Icon to false
+    set Popup_State  to TRUE
+    set Caption_Bar  to FALSE
+    set Border_Style to Border_Normal //Border_None
+    
+    set Color to (RGB(200,255,200)) //11663608 //pale yellow //clHighLightText //White
+    set GUILocation to 37 42
+    set GUISize     to 26 541
+
+    object oPrompt is a Textbox
+
+        //Set Justification_Mode to jMode_Center
+        Set GUILocation to 4 19
+        Set GUISize     to 20 250
+        set FontWeight  to 600
+
+    End_Object // oPrompt
+
+    Object ValueForm is a Form
+
+        on_key kCancel      send CancelList
+        on_key kEnter       send AcceptOk
+		on_key kSave_Record send AutoSaveOk
+        on_key Key_PgUp     send DoDisplayStatus
+        on_key Key_PgDn     send DupeOk
+        on_key kUpArrow     send KeyAction of oBackButton //send BackOk
+		on_key kDownArrow	send AcceptOk
+		on_key kHelp		send DisplayHelpFile
+
+        set GUILocation to 3 273
+        Set GUISize             to 20 85
+        Set numeric_mask item 0 to 8 Jcpars.Decimals "*,"
+
+        procedure CancelList
+            if (pbPausebar(self)) send Close_Panel
+        end_procedure
+
+        procedure AcceptOk
+			delegate send AcceptOk
+		end_procedure
+
+		procedure AutoSaveOk
+            //BC: 12/13/06 get rid of pbpausebar conditinal to improve functioning of autosave behavior
+            //if NOT (pbPausebar(self)) send SetAutoSave to (oCalcEngine(self)) TRUE
+            send SetAutoSave to (oCalcEngine(self)) TRUE
+			delegate send AcceptOk
+		end_procedure
+
+		procedure BackOk
+            set pbBackup to TRUE
+            set pbReturn to TRUE
+            delegate send AcceptOk
+		end_procedure
+
+        procedure DupeOk
+            if (pbPausebar(self)) procedure_return
+            delegate send DupeOk
+		end_procedure
+
+        function CalcValue returns boolean
+            number nValue nLo nHi
+            //
+            if (NOT(pbPausebar(self))) get Value item 0 to nValue
+            if (pbRange(self)) begin
+                get pnRangeLo to nLo
+                get pnRangeHi to nHi
+                if (nValue < nLo OR nValue > nHi) begin
+                    send Stop_Box ("Out of range." * string(nLo) * "-" * string(nHi))
+                    function_return
+                end
+            end
+            set pnValue to nValue
+            function_return DFTRUE
+        end_function
+
+        procedure DupeValue
+            number nValue
+            //
+            get pnDupe  to nValue
+            set pnValue to nValue
+        end_procedure
+
+        procedure DisplayHelpFile
+            send RetrieveHelp of OpcodeHelpDialog (piCC(self)) (piOpcode(self)) (psStandard(self))
+		end_procedure
+
+        procedure DoNumericMask integer iDecimals
+            set numeric_mask item 0 to 8 iDecimals "*,"
+        end_procedure
+
+    End_Object // ValueForm
+
+    Object oBackButton is a cGlblButton
+        Set Label to "< &Back"
+        Set GUILocation TO  2 370
+        Set GUISize     TO 22  51 //67
+		procedure OnClick
+            set pbBackup to TRUE
+            set pbReturn to TRUE
+            send AcceptOk
+		end_procedure
+    End_Object    // oBackButton
+
+    Object oNextButton is a cGlblButton
+        Set Label to "&Next >"
+        Set GUILocation TO  2 421 //428
+        Set GUISize     TO 22  51 //67
+		procedure OnClick
+			send AcceptOk
+		end_procedure
+    End_Object    // oNextButton
+
+    Object oCancelButton is a cGlblButton
+        Set Label to "&Cancel"
+        Set GUILocation TO  2 479 //502
+        Set GUISize     TO 22  51 //67
+		procedure OnClick
+            set pbCanceled to true
+            send Close_Panel
+		end_procedure
+    End_Object // oCancelButton
+
+    procedure set Prompt string sPrompt
+        set Value of oPrompt to sPrompt
+    end_procedure
+
+    procedure set DefaultValue string nValue
+        set Value of ValueForm to nValue
+    end_procedure
+
+    procedure AcceptOk
+        boolean bValid
+        //
+        get CalcValue of ValueForm to bValid
+        if (NOT(bValid)) procedure_return
+        send Close_Panel
+    end_procedure
+
+    procedure DupeOk
+        send DupeValue of ValueForm
+        send Close_Panel
+    end_procedure
+
+    procedure DoFormatValue boolean bFormat integer iOpcode integer iVarnum
+        integer iDecimals
+        number  nLo nHi
+        //
+        set pbRange   to FALSE
+        set pnRangeLo to 0
+        set pnRangeHi to 0
+        //
+        if (bFormat) begin
+            clear Esvars
+            move iOpcode to Esvars.Opcode
+            move iVarnum to Esvars.Varnum
+            find GE Esvars by Index.1
+            if ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum) begin
+                move Esvars.Decimals   to iDecimals
+                move Esvars.Range_low  to nLo
+                move Esvars.Range_high to nHi
+                set pbRange            to (nLo<>0 or nHi<>0) // range could be -0.5 to +0.5
+                set pnRangeLo          to nLo
+                set pnRangeHi          to nHi
+            end
+        end
+        else move Jcpars.Decimals to iDecimals
+        send DoNumericMask of ValueForm iDecimals
+    end_procedure
+
+    function RetrieveValue    ;
+		integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        number  nDefault      ;
+        integer iOpcode       ;
+        boolean bAllowBackup  ;
+        boolean bFormat       ;
+        returns number
+        //
+        integer iVarnum 
+        integer iRowCol iRow iCol
+        number  nValue
+        //
+        set pbPausebar to FALSE
+        Get GuiLocation of (oCalcWizard(self)) to iRowCol
+        Move  (hi(iRowCol)) to iRow
+        Move (low(iRowCol)) to iCol
+        set GUILocation to (iRow+58+(iPosIndex*25)) (iCol+46) // vdf 12.1 & 14
+        //set GUILocation to (37+(iPosIndex*25)) 42  vdf 10.1 values
+        send adjust_logicals
+        // enable backup button
+        set Enabled_State of oBackButton to (iProcessIndex AND bAllowBackup)
+		// help system
+		set psStandard to sStandard
+        set piOpcode   to iOpcode
+		//
+        move (iProcessIndex + 1) to iVarnum
+        send DoFormatValue bFormat iOpcode iVarnum
+        //
+        set pnValue      to 0
+        set Prompt       to sPrompt
+		set DefaultValue to nDefault
+        send Popup_Modal
+        get pnValue to nValue
+        set pnDupe  to nValue
+        function_return nValue
+    end_function // RetrieveValue
+
+    function PauseValue       ;
+		integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        integer iOpcode       ;
+        boolean bFormat       ;
+        returns integer
+        //
+        integer iVarnum iValue
+        integer iRowCol iRow iCol
+        //
+        set pbPausebar to TRUE
+        //set GUILocation to (37+(iPosIndex*25)) 42  vdf 10.1 values
+        Get GuiLocation of (oCalcWizard(self)) to iRowCol
+        Move  (hi(iRowCol)) to iRow
+        Move (low(iRowCol)) to iCol
+        set GUILocation to (iRow+58+(iPosIndex*25)) (iCol+46) // vdf 12.1 & 14
+        send adjust_logicals
+        // enable backup button
+        set Enabled_State of oBackButton to iProcessIndex
+		// help system
+		set psStandard to sStandard
+        set piOpcode   to iOpcode
+        //
+        move (iProcessIndex + 1) to iVarnum
+        send DoFormatValue bFormat iOpcode iVarnum
+        //
+        set pnValue      to 1
+        set Prompt       to sPrompt
+        set DefaultValue to 0
+		send Popup_Modal
+        get pnValue to iValue
+        //set pnDupe to nValue
+        function_return iValue
+    end_function // PauseValue
+
+    procedure DoDisplayStatus
+        integer iOpcode
+        handle  hStatus hKey hData
+        //
+        move (oCalcStatusArray      (oCalcEngine(self))) to hStatus
+        move (OpcodeKeyStorageArray (oCalcEngine(self))) to hKey
+        move (OpcodeDataStorageArray(oCalcEngine(self))) to hData
+        get IsReturnOpcode of oCalcStatus hStatus hKey hData to iOpcode
+    end_procedure
+
+    on_Key Key_Alt+Key_B send KeyAction of oBackButton
+    on_Key Key_Alt+Key_N send KeyAction of oNextButton
+    on_Key Key_Alt+Key_C send KeyAction of oCancelButton
+
+end_object // CalcValueDialog
+
+Object CheckboxValueDialog is a ModalPanel //Dialog
+
+    property number  pnValue    0
+    property number  pnDupe     0
+    //
+    property string  psStandard ""
+    property integer piOpcode   0
+    //
+    property integer pbPausebar FALSE
+    property integer piCalcWizardLocation 0
+    //
+    set Locate_Mode to NO_LOCATE
+    //set SysMenu_Icon  To false
+    //set Minimize_Icon to false
+    set Popup_State  to TRUE
+    set Caption_Bar  to FALSE
+    set Border_Style to Border_Normal //Border_None
+    set Color to (RGB(200,255,200)) //11663608 //pale yellow //clLime
+    set GUILocation to 37 42
+    set GUISize     to 26 541
+
+    object oPrompt is a Textbox
+
+        //Set Justification_Mode to jMode_Center
+        Set GUILocation to 4 19
+        Set GUISize     to 20 250
+        set FontWeight  to 600
+
+    End_Object // oPrompt
+
+    Object ValueCheckbox is a Checkbox
+
+        on_key kCancel      send CancelList
+        on_key kEnter       send AcceptOk
+        on_key kSave_Record send AutoSaveOk
+        on_key Key_PgUp     send DoDisplayStatus
+        on_key Key_PgDn     send DupeOk
+        on_key kUpArrow     send KeyAction of oBackButton //BackOk
+        on_key kDownArrow   send AcceptOk
+        on_key kHelp        send DisplayHelpFile
+
+        set GUILocation to 5 273 //337 //277
+        set GUISize             to 20 20 //85
+        set Label               to "***"
+
+        procedure CancelList
+            if (pbPausebar(self)) send Close_Panel
+        end_procedure
+
+        procedure AcceptOk
+            delegate send AcceptOk
+        end_procedure
+
+        procedure AutoSaveOk
+            //BC: 12/13/06 get rid of pbpausebar conditinal to improve functioning of autosave behavior
+            //if NOT (pbPausebar(self)) send SetAutoSave to (oCalcEngine(self)) TRUE
+            send SetAutoSave to (oCalcEngine(self)) TRUE
+            delegate send AcceptOk
+        end_procedure
+
+        procedure BackOk
+            set pbBackup to TRUE
+            set pbReturn to TRUE
+            delegate send AcceptOk
+        end_procedure
+
+        procedure DupeOk
+            if (pbPausebar(self)) procedure_return
+            delegate send DupeOk
+        end_procedure
+
+        procedure CalcValue
+            number nValue
+            //
+            if (NOT(pbPausebar(self))) get Checked_State item 0 to nValue
+            set pnValue                                       to nValue
+        end_procedure
+
+        procedure DupeValue
+            number nValue
+            //
+            get pnDupe  to nValue
+            set pnValue to nValue
+        end_procedure
+
+        procedure DisplayHelpFile
+            send RetrieveHelp of OpcodeHelpDialog (piCC(self)) (piOpcode(self)) (psStandard(self))
+        end_procedure
+
+    End_Object // ValueCheckbox
+
+    Object oBackButton is a cGlblButton
+        Set Label to "< &Back"
+        Set GUILocation TO  2 370
+        Set GUISize     TO 22  51 //67
+        procedure OnClick
+            set pbBackup to TRUE
+            set pbReturn to TRUE
+            send AcceptOk
+        end_procedure
+    End_Object    // oBackButton
+
+    Object oNextButton is a cGlblButton
+        Set Label to "&Next >"
+        Set GUILocation TO  2 421 //428
+        Set GUISize     TO 22  51 //67
+        procedure OnClick
+            send AcceptOk
+        end_procedure
+    End_Object    // oNextButton
+
+    Object oCancelButton is a cGlblButton
+        Set Label to "&Cancel"
+        Set GUILocation TO  2 479 //502
+        Set GUISize     TO 22  51 //67
+        procedure OnClick
+            set pbCanceled to true
+            send Close_Panel
+        end_procedure
+    End_Object // oCancelButton
+
+    procedure set Prompt string sPrompt
+        set Value of oPrompt to sPrompt
+    end_procedure
+
+    //BC: 12/20/06 checked state not getting set when value comes from overridable link
+    procedure set DefaultValue number nDefault //boolean bChecked
+        set Checked_State of ValueCheckbox to (nDefault >0) //bChecked
+    end_procedure
+
+    procedure AcceptOk
+        send CalcValue of ValueCheckbox
+        send Close_Panel
+    end_procedure
+
+    procedure DupeOk
+        send DupeValue of ValueCheckbox
+        send Close_Panel
+    end_procedure
+
+    function RetrieveValue    ;
+        integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        number  nDefault      ;
+        integer iOpcode       ;
+        boolean bAllowBackup  ;
+        returns number
+        //
+        integer iRowCol iRow iCol
+        number nValue
+        //
+        set pbPausebar to FALSE
+        //set GUILocation to (37+(iPosIndex*25)) 42  vdf 10.1 values
+        Get GuiLocation of (oCalcWizard(self)) to iRowCol
+        Move  (hi(iRowCol)) to iRow
+        Move (low(iRowCol)) to iCol
+        set GUILocation to (iRow+58+(iPosIndex*25)) (iCol+46) // vdf 12.1 & 14
+        send adjust_logicals
+        // enable backup button
+        set Enabled_State of oBackButton to (iProcessIndex AND bAllowBackup)
+        // help system
+        set psStandard to sStandard
+        set piOpcode   to iOpcode
+        //
+        set pnValue      to 0
+        set Prompt       to sPrompt
+        set DefaultValue to nDefault
+        send Popup_Modal
+        get pnValue to nValue
+        set pnDupe to nValue
+        function_return nValue
+    end_function // RetrieveValue
+
+    function PauseValue       ;
+        integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        integer iOpcode       ;
+        returns integer
+        //
+        integer iValue
+        integer iRowCol iRow iCol
+        //
+        set pbPausebar to TRUE
+        //set GUILocation to (37+(iPosIndex*25)) 42  vdf 10.1 values
+        Get GuiLocation of (oCalcWizard(self)) to iRowCol
+        Move  (hi(iRowCol)) to iRow
+        Move (low(iRowCol)) to iCol
+        set GUILocation to (iRow+58+(iPosIndex*25)) (iCol+46) // vdf 12.1 & 14
+        send adjust_logicals
+        // enable backup button
+        set Enabled_State of oBackButton to iProcessIndex
+        // help system
+        set psStandard to sStandard
+        set piOpcode   to iOpcode
+        //
+        set pnValue      to 1
+        set Prompt       to sPrompt
+        set DefaultValue to 0
+        send Popup_Modal
+        get pnValue to iValue
+        //set pnDupe to nValue
+        function_return iValue
+    end_function // PauseValue
+
+    procedure DoDisplayStatus
+        integer iOpcode
+        handle  hStatus hKey hData
+        //
+        move (oCalcStatusArray      (oCalcEngine(self))) to hStatus
+        move (OpcodeKeyStorageArray (oCalcEngine(self))) to hKey
+        move (OpcodeDataStorageArray(oCalcEngine(self))) to hData
+        get IsReturnOpcode of oCalcStatus hStatus hKey hData to iOpcode
+    end_procedure
+
+    on_Key Key_Alt+Key_B send KeyAction of oBackButton
+    on_Key Key_Alt+Key_N send KeyAction of oNextButton
+    on_Key Key_Alt+Key_C send KeyAction of oCancelButton
+
+end_object // CheckboxValueDialog
+
+Object ComboValueDialog is a ModalPanel //Dialog
+
+    property number  pnValue    0
+    property number  pnDupe     0
+    //
+    property string  psStandard ""
+    property integer piOpcode   0
+    property integer piVarnum   0
+    property integer piDefault  0
+    property integer piCalcWizardLocation 0
+    //
+    property boolean pbPausebar FALSE
+    //
+    set Locate_Mode to NO_LOCATE
+    //set SysMenu_Icon  To false
+    //set Minimize_Icon to false
+    set Popup_State  to TRUE
+    set Caption_Bar  to FALSE
+    set Border_Style to Border_Normal //Border_None
+    set Color to (RGB(200,255,200)) //11663608 //pale yellow //clYellow
+    set GUILocation to 37 42
+    set GUISize     to 26 541 //22 541
+    object oPrompt is a Textbox
+
+        Set GUILocation to 4 19
+        Set GUISize     to 20 250
+        set FontWeight  to 600
+
+    End_Object // oPrompt
+
+    Object ValueForm is a ComboForm
+
+        on_key kCancel      send CancelList
+        on_key kEnter       send AcceptOk
+        on_key kSave_Record send AutoSaveOk
+        on_key Key_PgUp     send DoDisplayStatus
+        //on_key Key_PgDn     send DupeOk
+        //on_key kUpArrow     send BackOk
+        //on_key kDownArrow   send AcceptOk
+        on_key kHelp        send DisplayHelpFile
+
+        set Combo_Sort_State   to FALSE
+        set Entry_State item 0 to FALSE
+
+        set GUILocation to 3 240
+        //Set GUISize     to 20 85
+        set Size        to 13 85 //130
+
+        procedure CancelList
+            if (pbPausebar(self)) send Close_Panel
+        end_procedure
+
+        procedure AcceptOk
+            delegate send AcceptOk
+        end_procedure
+
+        procedure AutoSaveOk
+            //BC: 12/13/06 get rid of pbpausebar conditinal to improve functioning of autosave behavior
+            //if NOT (pbPausebar(self)) send SetAutoSave to (oCalcEngine(self)) TRUE
+            send SetAutoSave to (oCalcEngine(self)) TRUE
+            delegate send AcceptOk
+        end_procedure
+
+//        procedure BackOk
+//            set pbBackup to true
+//            delegate send AcceptOk
+//        end_procedure
+
+        procedure DupeOk
+            if (pbPausebar(self)) procedure_return
+            delegate send DupeOk
+        end_procedure
+
+        procedure CalcValue
+            string sValue
+            number nValue
+            //
+            if (NOT(pbPausebar(self))) get Value to sValue
+            if (sValue = "") procedure_return
+            get Combo_Item_Matching sValue    to nValue
+            if (nValue < 0) get piDefault     to nValue
+            // the list is zero based
+            else            move (nValue + 1) to nValue
+            set pnValue                       to nValue
+        end_procedure
+
+        procedure DupeValue
+            number nValue
+            //
+            get pnDupe  to nValue
+            set pnValue to nValue
+        end_procedure
+
+        procedure DisplayHelpFile
+            send RetrieveHelp of OpcodeHelpDialog (piCC(self)) (piOpcode(self)) (psStandard(self))
+        end_procedure
+
+        procedure Combo_Fill_List
+            integer iOpcode iVarnum iDefault iCount
+            string  sDefault
+            //
+            get piOpcode  to iOpcode
+            get piVarnum  to iVarnum
+            get piDefault to iDefault
+            //
+            if (NOT(iDefault)) increment iDefault
+            //
+            send Combo_Delete_Data
+            //
+            clear Esvars
+            move iOpcode to Esvars.Opcode
+            move iVarnum to Esvars.Varnum
+            //BC: 12/27/06 changed find logic to use index 2 to insulate from extraneous data, i.e. input type 1 or 2!
+            // loop logic assumes 1st combolist esvars record will always be found!
+            move 3       to Esvars.Input_Type
+            find GE Esvars by Index.2
+            while ((FOUND) AND Esvars.Opcode = iOpcode AND Esvars.Varnum = iVarnum)
+                increment iCount
+                if (iDefault = iCount) move Esvars.Description to sDefault
+                send Combo_Add_Item (trim(Esvars.Description))
+                find GT Esvars by Index.2
+            loop
+            set Value to sDefault
+        end_procedure
+
+    End_Object // ValueForm
+
+    Object oBackButton is a cGlblButton
+        Set Label to "< &Back"
+        Set GUILocation TO  2 370
+        Set GUISize     TO 22  51
+        procedure OnClick
+            set pbBackup to TRUE
+            set pbReturn to TRUE
+            send AcceptOk
+        end_procedure
+    End_Object    // oBackButton
+
+    Object oNextButton is a cGlblButton
+        Set Label to "&Next >"
+        Set GUILocation TO  2 421 //428
+        Set GUISize     TO 22  51 //67
+        procedure OnClick
+            send AcceptOk
+        end_procedure
+    End_Object    // oNextButton
+
+    Object oCancelButton is a cGlblButton
+        Set Label to "&Cancel"
+        Set GUILocation TO  2 479 //502
+        Set GUISize     TO 22  51 //67
+        procedure OnClick
+            set pbCanceled to true
+            send Close_Panel
+        end_procedure
+    End_Object // oCancelButton
+
+    procedure set Prompt string sPrompt
+        set Value of oPrompt to sPrompt
+    end_procedure
+
+    procedure AcceptOk
+        send CalcValue of ValueForm
+        send Close_Panel
+    end_procedure
+
+    procedure DupeOk
+        send DupeValue of ValueForm
+        send Close_Panel
+    end_procedure
+
+    function RetrieveValue    ;
+        integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        number  nDefault      ;
+        integer iOpcode       ;
+        boolean bAllowBackup  ;
+        returns number
+        //
+        integer iRowCol iRow iCol
+        number nValue
+        //
+        set pbPausebar to FALSE
+        //set GUILocation to (37+(iPosIndex*25)) 42  //vdf 10.1 values
+        Get GuiLocation of (oCalcWizard(self)) to iRowCol
+        Move  (hi(iRowCol)) to iRow
+        Move (low(iRowCol)) to iCol
+        set GUILocation to (iRow+58+(iPosIndex*25)) (iCol+46) // vdf 12.1 & 14
+        send adjust_logicals
+        // enable backup button
+        set Enabled_State of oBackButton to (iProcessIndex AND bAllowBackup)
+        // help system
+        set psStandard   to sStandard
+        set piOpcode     to iOpcode
+        set piVarnum     to (iProcessIndex + 1)
+        set piDefault    to nDefault
+        //
+        set pnValue      to 0
+        set Prompt       to sPrompt
+        //
+        send Combo_Fill_List of ValueForm
+        send Popup_Modal
+        get pnValue to nValue
+        set pnDupe  to nValue
+        function_return nValue
+    end_function // RetrieveValue
+
+    function PauseValue       ;
+        integer iProcessIndex ;
+        integer iPosIndex     ;
+        string  sStandard     ;
+        string  sPrompt       ;
+        integer iOpcode       ;
+        returns integer
+        //
+        integer iValue
+        integer iRowCol iRow iCol
+        //
+        set pbPausebar to TRUE
+        //set GUILocation to (37+(iPosIndex*25)) 42  vdf 10.1 values
+        Get GuiLocation of (oCalcWizard(self)) to iRowCol
+        Move  (hi(iRowCol)) to iRow
+        Move (low(iRowCol)) to iCol
+        set GUILocation to (iRow+58+(iPosIndex*25)) (iCol+46) // vdf 12.1 & 14
+        send adjust_logicals
+        // enable backup button
+        set Enabled_State of oBackButton to iProcessIndex
+        // help system
+        set psStandard to sStandard
+        set piOpcode   to iOpcode
+        set piVarnum   to (iProcessIndex + 1)
+        set piDefault  to 0
+        //
+        set pnValue      to 1
+        set Prompt       to sPrompt
+        //
+        send Combo_Fill_List of ValueForm
+        send Popup_Modal
+        get pnValue to iValue
+        //set pnDupe to nValue
+        function_return iValue
+    end_function // PauseValue
+
+    procedure DoDisplayStatus
+        integer iOpcode
+        handle  hStatus hKey hData
+        //
+        move (oCalcStatusArray      (oCalcEngine(self))) to hStatus
+        move (OpcodeKeyStorageArray (oCalcEngine(self))) to hKey
+        move (OpcodeDataStorageArray(oCalcEngine(self))) to hData
+        get IsReturnOpcode of oCalcStatus hStatus hKey hData to iOpcode
+    end_procedure
+
+    on_Key Key_Alt+Key_B send KeyAction of oBackButton
+    on_Key Key_Alt+Key_N send KeyAction of oNextButton
+    on_Key Key_Alt+Key_C send KeyAction of oCancelButton
+
+end_object // ComboValueDialog
+
+// ----------------------------------------------------------------------------

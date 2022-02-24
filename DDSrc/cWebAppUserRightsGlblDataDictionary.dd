@@ -1,0 +1,44 @@
+Use cGlblDataDictionary.pkg
+
+Open WebAppUserRights
+Open WebAppUser
+Open Employee
+
+Register_Object WebAppUserRights_sl
+
+Class cWebAppUserRightsGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to WebAppUserRights.File_Number
+
+        Set Add_Client_File to Employee.File_Number
+        Set Add_Client_File to WebAppUser.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field WebAppUserRights.RightLevel DD_REQUIRED to True
+        Set Field_Prompt_Object Field WebAppUserRights.RightLevel to WebAppUserRights_sl
+
+        Set Field_Option Field WebAppUserRights.Description DD_REQUIRED to True
+        Set Field_Prompt_Object Field WebAppUserRights.Description to WebAppUserRights_sl
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        //Insert Code Below
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to WebAppUserRights.ChangedFlag
+        End
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use WebAppUserRights.sl
+#ENDIF

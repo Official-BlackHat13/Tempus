@@ -1,0 +1,14 @@
+// TempusEstimatingPrecompile.pkg 
+//
+// 15.0.93.1  - 07/01/09 - program creation
+
+Use GlobalAllEnt.pkg
+Use cCJStandardCommandBarSystem.pkg
+Use cCJCommandBarSystem.pkg
+Use oEditContextMenu.pkg
+Use oDEOEditContextMenu.pkg
+Use Regserver.pkg
+Use cTempusApplication.pkg
+Use cTempusClientArea.pkg
+Use cTempusDbView.pkg
+Use DataAttr.pkg

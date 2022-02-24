@@ -1,0 +1,1335 @@
+// VarSigns.DG
+
+Use EsvarsI1.dg
+Use EsvarsI3.dg
+
+Use DFAllEnt.pkg
+Use cGlblGroup.pkg
+Use cGlblCheckBox.pkg
+Use cGlblComboForm.pkg
+Use cGlblForm.pkg
+Use cGlblRadio.pkg
+Use cGlblRadioGroup.pkg
+
+
+//AB-IgnoreEnd
+
+Object odgStdModifiers is a ModalPanel
+
+    property integer Invoking_Object_Id 0
+    property string  psModifiers        ""
+    property string  psSpecial          ""
+    //
+    property boolean pbError            FALSE
+    property integer piCC               0
+    property integer piOpcode           0
+    property integer piVarnum           0
+    
+    Set Label to "Execution Modifier Signs"
+    Set Size to 256 483
+    Set Location to 5 5
+    Set Locate_Mode to CENTER_ON_PANEL
+    
+    Object oBox is a Container3d
+        Set Size to 227 473
+        Set Location to 4 5
+        Set Border_Style to Border_StaticEdge
+        Object oInputControlGroup is a cGlblGroup
+            Set Size to 78 253
+            Set Location to 4 7
+            Set Label to "Input Controls"
+            Object oCheckboxProhibitInput is a cGlblCheckBox
+                Set Label to "@ = prohibit User Input "
+                Set Size to 10 91
+                Set Location to 15 10
+                Set Status_Help to "Prompt will not be displayed in calc wizard; value probably gets pushed here"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                           to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxTitleOnly to bChecked
+                    //
+                    set Enabled_State of oCheckboxEditModePrompt to (NOT(bChecked))
+                    set Enabled_State of oCheckboxTitleOnly      to (NOT(bChecked))
+                    set Enabled_State of oCheckboxZeroProhibited to (NOT(bChecked))
+                    set Enabled_State of oCheckboxBarPauses      to (NOT(bChecked))
+                    set Enabled_State of oCheckboxDefaultLink    to (NOT(bChecked))
+                    //set Enabled_State of oCheckboxInputType      to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxVariableLink(oLinkControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxCCList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxOpList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxProhibitInput
+
+            Object oCheckboxEditModePrompt is a cGlblCheckBox
+                Set Label to "E = edit mode prompting only"
+                Set Size to 10 107
+                Set Location to 15 130
+                Set Status_Help to "Input will be skipped in interactive mode; item is editable in edit mode"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                                to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxZeroProhibited to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxBarPauses      to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxDefaultLink    to bChecked
+                    //
+                    set Enabled_State of oCheckboxProhibitInput  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxTitleOnly      to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxVariableLink(oLinkControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxCCList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxOpList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxEditModePrompt
+
+            Object oCheckboxZeroProhibited is a cGlblCheckBox
+                Set Label to "Z = input cannot be zero"
+                Set Size to 10 94
+                Set Location to 26 10
+                Set Status_Help to "Disallows user to input a zero value for the variable"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                                to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxEditModePrompt to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxBarPauses      to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxDefaultLink    to bChecked
+                    //
+                    set Enabled_State of oCheckboxProhibitInput  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxTitleOnly      to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxZeroProhibited
+
+            Object oCheckboxTitleOnly is a cGlblCheckBox
+                Set Label to "T = title display only, no input"
+                Set Size to 10 107
+                Set Location to 26 130
+                Set Status_Help to "Functionally equivalent to @ modifier; exists for backward compatibility"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                               to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxProhibitInput to bChecked
+                    //
+                    set Enabled_State of oCheckboxProhibitInput  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxEditModePrompt to (NOT(bChecked))
+                    set Enabled_State of oCheckboxZeroProhibited to (NOT(bChecked))
+                    set Enabled_State of oCheckboxBarPauses      to (NOT(bChecked))
+                    set Enabled_State of oCheckboxDefaultLink    to (NOT(bChecked))
+                    //set Enabled_State of oCheckboxInputType      to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxVariableLink(oLinkControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxCCList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxOpList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxTitleOnly
+
+            Object oCheckboxBarPauses is a cGlblCheckBox
+                Set Label to "| = Default data or link will not be retrieved until <Return> is pressed."
+                Set Size to 10 229
+                Set Location to 37 10
+                Set Status_Help to "When default value exists, pauses for user input, allows skipping picklists"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                                to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxEditModePrompt to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxZeroProhibited to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxDefaultLink    to bChecked
+                    //
+                    set Enabled_State of oCheckboxProhibitInput  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxTitleOnly      to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxBarPauses
+
+            Object oCheckboxDefaultLink is a cGlblCheckBox
+                Set Label to "D = Link used as default input and retrieved value can be overridden"
+                Set Size to 10 233
+                Set Location to 48 10
+                Set Status_Help to "The retrieved value will be displayed as default value for user input; overriding deactivates link"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                                to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxEditModePrompt to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxZeroProhibited to bChecked
+                    if (NOT(bChecked)) ;
+                        get Checked_State of oCheckboxBarPauses      to bChecked
+                    //
+                    set Enabled_State of oCheckboxProhibitInput  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxTitleOnly      to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxDefaultLink
+
+            Object oCheckboxInputType is a cGlblCheckBox
+                Set Label to "I = Input type defined as type "
+                Set Size to 10 110
+                Set Location to 60 10
+                Set Status_Help to "Activates alternative windows object types for input"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    set Enabled_State of oComboFormInputType        to bChecked
+                    //
+                    //set Enabled_State of oCheckboxProhibitInput  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxTitleOnly      to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxInputType
+
+            Object oComboFormInputType is a cGlblComboForm
+                Set Size to 13 120
+                Set Location to 59 120
+                Set Status_Help to "Available alternate windows objects for input"
+                Set Form_Border to 0
+                Set Form_DataType to ascii_window
+
+                //AB-StoreStart
+                // Combo_Fill_List is called when the list needs filling
+                set Enabled_State to FALSE
+                set default_combo_item to 0
+                Set combo_sort_state   to false
+                Set entry_state item 0 to false
+                
+                // Combo_Fill_List is called when the list needs filling
+                Procedure Combo_Fill_List
+                    // Fill the combo list with Send Combo_Add_Item
+                    // note: according to the doc's the combo_value property specifies
+                    //       the value of  Item item_num in this object's list
+                    //       so I'm thinking we can retrieve 1-4 accordingly
+                    send Combo_Add_Item "1 = set decimals & range check" // item_num 1
+                    send Combo_Add_Item "2 = checkbox" // item_num 2
+                    send Combo_Add_Item "3 = drop-down list" // item_num 3
+                    //send Combo_Add_Item "spin-form"
+                End_Procedure  // Combo_fill_list
+                send combo_initialize_list to (oComboFormInputType(self))
+                
+                Procedure Exiting
+                    string sInputType
+                    integer iVarnum
+                    get piVarnum to iVarnum
+                    get value to sInputType
+                    move (Left(sInputType,1)) to sInputType
+                    If (sInputType = "1") send doEditEsvars to odgEsvarsI1 iVarnum
+                    else if (sInputType = "3") send doEditEsvars to odgEsvarsI3 iVarnum
+                End_Procedure
+                
+                //send init_selected_item
+                
+                // notification of a selection change or edit change
+                //Procedure OnChange
+                //    String sValue
+                //    Get Value to sValue // the current selected item
+                //
+                //End_Procedure  // OnChange
+                
+                // notification that the list has dropped down
+                //Procedure OnDropDown
+                //End_Procedure  // OnDropDown
+                
+                // notification that the list was closed
+                //Procedure OnCloseUp
+                //End_Procedure  // OnCloseUp
+                //AB-StoreEnd
+
+            End_Object    // oComboFormInputType
+
+
+            //AB-StoreStart
+            function IsInput returns string
+                string sInput sInputType
+                //
+                if (Checked_State(oCheckboxInputType(self))) begin
+                    move (sInput + "I") to sInput
+                    get value of (oComboFormInputType(self)) to sInputType
+                    move (sInput + (Left(sInputType,1)))                              to sInput
+                end
+                if (Checked_State(oCheckboxProhibitInput(self)))  move (sInput + "@") to sInput
+                if (Checked_State(oCheckboxEditModePrompt(self))) move (sInput + "E") to sInput
+                if (Checked_State(oCheckboxZeroProhibited(self))) move (sInput + "Z") to sInput
+                if (Checked_State(oCheckboxTitleOnly(self)))      move (sInput + "T") to sInput
+                if (Checked_State(oCheckboxBarPauses(self)))      move (sInput + "|") to sInput
+                if (Checked_State(oCheckboxDefaultLink(self)))    move (sInput + "D") to sInput
+                function_return sInput
+            end_function
+            
+            procedure DoReset string sCurrent
+                boolean bChecked
+                integer iInputType iComparison
+                string sInputType sUserSymbols sComparisonLetter
+                //
+                // constant letter used in comparison is also a modifier value for (E)dit only and (D)efault link
+                Move (Pos(">",sCurrent)) to iComparison
+                if not iComparison Move (Pos("<",sCurrent)) to iComparison
+                if not iComparison Move (Pos("=",sCurrent)) to iComparison
+                if not iComparison Move (Pos("~",sCurrent)) to iComparison
+                if iComparison Move (Mid(sCurrent,1,(iComparison+2))) to sComparisonLetter
+                //
+                If (Jcoper.Recnum =0) set Enabled_State of oCheckboxInputType to False // can't create esvar records without jcoper
+                Else set Enabled_State of oCheckboxInputType to True 
+                move (sCurrent CONTAINS "@") to bChecked
+                set Checked_State of oCheckboxProhibitInput  to bChecked
+                move (sCurrent CONTAINS "E" and sComparisonLetter <> "E") to bChecked
+                set Checked_State of oCheckboxEditModePrompt to bChecked
+                move (sCurrent CONTAINS "Z") to bChecked
+                set Checked_State of oCheckboxZeroProhibited to bChecked
+                move (sCurrent CONTAINS "T") to bChecked
+                set Checked_State of oCheckboxTitleOnly      to bChecked
+                move (sCurrent CONTAINS "|") to bChecked
+                set Checked_State of oCheckboxBarPauses      to bChecked
+                move (sCurrent CONTAINS "D" and sComparisonLetter <> "D") to bChecked
+                set Checked_State of oCheckboxDefaultLink    to bChecked
+                move (sCurrent CONTAINS "I") to bChecked
+                set Checked_State of oCheckboxInputType      to bChecked
+                if (bChecked) begin
+                    move (Mid(sCurrent,1,((Pos("I",sCurrent))+1))) to iInputType
+                    If (iInputType<1) move 1 to iInputType
+                    // try to force oComboFormInputType to load its list so
+                    // move below won't trigger "attempt to reference invalid item" error
+                    // if executed along with the very first activiation of varsigns dialog
+                    Move ( Combo_Value(oComboFormInputType(self),(iInputType-1))) to sInputType
+                    set value of (oComboFormInputType(self)) to sInputType
+                end
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // oInputControlGroup
+
+        Object oPicklistControlGroup is a cGlblGroup
+            Set Size to 134 253
+            Set Location to 86 7
+            Set Label to "Picklist Controls"
+            Object oCheckboxCCList is a cGlblCheckBox
+                Set Label to "CC = display cost center picklist starting with Cost Center"
+                Set Size to 10 194
+                Set Location to 15 10
+                Set Status_Help to "Displays list of cost centers belonging to assigned department of the default CC"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                              to bChecked
+                    set Enabled_State            of oFormDefaultCC to bChecked
+                    if (NOT(bChecked)) set Value of oFormDefaultCC to ""
+                    if (NOT(bChecked)) set Value of (oCCFilterForm(oGroupCCPicklistFiltering(oCCRadioContainer(self)))) to ""
+                    send DoEnableRadioGroup of oGroupCCPicklistFiltering
+//                    send DoEnableRadioGroup of oGroupPicklistFiltering
+                    //
+                    set Enabled_State of (oCheckboxProhibitInput(oInputControlGroup(self)))  to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxEditModePrompt(oInputControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxTitleOnly(oInputControlGroup(self)))      to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxVariableLink(oLinkControlGroup(self))) to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxCCList
+
+            Object oFormDefaultCC is a cGlblForm
+                Set Size to 13 40
+                Set Location to 13 205
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOn
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                set Prompt_Object to (Jccntr_SL(self))
+                set Numeric_Mask item 0 to 4 0
+                //
+                procedure Prompt_Callback integer hPrompt
+                    set Initial_Column of hPrompt to 2
+                    set Export_Column  of hPrompt to 2
+                end_procedure
+                //Procedure OnChange
+                //    String sValue
+                //    Get value to sValue
+                //
+                //End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oFormDefaultCC
+
+            Object oGroupCCPicklistFiltering is a cGlblGroup
+                Set Size to 26 220
+                Set Location to 26 25
+                Set Label to "Cost Center Picklist Filtering"
+                Object oCCRadioContainer is a RadioContainer
+                    Set Size to 24 195
+                    Object oRadio1 is a Radio
+                        Set Label to "No Filter"
+                        Set Size to 10 43
+                        Set Location to 10 5
+                        Set Status_Help to "All cost centers with standards and in the same department will display"
+                    End_Object    // oRadio1
+
+                    Object oRadio2 is a cGlblRadio
+                        Set Label to "_x = show only cost centers whose filter flag ="
+                        Set Size to 10 138
+                        Set Location to 10 55
+                        Set Status_Help to "Only cost centers with an assigned flag equal to the filter flag will display."
+                    End_Object    // oRadio2
+
+
+                    //AB-StoreStart
+                    Procedure Notify_Select_State integer iToItem integer iFromItem
+                        set Enabled_State of oCCFilterForm to (iToItem = 1)
+                    End_Procedure
+                    
+                    // If you set Current_radio you must set this after the
+                    // radio objects have been created AND after Notify_select_State has been
+                    // created. i.e. Set in bottom-code at end!!
+                    //Set Current_Radio to 0
+                    //AB-StoreEnd
+
+                End_Object    // oRadioContainer
+
+                Object oCCFilterForm is a cGlblForm
+                    Set Size to 13 15
+                    Set Location to 9 196
+                    Set Status_Help to "Value to use with user-defined picklist filter"
+
+                    //AB-StoreStart
+                    set Enabled_State to FALSE
+                    set Capslock_State to TRUE
+                    //Procedure OnChange
+                    //    String sValue
+                    //    Get value to sValue
+                    //
+                    //End_Procedure  // OnChange
+                    //AB-StoreEnd
+
+                End_Object    // oCCFilterForm
+
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                
+                procedure DoEnableRadioGroup
+                    boolean bState1 bState2
+                    //
+                    get Checked_State of oCheckboxCCList to bState1
+                    set Enabled_State to (bState1)
+                end_procedure
+                
+                function IsCCFilterSelected returns string
+                    integer iRadio
+                    string  sFilter
+                    //
+                    get Current_Radio of oCCRadioContainer to iRadio
+                    if (iRadio) begin
+                        if (iRadio = 1) begin
+                            get Value of oCCFilterForm to sFilter
+                            if (sFilter <> "") begin 
+                                move (" _" + sFilter)      to sFilter // moving "_" causes bad format of experssion error
+                                move (trim(sFilter))       to sFilter
+                            end
+                        end
+                    end
+                    function_return sFilter
+                end_function
+                
+                //AB-StoreEnd
+
+            End_Object    // oGroupCCPicklistFiltering
+
+            Object oCheckboxOpList is a cGlblCheckBox
+                Set Label to "OP = display operations picklist starting with Operation"
+                Set Size to 10 184
+                Set Location to 60 10
+                Set Status_Help to "Displays list of operations for cost center selected or defined by default operation value"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    boolean bChecked
+                    //
+                    get Checked_State                                              to bChecked
+                    if (bChecked) move (NOT(Checked_State(oCheckboxCCList(self)))) to bChecked
+                    set Enabled_State of oFormDefaultOp                            to bChecked
+                    //
+                    send DoEnableRadioGroup of oGroupPicklistFiltering
+                    //
+                    set Enabled_State of (oCheckboxProhibitInput(oInputControlGroup(self)))  to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxEditModePrompt(oInputControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxTitleOnly(oInputControlGroup(self)))      to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxVariableLink(oLinkControlGroup(self))) to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxOpList
+
+            Object oFormDefaultOp is a cGlblForm
+                Set Size to 13 49
+                Set Location to 58 196
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Prompt_Button_Mode to pb_PromptOn
+
+                //AB-StoreStart
+                property integer pbLinker TRUE
+                
+                set Enabled_State to FALSE
+                set Prompt_Object to (Jcoper_SL(self))
+                set Numeric_Mask item 0 to 6 0
+                procedure Prompt
+                    send LinkCodePrompt to (Jcoper_SL(self)) (Value(self,0))
+                end_procedure
+                //Procedure OnChange
+                //    String sValue
+                //    Get value to sValue
+                //
+                //End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oFormDefaultOp
+
+
+            Object oGroupPicklistFiltering is a cGlblGroup
+                Set Size to 56 220
+                Set Location to 71 25
+                Set Label to "Operations Picklist Filtering"
+                Object oRadioContainer is a RadioContainer
+                    Set Size to 55 195
+                    Object oRadio1 is a Radio
+                        Set Label to "No Filter"
+                        Set Size to 10 43
+                        Set Location to 10 5
+                        Set Status_Help to "All operations defined as standards in the same cost center will display"
+                    End_Object    // oRadio1
+
+                    Object Radio2 is a Radio
+                        Set Label to "_L = show labor only"
+                        Set Size to 10 81
+                        Set Location to 10 55
+                        Set Status_Help to "Only operations with a subtotal type of labor will display (H or L in subtotal flag)"
+                    End_Object    // Radio2
+
+                    Object Radio3 is a Radio
+                        Set Label to "_M = show material only"
+                        Set Size to 10 92
+                        Set Location to 20 55
+                        Set Status_Help to "Only material operations will display (M in subtotal flag)"
+                    End_Object    // Radio3
+
+                    Object oRadio4 is a cGlblRadio
+                        Set Label to "_P = show purchases only"
+                        Set Size to 10 99
+                        Set Location to 30 55
+                        Set Status_Help to "Only purchases, including paper, will display (P in subtotal flag)"
+                    End_Object    // oRadio4
+
+                    Object oRadio5 is a cGlblRadio
+                        Set Label to "_?x = show only items whose filter flag ="
+                        Set Size to 10 142
+                        Set Location to 40 55
+                        Set Status_Help to "Only operations with an assigned flag equal to the filter flag will display"
+                    End_Object    // oRadio5
+
+
+                    //AB-StoreStart
+                    Procedure Notify_Select_State integer iToItem integer iFromItem
+                        set Enabled_State of oFilterForm to (iToItem = 4)
+                    End_Procedure
+                    
+                    // If you set Current_radio you must set this after the
+                    // radio objects have been created AND after Notify_select_State has been
+                    // created. i.e. Set in bottom-code at end!!
+                    //Set Current_Radio to 0
+                    //AB-StoreEnd
+
+                End_Object    // oRadioContainer
+
+                Object oFilterForm is a cGlblForm
+                    Set Size to 13 15
+                    Set Location to 39 196
+                    Set Status_Help to "Value to use with user-defined picklist filter"
+
+                    //AB-StoreStart
+                    set Enabled_State to FALSE
+                    set Capslock_State to TRUE
+                    //Procedure OnChange
+                    //    String sValue
+                    //    Get value to sValue
+                    //
+                    //End_Procedure  // OnChange
+                    //AB-StoreEnd
+
+                End_Object    // oFilterForm
+
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                
+                procedure DoEnableRadioGroup
+                    boolean bState1 bState2
+                    //
+                    get Checked_State of oCheckboxCCList to bState1
+                    get Checked_State of oCheckboxOpList to bState2
+                    set Enabled_State to (bState2)
+                end_procedure
+
+                function IsFilterSelected returns string
+                    integer iRadio
+                    string  sFilter
+                    //
+                    get Current_Radio of oRadioContainer to iRadio
+                    if (iRadio) begin
+                        if      (iRadio = 1) move "_L"   to sFilter
+                        else if (iRadio = 2) move "_M"   to sFilter
+                        else if (iRadio = 3) move "_P"   to sFilter
+                        else if (iRadio = 4) begin
+                            get Value of oFilterForm     to sFilter
+                            If (sFilter <> "") move ("_?" + sFilter) to sFilter
+                        end
+                    end
+                    function_return sFilter
+                end_function
+                //AB-StoreEnd
+
+            End_Object    // oGroupPicklistFiltering
+
+
+            //AB-StoreStart
+            function IsPicklist returns string
+                string sPicklist sCC sOpcode sFilter sCCFilter
+                //
+                if (Checked_State(oCheckboxCCList(self))) begin
+                    move "CC"                   to sPicklist
+                    get Value of oFormDefaultCC to sCC
+                    if (sCC = "") begin
+                        set pbError to TRUE
+                        function_return "Default Cost Center cannot be null"
+                    end
+                    else Begin
+                            get IsCCFilterSelected of oGroupCCPicklistFiltering to sCCFilter
+                            set piCC               to sCC
+                            move (sPicklist +sCCFilter) to sPicklist
+                         End
+                end
+                //
+                if (Checked_State(oCheckboxOpList(self))) begin
+                    move (sPicklist + "OP")     to sPicklist
+                    get Value of oFormDefaultOp to sOpcode
+                    if (sOpcode <> "") begin
+                        if (sCC <> "") begin
+                            set pbError to TRUE
+                            function_return ("There is a default Cost Center" + "\n\nThere cannot be a default Opcode")
+                        end
+                        set piOpcode               to sOpcode
+                    end
+                    else begin
+                        if (sPicklist contains "CC") break // no opcode is required or desired
+                        set pbError to TRUE
+                        function_return "Default Opcode cannot be null"
+                    end
+                    //
+                    get IsFilterSelected of oGroupPicklistFiltering to sFilter
+                    move (sPicklist + sFilter)                      to sPicklist
+                end
+                //
+                function_return sPicklist
+            end_function
+            
+            procedure DoReset string sCurrent integer iCC integer iOpcode
+                integer hGroup iPos
+                string  sFlag
+                //
+                move (oCCRadioContainer(oGroupCCPicklistFiltering(self))) to hGroup
+                if (sCurrent CONTAINS "CC") begin
+                    set Checked_State of oCheckboxCCList to TRUE
+                    set Value         of oFormDefaultCC  to iCC
+                    set Current_Radio of hGroup to 1
+                    If (sCurrent contains "CC_") begin
+                        move (pos("CC_",sCurrent)) to iPos
+                        move (mid(sCurrent,1,(iPos + 3))) to sFlag
+                        set Value of (oCCFilterForm(oGroupCCPicklistFiltering(self))) to sFlag
+                    end
+                    else begin
+                        set Current_Radio of hGroup  to 0
+                        set Value of (oCCFilterForm(oGroupPicklistFiltering(self))) to ""
+                    end
+                end
+                else begin
+                    set Value         of oFormDefaultCC  to ""
+                    set Checked_State of oCheckboxCCList to FALSE
+                    set Current_Radio of hGroup  to 0
+                    set Value of (oCCFilterForm(oGroupPicklistFiltering(self))) to ""
+                end
+                //
+                move (oRadioContainer(oGroupPicklistFiltering(self))) to hGroup
+                if (sCurrent CONTAINS "OP") begin
+                    set Checked_State of oCheckboxOpList to TRUE
+                    set Value         of oFormDefaultOp  to iOpcode
+                    If (sCurrent contains "OP_") Begin
+                        if      (sCurrent CONTAINS "OP_L") set Current_Radio of hGroup  to 1
+                        else if (sCurrent CONTAINS "OP_M") set Current_Radio of hGroup  to 2
+                        else if (sCurrent CONTAINS "OP_P") set Current_Radio of hGroup  to 3
+                        else if (sCurrent CONTAINS "OP_?") begin
+                            set                              Current_Radio of hGroup  to 4
+                            move (pos("OP_?",sCurrent))                               to iPos
+                            move (mid(sCurrent,1,(iPos + 4)))                         to sFlag
+                            set Value of (oFilterForm(oGroupPicklistFiltering(self))) to sFlag
+                        end
+                        else begin
+                            set                              Current_Radio of hGroup  to 0
+                            set Value of (oFilterForm(oGroupPicklistFiltering(self))) to ""
+                        end
+                    end
+                end
+                else begin
+                    set Value         of oFormDefaultOp  to ""
+                    set Checked_State of oCheckboxOpList to FALSE
+                    set                              Current_Radio of hGroup  to 0
+                    set Value of (oFilterForm(oGroupPicklistFiltering(self))) to ""
+                end
+                //
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // oPicklistControlGroup
+
+        Object oLinkControlGroup is a cGlblGroup
+            Set Size to 105 200
+            Set Location to 4 265
+            Set Label to "Link Controls"
+            Object oCheckBoxExportLink is a cGlblCheckBox
+                Set Label to "^ export to specified destination, value from "
+                Set Size to 10 156
+                Set Location to 15 10
+                Set Status_Help to "Denotes that a link code / symbol will be the destination, instead of the source, for a value"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    set Enabled_State of oComboFormExportSymbol        to bChecked
+                    set Enabled_State of oRadioGroupExportType         to bChecked
+                    set Enabled_State of oCheckboxVariableLink         to (NOT(bChecked))
+                    set Enabled_State of oCheckboxSuppressCalcTrigger  to (NOT(bChecked))
+                    set Enabled_State of oCheckboxSuppressItemCreation to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxProhibitInput(oInputControlGroup(self)))  to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxEditModePrompt(oInputControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxTitleOnly(oInputControlGroup(self)))      to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckBoxExportLink
+
+            Object oComboFormExportSymbol is a cGlblComboForm
+                Set Size to 13 26
+                Set Location to 14 168
+                Set Status_Help to "Denotes the variable or constant value from this stanard to write to destination"
+                Set Form_Border to 0
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                
+                // Combo_Fill_List is called when the list needs filling
+                Procedure Combo_Fill_List
+                    // Fill the combo list with Send Combo_Add_Item
+                    send Combo_Add_Item "1"
+                    send Combo_Add_Item "2"
+                    send Combo_Add_Item "3"
+                    send Combo_Add_Item "4"
+                    send Combo_Add_Item "5"
+                    send Combo_Add_Item "6"
+                    send Combo_Add_Item "7"
+                    send Combo_Add_Item "8"
+                    send Combo_Add_Item "9"
+                    send Combo_Add_Item "V"
+                    send Combo_Add_Item "A"
+                    send Combo_Add_Item "B"
+                    send Combo_Add_Item "C"
+                    send Combo_Add_Item "D"
+                    send Combo_Add_Item "E"
+                    send Combo_Add_Item "F"
+                    send Combo_Add_Item "G"
+                    send Combo_Add_Item "H"
+                    send Combo_Add_Item "I"
+                End_Procedure  // Combo_fill_list
+                
+                
+                // notification of a selection change or edit change
+                //Procedure OnChange
+                //    String sValue
+                //    Get Value to sValue // the current selected item
+                //
+                //End_Procedure  // OnChange
+                
+                
+                // notification that the list has dropped down
+                //Procedure OnDropDown
+                //End_Procedure  // OnDropDown
+                
+                
+                // notification that the list was closed
+                //Procedure OnCloseUp
+                //End_Procedure  // OnCloseUp
+                //AB-StoreEnd
+
+            End_Object    // oComboFormExportSymbol
+
+            Object oRadioGroupExportType is a cGlblRadioGroup
+                Set Size to 24 178
+                Set Location to 27 16
+                Set Label to "and any value at destination should be "
+                Object Radio1 is a Radio
+                    Set Label to "replaced"
+                    Set Size to 10 44
+                    Set Location to 10 5
+                    Set Status_Help to "The value at the destination link will be replaced"
+                End_Object    // Radio1
+
+                Object Radio2 is a Radio
+                    Set Label to "added to"
+                    Set Size to 10 45
+                    Set Location to 10 59
+                    Set Status_Help to "The value at the destination will have the exported value added to it"
+                End_Object    // Radio2
+
+                Object Radio3 is a Radio
+                    Set Label to "subtracted from"
+                    Set Size to 10 65
+                    Set Location to 10 111
+                    Set Status_Help to "The value at the destination will have the exported value subtracted from it"
+                End_Object    // Radio3
+
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                
+                Procedure Notify_Select_State integer iToItem integer iFromItem
+                    //for augmentation
+                End_Procedure
+                
+                // If you set Current_radio you must set this after the
+                // radio objects have been created AND after Notify_select_State has been
+                // created. i.e. Set in bottom-code at end!!
+                //Set Current_Radio to 0
+                //AB-StoreEnd
+
+            End_Object    // oRadioGroupExportType
+
+            Object oCheckboxVariableLink is a cGlblCheckBox
+                Set Label to "&& = link code for this item is value of Variable"
+                Set Size to 10 154
+                Set Location to 55 10
+                Set Status_Help to "The link code for an item can be set to the value of another variable in this std."
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State                                  to bChecked
+                    set Enabled_State of oComboFormLinkSource          to bChecked
+                    set Enabled_State of oCheckBoxExportLink           to (NOT(bChecked))
+                    //
+                    set Enabled_State of (oCheckboxProhibitInput(oInputControlGroup(self)))  to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxEditModePrompt(oInputControlGroup(self))) to (NOT(bChecked))
+                    set Enabled_State of (oCheckboxTitleOnly(oInputControlGroup(self)))      to (NOT(bChecked))
+                    //set Enabled_State of oCheckboxSuppressCalcTrigger  to (NOT(bChecked))
+                    //set Enabled_State of oCheckboxSuppressItemCreation to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxCCList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                    set Enabled_State of (oCheckBoxOpList(oPickListControlGroup(self)))   to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxVariableLink
+
+            Object oComboFormLinkSource is a cGlblComboForm
+                Set Size to 13 27
+                Set Location to 54 167
+                Set Status_Help to "Denotes the source variable whose value will define this item's link code"
+                Set Form_Border to 0
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                
+                // Combo_Fill_List is called when the list needs filling
+                Procedure Combo_Fill_List
+                    // Fill the combo list with Send Combo_Add_Item
+                    send Combo_Add_Item "1"
+                    send Combo_Add_Item "2"
+                    send Combo_Add_Item "3"
+                    send Combo_Add_Item "4"
+                    send Combo_Add_Item "5"
+                    send Combo_Add_Item "6"
+                    send Combo_Add_Item "7"
+                    send Combo_Add_Item "8"
+                    send Combo_Add_Item "9"
+                End_Procedure  // Combo_fill_list
+                
+                
+                // notification of a selection change or edit change
+                //Procedure OnChange
+                //    String sValue
+                //    Get Value to sValue // the current selected item
+                //
+                //End_Procedure  // OnChange
+                
+                
+                // notification that the list has dropped down
+                //Procedure OnDropDown
+                //End_Procedure  // OnDropDown
+                
+                
+                // notification that the list was closed
+                //Procedure OnCloseUp
+                //End_Procedure  // OnCloseUp
+                //AB-StoreEnd
+
+            End_Object    // oComboFormLinkSource
+
+            Object oCheckboxSuppressCalcTrigger is a cGlblCheckBox
+                Set Label to "! = don't trigger calc. in linked item"
+                Set Size to 10 123
+                Set Location to 70 10
+                Set Status_Help to "When link symbol denotes a calculated value, retrieve value without triggering calculation"
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State                                  to bChecked
+                    set Enabled_State of oCheckBoxExportLink           to (NOT(bChecked))
+                    //set Enabled_State of oCheckboxVariableLink         to (NOT(bChecked))
+                    set Enabled_State of oCheckboxSuppressItemCreation to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxSuppressCalcTrigger
+
+            Object oCheckboxSuppressItemCreation is a cGlblCheckBox
+                Set Label to "Original label below won't compile"
+                Set Size to 10 184
+                Set Location to 86 10
+                Set Status_Help to "Same as "
+
+                //AB-StoreStart
+                Set Label to ("!" + "! = don't trigger calc. in linked item && don't create item")
+                
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State                                 to bChecked
+                    set Enabled_State of oCheckBoxExportLink          to (NOT(bChecked))
+                    //set Enabled_State of oCheckboxVariableLink        to (NOT(bChecked))
+                    set Enabled_State of oCheckboxSuppressCalcTrigger to (NOT(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxSuppressItemCreation
+
+
+            //AB-StoreStart
+            function IsLink returns string
+                integer iRadio
+                string  sLink sValue
+                //
+                if (Checked_State(oCheckBoxExportLink(self))) begin
+                    get Value of oComboFormExportSymbol to sValue
+                    if (sValue = "") begin
+                        set pbError to TRUE
+                        function_return "Destination not specified"
+                    end
+                    move ("^" + sValue)                        to sLink
+                    get Current_Radio of oRadioGroupExportType to iRadio
+                    if (iRadio = 1) move (sLink + "+")         to sLink
+                    if (iRadio = 2) move (sLink + "-")         to sLink
+                end
+                //
+                if (Checked_State(oCheckBoxVariableLink(self))) begin
+                    get Value of oComboFormLinkSource to sValue
+                    if (sValue = "") begin
+                        set pbError to TRUE
+                        function_return "Variable not specified"
+                    end
+                    move ("&" + sValue) to sLink
+                end
+                //
+                if (Checked_State(oCheckBoxSuppressCalcTrigger(self)))  move (sLink + "!") to sLink
+                if (Checked_State(oCheckBoxSuppressItemCreation(self))) move (sLink + "!"+"!") to sLink
+                //
+                function_return sLink
+            end_function
+            
+            procedure DoReset string sCurrent
+                integer iPos
+                string  sValue sRadio
+                //
+                set Value         of oComboFormExportSymbol        to ""
+                set Current_Radio of oRadioGroupExportType         to 0
+                set Checked_State of oCheckBoxExportLink           to FALSE
+                set Value         of oComboFormLinkSource          to ""
+                set Checked_State of oCheckboxVariableLink         to FALSE
+                set Checked_State of oCheckboxSuppressCalcTrigger  to FALSE
+                set Checked_State of oCheckboxSuppressItemCreation to FALSE
+                //
+                move (pos("^",sCurrent)) to iPos
+                if (iPos) begin
+                    set Checked_State of oCheckBoxExportLink    to TRUE
+                    move (mid(sCurrent,1,(iPos+1)))             to sValue
+                    set Value         of oComboFormExportSymbol to sValue
+                    move (mid(sCurrent,1,(iPos+1)))             to sRadio
+                    if (sRadio = "+") ;
+                        set Current_Radio of oRadioGroupExportType to 1
+                    if (sRadio = "-") ;
+                        set Current_Radio of oRadioGroupExportType to 2
+                    procedure_return
+                end
+                //
+                move (pos("&",sCurrent)) to iPos
+                if (iPos) begin
+                    set Checked_State of oCheckboxVariableLink to TRUE
+                    move (mid(sCurrent,1,(iPos+1)))            to sValue
+                    set Value         of oComboFormLinkSource  to sValue
+                    //procedure_return
+                end
+                //
+                //if      (sCurrent CONTAINS "!!") set Checked_State of oCheckBoxSuppressItemCreation to TRUE
+                //if      (POS("!!",sCurrent)) set Checked_State of oCheckBoxSuppressItemCreation to TRUE
+                //else if (sCurrent CONTAINS "!")  set Checked_State of oCheckBoxSuppressCalcTrigger  to TRUE
+                move (pos("!",sCurrent)) to iPos
+                if (ipos) begin
+                    move (mid(sCurrent,1,(iPos+1))) to sValue
+                    if (sValue = "!") set Checked_State of oCheckBoxSuppressItemCreation to TRUE
+                    else              set Checked_State of oCheckBoxSuppressCalcTrigger  to TRUE
+                end
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // oLinkControlGroup
+
+        Object oConditionalControlGroup is a cGlblGroup
+            Set Size to 82 200
+            Set Location to 111 265
+            Set Label to "Conditional Controls"
+            Object oComboFormCondionVar1 is a cGlblComboForm
+                Set Label to "The value of Variable"
+                Set Size to 13 27
+                Set Location to 10 143
+                Set Status_Help to "The value of the first variable for use in the comparison"
+                Set Form_Border to 0
+                Set Label_Col_Offset to 75
+
+                //AB-StoreStart
+                // Combo_Fill_List is called when the list needs filling
+                Procedure Combo_Fill_List
+                    // Fill the combo list with Send Combo_Add_Item
+                    send Combo_Add_Item "1"
+                    send Combo_Add_Item "2"
+                    send Combo_Add_Item "3"
+                    send Combo_Add_Item "4"
+                    send Combo_Add_Item "5"
+                    send Combo_Add_Item "6"
+                    send Combo_Add_Item "7"
+                    send Combo_Add_Item "8"
+                    send Combo_Add_Item "9"
+                    send Combo_Add_Item "V"
+                End_Procedure  // Combo_fill_list
+                
+                
+                // notification of a selection change or edit change
+                Procedure OnChange
+                    boolean bState
+                    string  sValue
+                    //
+                    get Value                                  to sValue
+                    move (sValue <> "")                        to bState
+                    set Enabled_State of oRadioGroupCondition  to bState
+                    set Enabled_State of oComboFormCondionVar2 to bState
+                End_Procedure  // OnChange
+                
+                
+                // notification that the list has dropped down
+                //Procedure OnDropDown
+                //End_Procedure  // OnDropDown
+                
+                
+                // notification that the list was closed
+                //Procedure OnCloseUp
+                //End_Procedure  // OnCloseUp
+                //AB-StoreEnd
+
+            End_Object    // oComboFormCondionVar1
+
+            Object oRadioGroupCondition is a cGlblRadioGroup
+                Set Size to 34 147
+                Set Location to 24 28
+                Set Label to "must be"
+                Object oRadio1 is a Radio
+                    Set Label to "> greater than"
+                    Set Size to 10 61
+                    Set Location to 10 5
+                    Set Status_Help to "First value must be greater than 2nd value"
+                End_Object    // oRadio1
+
+                Object oRadio2 is a Radio
+                    Set Label to "< less than"
+                    Set Size to 10 51
+                    Set Location to 20 5
+                    Set Status_Help to "First value must be less than second value"
+                End_Object    // oRadio2
+
+                Object oRadio3 is a Radio
+                    Set Label to "= equal to"
+                    Set Size to 10 48
+                    Set Location to 10 80
+                    Set Status_Help to "First value must be equal to second value"
+                End_Object    // oRadio3
+
+                Object oRadio4 is a cGlblRadio
+                    Set Label to "~ not equal to"
+                    Set Size to 10 61
+                    Set Location to 20 80
+                    Set Status_Help to "First value must not be equal to second value"
+                End_Object    // oRadio4
+
+
+                //AB-StoreStart
+                set Enabled_State to FALSE
+                
+                Procedure Notify_Select_State integer iToItem integer iFromItem
+                    //for augmentation
+                End_Procedure
+                
+                // If you set Current_radio you must set this after the
+                // radio objects have been created AND after Notify_select_State has been
+                // created. i.e. Set in bottom-code at end!!
+                //Set Current_Radio to 0
+                //AB-StoreEnd
+
+            End_Object    // oRadioGroupCondition
+
+            Object oComboFormCondionVar2 is a cGlblComboForm
+                Set Label to "the value of Variable or Constant."
+                Set Size to 13 27
+                Set Location to 63 143
+                Set Status_Help to "The value of the second variable for use in the comparison"
+                Set Form_Border to 0
+                Set Label_Col_Offset to 110
+                set Enabled_State to FALSE
+                
+                // Combo_Fill_List is called when the list needs filling
+                Procedure Combo_Fill_List
+                    // Fill the combo list with Send Combo_Add_Item
+                    send Combo_Add_Item "1"
+                    send Combo_Add_Item "2"
+                    send Combo_Add_Item "3"
+                    send Combo_Add_Item "4"
+                    send Combo_Add_Item "5"
+                    send Combo_Add_Item "6"
+                    send Combo_Add_Item "7"
+                    send Combo_Add_Item "8"
+                    send Combo_Add_Item "9"
+                    send Combo_Add_Item "V"
+                    send Combo_Add_Item "A"
+                    send Combo_Add_Item "B"
+                    send Combo_Add_Item "C"
+                    //send Combo_Add_Item "D"
+                    //send Combo_Add_Item "E"
+                    send Combo_Add_Item "F"
+                    send Combo_Add_Item "G"
+                    send Combo_Add_Item "H"
+                    //send Combo_Add_Item "I"
+                End_Procedure  // Combo_fill_list
+                
+                
+                // notification of a selection change or edit change
+                //Procedure OnChange
+                //    String sValue
+                //    Get Value to sValue // the current selected item
+                //
+                //End_Procedure  // OnChange
+                
+                
+                // notification that the list has dropped down
+                //Procedure OnDropDown
+                //End_Procedure  // OnDropDown
+                
+                
+                // notification that the list was closed
+                //Procedure OnCloseUp
+                //End_Procedure  // OnCloseUp
+
+            End_Object    // oComboFormCondionVar2
+
+
+            //AB-StoreStart
+            function IsConditional returns string
+                integer iRadio
+                string  sConditional sVar1 sOperator sVar2
+                //
+                get Value of oComboFormCondionVar1 to sVar1
+                if (sVar1 <> "") begin
+                    get Current_Radio of oRadioGroupCondition to iRadio
+                    if      (iRadio = 0) move ">" to sOperator
+                    else if (iRadio = 1) move "<" to sOperator
+                    else if (iRadio = 2) move "=" to sOperator
+                    else if (iRadio = 3) move "~" to sOperator
+                end
+                get Value of oComboFormCondionVar2 to sVar2
+                move (sOperator + sVar1 + sVar2)   to sConditional
+                //
+                function_return sConditional
+            end_function
+            
+            procedure DoReset string sCurrent
+                integer iPos
+                string  sConditional sVar1 sOperator sVar2
+                //
+                move (pos(">",sCurrent))                to iPos
+                if (NOT(iPos)) move (pos("<",sCurrent)) to iPos
+                if (NOT(iPos)) move (pos("=",sCurrent)) to iPos
+                if (NOT(iPos)) move (pos("~",sCurrent)) to iPos
+                if (iPos) begin
+                    move (mid(sCurrent,1,iPos)) to sConditional
+                    increment iPos
+                    move (mid(sCurrent,1,iPos)) to sVar1
+                    increment iPos
+                    move (mid(sCurrent,1,iPos)) to sVar2
+                    //
+                    if (sConditional = ">") move 0 to iPos
+                    if (sConditional = "<") move 1 to iPos
+                    if (sConditional = "=") move 2 to iPos
+                    if (sConditional = "~") move 3 to iPos
+                    set Enabled_State of oRadioGroupCondition  to TRUE
+                    set Current_Radio of oRadioGroupCondition  to iPos
+                    set Enabled_State of oComboFormCondionVar2 to TRUE
+                    set Value         of oComboFormCondionVar2 to sVar2
+                    set Value         of oComboFormCondionVar1 to sVar1
+                    procedure_return
+                end
+                //
+                set Current_Radio of oRadioGroupCondition  to 0
+                set Enabled_State of oRadioGroupCondition  to FALSE
+                set Value         of oComboFormCondionVar2 to ""
+                set Enabled_State of oComboFormCondionVar2 to FALSE
+                set Value         of oComboFormCondionVar1 to ""
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // oConditionalControlGroup
+
+
+        //AB-StoreStart
+        function IsReturnString returns string
+            string sInput sPicklist sLink sConditional
+            //
+            get IsInput       of oInputControlGroup       to sInput
+            get IsPicklist    of oPicklistControlGroup    to sPicklist
+            if (pbError(self)) function_return sPicklist
+            get IsLink        of oLinkControlGroup        to sLink
+            get IsConditional of oConditionalControlGroup to sConditional
+            function_return (sConditional + sInput + sPicklist + sLink)
+        end_function
+        
+        procedure DoReset string sCurrent integer iCC integer iOpcode
+            send DoReset of oInputControlGroup       sCurrent
+            send DoReset of oPicklistControlGroup    sCurrent iCC iOpcode
+            send DoReset of oLinkControlGroup        sCurrent
+            send DoReset of oConditionalControlGroup sCurrent
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oBox
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Default_State to TRUE
+        Set Location to 236 372
+
+        //AB-StoreStart
+        procedure OnClick
+            send DoReturnString
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oOK_bn
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Location to 236 427
+
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oCancel_bn
+
+    on_key kCancel       send KeyAction of oCancel_bn
+    on_key Key_Alt+Key_O send KeyAction of oOK_bn
+    on_key Key_Alt+Key_C send KeyAction of oCancel_bn
+    
+    procedure DoReturnString
+        string sModifiers
+        string sSpecial
+        //
+        set pbError  to FALSE
+        set piCC     to 0
+        set piOpcode to 0
+        //
+        get psSpecial to sSpecial
+        get IsReturnString of oBox to sModifiers
+        //
+        if (pbError(self)) begin
+            send Stop_Box sModifiers
+            procedure_return
+        end
+        //
+        set psModifiers to (sModifiers+sSpecial)
+        send Close_Panel
+    end_procedure
+    
+    function IsModifiers integer iVarnum string sCurrent integer iCC integer iOpcode returns string
+        string sSpecial
+        set psModifiers to "CANCEL"
+        set piVarnum to iVarnum
+        //
+        if (sCurrent contains "J") set psSpecial to "J"
+        else set psSpecial to ""
+        send DoReset of oBox sCurrent iCC iOpcode
+        send Popup_Modal
+        function_return (psModifiers(self))
+    end_function
+
+End_Object    // odgStdModifiers
+

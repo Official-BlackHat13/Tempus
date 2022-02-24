@@ -1,0 +1,39 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Contact.DD
+Use cMarketGroupGlblDataDictionary.dd
+Use cMarketMemberGlblDataDictionary.dd
+
+Object oMarketMemberProcess is a BusinessProcess
+    Object oMarketGroup_DD is a cMarketGroupGlblDataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oMarketMember_DD is a cMarketMemberGlblDataDictionary
+        Set DDO_Server to oMarketGroup_DD
+        Set DDO_Server to oContact_DD
+    End_Object
+
+    Set Main_DD to oMarketMember_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+    
+
+End_Object
+

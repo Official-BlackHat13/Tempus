@@ -1,0 +1,1233 @@
+// standards array for calc engine
+use StatPnl.pkg
+
+declare_datafile Jcdept
+declare_datafile Jccntr
+declare_datafile Jcoper
+
+
+class cStandardsArray is an Array
+
+    procedure Construct_Object
+        forward send Construct_Object
+        //
+        property integer piRowCount
+        //
+    end_procedure
+
+    // integer Opcode           //   0 //  4  NUM    8.0
+    // string  Name             //   1 //  5  ASC     24
+    // string  Nickname         //   2 //  6  ASC     10
+    // integer Cstctr_idno      //   3 //  2  NUM    4.0
+    // string  Optype           //   4 //  7  ASC      2
+    // number  Standard         //   5 // 10  NUM    6.2
+    // number  Markup           //   6 // 11  NUM    2.2
+    // string  Lookup_var       //   7 // 77  ASC      1
+    // string  Bracket_var      //   8 // 78  ASC      1
+    // string  Prorate_bracket  //   9 // 79  ASC      1
+    // string  Prorate_lookup   //  10 // 80  ASC      1
+    // string  Calc_flags       //  11 // 81  ASC     26
+    // string  Formula          //  12 // 82  ASC     54
+    // string  Est_formula      //  13 // 83  ASC     54
+    // string  Est_formula_typ  //  14 // 84  ASC      1
+    // string  Table_std_desc   //  15 // 86  ASC     14
+    // string  Lookup_desc      //  16 // 87  ASC     14
+    // string  Bracket_desc     //  17 // 88  ASC     14
+    // string  Var1_tag         //  18 // 91  ASC     30
+    // string  Var2_tag         //  19 // 92  ASC     30
+    // string  Var3_tag         //  20 // 93  ASC     30
+    // string  Var4_tag         //  21 // 94  ASC     30
+    // string  Var5_tag         //  22 // 95  ASC     30
+    // string  Var6_tag         //  23 // 96  ASC     30
+    // string  Var7_tag         //  24 // 97  ASC     30
+    // string  Var8_tag         //  25 // 98  ASC     30
+    // string  Var9_tag         //  26 // 99  ASC     30
+    // number  Var1_dflt_value  //  27 //100  NUM    8.4
+    // number  Var2_dflt_value  //  28 //101  NUM    8.4
+    // number  Var3_dflt_value  //  29 //102  NUM    8.4
+    // number  Var4_dflt_value  //  30 //103  NUM    8.4
+    // number  Var5_dflt_value  //  31 //104  NUM    8.4
+    // number  Var6_dflt_value  //  32 //105  NUM    8.4
+    // number  Var7_dflt_value  //  33 //106  NUM    8.4
+    // number  Var8_dflt_value  //  34 //107  NUM    8.4
+    // number  Var9_dflt_value  //  35 //108  NUM    8.4
+    // integer Var1_link_code   //  36 //109  NUM    8.0
+    // integer Var2_link_code   //  37 //110  NUM    8.0
+    // integer Var3_link_code   //  38 //111  NUM    8.0
+    // integer Var4_link_code   //  39 //112  NUM    8.0
+    // integer Var5_link_code   //  40 //113  NUM    8.0
+    // integer Var6_link_code   //  41 //114  NUM    8.0
+    // integer Var7_link_code   //  42 //115  NUM    8.0
+    // integer Var8_link_code   //  43 //116  NUM    8.0
+    // integer Var9_link_code   //  44 //117  NUM    8.0
+    // string  Var1_link_symbl  //  45 //118  ASC      1
+    // string  Var2_link_symbl  //  46 //119  ASC      1
+    // string  Var3_link_symbl  //  47 //120  ASC      1
+    // string  Var4_link_symbl  //  48 //121  ASC      1
+    // string  Var5_link_symbl  //  49 //122  ASC      1
+    // string  Var6_link_symbl  //  50 //123  ASC      1
+    // string  Var7_link_symbl  //  51 //124  ASC      1
+    // string  Var8_link_symbl  //  52 //125  ASC      1
+    // string  Var9_link_symbl  //  53 //126  ASC      1
+    // string  Con1_desc        //  54 //127  ASC     30
+    // string  Con2_desc        //  55 //128  ASC     30
+    // string  Con3_desc        //  56 //129  ASC     30
+    // string  Con4_desc        //  57 //130  ASC     30
+    // string  Con5_desc        //  58 //131  ASC     30
+    // string  Con6_desc        //  59 //132  ASC     30
+    // string  Con7_desc        //  60 //133  ASC     30
+    // string  Con8_desc        //  61 //134  ASC     30
+    // string  Con9_desc        //  62 //135  ASC     30
+    // number  Con1_value       //  63 //136  NUM    8.4
+    // number  Con2_value       //  64 //137  NUM    8.4
+    // number  Con3_value       //  65 //138  NUM    8.4
+    // number  Con4_value       //  66 //139  NUM    8.4
+    // number  Con5_value       //  67 //140  NUM    8.4
+    // number  Con6_value       //  68 //141  NUM    8.4
+    // number  Con7_value       //  69 //142  NUM    8.4
+    // number  Con8_value       //  70 //143  NUM    8.4
+    // number  Con9_value       //  71 //144  NUM    8.4
+    // integer Con1_link_code   //  72 //145  NUM    8.0
+    // integer Con2_link_code   //  73 //146  NUM    8.0
+    // integer Con3_link_code   //  74 //147  NUM    8.0
+    // integer Con4_link_code   //  75 //148  NUM    8.0
+    // integer Con5_link_code   //  76 //149  NUM    8.0
+    // integer Con6_link_code   //  77 //150  NUM    8.0
+    // integer Con7_link_code   //  78 //151  NUM    8.0
+    // integer Con8_link_code   //  79 //152  NUM    8.0
+    // integer Con9_link_code   //  80 //153  NUM    8.0
+    // string  Con1_link_symbl  //  81 //154  ASC      1
+    // string  Con2_link_symbl  //  82 //155  ASC      1
+    // string  Con3_link_symbl  //  83 //156  ASC      1
+    // string  Con4_link_symbl  //  84 //157  ASC      1
+    // string  Con5_link_symbl  //  85 //158  ASC      1
+    // string  Con6_link_symbl  //  86 //159  ASC      1
+    // string  Con7_link_symbl  //  87 //160  ASC      1
+    // string  Con8_link_symbl  //  88 //161  ASC      1
+    // string  Con9_link_symbl  //  89 //162  ASC      1
+    // number  Bracket1_value   //  90 //163  NUM    8.4
+    // number  Bracket2_value   //  91 //164  NUM    8.4
+    // number  Bracket3_value   //  92 //165  NUM    8.4
+    // number  Bracket4_value   //  93 //166  NUM    8.4
+    // number  Bracket5_value   //  94 //167  NUM    8.4
+    // number  Lookup1_value    //  95 //168  NUM    8.4
+    // number  Lookup2_value    //  96 //169  NUM    8.4
+    // number  Lookup3_value    //  97 //170  NUM    8.4
+    // number  Lookup4_value    //  98 //171  NUM    8.4
+    // number  Lookup5_value    //  99 //172  NUM    8.4
+    // number  Lookup6_value    // 100 //173  NUM    8.4
+    // number  Lookup7_value    // 101 //174  NUM    8.4
+    // number  Lookup8_value    // 102 //175  NUM    8.4
+    // number  Lookup9_value    // 103 //176  NUM    8.4
+    // number  Lookup10_value   // 104 //177  NUM    8.4
+    // number  L1b1_std         // 105 //178  NUM    6.4
+    // number  L1b2_std         // 106 //179  NUM    6.4
+    // number  L1b3_std         // 107 //180  NUM    6.4
+    // number  L1b4_std         // 108 //181  NUM    6.4
+    // number  L1b5_std         // 109 //182  NUM    6.4
+    // number  L2b1_std         // 110 //183  NUM    6.4
+    // number  L2b2_std         // 111 //184  NUM    6.4
+    // number  L2b3_std         // 112 //185  NUM    6.4
+    // number  L2b4_std         // 113 //186  NUM    6.4
+    // number  L2b5_std         // 114 //187  NUM    6.4
+    // number  L3b1_std         // 115 //188  NUM    6.4
+    // number  L3b2_std         // 116 //189  NUM    6.4
+    // number  L3b3_std         // 117 //190  NUM    6.4
+    // number  L3b4_std         // 118 //191  NUM    6.4
+    // number  L3b5_std         // 119 //192  NUM    6.4
+    // number  L4b1_std         // 120 //193  NUM    6.4
+    // number  L4b2_std         // 121 //194  NUM    6.4
+    // number  L4b3_std         // 122 //195  NUM    6.4
+    // number  L4b4_std         // 123 //196  NUM    6.4
+    // number  L4b5_std         // 124 //197  NUM    6.4
+    // number  L5b1_std         // 125 //198  NUM    6.4
+    // number  L5b2_std         // 126 //199  NUM    6.4
+    // number  L5b3_std         // 127 //200  NUM    6.4
+    // number  L5b4_std         // 128 //201  NUM    6.4
+    // number  L5b5_std         // 129 //202  NUM    6.4
+    // number  L6b1_std         // 130 //203  NUM    6.4
+    // number  L6b2_std         // 131 //204  NUM    6.4
+    // number  L6b3_std         // 132 //205  NUM    6.4
+    // number  L6b4_std         // 133 //206  NUM    6.4
+    // number  L6b5_std         // 134 //207  NUM    6.4
+    // number  L7b1_std         // 135 //208  NUM    6.4
+    // number  L7b2_std         // 136 //209  NUM    6.4
+    // number  L7b3_std         // 137 //210  NUM    6.4
+    // number  L7b4_std         // 138 //211  NUM    6.4
+    // number  L7b5_std         // 139 //212  NUM    6.4
+    // number  L8b1_std         // 140 //213  NUM    6.4
+    // number  L8b2_std         // 141 //214  NUM    6.4
+    // number  L8b3_std         // 142 //215  NUM    6.4
+    // number  L8b4_std         // 143 //216  NUM    6.4
+    // number  L8b5_std         // 144 //217  NUM    6.4
+    // number  L9b1_std         // 145 //218  NUM    6.4
+    // number  L9b2_std         // 146 //219  NUM    6.4
+    // number  L9b3_std         // 147 //220  NUM    6.4
+    // number  L9b4_std         // 148 //221  NUM    6.4
+    // number  L9b5_std         // 149 //222  NUM    6.4
+    // number  L10b1_std        // 150 //223  NUM    6.4
+    // number  L10b2_std        // 151 //224  NUM    6.4
+    // number  L10b3_std        // 152 //225  NUM    6.4
+    // number  L10b4_std        // 153 //226  NUM    6.4
+    // number  L10b5_std        // 154 //227  NUM    6.4
+    // string  Var1_tag_symbl   // 155 //233  ASC     15
+    // string  Var2_tag_symbl   // 156 //234  ASC     15
+    // string  Var3_tag_symbl   // 157 //235  ASC     15
+    // string  Var4_tag_symbl   // 158 //236  ASC     15
+    // string  Var5_tag_symbl   // 159 //237  ASC     15
+    // string  Var6_tag_symbl   // 160 //238  ASC     15
+    // string  Var7_tag_symbl   // 161 //239  ASC     15
+    // string  Var8_tag_symbl   // 162 //240  ASC     15
+    // string  Var9_tag_symbl   // 163 //241  ASC     15
+    // string  C1_tag_symbl     // 164 //244  ASC      6
+    // integer C1_link_code     // 165 //245  NUM    6.0
+    // string  C1_link_symbl    // 166 //246  ASC      1
+    // string  C2_tag_symbl     // 167 //247  ASC      6
+    // integer C2_link_code     // 168 //248  NUM    6.0
+    // string  C2_link_symbl    // 169 //249  ASC      1
+    // string  C3_tag_symbl     // 170 //250  ASC      6
+    // integer C3_link_code     // 171 //251  NUM    6.0
+    // string  C3_link_symbl    // 172 //252  ASC      1
+    // string  Sell_formula     // 173 //253  ASC     54
+    // number Jcdept.Markup     // 174 //254  NUM    2.2
+    // number Jccntr.Markup     // 175 //255  NUM    2.2
+    // number Jccntr.Fullrate   // 176 //256  NUM    4.2
+    // number Jccntr.Sell_rate  // 177 //257  NUM    4.2
+    // string  Print_flags      // 178 //258  ASC     26 // To Add PrintFlags
+
+    procedure DoLoadStandardsArray
+        integer bFound iRowCount iIndex hStatusPanel
+        number  nTotal nCurrent nPercent
+        string  sSentinel
+        //
+        send Cursor_Wait of Cursor_Control
+        //
+        get_attribute DF_FILE_RECORDS_USED of Jcoper.File_number to nTotal
+        //
+        send Delete_Data
+        //
+        move (Status_Panel(self)) to hStatusPanel
+        if (hStatusPanel) begin
+            //Get Sentinel_Name of hStatusPanel to sSentinel
+            //Set Sentinel_Name of hStatusPanel to "prgssent"
+            send Initialize_StatusPanel of hStatusPanel ;
+                "Caching standards" "Please wait..." ""
+            set Allow_Cancel_State of hStatusPanel to FALSE
+            send Start_StatusPanel of hStatusPanel
+        end // if (hStatusPanel)
+        //
+        clear Jcoper
+        find GE Jcoper.Opcode
+        move (FOUND) to bFound
+        while (bFound)
+            relate Jcoper
+            move (nCurrent + 1) to nCurrent
+            //
+            if (Jcoper.Est_std = "Y") begin
+                set Array_Value item iIndex to Jcoper.Opcode
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Name))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Nickname))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Cstctr_idno
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Optype
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Standard
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Markup
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup_var
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Bracket_var
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Prorate_bracket
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Prorate_lookup
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Calc_flags))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Formula))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Est_formula))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Est_formula_typ
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Table_std_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Lookup_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Bracket_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var1_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var2_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var3_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var4_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var5_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var6_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var7_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var8_tag))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var9_tag))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var1_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var2_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var3_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var4_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var5_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var6_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var7_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var8_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var9_dflt_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var1_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var2_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var3_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var4_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var5_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var6_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var7_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var8_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var9_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var1_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var2_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var3_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var4_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var5_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var6_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var7_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var8_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Var9_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con1_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con2_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con3_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con4_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con5_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con6_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con7_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con8_desc))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Con9_desc))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con1_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con2_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con3_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con4_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con5_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con6_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con7_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con8_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con9_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con1_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con2_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con3_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con4_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con5_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con6_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con7_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con8_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con9_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con1_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con2_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con3_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con4_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con5_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con6_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con7_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con8_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Con9_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Bracket1_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Bracket2_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Bracket3_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Bracket4_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Bracket5_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup1_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup2_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup3_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup4_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup5_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup6_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup7_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup8_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup9_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.Lookup10_value
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L1b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L1b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L1b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L1b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L1b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L2b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L2b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L2b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L2b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L2b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L3b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L3b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L3b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L3b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L3b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L4b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L4b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L4b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L4b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L4b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L5b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L5b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L5b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L5b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L5b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L6b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L6b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L6b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L6b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L6b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L7b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L7b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L7b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L7b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L7b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L8b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L8b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L8b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L8b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L8b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L9b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L9b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L9b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L9b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L9b5_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L10b1_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L10b2_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L10b3_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L10b4_std
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.L10b5_std
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var1_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var2_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var3_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var4_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var5_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var6_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var7_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var8_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Var9_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.C1_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.C1_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.C1_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.C2_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.C2_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.C2_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.C3_tag_symbl))
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.C3_link_code
+                increment iIndex
+                set Array_Value item iIndex to Jcoper.C3_link_symbl
+                increment iIndex
+                set Array_Value item iIndex to (trim(Jcoper.Sell_formula))
+                increment iIndex
+                set Array_Value item iIndex to Jcdept.Markup
+                increment iIndex
+                set Array_Value item iIndex to Jccntr.Markup
+                increment iIndex
+                set Array_Value item iIndex to Jccntr.Fullrate
+                increment iIndex
+                set Array_Value item iIndex to Jccntr.Sell_rate
+                Increment iIndex
+                Set Array_Value Item iIndex to Jcoper.PRINT_FLAGS
+                Increment iIndex
+                //
+                increment iRowCount
+                // update the sentinel
+                //move ((nCurrent / nTotal) * 100) to nPercent
+                //send Update_StatusPanel ;
+                //    of hStatusPanel ("__PROGRESS__" + string(integer(nPercent)))
+                send Update_StatusPanel of hStatusPanel ("Loading Operation:"*string(Jcoper.Opcode)) 
+            end // if (Jcoper.Est_std = "Y")
+            find GT Jcoper.Opcode
+            move (FOUND) to bFound
+        loop // while (bFound)
+        //
+        set piRowCount to iRowCount
+        //
+        send Stop_StatusPanel of hStatusPanel
+        //set Sentinel_Name of hStatusPanel to sSentinel
+        //
+        send Cursor_Ready of Cursor_Control
+        clear Jcoper
+        //
+    end_procedure // DoLoadStandardsArray
+    //
+    #IFDEF CE_CALC_TEST
+    procedure DoReloadStandard
+        integer bFound iRow iIndex
+        //
+        get IsOpcodeRow Jcoper.Opcode to iRow
+        move (iRow * 179)             to iIndex
+        //
+        set Array_Value item iIndex to Jcoper.Opcode
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Name))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Nickname))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Cstctr_idno
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Optype
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Standard
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Markup
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup_var
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Bracket_var
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Prorate_bracket
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Prorate_lookup
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Calc_flags))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Formula))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Est_formula))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Est_formula_typ
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Table_std_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Lookup_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Bracket_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var1_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var2_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var3_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var4_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var5_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var6_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var7_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var8_tag))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Var9_tag))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var1_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var2_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var3_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var4_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var5_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var6_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var7_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var8_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var9_dflt_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var1_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var2_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var3_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var4_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var5_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var6_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var7_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var8_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var9_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var1_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var2_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var3_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var4_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var5_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var6_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var7_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var8_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var9_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con1_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con2_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con3_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con4_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con5_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con6_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con7_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con8_desc))
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Con9_desc))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con1_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con2_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con3_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con4_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con5_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con6_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con7_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con8_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con9_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con1_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con2_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con3_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con4_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con5_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con6_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con7_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con8_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con9_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con1_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con2_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con3_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con4_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con5_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con6_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con7_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con8_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Con9_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Bracket1_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Bracket2_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Bracket3_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Bracket4_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Bracket5_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup1_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup2_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup3_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup4_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup5_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup6_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup7_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup8_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup9_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Lookup10_value
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L1b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L1b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L1b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L1b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L1b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L2b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L2b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L2b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L2b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L2b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L3b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L3b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L3b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L3b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L3b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L4b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L4b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L4b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L4b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L4b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L5b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L5b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L5b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L5b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L5b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L6b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L6b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L6b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L6b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L6b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L7b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L7b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L7b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L7b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L7b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L8b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L8b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L8b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L8b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L8b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L9b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L9b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L9b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L9b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L9b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L10b1_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L10b2_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L10b3_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L10b4_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.L10b5_std
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var1_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var2_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var3_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var4_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var5_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var6_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var7_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var8_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.Var9_tag_symbl
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.C1_tag_symbl))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.C1_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.C1_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.C2_tag_symbl))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.C2_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.C2_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.C3_tag_symbl))
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.C3_link_code
+        increment iIndex
+        set Array_Value item iIndex to Jcoper.C3_link_symbl
+        increment iIndex
+        set Array_Value item iIndex to (trim(Jcoper.Sell_formula))
+        increment iIndex
+        set Array_Value item iIndex to Jcdept.Markup
+        increment iIndex
+        set Array_Value item iIndex to Jccntr.Markup
+        increment iIndex
+        set Array_Value item iIndex to Jccntr.Fullrate
+        increment iIndex
+        set Array_Value item iIndex to Jccntr.Sell_rate
+        increment iIndex
+        Set Array_Value Item iIndex to Jcoper.PRINT_FLAGS
+        Increment iIndex
+        //
+        if (iRow = piRowCount(self)) set piRowCount to (piRowCount(self) + 1)
+    end_procedure // DoReloadStandard
+    #ENDIF
+    //
+    function IsOpcodeRow integer iOpcode returns integer
+        integer iRowCount iRow iIndex iValue
+        get piRowCount to iRowCount
+        while (iRow < iRowCount)
+            get Integer_Value item (iRow * 179) to iValue
+            if (iValue = iOpcode) break
+            increment iRow
+        loop
+        function_return iRow
+    end_function
+    //
+    function IsName integer iRow returns string
+        string sName
+        get String_Value item ((iRow * 179) + 1) to sName
+        function_return sName
+    end_function
+    //
+    function IsCstCtrIdno integer iRow returns integer
+        integer iCC
+        Get Integer_Value Item ((iRow * 179) + 3) to iCC
+        function_return iCC
+    end_function
+    //
+    function IsOptype integer iRow returns string
+        string sOptype
+        get String_Value item ((iRow * 179) + 4) to sOptype
+        function_return sOptype
+    end_function
+    //
+    function IsStandard integer iRow returns number
+        number nStandard
+        get Number_Value item ((iRow * 179) + 5) to nStandard
+        function_return nStandard
+    end_function
+    //
+    function IsOperationMarkup integer iRow returns number
+        number nMarkup
+        get Number_Value item ((iRow * 179) + 6) to nMarkup
+        function_return nMarkup
+    end_function
+    //
+    function IsLookupVar integer iRow returns string
+        string sLookupVar
+        Get String_Value Item ((iRow * 179) + 7) to sLookupVar
+        function_return sLookupVar
+    end_function
+    //
+    function IsBracketVar integer iRow returns string
+        string sBracketVar
+        get String_Value item ((iRow * 179) + 8) to sBracketVar
+        function_return sBracketVar
+    end_function
+    //
+    function IsProrateBracket integer iRow returns string
+        string sProrateBracket
+        get String_Value item ((iRow * 179) + 9) to sProrateBracket
+        function_return sProrateBracket
+    end_function
+    //
+    function IsProrateLookup integer iRow returns string
+        string sProrateLookup
+        get String_Value item ((iRow * 179) + 10) to sProrateLookup
+        function_return sProrateLookup
+    end_function
+    //
+    function IsCalcFlags integer iRow returns string
+        string sCalcFlags
+        Get String_Value Item ((iRow * 179) + 11) to sCalcFlags
+        function_return sCalcFlags
+    end_function
+    //
+    function IsFormula integer iRow returns string
+        string sFormula
+        get String_Value item ((iRow * 179) + 12) to sFormula
+        function_return sFormula
+    end_function
+    //
+    function IsEstFormula integer iRow returns string
+        string sEstFormula
+        get String_Value item ((iRow * 179) + 13) to sEstFormula
+        function_return sEstFormula
+    end_function
+    //
+    function IsEstFormulaType integer iRow returns string
+        string sEstFormulaType
+        get String_Value item ((iRow * 179) + 14) to sEstFormulaType
+        function_return sEstFormulaType
+    end_function
+    //
+    function IsTableStdDesc integer iRow returns string
+        string sTableStdDesc
+        Get String_Value Item ((iRow * 179) + 15) to sTableStdDesc
+        function_return sTableStdDesc
+    end_function
+    //
+    function IsVarTag integer iRow integer iIndex returns string
+        string sVarTag
+        get String_Value item ((iRow * 179) + (18 + iIndex)) to sVarTag
+        function_return sVarTag
+    end_function
+    //
+    function IsVarDfltValue integer iRow integer iIndex returns number
+        number nVarDfltValue
+        get Number_Value item ((iRow * 179) + (27 + iIndex)) to nVarDfltValue
+        function_return nVarDfltValue
+    end_function
+    //
+    function IsVarLinkCode integer iRow integer iIndex returns integer
+        integer iVarLinkCode
+        get Integer_Value item ((iRow * 179) + (36 + iIndex)) to iVarLinkCode
+        function_return iVarLinkCode
+    end_function
+    //
+    function IsVarLinkSymbl integer iRow integer iIndex returns string
+        string sVarLinkSymbl
+        Get String_Value Item ((iRow * 179) + (45 + iIndex)) to sVarLinkSymbl
+        function_return sVarLinkSymbl
+    end_function
+    //
+    function IsConDesc integer iRow integer iIndex returns string
+        string sConDesc
+        get String_Value item ((iRow * 179) + (54 + iIndex)) to sConDesc
+        function_return sConDesc
+    end_function
+    //
+    function IsConValue integer iRow integer iIndex returns number
+        number nConValue
+        get Number_Value item ((iRow * 179) + (63 + iIndex)) to nConValue
+        function_return nConValue
+    end_function
+    //
+    function IsConLinkCode integer iRow integer iIndex returns integer
+        integer iConLinkCode
+        get Integer_Value item ((iRow * 179) + (72 + iIndex)) to iConLinkCode
+        function_return iConLinkCode
+    end_function
+    //
+    function IsConLinkSymbl integer iRow integer iIndex returns string
+        string sConLinkSymbl
+        Get String_Value Item ((iRow * 179) + (81 + iIndex)) to sConLinkSymbl
+        function_return sConLinkSymbl
+    end_function
+    //
+    function IsBracketValue integer iRow integer iIndex returns number
+        number nBracketValue
+        get Number_Value item ((iRow * 179) + (90 + iIndex)) to nBracketValue
+        function_return nBracketValue
+    end_function
+    //
+    function IsLookupValue integer iRow integer iIndex returns number
+        number nLookupValue
+        get Number_Value item ((iRow * 179) + (95 + iIndex)) to nLookupValue
+        function_return nLookupValue
+    end_function
+    //
+    function IsL1B1Std integer iRow integer iIndex returns number
+        number nL1B1Std
+        get Number_Value item ((iRow * 179) + (105 + iIndex)) to nL1B1Std
+        function_return nL1B1Std
+    end_function
+    //
+    function IsVarTagSymbl integer iRow integer iIndex returns string
+        string sVarTagSymbl
+        Get String_Value Item ((iRow * 179) + (155 + iIndex)) to sVarTagSymbl
+        function_return sVarTagSymbl
+    end_function
+    //
+    function IsC1TagSymbl integer iRow returns string
+        string sTagSymbl
+        get String_Value item ((iRow * 179) + 164) to sTagSymbl
+        function_return sTagSymbl
+    end_function
+    //
+    function IsC1LinkCode integer iRow returns integer
+        integer iLinkCode
+        get Integer_Value item ((iRow * 179) + 165) to iLinkCode
+        function_return iLinkCode
+    end_function
+    //
+    function IsC1LinkSymbl integer iRow returns string
+        string sLinkSymbl
+        get String_Value item ((iRow * 179) + 166) to sLinkSymbl
+        function_return sLinkSymbl
+    end_function
+    //
+    function IsC2TagSymbl integer iRow returns string
+        string sTagSymbl
+        Get String_Value Item ((iRow * 179) + 167) to sTagSymbl
+        function_return sTagSymbl
+    end_function
+    //
+    function IsC2LinkCode integer iRow returns integer
+        integer iLinkCode
+        get Integer_Value item ((iRow * 179) + 168) to iLinkCode
+        function_return iLinkCode
+    end_function
+    //
+    function IsC2LinkSymbl integer iRow returns string
+        string sLinkSymbl
+        get String_Value item ((iRow * 179) + 169) to sLinkSymbl
+        function_return sLinkSymbl
+    end_function
+    //
+    function IsC3TagSymbl integer iRow returns string
+        string sTagSymbl
+        get String_Value item ((iRow * 179) + 170) to sTagSymbl
+        function_return sTagSymbl
+    end_function
+    //
+    function IsC3LinkCode integer iRow returns integer
+        integer iLinkCode
+        Get Integer_Value Item ((iRow * 179) + 171) to iLinkCode
+        function_return iLinkCode
+    end_function
+    //
+    function IsC3LinkSymbl integer iRow returns string
+        string sLinkSymbl
+        get String_Value item ((iRow * 179) + 172) to sLinkSymbl
+        function_return sLinkSymbl
+    end_function
+    //
+    function IsSellFormula integer iRow returns string
+        string sSellFormula
+        get String_Value item ((iRow * 179) + 173) to sSellFormula
+        function_return sSellFormula
+    end_function
+    //
+    function IsDepartmentMarkup integer iRow returns number
+        number nMarkup
+        get Number_Value item ((iRow * 179) + 174) to nMarkup
+        function_return nMarkup
+    end_function
+    //
+    function IsCenterMarkup integer iRow returns number
+        number nMarkup
+        Get Number_Value Item ((iRow * 179) + 175) to nMarkup
+        function_return nMarkup
+    end_function
+    //
+    function IsCenterFullrate integer iRow returns number
+        number nRate
+        get Number_Value item ((iRow * 179) + 176) to nRate
+        function_return nRate
+    end_function
+    //
+    function IsCenterSellrate integer iRow returns number
+        number nRate
+        get Number_Value item ((iRow * 179) + 177) to nRate
+        function_return nRate
+    end_function
+    //
+    Function IsPrintFlags Integer iRow Returns String
+        String sPrintFlags
+        Get String_Value Item ((iRow * 179) + 178) to sPrintFlags
+        Function_Return sPrintFlags
+    End_Function
+end_class // cStandardsArray

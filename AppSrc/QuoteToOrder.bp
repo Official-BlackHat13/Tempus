@@ -1,0 +1,176 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use cOrderDtlGlblDataDictionary.dd
+Use Contact.DD
+Use cDivisionMgrGlblDataDictionary.dd
+
+Object oQuoteToOrder is a BusinessProcess
+    
+    Property Integer piQuoteIdno
+    Property Integer piJobNumber
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+    
+    
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrderDtl_DD is a cOrderDtlGlblDataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set Constrain_file to Order.File_number
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oOrder_DD
+    Set Display_Error_State to True
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        Boolean bFail 
+        Integer hoDD iJobNumber iPORequired iQuoteID iRecId
+        Date    dToday
+        //
+        Get piQuoteIdno     to iQuoteID
+        Set Main_DD         to oOrder_DD
+        Get Main_DD         to hoDD
+        //
+        If (Quotehdr.QuotehdrID <> iQuoteID) Begin
+            Clear Quotehdr
+            Move iQuoteID to Quotehdr.QuotehdrID
+            Find eq Quotehdr by 1            
+        End
+
+        //
+        Sysdate dToday
+        Send Clear_All of hoDD
+        Move Quotehdr.LocationIdno to Location.LocationIdno
+        Send Request_Find of hoDD EQ Location.File_Number 1
+        Move Quotehdr.RepIdno      to SalesRep.RepIdno
+        Send Request_Find of hoDD EQ SalesRep.File_Number 1
+        If (Found) Begin
+            Move (YesNo_Box("Will this Order require a P.O Number?", "Set P.O. Reminder?", MB_DEFBUTTON1)) to iPORequired
+            If (iPORequired= MBR_Yes) Begin
+              Set Field_Changed_Value of hoDD Field Order.PO_Flag        to "1" 
+            End
+            Set Field_Changed_Value of hoDD Field Order.JobOpenDate    to dToday
+            Set Field_Changed_Value of hoDD Field Order.QuoteReference to iQuoteID
+            Set Field_Changed_Value of hoDD Field Order.QuoteAmount    to Quotehdr.Amount
+            Set Field_Changed_Value of hoDD Field Order.WorkType       to Quotehdr.WorkType
+            Set Field_Changed_Value of hoDD Field Order.BillingType    to Quotehdr.BillingType
+            Set Field_Changed_Value of hoDD Field Order.Title          to Quotehdr.QuoteLostMemo
+            Get Request_Validate    of hoDD                            to bFail
+            If (bFail) Begin
+                Send Stop_Box "Could not create Order Header - Validation Error"
+                Procedure_Return
+            End
+            If (not(bFail)) Begin
+                Send Request_Save   of hoDD
+            End
+            Get Field_Current_Value of hoDD Field Order.JobNumber to iJobNumber
+            Set piJobNumber to iJobNumber
+            //
+            // Select InvDtl DD
+            Set Main_DD                                                 to oOrderDtl_DD
+            Move oOrderDtl_DD                                           to hoDD
+            // Fill InvDtl with Values
+            Clear Quotedtl
+            Move iQuoteID                                            to Quotedtl.QuotehdrID
+            Find GE Quotedtl by Index.2
+            While ((Found) and Quotedtl.QuotehdrID = iQuoteID)
+                Send Clear          of hoDD
+                //
+                Move Quotedtl.MastOpsIdno  to MastOps.MastOpsIdno
+                Find eq MastOps by Index.1
+                If (Found) Begin
+                    Move MastOps.Recnum                        to iRecId
+                    Send Find_By_Recnum of hoDD MastOps.File_Number iRecId
+                    //Increment                                                       iSeq
+                    //
+//                    Get FindItemTaxRate of oInvoiceCreationProcess Quotehdr.LocationIdno Quotedtl.MastOpsIdno to nTaxRate
+//                    If (nTaxRate) Begin
+//                        Move (Quotedtl.Quantity*Quotedtl.Price*nTaxRate/100)     to nTaxAmount
+//                    End
+                    //
+                    Set Field_Changed_Value of hoDD Field OrderDtl.Quantity             to Quotedtl.Quantity
+                    Set Field_Changed_Value of hoDD Field OrderDtl.Price                to Quotedtl.Price
+                    Set Field_Changed_Value of hoDD Field OrderDtl.TaxRate              to Quotedtl.TaxRate
+                    Set Field_Changed_Value of hoDD Field OrderDtl.TaxAmount            to Quotedtl.TaxAmount                
+                    Set Field_Changed_Value of hoDD Field OrderDtl.InvoiceDescription   to Quotedtl.Description
+                    Set Field_Changed_Value of hoDD Field OrderDtl.Sequence             to Quotedtl.Sequence
+                    Set Field_Changed_Value of hoDD Field OrderDtl.MastOpsIdno          to Quotedtl.MastOpsIdno
+                    Get Request_Validate    of hoDD                                     to bFail
+                    If (bFail) Begin
+                        Send Stop_Box "Processing Stopped for Order Detail"
+                        Function_Return
+                    End
+                    Send Request_Save       of hoDD 
+                End // if Opers record found
+                Find GT Quotedtl by Index.2
+            Loop
+        End
+        //
+
+    End_Procedure
+
+    Function DoCreateOrderFromQuote Integer iQuoteIdno Returns Integer
+        Integer iJobNumber
+        //
+        Set piQuoteIdno to iQuoteIdno
+        Set piJobNumber    to 0
+        //
+        Send DoProcess
+        //
+        Get piJobNumber to iJobNumber
+        Function_Return     iJobNumber
+    End_Function
+    
+End_Object
+

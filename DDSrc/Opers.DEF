@@ -1,0 +1,68 @@
+-----------------------------------------------------------------------------
+  DATE: 11/30/2016      TIME: 09:51                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Opers (# 7)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Opers
+  USER DISPLAY NAME         : Operations
+  DATAFLEX FILE NAME        : Opers
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16607     ( USED: 16607 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 228417 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  OpersIdno        NUM    8.0     1  1   
+  2  CustomerIdno     NUM    8.0    12      
+  3  LocationIdno     NUM    8.0    23  2   Location.FIELD_2 (3,2)
+  4  MastOpsIdno      NUM    8.0    34  3   MastOps.FIELD_1 (11,1)
+  5  Name             ASC     50    45      
+  6  SellRate         NUM    6.4    95      
+  7  CostRate         NUM    6.4   107      
+  8  CostType         ASC     15   119      
+  9  CalcBasis        ASC     15   134      
+ 10  ActivityType     ASC     20   149      
+ 11  Description      TEX    512   169      
+ 12  Display          NUM    2.0 16552      
+ 13  Status           ASC      1 16558      
+ 14  DisplaySequence  NUM    4.2 16559  5   
+ 15  ChangedFlag      NUM    2.0 16567  6   
+ 16  IsScheduled      NUM    2.0 16573      
+ 17  ExcludeCostFlag  ASC      1 16579      
+ 18  RecordOwner      NUM    8.0 16580      
+ 19  MonthlyItemFlag  NUM    2.0 16591  7   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    OpersIdno       NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       OpersIdno       NO  NO 
+
+  3    MastOpsIdno     NO  NO       0      0       2     ON-LINE
+       OpersIdno       NO  NO 
+
+  4    LocationIdno    NO  NO       0      0       2     ON-LINE
+       MastOpsIdno     NO  NO 
+
+  5    LocationIdno    NO  NO       0      0       3     ON-LINE
+       DisplaySequence NO  NO 
+       OpersIdno       NO  NO 
+
+  6    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       OpersIdno       NO  NO 
+
+  7    LocationIdno    NO  NO       0      0       3     ON-LINE
+       MonthlyItemFlag NO  NO 
+       OpersIdno       NO  NO 
+

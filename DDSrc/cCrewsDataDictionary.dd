@@ -1,0 +1,44 @@
+Use cGlblDataDictionary.pkg
+
+Open Crews
+Open System
+Open Crmember
+
+Class cCrewsDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Crews.File_Number
+
+        Set Add_Client_File to Crmember.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field Crews.CrewId DD_AUTOFIND to True
+        Set Key_Field_State Field Crews.CrewId to True
+        Set Field_Auto_Increment Field Crews.CrewId to File_Field System.CrewId
+
+        Set Field_Option Field Crews.CrewChiefId DD_NOENTER to True
+
+        Set Field_Option Field Crews.CrewCount DD_NOENTER to True
+
+        Set Field_Option Field Crews.ChiefCount DD_NOENTER to True
+
+    End_Procedure
+
+    Procedure Field_Defaults
+        Date dToday
+        //
+        Sysdate dToday
+        //
+        Forward Send Field_Defaults
+        //
+        Set Field_Changed_Value Field Crews.CrewDate to dToday
+    End_Procedure
+
+End_Class

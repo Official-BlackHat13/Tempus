@@ -1,0 +1,6 @@
+EstDtlIdno
+EstHeadIdno
+MastOpsIdno
+SellRate
+BasisQty
+Description

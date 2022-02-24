@@ -1,0 +1,176 @@
+Use cGlblDataDictionary.pkg
+
+Open Quotehdr
+Open System
+Open Location
+Open SalesRep
+Open Contact
+Open Quotedtl
+Open Order
+Open pminvhdr
+Open Eshead
+Open BillingType
+
+Object oQuotehdrStatusValidation is a DescriptionValidationTable
+    Set Validate_State    to False
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "P" "PENDING"
+        Send Add_Table_Value "R" "REVISED"
+        Send Add_Table_Value "W" "WON"
+        Send Add_Table_Value "L" "LOST"
+        Send Add_Table_Value "F" "FORCAST"
+        Send Add_Table_Value "H" "ON HOLD"
+    End_Procedure
+End_Object
+
+Object QuotehdrWorkTypeVT is a DescriptionValidationTable
+    Set Validate_State    to False
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "S" "Snow Removal"
+        Send Add_Table_Value "P" "Pavement Maintenance"
+        Send Add_Table_Value "SW" "Sweeping"
+        Send Add_Table_Value "E" "Excavation"
+        Send Add_Table_Value "O" "Other"
+    End_Procedure
+End_Object
+
+Object Probability is a ValidationTable
+    Set Validate_State    to False
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "20"
+        Send Add_Table_Value "40"
+        Send Add_Table_Value "60"
+        Send Add_Table_Value "80"
+    End_Procedure
+End_Object
+
+
+Object BillingType_VT is a FileValidationTable
+    Set Validate_State to False
+    Set Allow_Blank_State to True
+    Set Main_File         to BillingType.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 2 // description is in field 2
+    Set Ordering          to 1 // load by index 1
+End_Object
+
+Register_Object Quotehdr_sl
+
+Class cQuotehdrDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Quotehdr.File_Number
+
+        Set Add_Server_File to Location.File_Number
+        Set Add_Server_File to Contact.File_Number
+        Set Add_Server_File to SalesRep.File_Number
+
+        Set Add_Client_File to Quotedtl.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+        Set Add_System_File to Order.File_Number DD_Lock_On_All
+        Set Add_System_File to pminvhdr.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Quotehdr.QuotehdrID to File_Field System.QuoteHdrId
+        Set Field_Prompt_Object Field Quotehdr.QuotehdrID to Quotehdr_sl
+        Set Key_Field_State Field Quotehdr.QuotehdrID to True
+        Set Field_Option Field Quotehdr.QuotehdrID DD_FORCEPUT to True
+
+        Set Field_Option Field Quotehdr.ContactIdno DD_REQUIRED to True
+        Set Field_Mask_Type Field Quotehdr.Amount to Mask_Currency_Window
+        Set Field_Mask Field Quotehdr.Amount to "$ #,###,##0.00"
+
+        Set Field_Option Field Quotehdr.JobNumber DD_ZERO_SUPPRESS to True
+
+        Set Field_Option Field Quotehdr.Status DD_CAPSLOCK to True
+        
+        Set Field_Value_Table Field Quotehdr.Status to oQuotehdrStatusValidation
+
+        Set Field_Value_Table Field Quotehdr.WorkType to QuotehdrWorkTypeVT
+
+        Set Field_Value_Table Field Quotehdr.Probability to Probability
+
+        //Set Field_Option Field Quotehdr.CloseDate DD_REQUIRED to True
+
+        Set Field_Mask_Type Field Quotehdr.TaxTotal to Mask_Currency_Window
+        Set Field_Mask Field Quotehdr.TaxTotal to "$ #,###,##0.0000"
+
+        Set Field_Mask_Type Field Quotehdr.SubTotal to Mask_Currency_Window
+        Set Field_Mask Field Quotehdr.SubTotal to "$ #,###,##0.00"
+
+        Set Field_Option Field Quotehdr.EstimateReference DD_ZERO_SUPPRESS to True
+
+        Set Field_Value_Table Field Quotehdr.BillingType to BillingType_VT
+
+    End_Procedure
+
+    Procedure OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Quotehdr.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+
+    Procedure Field_Defaults
+        Date dToday
+        //
+        Sysdate dToday
+        //
+        Forward Send Field_Defaults
+        //
+        If (giSalesRepId>1) Begin
+        End
+        Else Begin
+        End
+        
+        Set Field_Changed_Value Field Quotehdr.QuoteDate to dToday
+        Set Field_Changed_Value Field Quotehdr.Status to "P"
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        //
+        Move Customer.Name         to Quotehdr.Organization
+        Move Customer.CustomerIdno to Quotehdr.CustomerIdno
+        Move Location.Name         to Quotehdr.LocationName
+//        Move Quotehdr.Amount       to Order.QuoteAmount
+    End_Procedure
+
+    Procedure Save_Main_File
+        Forward Send Save_Main_File
+        //
+        //Process is being used instead
+//        If (Quotehdr.JobNumber <> 0) Begin
+//            Clear Order
+//            Move Quotehdr.JobNumber to Order.JobNumber
+//            Find eq Order.JobNumber
+//            If (Found) Begin
+//                Move Quotehdr.QuoteLostMemo to Order.Title
+//                Move Quotehdr.Amount to Order.QuoteAmount
+//                SaveRecord Order
+//            End
+//        End
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Quotehdr.sl
+#ENDIF

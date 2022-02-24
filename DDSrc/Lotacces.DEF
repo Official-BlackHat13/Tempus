@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Lotacces (# 31)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:LOTACCES
+  USER DISPLAY NAME         : Lotacces
+  DATAFLEX FILE NAME        : Lotacces
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 96        ( USED: 96 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 76 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LotAccessoryId   NUM   10.0     1  1   
+  2  ParkingLotId     NUM   10.0    12  2   Parklots.FIELD_1 (30,1)
+  3  AccessoryType    ASC      1    23      
+  4  Description      ASC     40    24      
+  5  Length           NUM   10.0    64      
+  6  Width            NUM   10.0    75      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LotAccessoryId  NO  NO       0      0       1     ON-LINE
+
+  2    ParkingLotId    NO  NO       0      0       2     ON-LINE
+       LotAccessoryId  NO  NO 
+

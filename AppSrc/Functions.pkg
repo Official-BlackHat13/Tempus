@@ -1,0 +1,302 @@
+// Functions.pkg
+// Created: 06/12/2015 11:59:52.953 AM
+// 
+Use seq_chnl.pkg
+
+//Get UTC Time
+Function GetUTC_Time String sUTC Returns String
+    Move (CurrentDateTime()) to sUTC
+    Function_Return sUTC
+End_Function
+
+// IsTimeValid
+Function IsTimeValid String ByRef sTime Integer ByRef iHr Integer ByRef iMin Returns Boolean
+    Integer iLength iPos
+    String  sHr sMin
+    //
+    Move (Trim(sTime))           to sTime
+    Move (Replace(":",sTime,"")) to sTime
+    //
+    Move (length(sTime)) to iLength
+    If (iLength < 1 or iLength > 4) Begin
+        Function_Return True
+    End
+    //
+    If (iLength < 3) Begin
+        Move sTime to iHr
+    End
+    Else Begin
+        Move     (right(sTime,2)) to iMin
+        If (iLength = 3) Begin
+            Move (left (sTime,1)) to iHr
+        End
+        Else Begin
+            Move (left (sTime,2)) to iHr
+        End
+    End
+    //
+    If (iHr > 23 or iMin > 59) Begin
+        Function_Return True
+    End
+    //
+    Move iHr                       to sHr
+    If (length(sHr) = 1) Begin
+        Move ("0" + sHr )          to sHr
+    End
+    Move iMin                      to sMin
+    If (length(sMin) = 1) Begin
+        Move ("0" + sMin)          to sMin
+    End
+    Move (sHr + ":" + sMin)        to sTime
+End_Function  // IsTimeValid
+
+
+Function IsTimeString Integer iHr Integer iMin Integer iSec Returns String
+    String sHr sMin sSec
+    //
+    If (iHr  < 10) Move ("0" + String(iHr )) to sHr
+    Else           Move               iHr    to sHr
+    If (iMin < 10) Move ("0" + String(iMin)) to sMin
+    Else           Move               iMin   to sMin
+    If (iSec < 10) Move ("0" + String(iSec)) to sSec
+    Else           Move               iSec   to sSec
+    Function_Return (sHr + ":" + sMin + ":" + sSec)
+End_Function // IsTimeString
+    
+Function DateTimeToTimeStamp DateTime dtNow Integer ByRef iYear Integer ByRef iMonth Integer ByRef iDay Integer ByRef iHr Integer ByRef iMin Integer ByRef iSec Returns String
+    String sDateStampWTime
+    Move (DateGetYear(dtNow)) to iYear
+    Move (DateGetMonth(dtNow)) to iMonth
+    Move (DateGetDay(dtNow)) to iDay
+    Move (DateGetHour(dtNow)) to iHr
+    Move (DateGetMinute(dtNow)) to iMin
+    Move (DateGetSecond(dtNow)) to iSec
+    Move (String(iYear)+String(iMonth)+String(iDay)+"T"+String(iHr)+String(iMin)+String(iSec)) to sDateStampWTime
+    Function_Return sDateStampWTime
+End_Function
+
+Function RoundValue Number nValue String sRoundFlag Returns Number
+    Integer iPos
+    Number nReal nDecimal nRounded
+    Boolean bHalfway
+    //
+    Move (Pos(".", nValue)) to iPos
+    Move (Left(nValue, iPos-1)) to nReal
+    Move (Right(nValue, Length(nValue)-iPos+1)) to nDecimal
+    Move (nDecimal >= .5) to bHalfway
+    Move (round(nValue)) to nRounded
+    If (not(bHalfway) and (sRoundflag contains "+")) ;
+        Move (Round(nRounded + 0.6)) to nRounded
+    If    ((bHalfway) and (sRoundflag contains "-")) ;
+        Move (Round(nRounded - 0.6)) to nRounded
+    Function_Return nRounded
+End_Function
+
+Function ValidateDateSelection Date dStartDate Date dStopDate Boolean bAllowFutureDate String ByRef sErrorMsg Returns Boolean
+    Boolean bDateRange
+    Date dToday
+    Sysdate dToday
+    //
+    Move (dStartDate<>'' and dStopDate<>'') to bDateRange
+    //
+    If (not(bDateRange)) Begin
+        Case Begin
+            Case (dStartDate='')
+                Move ("Please enter a Date.") to sErrorMsg
+                Function_Return False
+                Case Break
+            Case (not(bAllowFutureDate) and (dStartDate>dToday))
+                Move ("The Date cannot be in the future.") to sErrorMsg
+                Function_Return False
+                Case Break
+            Case Else
+                Function_Return True
+        Case End
+    End
+    Else Begin // bDateRange = TRUE
+        Case Begin
+            Case (dStartDate='' or dStopDate='')
+                Move "Please enter Start and Stop Date " to sErrorMsg
+                Function_Return False
+                Case Break
+            Case (dStartDate>dStopDate)
+                Move "The Start Date cannot be greater than the Stop Date." to sErrorMsg
+                Function_Return False
+                Case Break
+            Case (not(bAllowFutureDate) and (dStartDate>dToday or dStopDate>dToday))
+                Move "You may not select a day in the future." to sErrorMsg
+                Function_Return False
+                Case Break
+            Case Else
+                Function_Return True
+                Case Break
+        Case End
+    End
+    Function_Return True
+End_Function
+
+Function FindMonthName Integer iMonthNumber Returns String
+    String sMonthName
+    Case Begin
+        Case (iMonthNumber = "1") Move ("January") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "2") Move ("February") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "3") Move ("March") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "4") Move ("April") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "5") Move ("May") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "6") Move ("June") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "7") Move ("July") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "8") Move ("August") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "9") Move ("September") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "10") Move ("October") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "11") Move ("November") to sMonthName 
+        Case Break
+        Case (iMonthNumber = "12") Move ("December") to sMonthName 
+        Case Break
+    Case End
+    Function_Return sMonthName
+End_Function   
+
+    Function FileSize String sFilePath Returns Integer
+        Integer iChn iSize
+        Boolean bExist
+
+        File_Exist sFilePath bExist
+        If not bExist ;
+            Function_Return -1
+        
+        Get Seq_New_Channel to iChn
+        Direct_Input channel iChn sFilePath
+        Get_Channel_Size iChn to iSize
+        Close_Output channel iChn
+        Send Seq_Release_Channel iChn
+        Function_Return iSize
+    End_Function
+
+Function BuildDateRange String sStart String sStop Returns String
+    String sDateRange
+
+    If (sStart = "" or sStop = "") Move "No Date Range Defined" to sDateRange
+    Else Begin
+        If ((DateGetYear(sStart)) = (DateGetYear(sStop))) Move (Left(sStart,5) * "-" * sStop) to sDateRange
+        Else Move (sStart + " - " + sStop) to sDateRange
+    End
+    Function_Return sDateRange
+End_Function
+
+Function IsNineDigitCode String sZipEntry Returns String
+    String sNewZip s5Digits s4Digits
+    If (Length(sZipEntry)>5) Begin
+        If (Mid(sZipEntry,1,6) = "-") Begin
+             Move sZipEntry to sNewZip 
+        End
+        If (Length(Trim(sZipEntry))=9) Begin
+            Move (Mid(sZipEntry,5,1)) to s5Digits
+            Move (Mid(sZipEntry,4,6)) to s4Digits
+            Move (s5Digits+"-"+s4Digits) to sNewZip    
+        End            
+    End
+    Else Move sZipEntry to sNewZip
+    Function_Return sNewZip
+End_Function
+
+Function GeneratePropMgrUsername String sFirst String sLast Returns String
+    String sUsername
+    Move (Left(sFirst,1)+sLast) to sUsername
+    // Test
+    Open WebAppUser
+    Clear WebAppUser
+    Move sUsername to WebAppUser.LoginName
+    Find EQ WebAppUser by 1
+    If ((Found) and Lowercase(sUsername) = Lowercase(WebAppUser.LoginName)) Begin
+        Move (Left(sFirst,2)+sLast) to sUsername
+    End
+    Clear WebAppUser
+    Function_Return sUsername
+End_Function
+                
+Function GenerateRandomPassword Integer iLength Boolean bSpecialChars Boolean bNumbers Boolean bUpperChar Boolean bLowerChar Returns String
+    Integer i iRandom
+    String sNewASCII sNewPass
+    While (Length(sNewPass)<iLength)
+        Move (Random(122)) to iRandom
+        Case Begin
+            Case (bSpecialChars and iRandom >= 35 and iRandom <= 46) // Special Chars #$%&'()*+,-.
+                Move (Character(iRandom)) to sNewASCII
+                Move (Append(sNewPass, sNewASCII)) to sNewPass
+                Case Break
+            Case (bNumbers and iRandom >= 48 and iRandom <= 57) // 0-9
+                Move (Character(iRandom)) to sNewASCII
+                Move (Append(sNewPass, sNewASCII)) to sNewPass
+                Case Break
+            Case (bUpperChar and iRandom >= 65 and iRandom <= 90) // A-Z
+                Move (Character(iRandom)) to sNewASCII
+                Move (Append(sNewPass, sNewASCII)) to sNewPass
+                Case Break
+            Case (bLowerChar and iRandom >= 97 and iRandom <= 122) // a-z
+                Move (Character(iRandom)) to sNewASCII
+                Move (Append(sNewPass, sNewASCII)) to sNewPass
+                Case Break
+            Case Else
+                Move 0 to iRandom
+        Case End
+    Loop
+    Function_Return sNewPass
+End_Function
+
+Function IsImageFile String sFileExt Returns Boolean
+    Boolean bIsImageFile
+    //
+    // Image (JPG/JPEG)|*.jpg;*.jpeg|Image File (PNG)|*.png|All Images|*.jpg;*.jpeg;*.png
+    Case Begin
+        Case (sFileExt = ".jpg" or sFileExt = ".JPG")
+            Move True to bIsImageFile
+            Case Break
+        Case (sFileExt = ".jpeg" or sFileExt = ".JPEG")
+            Move True to bIsImageFile
+            Case Break
+        Case (sFileExt = ".png" or sFileExt = ".PNG")
+            Move True to bIsImageFile
+            Case Break
+        Case (sFileExt = ".bmp" or sFileExt = ".BMP")
+            Move True to bIsImageFile
+            Case Break
+        Case Else
+            Move False to bIsImageFile
+    Case End
+    Function_Return bIsImageFile
+End_Function
+
+Function FileProperties String sSourceFile String ByRef sFileName String ByRef sFileExt Integer ByRef iFileSize Returns Boolean
+    Boolean bCompleted
+    Integer iDotPos iSlashPos
+    //
+    // Get file Extension
+    Move ((Length(sSourceFile)) - (RightPos(".", sSourceFile))) to iDotPos
+    Move (Right(sSourceFile, (iDotPos+1))) to sFileExt
+    // Get file Name
+    Move ((Length(sSourceFile)) - (RightPos("\", sSourceFile))) to iSlashPos
+    Move (Right(sSourceFile, (iSlashPos))) to sFileName
+    Move (Left(sFileName, ((Length(sFileName))-(iDotPos+1)))) to sFileName
+    // Get file Size
+    //Get FileSize of oFTPTransfer1 sSourceFile to iFileSize
+    //
+    Function_Return True
+End_Function
+
+//Object oFTPTransfer1 is a cFTPTransfer
+//
+//    Procedure OnTransferStatus Integer iBytesTransferred Integer iFileSize
+//        // You can abort file transfer here with 'Send CancelTransfer'
+//    End_Procedure
+//
+//End_Object

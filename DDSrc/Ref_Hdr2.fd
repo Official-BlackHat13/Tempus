@@ -1,0 +1,5 @@
+#REPLACE FILE121 Ref_Hdr2
+#REPLACE Ref_Hdr2.Recnum |FN121,0
+#REPLACE Ref_Hdr2.Ref_Hdr_Idno |FN121,1
+#REPLACE Ref_Hdr2.Description |FS121,2
+#REPLACE Ref_Hdr2.SalesRep |FS121,3

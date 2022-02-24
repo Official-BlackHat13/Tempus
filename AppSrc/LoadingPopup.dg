@@ -1,0 +1,64 @@
+Use Windows.pkg
+Use cProgressBar.pkg
+Use dftimer.pkg
+Use Set.pkg
+
+Object oLoadingPopup is a ModalPanel
+    Set Size to 90 200
+    Set Label to "Change this 'Label' property..."
+    Set piMinSize to 90 200
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+    Set piMaxSize to 90 200
+    Set Locate_Mode to Center_On_Parent
+    Set Caption_Bar to False
+
+    
+
+    Object oProgressBar1 is a cProgressBar
+        Set Size to 14 169
+        Set Location to 26 15
+        Set pbSmooth to True
+    End_Object
+
+    Object oTextBox1 is a TextBox
+        Set Auto_Size_State to False
+        Set Size to 10 61
+        Set Location to 46 63
+        Set Label to "Loading"
+        Set FontPointHeight to 10
+    End_Object
+
+    Object oDFTimer1 is a DFTimer
+        Integer iRunCount
+        Move 0 to iRunCount
+        Set Timer_Active_State to False
+        Set Timeout to 1000 // every second
+        //OnTimer is a predefined method in the dfTimer class
+        //OnTimer executes each time the TimeOut interval passes
+        Procedure OnTimer Integer wParam Integer lParam
+            Forward Send OnTimer wParam lParam
+            While (iRunCount <=10)
+                Send DoAdvanceBy of oProgressBar1 10   
+                Increment iRunCount
+            Loop
+            If (iRunCount >= 10) Begin
+                Set Timer_Active_State to False
+                Send Deactivate of oLoadingPopup
+            End
+            
+            
+        End_Procedure
+    
+    End_Object
+
+    Procedure Activating
+        Forward Send Activating
+        Set Timer_Active_State of oDFTimer1 to True
+    End_Procedure
+
+
+//    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+//    On_Key Key_Alt+Key_C Send KeyAction of oCancel_Btn
+
+End_Object

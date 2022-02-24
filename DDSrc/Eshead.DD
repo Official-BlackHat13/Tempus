@@ -1,0 +1,518 @@
+// Class Name: Eshead_DataDictionary
+// Revision  : 32
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Eshead
+Open Escomp
+Open Jcpars
+Open System
+//Open Quotehdr
+Open Location
+Open Contact
+Open SalesRep
+Open Quotehdr
+//Open Jcquot
+Open BillingType
+
+
+Object EsHead_Work_Type_VT  is a DescriptionValidationTable
+    Set Validate_State to False
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "S" "Snow Removal"
+        Send Add_Table_Value "P" "Pavement Maintenance"
+        Send Add_Table_Value "SW" "Sweeping"
+        Send Add_Table_Value "E" "Excavation"
+        Send Add_Table_Value "O" "Other"
+        Send Add_Table_Value "CE" "Capital Expenditure"
+        Send Add_Table_Value "SL" "Shop Labor"
+        Send Add_Table_Value "CX" "Connex Box"
+        Send Add_Table_Value "DR" "Damage Repair"
+    End_Procedure    // Fill_List
+End_Object   // Order_Work_Type_VT
+        
+Object oBillingType is a FileValidationTable
+    Set Validate_State to True
+    Set Allow_Blank_State to False
+    Set Main_File         to BillingType.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 2 // description is in field 2
+    Set Ordering          to 2 // load by index 2 Discription A-Z
+End_Object
+
+Object EsheadStatusValidation is a DescriptionValidationTable
+    Set Validate_State    to False
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "P" "PENDING"
+        Send Add_Table_Value "R" "REVISED"
+        Send Add_Table_Value "W" "WON"
+        Send Add_Table_Value "L" "LOST"
+        Send Add_Table_Value "F" "FORCAST"
+        Send Add_Table_Value "H" "ON HOLD"
+    End_Procedure
+End_Object
+
+Register_Object oEstimate
+Register_Object oEstimate_sl
+
+Class Eshead_DataDictionary is a cGlblDataDictionary
+ 
+    // Construct_Object:
+    procedure Construct_Object
+        forward send Construct_Object
+
+        Set Main_File To Eshead.File_Number
+
+        Set Add_Server_File to Location.File_Number
+        Set Add_Server_File to Contact.File_Number
+        Set Add_Server_File to SalesRep.File_Number
+
+        Set Add_Client_File to Escomp.File_Number
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+
+        // External (System) file structure.............
+        Set Add_System_File to Jcpars.File_Number DD_LOCK_ON_NEW_SAVE
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+//        Set Add_System_File to Quotehdr.File_Number DD_Lock_On_All
+//        Set Add_System_File to Jcquot.File_Number DD_LOCK_ON_ALL
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Eshead.Estimate_Id DD_AUTOFIND to True
+        Set Key_Field_State Field Eshead.Estimate_Id To TRUE
+        Set Status_Help Field Eshead.Estimate_Id To "Estimate ID's are assigned by the system."
+        Set Key_Field_State Field Eshead.ESTIMATE_ID to True
+        Set Field_Auto_Increment Field Eshead.ESTIMATE_ID to File_Field System.LastEstimate
+        Set Field_Prompt_Object Field Eshead.ESTIMATE_ID to oEstimate_sl
+
+        Set Field_Option Field Eshead.Comp_Count DD_NOENTER to True
+
+        Set Field_Option Field Eshead.Prodcode DD_CAPSLOCK to True
+
+        Set Field_Option Field Eshead.Customer DD_CAPSLOCK to True
+
+        Set Field_Option Field Eshead.Estimator DD_CAPSLOCK to True
+
+        Set Field_Option Field Eshead.Creation_Date DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Art_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Art_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Art_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Art_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q1_Art_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q1_Art_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q1_Art_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Art_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Art_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Art_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Art_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q2_Art_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q2_Art_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q2_Art_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Art_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Art_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Art_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Art_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q3_Art_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q3_Art_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q3_Art_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Prep_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Prep_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Prep_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Prep_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q1_Prep_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q1_Prep_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q1_Prep_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Prep_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Prep_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Prep_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Prep_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q2_Prep_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q2_Prep_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q2_Prep_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Prep_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Prep_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Prep_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Prep_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q3_Prep_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q3_Prep_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q3_Prep_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Press_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Press_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Press_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Press_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q1_Press_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q1_Press_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q1_Press_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Press_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Press_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Press_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Press_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q2_Press_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q2_Press_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q2_Press_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Press_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Press_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Press_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Press_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q3_Press_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q3_Press_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q3_Press_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Bind_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Bind_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Bind_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Bind_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q1_Bind_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q1_Bind_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q1_Bind_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Bind_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Bind_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Bind_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Bind_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q2_Bind_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q2_Bind_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q2_Bind_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Bind_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Bind_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Bind_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Bind_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q3_Bind_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q3_Bind_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q3_Bind_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Lbr_$ to MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Lbr_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Lbr_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Lbr_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q1_Lbr_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q1_Lbr_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q1_Lbr_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Lbr_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Lbr_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Lbr_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Lbr_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q2_Lbr_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q2_Lbr_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q2_Lbr_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Lbr_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Lbr_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Lbr_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Lbr_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Q3_Lbr_Hrs To "#,##0.00"
+        Set Field_Mask_Type Field Eshead.Q3_Lbr_Hrs To MASK_NUMERIC_WINDOW
+        Set Field_Option Field Eshead.Q3_Lbr_Hrs DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Mtl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Mtl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Mtl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Mtl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Mtl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Mtl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Mtl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Mtl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Mtl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Mtl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Mtl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Mtl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Pp_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Pp_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Pp_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Pp_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Pp_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Pp_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Pp_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Pp_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Pp_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Pp_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Pp_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Pp_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Pur_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Pur_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Pur_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Pur_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Pur_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Pur_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Pur_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Pur_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Pur_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Pur_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Pur_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Pur_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Ttl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Ttl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Ttl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Ttl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Ttl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Ttl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Ttl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Ttl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Ttl_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Ttl_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Ttl_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Ttl_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_X_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_X_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_X_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_X_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_X_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_X_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_X_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_X_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_X_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_X_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_X_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_X_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Frt_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Frt_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q1_Frt_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q1_Frt_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Frt_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Frt_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q2_Frt_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q2_Frt_Sell DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Frt_$ To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Frt_$ DD_NOENTER to True
+
+        Set Field_Mask_Type Field Eshead.Q3_Frt_Sell To MASK_CURRENCY_WINDOW
+        Set Field_Option Field Eshead.Q3_Frt_Sell DD_NOENTER to True
+
+        Set Field_Mask Field Eshead.Qty1 To "##,###,###"
+        Set Field_Mask_Type Field Eshead.Qty1 To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Eshead.Qty1 To "Enter three quantity values."
+
+        Set Field_Mask Field Eshead.Qty2 To "##,###,###"
+        Set Field_Mask_Type Field Eshead.Qty2 To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Eshead.Qty2 To "Enter three quantity values."
+
+        Set Field_Mask Field Eshead.Qty3 To "##,###,###"
+        Set Field_Mask_Type Field Eshead.Qty3 To MASK_NUMERIC_WINDOW
+        Set Status_Help Field Eshead.Qty3 To "Enter three quantity values."
+
+        Set Field_Checkbox_Values Field Eshead.Locked to "Y" "N"
+        Set Field_Class_Name Field Eshead.Locked To "dbCheckBox"
+
+        Set Field_Option Field Eshead.Division_Code DD_CAPSLOCK to True
+
+        Set Field_Prompt_Object Field Eshead.CustomerIdno to oEstimate
+
+        Set Field_Prompt_Object Field Eshead.LocationIdno to oEstimate
+
+        Set Field_Prompt_Object Field Eshead.ContactIdno to oEstimate
+
+        Set Field_Prompt_Object Field Eshead.OrderReference to oEstimate
+
+        Set Field_Value_Table Field Eshead.WorkType to EsHead_Work_Type_VT
+
+        Set Field_Value_Table Field Eshead.BillingType to oBillingType
+
+        Set Field_Value_Table Field Eshead.Status to EsheadStatusValidation
+        //
+        Property Integer pbDeleteQuoteLog
+        //
+    end_procedure  // Construct_Object
+
+
+    // Delete_Main_File:
+//    Procedure Delete_Main_File
+//        Forward Send Delete_Main_File
+//        // Insert Code Here
+//        if (Eshead.Customer = "") procedure_return
+//        clear Jcquot
+//        move Eshead.Estnum to Jcquot.Idno
+//        find EQ Jcquot.Idno
+//        if (NOT(FOUND)) procedure_return
+//        //
+//        if (pbDeleteQuoteLog(self)) begin //yes delete quote record
+//            set pbDeleteQuoteLog to FALSE
+//            If (Jcquot.Status = "O") delete Jcquot
+//            Else Begin
+//                if (Jcquot.Status = "J") move "2" to Jcquot.Status
+//                else if (Jcquot.Status = "I") move "3" to Jcquot.Status
+//                saverecord Jcquot
+//            end
+//            procedure_return
+//        end
+//        // no, don't delete quote record
+//        if      (Jcquot.Status = "O") move "1" to Jcquot.Status
+//        else if (Jcquot.Status = "J") move "2" to Jcquot.Status
+//        else if (Jcquot.Status = "I") move "3" to Jcquot.Status
+//        saverecord Jcquot
+//    End_Procedure   // Delete_Main_File
+
+    // Save_Main_File:
+    Procedure Save_Main_File
+        Forward Send Save_Main_File
+        // Insert Code Here
+    End_Procedure   // Save_Main_File
+
+    // DoUpdateNeedsCalced:
+    Procedure DoUpdateNeedsCalced
+        boolean bNeedsCalced
+        Integer iRecnum
+        string  sValue
+        //
+        If (not(HasRecord(Self))) Procedure_Return
+        //
+        send Refind_Records
+        // save the current Escomp recnum
+        move Escomp.Recnum to iRecnum
+        clear Escomp
+        move Eshead.Estimate_id to Escomp.Estimate_id
+        find GE Escomp.Estimate_id
+        while ((FOUND) AND Escomp.Estimate_id = Eshead.Estimate_id)
+            move (Escomp.Needs_calced = "Y") to bNeedsCalced
+            if (bNeedsCalced) break
+            find GT Escomp.Estimate_id
+        loop
+        if (bNeedsCalced) move "Y" to sValue
+        else              move "N" to sValue
+        set Field_Changed_Value field Eshead.Needs_calced to sValue
+        send Request_Save
+        // refresh Escomp record buffer
+        clear Escomp
+        If (not(iRecnum)) Procedure_Return
+        move iRecnum to Escomp.Recnum
+        find EQ Escomp.Recnum
+    End_Procedure   // DoUpdateNeedsCalced
+
+    // Update:
+    // Use this message to effect changes in related-to files. The
+    // Backout message should be designed to reverse the effects of this
+    // message. It is invoked while the database is locked.
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        add 1 to Eshead.Updates
+    End_Procedure   // Update
+
+    // Creating:
+    // This message is sent each time a new record is created in the
+    // main file. You should use this to assign field values that
+    // apply to the creation of a new record (i.e. assigning a unique ID
+    // from a system_file field). Creating is invoked while the database
+    // is locked.
+    Procedure Creating
+        Forward Send Creating
+        // Insert Code Here
+        sysdate Eshead.Creation_Date
+        Move Eshead.Estimate_Id to Eshead.Estnum
+        Move Location.CustomerIdno          to Eshead.CustomerIdno
+        
+        Move Eshead.ESTIMATE_ID             to Escomp.ESTIMATE_ID
+        Move Eshead.TITLE                   to Escomp.DESCRIPTION
+        Move Eshead.CREATION_DATE           to Escomp.CREATION_DATE
+        Move 1                              to Escomp.QTY1
+        Move 2                              to Escomp.QTY2
+        Move 3                              to Escomp.QTY3
+    End_Procedure   // Creating
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field Eshead.Status to "P"
+    End_Procedure    // Field_Defaults
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Estimate.sl
+
+#ENDIF
+

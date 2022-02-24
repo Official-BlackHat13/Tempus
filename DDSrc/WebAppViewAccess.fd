@@ -1,0 +1,7 @@
+#REPLACE FILE84 WebAppViewAccess
+#REPLACE WebAppViewAccess.File_Number |CI84
+#REPLACE WebAppViewAccess.ViewName |FS84,1
+#REPLACE WebAppViewAccess.Full |FS84,2
+#REPLACE WebAppViewAccess.Modify |FS84,3
+#REPLACE WebAppViewAccess.ReadOnly |FS84,4
+#REPLACE WebAppViewAccess.ChangedFlag |FN84,5

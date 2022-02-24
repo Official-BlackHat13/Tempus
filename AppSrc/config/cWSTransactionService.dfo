@@ -1,0 +1,55 @@
+Object 
+
+    //
+    // Interface:
+    //
+    // Function wsCreateTimeTransaction String llsEmployeeNumber String llsJobNumber String llsEquipNumber String llsPhone String llsGPSLat String llsGPSLong String llsAttachIdno String BYREF llsErrorMsg Returns Boolean
+    // Function wsCreateMaterialTransaction String llsEmployeeNumber String llsJobNumber String llsEquipNumber String llsMatQty String llsPhone String llsGPSLat String llsGPSLong String BYREF llsErrorMsg Returns Boolean
+    // Function wsEndShiftTransaction String llsEmployeeIdno String llsPhone String llsGPSLat String llsGPSLong String BYREF llsErrorMsg Returns Boolean
+    // Function wsDoCreateIdleTransaction Integer lliEmployeeIdno Integer lliJobNumber Integer lliOpersIdno Returns Boolean
+    // Function wsDoEndShift Integer lliEmployeeIdno Returns Boolean
+    // Function wsGetNewTransactions Returns tWStNewTransaction[]
+    // Function wsUpdateCollectedTransactions tWStCollectedTransaction[] lltTransactions Returns Integer
+    // Function wsUpdateEmployeeRecords Returns tWStEmployee[]
+    // Function wsGetNewLocationNotes Returns tWStLocnotes[]
+    // Function wsUpdateCollectedLocationNotes tWStLocnotes[] lltNotes Returns Integer
+    // Function wsDoCloseExpiredLocationNote Integer lliLocnoteIdno Returns Boolean
+    // Function wsGetSelectedLocationNotes Integer lliJobNumber Date lldNoteDate Date lldNoteStopDate Returns tWStLocnotes[]
+    // Function wsGetNewAreaNotes Returns tWStAreanote[]
+    // Function wsUpdateCollectedAreaNotes tWStAreanote[] lltNotes Returns Integer
+    // Function wsUpdateMastOps tWStMastOps[] lltMastOpsUpdate Returns tWStMastOps[]
+    // Function wsUpdateLocNotes tWStLocnotes[] lltLocNotesUpdate Returns tWStLocnotes[]
+    // Function wsUpdateAreas tWStAreas[] lltAreasUpdate Returns tWStAreas[]
+    // Function wsUpdateCustomer tWStCustomer[] lltCustomerUpdate Returns tWStCustomer[]
+    // Function wsUpdateTerms tWStTerms[] lltTermsUpdate Returns tWStTerms[]
+    // Function wsUpdateSalesTaxGroup tWStSalesTaxGroup[] lltSalesTaxGroupUpdate Returns tWStSalesTaxGroup[]
+    // Function wsUpdateLocation tWStLocation[] lltLocationUpdate Returns tWStLocation[]
+    // Function wsUpdateOpers tWStOpers[] lltOpersUpdate Returns tWStOpers[]
+    // Function wsUpdateOrder tWStOrder[] lltOrderUpdate Returns tWStOrder[]
+    // Function wsUpdateInvhdr tWStInvhdr[] lltInvhdrUpdate Returns tWStInvhdr[]
+    // Function wsUpdateEmployer tWStEmployer[] lltEmployerUpdate Returns tWStEmployer[]
+    // Function wsUpdateEmployee tWStEmployee[] lltEmployeeUpdate Returns tWStEmployee[]
+    // Function wsUpdateEquipmnt tWStEquipmnt[] lltEquipmntUpdate Returns tWStEquipmnt[]
+    // Function wsUpdateLocEquip tWStLocEquip[] lltLocEquipUpdate Returns tWStLocEquip[]
+    // Function wsUpdateSalesRep tWStSalesRep[] lltSalesRepUpdate Returns tWStSalesRep[]
+    // Function wsUpdateDivisionMgr tWStDivisionMgr[] lltDivisionMgrUpdate Returns tWStDivisionMgr[]
+    // Function wsUpdateWorkType tWStWorkType[] lltWorkTypeUpdate Returns tWStWorkType[]
+    // Function wsUpdateUser tWStUser[] lltUserUpdate Returns tWStUser[]
+    // Function wsUpdateWebAppUserRights tWStWebAppUserRights[] lltWebAppUserRightsUpdate Returns tWStWebAppUserRights[]
+    // Function wsUpdateWebAppUser tWStWebAppUser[] lltWebAppUserUpdate Returns tWStWebAppUser[]
+    // Function wsUpdateViewAccess tWStViewAccess[] lltViewAccessUpdate Returns tWStViewAccess[]
+    // Function wsUpdateContact tWStContact[] lltContactUpdate Returns tWStContact[]
+    // Function wsUpdateReqtypes tWStReqtypes[] lltUpdate Returns tWStReqtypes[]
+    // Function wsGetOpenTransactions Returns tWStNewTransaction[]
+    // Function wsLogEvent Integer lliEventType String lllpszEvent Returns tWSLogEventResponse
+    //
+
+
+    // phoSoapClientHelper
+    //     Setting this property will pop up a view that provides information
+    //     about the Soap (xml) data transfer. This can be useful in debugging.
+    //     If you use this you must make sure you USE the test view at the top
+    //     of your program/view by adding:   Use WebClientHelper.vw // oClientWSHelper
+    //Set phoSoapClientHelper to oClientWSHelper
+
+End_Object

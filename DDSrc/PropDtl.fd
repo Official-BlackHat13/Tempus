@@ -1,0 +1,11 @@
+#REPLACE FILE64 PropDtl
+#REPLACE PropDtl.Recnum |FN64,0
+#REPLACE PropDtl.PropHdr_Idno |FN64,1
+#REPLACE PropDtl.PropDtl_Idno |FN64,2
+#REPLACE PropDtl.SnowDepth |FS64,3
+#REPLACE PropDtl.PlowPrice |FS64,4
+#REPLACE PropDtl.ShovelPrice |FS64,5
+#REPLACE PropDtl.DeicePrice |FS64,6
+#REPLACE PropDtl.SideWalkDeice |FS64,7
+#REPLACE PropDtl.AddService |FS64,8
+#REPLACE PropDtl.AddPrice |FS64,9

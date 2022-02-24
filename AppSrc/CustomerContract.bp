@@ -1,0 +1,158 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use cCustomerContractsGlblDataDictionary.dd
+Use ContractDetails.dg
+
+Object oCustomerContract is a BusinessProcess
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oCustomerContracts_DD is a cCustomerContractsGlblDataDictionary
+        Set pbUseDDRelates to True
+        Set DDO_Server to oCustomer_DD
+        Set Field_Related_FileField Field CustomerContracts.CustomerIdno to File_Field Customer.CustomerIdno
+    End_Object
+
+    Set Main_DD to oCustomerContracts_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Function CreateRecord Integer iCustIdno String sFileName String sNewFileName Integer ByRef iContractIdno Returns Boolean
+        Boolean bFail bIsTemp bSuccess
+        Date dContractStartDate dContractExpiryDate
+        Handle hoDD
+        //
+        Get EnterContractDetails of oContractDetails (&dContractStartDate) (&dContractExpiryDate) (&bIsTemp) to bSuccess
+        If (not(bSuccess)) Function_Return False //without complete contract details processing is discontinued
+        //
+        Move oCustomerContracts_DD to hoDD
+        Send Clear of hoDD
+        // Find Customer
+        Move iCustIdno to Customer.CustomerIdno
+        Send Request_Find of hoDD EQ Customer.File_Number 1
+        // Contract Details
+        //Set Field_Changed_Value of hoDD Field CustomerContracts.CustomerIdno    to iCustIdno
+        Set Field_Changed_Value of hoDD Field CustomerContracts.DisplayName     to sFileName
+        Set Field_Changed_Value of hoDD Field CustomerContracts.FileName        to sNewFileName
+        Set Field_Changed_Value of hoDD Field CustomerContracts.StartDate       to dContractStartDate
+        Set Field_Changed_Value of hoDD Field CustomerContracts.ExpiryDate      to dContractExpiryDate
+        Set Field_Changed_Value of hoDD Field CustomerContracts.TempFlag        to bIsTemp
+        //
+        Get Request_Validate of hoDD                                            to bFail
+        If (not(bFail)) Begin
+            Send Request_Save of hoDD
+        End
+        Else Begin
+            Send Stop_Box "Processing stopped at Customer Contract Validation" "Processing Error"
+            Procedure_Return
+        End
+        Get Field_Current_Value of hoDD Field CustomerContracts.ContractIdno to iContractIdno
+        Function_Return (not(bFail))
+    End_Function
+    
+    Function IncrementContractAssignment Integer iContractIdno Returns Integer
+        Integer iContractAssignCount
+        Handle hoDD
+        Boolean bFail
+        //
+        Move oCustomerContracts_DD to hoDD
+        Send Clear of hoDD
+        Move iContractIdno to CustomerContracts.ContractIdno
+        Send Request_Find of hoDD EQ CustomerContracts.File_Number 1
+        If ((Found) and CustomerContracts.ContractIdno = iContractIdno) Begin
+            Get Field_Current_Value of hoDD Field CustomerContracts.AssignedCount to iContractAssignCount
+            Increment iContractAssignCount
+            Set Field_Changed_Value of hoDD Field CustomerContracts.AssignedCount to iContractAssignCount
+            Get Request_Validate of hoDD to bFail
+            If (not(bFail)) Begin
+                Send Request_Save of hoDD
+            End
+            Else Begin
+                Decrement iContractAssignCount
+                Send Stop_Box "Could not validate CustomerContract record." "Processing Error"
+            End
+        End
+        Function_Return (iContractAssignCount)
+    End_Function
+    
+    Function DecrementContractAssignment Integer iContractIdno Returns Integer
+        Integer iContractAssignCount
+        Handle hoDD
+        Boolean bFail
+        //
+        Move oCustomerContracts_DD to hoDD
+        Send Clear of hoDD
+        Move iContractIdno to CustomerContracts.ContractIdno
+        Send Request_Find of hoDD EQ CustomerContracts.File_Number 1
+        If ((Found) and CustomerContracts.ContractIdno = iContractIdno) Begin
+            Get Field_Current_Value of hoDD Field CustomerContracts.AssignedCount to iContractAssignCount
+            Decrement iContractAssignCount
+            Set Field_Changed_Value of hoDD Field CustomerContracts.AssignedCount to iContractAssignCount
+            Get Request_Validate of hoDD to bFail
+            If (not(bFail)) Begin
+                Send Request_Save of hoDD
+            End
+            Else Begin
+                Increment iContractAssignCount
+                Send Stop_Box "Could not validate CustomerContract record." "Processing Error"
+            End
+        End
+        Function_Return (iContractAssignCount)
+    End_Function
+    
+//    Function UpdateContractAssignment Integer iContractIdno Boolean bIncrement Integer ByRef iContractAssignCount Returns Boolean
+//        Handle hoDD
+//        Boolean bFail
+//        //
+//        Move oCustomerContracts_DD to hoDD
+//        Send Clear of hoDD
+//        Move iContractIdno to CustomerContracts.ContractIdno
+//        Send Request_Find of hoDD EQ CustomerContracts.File_Number 1
+//        If ((Found) and CustomerContracts.ContractIdno = iContractIdno) Begin
+//            Get Field_Current_Value of hoDD Field CustomerContracts.AssignedCount to iContractAssignCount
+//            If (bIncrement) Begin
+//                Increment iContractAssignCount
+//            End
+//            Else Begin
+//                Decrement iContractAssignCount
+//            End
+//            Set Field_Changed_Value of hoDD Field CustomerContracts.AssignedCount to iContractAssignCount
+//            Get Request_Validate of hoDD to bFail
+//            If (not(bFail)) Begin
+//                Send Request_Save of hoDD
+//            End
+//            Else Begin
+//                Send Stop_Box "Could not validate CustomerContract record." "Processing Error"
+//                Function_Return (bFail)
+//            End
+//        End
+//        Function_Return (not(bFail))
+//    End_Function
+    
+    Function DeleteRecord Integer iContractIdno Returns Boolean
+        Handle hoDD
+        Boolean bFail
+        //
+        Move oCustomerContracts_DD to hoDD
+        Send Clear of hoDD
+        Move iContractIdno to CustomerContracts.ContractIdno
+        Send Request_Find of hoDD EQ CustomerContracts.File_Number 1
+        If ((Found) and CustomerContracts.ContractIdno = iContractIdno) Begin
+            Send Request_Delete of hoDD
+            Function_Return True
+        End
+        Else Begin
+            Function_Return False
+        End
+    End_Function
+
+
+End_Object
+

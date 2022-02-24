@@ -1,0 +1,136 @@
+Struct tdGroupedGridSortData
+    Integer iIndex
+    Boolean bIsGroup
+    String[] sData
+End_Struct
+
+Class cGroupedGridSortHandler is a cGridSortHandler
+    
+    Function CompareGridSortData tdGroupedGridSortData Data1 tdGroupedGridSortData Data2 Returns Integer
+        Number nNum1 nNum2
+        Date dDate1 dDate2
+        DateTime dtDateTime1 dtDateTime2
+        String sVal1 sVal2
+        tGridSortColumnRules[] ColumnRules
+        Integer i iSegments iGroupColumn
+        Handle  hoGroupColumn
+
+        Move -1 to iGroupColumn        
+        Delegate Get phoGroupColumn to hoGroupColumn
+        If (hoGroupColumn>0) Begin
+            Get piColumnId of hoGroupColumn to iGroupColumn
+        End
+        
+        Get pColumnRules to ColumnRules
+        Move (SizeOfArray(ColumnRules)) to iSegments
+        For i from 0 to (iSegments-1)
+            
+            If (ColumnRules[i].iColumn <> iGroupColumn) Begin
+                // regardless of how we're sorting we must make sure that group rows are first   
+                If (Data1.bIsGroup) Begin
+                    Function_Return (LT)
+                End
+                If (Data2.bIsGroup) Begin
+                    Function_Return (GT)
+                End
+            End
+
+            If (ColumnRules[i].eDataType=Ascii_Window or ColumnRules[i].eDataType=Mask_Window) Begin
+                Move Data1.sData[i] to sVal1
+                Move Data2.sData[i] to sVal2
+                If (sVal1>sVal2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,LT,GT))
+                End
+                If (sVal1<sVal2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,GT,LT))
+                End
+            End
+            Else If (ColumnRules[i].eDataType=Mask_Date_Window or ColumnRules[i].eDataType=Date_Window) Begin
+                Move Data1.sData[i] to dDate1
+                Move Data2.sData[i] to dDate2
+                If (dDate1>dDate2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,LT,GT))
+                End
+                If (dDate1<dDate2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,GT,LT))
+                End
+            End
+            Else If (ColumnRules[i].eDataType=Mask_Datetime_Window) Begin
+                Move Data1.sData[i] to dtDateTime1
+                Move Data2.sData[i] to dtDateTime2
+                If (dtDateTime1>dtDateTime2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,LT,GT))
+                End
+                If (dtDateTime1<dtDateTime2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,GT,LT))
+                End
+            End
+            Else Begin // Mask_Numeric_Window Mask_Currency_Window <Ascii_Window
+                Move Data1.sData[i] to nNum1
+                Move Data2.sData[i] to nNum2
+                If (nNum1>nNum2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,LT,GT))
+                End
+                If (nNum1<nNum2) Begin
+                    Function_Return (If(ColumnRules[i].bDescending,GT,LT))
+                End
+            End
+        Loop
+        Function_Return (EQ)        
+    End_Function
+    
+    Function SortDataSource tGridSortRules GridSortRules tDataSourceRow[] DataSource Integer ByRef iSelectedRow Returns tDataSourceRow[]
+        tDataSourceRow[] NewDataSource
+        tdGroupedGridSortData[] SortData
+        Integer[] iIndexes
+        Integer iNewSelectedRow
+        Integer i iRows iRow j iCols iSortCol
+        
+        Set pColumnRules to GridSortRules.Rules
+        Move (SizeOfArray(DataSource)) to iRows
+        Move (SizeOfArray(GridSortRules.Rules)) to iCols
+        For i from 0 to (iRows-1)
+            Move i to SortData[i].iIndex
+            For j from 0 to (iCols-1)
+                Move GridSortRules.Rules[j].iColumn to iSortCol 
+                If (iSortCol=-1) Begin
+                    Move (SerializeRowID(DataSource[i].riID)) to SortData[i].sData[j]
+                End
+                Else If (SizeOfArray(DataSource[i].sValue)>iSortCol) Begin
+                    Move DataSource[i].sValue[iSortCol]   to SortData[i].sData[j]
+                    Move (Left(DataSource[i].vTag,1)='G') to SortData[i].bIsGroup
+                End
+                Else Begin
+                    Move "" to SortData[i].sData[j]
+                End
+            Loop
+        Loop
+
+        Move (SortArray(SortData,Self,RefFunc(CompareGridSortData))) to SortData
+
+        If (not(GridSortRules.bDescending)) Begin
+            For i from 0 to (iRows-1)
+                Move SortData[i].iIndex to iIndexes[i]
+            Loop
+        End
+        Else Begin
+            Move 0 to i
+            Move (iRows-1) to iRow
+            For i from 0 to (iRows-1)
+                Move SortData[iRow].iIndex to iIndexes[i]
+                Decrement iRow
+            Loop
+        End
+        
+        Move -1 to iNewSelectedRow
+        Move (SizeOfArray(iIndexes)) to iRows
+        For i from 0 to (iRows-1)
+            Move DataSource[iIndexes[i]] to NewDataSource[i]
+            If (iIndexes[i]=iSelectedRow) Begin
+                Move i to iNewSelectedRow
+            End
+        Loop    
+        Move iNewSelectedRow to iSelectedRow
+        Function_Return NewDataSource
+    End_Function
+End_Class

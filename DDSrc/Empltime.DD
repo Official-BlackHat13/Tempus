@@ -1,0 +1,205 @@
+// Class Name: Empltime_DataDictionary
+// Revision  : 1
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Empltime
+Open Employee
+Open System
+
+Register_Function LunchOutHrValidation Integer iField Integer iHr Returns Integer
+Register_Function LunchOutMnValidation Integer iField Integer iMn Returns Integer
+Register_Function LunchInHrValidation Integer iField Integer iHr Returns Integer
+Register_Function LunchInMnValidation Integer iField Integer iMn Returns Integer
+Register_Function StopHrValidation Integer iField Integer iHr Returns Integer
+Register_Function StopMnValidation Integer iField Integer iMn Returns Integer
+
+Class Empltime_DataDictionary  is a cGlblDataDictionary
+ 
+    Function StopHrValidation Integer iField Integer iHr Returns Integer
+        Integer iMn
+        Date    dLunchIn dStop
+        //
+        Get Field_Current_Value Field Empltime.StopMn to iMn
+        If (iHr + iMn) Begin
+            Get Field_Current_Value Field Empltime.StopDate to dStop
+            If (dStop = 0) Begin
+                Get Field_Current_Value Field Empltime.LunchInDate to dLunchIn
+                If (dLunchIn <> 0) Begin
+                    Set Field_Changed_Value Field Empltime.StopDate to dLunchIn
+                End
+            End
+        End
+    End_Function
+
+    Function StopMnValidation Integer iField Integer iMn Returns Integer
+        Integer iHr
+        Date    dLunchIn dStop
+        //
+        Get Field_Current_Value Field Empltime.StopHr to iHr
+        If (iHr + iMn) Begin
+            Get Field_Current_Value Field Empltime.StopDate to dStop
+            If (dStop = 0) Begin
+                Get Field_Current_Value Field Empltime.LunchInDate to dLunchIn
+                If (dLunchIn <> 0) Begin
+                    Set Field_Changed_Value Field Empltime.StopDate to dLunchIn
+                End
+            End
+        End
+    End_Function
+
+    Function LunchInHrValidation Integer iField Integer iHr Returns Integer
+        Integer iMn
+        Date    dLunchIn dLunchOut
+        //
+        Get Field_Current_Value Field Empltime.LunchInMn to iMn
+        If (iHr + iMn) Begin
+            Get Field_Current_Value Field Empltime.LunchInDate to dLunchIn
+            If (dLunchIn = 0) Begin
+                Get Field_Current_Value Field Empltime.LunchOutDate to dLunchOut
+                If (dLunchOut <> 0) Begin
+                    Set Field_Changed_Value Field Empltime.LunchInDate to dLunchOut
+                End
+            End
+        End
+    End_Function
+
+    Function LunchInMnValidation Integer iField Integer iMn Returns Integer
+        Integer iHr
+        Date    dLunchIn dLunchOut
+        //
+        Get Field_Current_Value Field Empltime.LunchInHr to iHr
+        If (iHr + iMn) Begin
+            Get Field_Current_Value Field Empltime.LunchInDate to dLunchIn
+            If (dLunchIn = 0) Begin
+                Get Field_Current_Value Field Empltime.LunchOutDate to dLunchOut
+                If (dLunchOut <> 0) Begin
+                    Set Field_Changed_Value Field Empltime.LunchInDate to dLunchOut
+                End
+            End
+        End
+    End_Function
+
+    Function LunchOutHrValidation Integer iField Integer iHr Returns Integer
+        Integer iMn
+        Date    dStart dLunchOut
+        //
+        Get Field_Current_Value Field Empltime.LunchOutMn to iMn
+        If (iHr + iMn) Begin
+            Get Field_Current_Value Field Empltime.LunchOutDate to dLunchOut
+            If (dLunchOut = 0) Begin
+                Get Field_Current_Value Field Empltime.StartDate to dStart
+                If (dStart <> 0) Begin
+                    Set Field_Changed_Value Field Empltime.LunchOutDate to dStart
+                End
+            End
+        End
+    End_Function
+
+    Function LunchOutMnValidation Integer iField Integer iMn Returns Integer
+        Integer iHr
+        Date    dStart dLunch
+        //
+        Get Field_Current_Value Field Empltime.LunchOutMn to iHr
+        If (iHr + iMn) Begin
+            Get Field_Current_Value Field Empltime.LunchOutDate to dLunch
+            If (dLunch = 0) Begin
+                Get Field_Current_Value Field Empltime.StartDate to dStart
+                If (dStart <> 0) Begin
+                    Set Field_Changed_Value Field Empltime.LunchOutDate to dStart
+                End
+            End
+        End
+    End_Function
+
+    Procedure Update
+        DateTime dtBegin dtEnd
+        TimeSpan tsElapsed
+        Integer  iMinutes
+        //
+        Forward Send Update
+        //
+        If (Empltime.LunchOutDate <> 0 and Empltime.LunchInDate <> 0) Begin
+            Move Empltime.LunchOutDate                        to dtBegin
+            Move (DateSetHour  (dtBegin,Empltime.LunchOutHr)) to dtBegin
+            Move (DateSetMinute(dtBegin,Empltime.LunchOutMn)) to dtBegin
+            Move Empltime.LunchInDate                         to dtEnd
+            Move (DateSetHour  (dtEnd  ,Empltime.LunchInHr )) to dtEnd
+            Move (DateSetMinute(dtEnd  ,Empltime.LunchInMn )) to dtEnd
+            Move (dtEnd - dtBegin)                            to tsElapsed
+            Move (SpanTotalMinutes(tsElapsed))                to iMinutes
+            Move iMinutes                                     to Empltime.LunchMinutes
+        End
+        If (Empltime.StartDate <> 0 and Empltime.StopDate <> 0) Begin
+            Move Empltime.StartDate                           to dtBegin
+            Move (DateSetHour  (dtBegin,Empltime.StartHr))    to dtBegin
+            Move (DateSetMinute(dtBegin,Empltime.StartMn))    to dtBegin
+            Move Empltime.StopDate                            to dtEnd
+            Move (DateSetHour  (dtEnd  ,Empltime.StopHr ))    to dtEnd
+            Move (DateSetMinute(dtEnd  ,Empltime.StopMn ))    to dtEnd
+            Move (dtEnd - dtBegin)                            to tsElapsed
+            Move (SpanTotalMinutes(tsElapsed))                to iMinutes
+            Move iMinutes                                     to Empltime.DayMinutes
+            If (Empltime.EmpltimeId = Employee.ActiveEmpltime) Begin
+                Move 0                                        to Employee.ActiveEmpltime
+            End
+        End
+    End_Procedure   // Update
+ 
+    Procedure Creating
+        Forward Send Creating
+        // Insert Code Here
+    End_Procedure   // Creating
+
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Main_File To Empltime.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+        Set Add_Server_File to Employee.File_Number
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field Empltime.Empltimeid to File_Field System.Empltimeid
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Empltime.Empltimeid DD_AUTOFIND to True
+        Set Key_Field_State Field Empltime.Empltimeid To TRUE
+
+        Set Field_Validate_msg Field Empltime.LunchOutHr to get_LunchOutHrValidation
+
+        Set Field_Validate_msg Field Empltime.LunchOutMn to get_LunchOutMnValidation
+
+        Set Field_Validate_msg Field Empltime.LunchInHr to get_LunchInHrValidation
+
+        Set Field_Validate_msg Field Empltime.LunchInMn to get_LunchInMnValidation
+
+        Set Field_Validate_msg Field Empltime.StopHr to get_StopHrValidation
+
+        Set Field_Validate_msg Field Empltime.StopMn to get_StopMnValidation
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+End_Class    // Empltime_DataDictionary
+

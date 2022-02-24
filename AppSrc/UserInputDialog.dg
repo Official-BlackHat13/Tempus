@@ -1,0 +1,68 @@
+Use Windows.pkg
+Use cRichEdit.pkg
+Use cTextEdit.pkg
+
+Object oUserInputDialog is a ModalPanel
+    Set Size to 47 209
+    Set Label to "User Input Required..."
+    Set piMinSize to 44 205
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+
+    Property String psLabelMessage
+    Property String psUserInput
+
+//    Object oUserInputForm is a cTextEdit
+//        Set Size to 67 191
+//        Set Location to 14 4
+//        Set peAnchors to anAll
+//        Set Label to "oUserInputForm"
+//        Set Label_FontWeight to fw_Bold
+//        Set Label_Justification_Mode to JMode_Top
+//        Set Label_Col_Offset to 0
+//        Set Label_Row_Offset to 2
+//    End_Object
+
+
+    Object oUserInputForm is a Form
+        Set Size to 13 198
+        Set Location to 15 6
+        Set peAnchors to anTopLeftRight
+        Set Label to "oUserInputForm"
+        Set Label_FontWeight to fw_Bold
+        Set Label_Justification_Mode to JMode_Top
+        Set Label_Col_Offset to 0
+        Set Label_Row_Offset to 2
+    
+    End_Object
+    
+
+    Object oOK_Btn is a Button
+        Set Label    to "&Ok"
+        Set Location to 31 155
+        Set peAnchors To anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+
+    Function PopupUserInput String sTitle String sMessage String sPreFill Boolean bPassword Returns String
+        String sUserInput
+        //
+        Set Label of oUserInputDialog to sTitle
+        Set Label of oUserInputForm to sMessage
+        Set Value of oUserInputForm to (Trim(sPreFill))
+        Set Password_State of oUserInputForm to bPassword
+        //
+        Send Popup_Modal of Self
+        //
+        Get Value of oUserInputForm to sUserInput
+        //
+        Function_Return sUserInput
+    End_Function
+
+
+End_Object

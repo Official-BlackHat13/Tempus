@@ -1,0 +1,32 @@
+Use Windows.pkg
+Use cHtmlHelp.pkg
+Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Invhdr
+
+Procedure DoFixInvoices
+    Integer iCount
+    //
+    Clear Invhdr
+    Find ge Invhdr.Recnum
+    While (Found)
+        Reread
+        Move 1 to Invhdr.PostFlag
+        SaveRecord Invhdr
+        Unlock
+        Increment iCount
+        Find gt Invhdr.Recnum
+    Loop
+    Send Info_Box iCount
+End_Procedure
+
+Send DoFixInvoices
+

@@ -1,0 +1,8 @@
+#REPLACE FILE31 Lotacces
+#REPLACE Lotacces.Recnum |FN31,0
+#REPLACE Lotacces.LotAccessoryId |FN31,1
+#REPLACE Lotacces.ParkingLotId |FN31,2
+#REPLACE Lotacces.AccessoryType |FS31,3
+#REPLACE Lotacces.Description |FS31,4
+#REPLACE Lotacces.Length |FN31,5
+#REPLACE Lotacces.Width |FN31,6

@@ -1,0 +1,1065 @@
+Use Batchdd.pkg
+Use sql.pkg
+Use Strings.nui
+Use gFormatNumbers.pkg
+
+Open Opers
+Open MastOps
+Open Customer
+Open Location
+Open Contact
+Open Order
+Open Invhdr
+Open Invdtl
+Open SalesRep
+
+
+Object oInvoicePostingProcess is a BusinessProcess
+
+    #Replace CS_CONNECT "DSN=QuickBooksData"
+    #Replace ODBC_DRV_ID  "ODBC_DRV"
+
+    Property Integer[] piPosted
+    Property Boolean   pbError
+    Property Handle    phDbc
+    Property Handle    phoODBCMngr
+
+    Set Display_Error_State to True
+
+    Function IsSqlDate Date dSource Returns String
+        String sYYYY sMM sDD
+        //
+        Move (mid(String(dSource),2,1)) to sMM
+        Move (mid(String(dSource),2,4)) to sDD
+        Move (mid(String(dSource),4,7)) to sYYYY
+        Function_Return (sYYYY + "-" + sMM + "-" + sDD)
+    End_Function
+    
+    Function IsDataFlexDate String sSource Returns Date
+        Date dReturnDate
+        String sYYYY sMM sDD
+        //YYYY-MM-DD
+        Move (Mid(sSource,4,1)) to sYYYY
+        Move (Mid(sSource,2,6)) to sMM
+        Move (Mid(sSource,2,9)) to sDD
+        Move (sMM +"/"+ sDD +"/"+ sYYYY) to dReturnDate
+        Function_Return dReturnDate
+    End_Function
+    
+    Function IsNineDigitCode String sZip Returns String
+        String sNewZip s5Digits s4Digits
+        If (Length(sZip)>5) Begin
+            If (Mid(sZip,1,6) = "-") Begin
+                 Move sZip to sNewZip 
+            End
+            If (Length(sZip)=9) Begin
+                Move (Mid(sZip,5,1)) to s5Digits
+                Move (Mid(sZip,4,6)) to s4Digits
+                Move (s5Digits+"-"+s4Digits) to sNewZip    
+            End            
+        End
+        Else Move sZip to sNewZip
+        Function_Return sNewZip
+    End_Function
+    
+    Function EstablishSQLConnection Handle ByRef hDbc Returns Boolean
+        Handle hoODBCMngr
+        //
+        Send Start_Process   // does all process init
+        If (not(hDbc)) Begin
+            Send Update_Status "Connecting to QuickBooks.."        
+        	//
+        	Object oODBCHandler is a cSQLHandleManager
+        	    Move Self to hoODBCMngr
+        	    Set phoODBCMngr to hoODBCMngr
+        	End_Object 
+        	
+            Get SQLConnect of hoODBCMngr ODBC_DRV_ID CS_CONNECT to hdbc
+            If (not(hDbc)) Begin
+                Send Stop_Box "Unable to connect to data source."
+                Send End_Process     // does all close down
+                Function_Return False
+            End
+            //
+            Send Update_Status "Connection Established"   
+        End
+        If (hDbc) Begin
+            //connection already established
+            Send Update_Status "Using established Connection"
+        End
+        Set phDbc to hDbc
+        Function_Return True
+    End_Function
+    
+//    Function DoExecuteSqlStatementDELETE Handle ByRef hDbc Handle ByRef hStmt String sQuery Returns Boolean
+//        Boolean bError
+//        
+//        Get SQLOpen of hDbc to hStmt
+//        Send SQLExecDirect of hStmt sQuery
+//        Move (ERR) to bError
+//        Function_Return bError
+//    End_Function    
+    
+    Function DisconnectSQLConnection Handle hDbc Returns Boolean
+        Send Update_Status "Closing Connection.."
+        //
+        Send SQLDisconnect of hdbc
+        Send Destroy_Object of (phoODBCMngr(Self))
+        //
+        Send End_Process
+        Function_Return True
+    End_Function    
+    
+
+    
+    Function IsCustomerColumnString Returns String
+        String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08 sC09
+        //
+        Move "Name,"                  to sC01
+        Move "BillAddressAddr1,"      to sC02
+        Move "BillAddressAddr2,"      to sC03
+        Move "BillAddressCity,"       to sC04
+        Move "BillAddressState,"      to sC05
+        Move "BillAddressPostalCode," to sC06
+        Move "Phone,"                 to sC07
+        Move "Fax,"                   to sC08
+        Move "AccountNumber"          to sC09
+        Function_Return (sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08 * sC09)
+    End_Function
+    
+    Function IsCustomerValueString Returns String
+        String sV01 sV02 sV03 sV04 sV05 sV06 sV07 sV08 sV09
+        String sAddr1 sAddr2
+        //
+        Move (trim(Location.Address1))                  to sAddr1
+        Move (trim(Location.Address2))                  to sAddr2
+        If (sAddr1 = "") Begin
+            Move sAddr2                                 to sAddr1
+            Move ""                                     to sAddr2
+        End
+        //
+        Move ("'" + trim(Location.Name)         + "',") to sV01
+        Move ("'" + trim(sAddr1)                + "',") to sV02
+        Move ("'" + trim(sAddr2)                + "',") to sV03
+        Move ("'" + trim(Location.City)         + "',") to sV04
+        Move ("'" + trim(Location.State)        + "',") to sV05
+        Move ("'" + trim(Location.Zip)          + "',") to sV06
+        Move ("'" + trim(Location.Phone1)       + "',") to sV07
+        Move ("'" + trim(Location.Phone2)       + "',") to sV08
+        Move ("'" + trim(Location.LocationIdno) + "'" ) to sV09
+        Function_Return (sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08 * sV09)
+    End_Function
+    
+    Function IsLocationListId Handle hDbc String sNumber String ByRef sError String ByRef sListId Returns Boolean
+        Boolean bError bOk
+        String  sColumns sValues sQuery
+        // confirm existence of Location in QB Customer file
+    //    If (Dealers.List_id = "") Begin
+            // first confirm that Location.LocationIdno does not exist as a Customer AccountNumber
+            Get IsCustomerListId hDbc sNumber (&sError) (&sListId) to bOk
+            If (not(bOk)) Begin
+                Function_Return
+            End
+            If ( bOk and sListId = "") Begin
+                Move "ListId was not found" to sError
+            End
+        Function_Return ((Length(sListId)) > 1)
+    End_Function
+    
+    Function IsCustomerListId Handle hDbc String sNumber String ByRef sError String ByRef sListId Returns Boolean
+        Boolean bErr
+        String sQuery
+        Integer iResult
+        Handle hStmt
+        
+        Move 0 to sListId
+        Move ("SELECT ListID FROM Customer WHERE AccountNumber = '" + trim(sNumber) + "'") to sQuery
+        Showln ("sQuery:"*sQuery)
+        Showln ("hDbc:"*hDbc)
+        Get SQLOpen of hDbc to hStmt
+        Send SQLExecDirect of hStmt sQuery
+        If (ERR) Begin
+            Move "Error in IsCustomerListId Query" to sError
+            Function_Return False
+        End
+        Repeat
+            Get SQLFetch of hStmt to iResult
+            Showln ("IsCustomerListId - iResult:"*String(iResult))
+            If (iResult <> 0) Begin 
+                Get SQLColumnValue of hStmt 1 to sListId
+            End
+            Else Move "No Results returned from SQLFetch"         to sError
+        Until (iResult=0)
+        
+        Send SQLClose of hStmt
+        Function_Return ((Length(sListId)) > 1)
+    End_Function
+    
+    Function LastInsertedID Handle hDbc String sTable String ByRef sError String ByRef sQBLastInsertId Returns Boolean
+        Boolean bErr
+        Integer iResult
+        String sQBInvNumber sQBRefNumber sQuery
+        Handle hStmt
+        //
+        Move ("SP_LASTINSERTID" * sTable ) to sQuery
+        Get SQLOpen of hDbc to hStmt
+        Send SQLExecDirect of hStmt sQuery
+        If (ERR) Begin
+            Move ("Could not execute SP_LastInsertID correctly on" * sTable) to sError
+            Function_Return False
+        End
+        Repeat
+            Get SQLFetch of hStmt to iResult
+            If (iResult<>0) Begin 
+                Get SQLColumnValue of hStmt 1 to sQBLastInsertId
+                Showln "LastInsertId :" sQBLastInsertId
+            End
+            Else Move "No Results returned from SQLFetch"         to sError
+        Until (iResult=0)
+        Send SQLClose of hStmt
+        Function_Return ((Length(sQBLastInsertId)) > 1)
+    End_Function
+    
+    Function LastRefNumber Handle hDbc String sTable String sQBLastInsertId String ByRef sError String ByRef sQBRefNumber Returns Boolean 
+        String sQuery
+        Handle hStmt
+        Integer iResult
+        //
+        Move ("SELECT RefNumber FROM" * sTable * "WHERE TxnID = '" + trim(sQBLastInsertId) + "'") to sQuery
+        Get SQLOpen of hDbc to hStmt
+        Send SQLExecDirect of hStmt sQuery
+        If (ERR) Begin
+            Move ("Could not find valid information for requested TXNID" * sTable) to sError
+            Function_Return
+        End
+        Repeat
+            Get SQLFetch of hStmt to iResult
+            If (iResult<>0) Begin 
+                Get SQLColumnValue of hStmt 1 to sQBRefNumber
+                Showln "QuickBooksRefNumber :" sQBRefNumber
+            End
+            Else Move "No Results returned from SQLFetch"         to sError
+        Until (iResult=0)
+        Send SQLClose of hStmt
+        Function_Return ((Length(sQBRefNumber)) > 1)
+    End_Function
+    
+    Function BuildCreditLineColumnString Returns String
+        String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08 sC09
+        //
+        Move "CustomerRefListID,"                       to sC01
+        Move "CreditMemoLineItemRefListID,"             to sC02
+        Move "CreditMemoLineDesc,"                      to sC03
+        Move "CreditMemoLineQuantity,"                  to sC04
+        Move "CreditMemoLineRate,"                      to sC05
+        Move "CreditMemoLineAmount,"                    to sC06
+        Move "CreditMemoLineSalesTaxCodeRefListID,"     to sC07
+        Move "FQSaveToCache"                            to sC08
+        Function_Return (sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08)
+    End_Function
+    
+    Function BuildCreditMemoColumnString Returns String
+        String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08 sC09
+        String sC10 sC11 sC12 sC13 sC14 sC15 sC16 sC17 sC18
+        String sC19 sC20 sC21 sC22 sC23
+        //
+        Move "ARAccountRefListID,"               to sC01
+        Move "TxnDate,"                          to sC02
+        Move "BillAddressAddr1,"                 to sC03
+        Move "BillAddressAddr2,"                 to sC04
+        Move "BillAddressAddr3,"                 to sC05
+        Move "BillAddressCity,"                  to sC06
+        Move "BillAddressState,"                 to sC07
+        Move "BillAddressPostalCode,"            to sC08
+        
+        Move "ShipAddressAddr1,"                     to sC09       //Contact Name
+        Move "ShipAddressAddr2,"                     to SC10       //Location Name
+        Move "ShipAddressAddr3,"                     to sC11        //Location Address
+        Move "ShipAddressCity,"                      to SC12
+        Move "ShipAddressState,"                     to SC13
+        Move "ShipAddressPostalCode,"                to SC14
+        
+        Move "ShipDate,"                         to sC15
+        Move "ItemSalesTaxRefListID,"            to sC16
+        Move "Memo,"                             to sC17
+        Move "SalesRepRefFullName,"              to sC18
+        Move "CustomerMsgRefListID"              to sC19
+        Function_Return ( ;
+            sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08 * sC09 *sC10 * ;
+            sC11 * sC12 * sC13 * sC14 * sC15 * sC16 * sC17 * sC18 * sC19 )
+    End_Function
+    
+    Function IsInvoiceLineColumnString Returns String
+        String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08
+        //
+        Move "CustomerRefListID,"                to sC01
+        Move "InvoiceLineItemRefListID,"         to sC02
+        Move "InvoiceLineDesc,"                  to sC03
+        Move "InvoiceLineQuantity,"              to sC04
+        Move "InvoiceLineRate,"                  to sC05
+        Move "InvoiceLineAmount,"                to sC06
+        Move "InvoiceLineSalesTaxCodeRefListID," to sC07
+        Move "FQSaveToCache"                     to sC08
+        Function_Return (sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08)
+    End_Function  
+    
+    Function IsInvoiceColumnString Returns String
+        String sC01 sC02 sC03 sC04 sC05 sC06 sC07 sC08 sC09
+        String sC10 sC11 sC12 sC13 sC14 sC15 sC16 sC17 sC18
+        String sC19 sC20 sC21 sC22 sC23 sC24
+        //
+        Move "ARAccountRefListID,"               to sC01
+        Move "TxnDate,"                          to sC02
+        Move "BillAddressAddr1,"                 to sC03
+        Move "BillAddressAddr2,"                 to sC04
+        Move "BillAddressAddr3,"                 to sC05
+        Move "BillAddressAddr4,"                 to sC06
+        Move "BillAddressCity,"                  to sC07
+        Move "BillAddressState,"                 to sC08
+        Move "BillAddressPostalCode,"            to sC09
+        
+        Move "ShipAddressAddr1,"                     to sC10       //Contact Name
+        Move "ShipAddressAddr2,"                     to SC11       //Location Name
+        Move "ShipAddressAddr3,"                     to sC12        //Location Address
+        Move "ShipAddressCity,"                      to SC13
+        Move "ShipAddressState,"                     to SC14
+        Move "ShipAddressPostalCode,"                to SC15
+        
+        Move "PONumber,"                         to sC16
+        Move "ShipDate,"                         to sC17
+        Move "IsPending,"                        to sC18
+        Move "ItemSalesTaxRefListID,"            to sC19
+        Move "Memo,"                             to sC20
+        Move "IsToBePrinted,"                    to sC21
+        Move "TermsRefFullName,"                 to sC22
+        Move "SalesRepRefFullName,"              to sC23
+        Move "CustomerMsgRefListID"              to sC24
+        Function_Return ( ;
+            sC01 * sC02 * sC03 * sC04 * sC05 * sC06 * sC07 * sC08 * sC09 * ;
+            sC10 * sC11 * sC12 * sC13 * sC14 * sC15 * sC16 * sC17 * sC18 * ;
+            sC19 * sC20 * sC21 * sC22 * sC23 * sC24)
+    End_Function
+
+    
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+    
+    Procedure OnProcess
+    End_Procedure // OnProcess
+
+    Function DoPostInvoices Integer[] ByRef iPosted Returns Boolean
+        Set piPosted to iPosted
+        Set pbError  to False
+        //
+        Boolean bCancel bError bOk bSuccess
+        Integer eStatus iItem iItems iMastOpsIdno iLocIdno
+        String  sError sListId sClass sColumns sValues sTable sQuery sQuantity sPrice sTotal sQBInvNumber sLastInsertedId
+        String  sAPContact_Name sAPContact_Email sAPAltContact_Name sAPAltContact_Email
+        String  sLineItem sInvoiceDate sName sAddr1 sAddr2 sAddr3 sCity sState sZip sShipDate sActivityType sQBTaxListID sTaxListID
+        String  sServiceContact sServiceLocName sServiceAddress sServiceCity sServiceState sServiceZip
+        String  sV01 sV02 sV03 sV04 sV05 sV06 sV07 sV08 sV09 
+        String  sV10 sV11 sV12 sV13 sV14 sV15 sV16 sV17 sV18
+        String  sV19 sV20 sV21 sV22 sV23 sV24
+        Number  nQuantity
+        Handle  hDbc hStmt
+        Date    dToday
+        //
+        Sysdate dToday
+        Get EstablishSQLConnection (&hDbc) to bSuccess
+        If (bSuccess and hDbc) Begin
+            Clear Invhdr Order Location
+            Find ge Invhdr.PostFlag
+            While ((Found) and Invhdr.PostFlag = 0)
+                If (Invhdr.PostReady) Begin
+                    Relate Invhdr
+                    Get_Attribute DF_FILE_STATUS of Location.File_Number to eStatus
+    //                Move (Trim(Location.ListID)) to sListId
+                    If (eStatus = DF_FILE_ACTIVE) Begin
+                        Get IsLocationListId hDbc Location.LocationIdno (&sError) (&sListId) to bOk
+                        
+                        //Save ListId to Current Location record
+                        If (bOk and sListId <> "") Begin
+                            Showln ("Retrieved ListID" * sListId)
+                            Reread Location
+                            Move sListId to Location.ListID
+                            SaveRecord Location
+                            Unlock
+                        End
+                        Else Begin
+                            Send Stop_Box sError
+                            Showln ("ListID not found. Please add location to QB")
+                            Set pbError to True
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Function_Return
+                        End
+                    End
+                    If (Location.ListID <> "") Begin
+                        // Check AP Form before continuing
+                        Move Location.LocationIdno to iLocIdno
+                        Clear LocationAPForm
+                        Move iLocIdno to LocationAPForm.LocationAPIdno
+                        Find EQ LocationAPForm.LocationAPIdno
+                        If ((Found) and LocationAPForm.LocationAPIdno = iLocIdno) Begin
+                            Move (Trim(LocationAPForm.BillingName))         to sName
+                            Move (Trim(LocationAPForm.BillingAttn))         to sAddr1
+                            Move (Trim(LocationAPForm.BillingAddress1))     to sAddr2
+                            Move (Trim(LocationAPForm.BillingAddress2))     to sAddr3
+                            Move (Trim(LocationAPForm.BillingCity))         to sCity
+                            Move (Trim(LocationAPForm.BillingState))        to sState
+                            Move (Trim(LocationAPForm.BillingZip))          to sZip
+                            Move (Trim(LocationAPForm.BCFullName))          to sAPContact_Name
+                            Move (Trim(LocationAPForm.BCEmail))             to sAPContact_Email
+                            Move (Trim(LocationAPForm.BCAltFullName))       to sAPAltContact_Name
+                            Move (Trim(LocationAPForm.BCAltEmail))          to sAPAltContact_Email
+                            If (Length(sAPContact_Email)>0 and Length(sAPContact_Name)>0) Begin
+                                //FROM VB DEMO: Update Customer Set Email = 'it@interstatepm.com', Contact = 'IT Department' Where ListID = '800019C0-1375976314'
+                                Move ("Update Customer Set Email = '"+sAPContact_Email+"', Contact = '"+sAPContact_Name+"'"+If(Length(sAPAltContact_Email)>0,", CC='"+sAPAltContact_Email+"'","") +" WHERE ListID = '"+Trim(Location.ListID)+"'") to sQuery
+                                Showln ("Location AP Contact Update:"*sQuery)
+                                Get SQLOpen of hDbc to hStmt
+                                Send SQLExecDirect of hStmt sQuery
+                                If (ERR) Begin
+                                    Send Stop_Box ("Could not update AP Contact for Customer '"*Trim(Customer.Name)*" at Location '"*Trim(Location.Name)*"'")
+                                    Send SQLClose of hStmt
+                                    Set pbError to True
+                                    Get DisconnectSQLConnection hDbc to bSuccess
+                                    Function_Return
+                                End
+                                Showln ("Location AP Contact Updated!")
+                                Move '' to sQuery
+                                Send SQLClose of hStmt
+                            End
+                        End
+                        Else Begin
+                            Send Stop_Box ("Invoice#"*String(Invhdr.InvoiceIdno)*" for Customer '"*Trim(Customer.Name)*"' at Location '"*Trim(Location.Name)*"' cannot be processed. AP Form Missing.") "AP Form Missing"
+                            Function_Return
+                        End
+                        //Create Invoice Detail line(s)
+                        Clear Invdtl
+                        Move Invhdr.InvoiceIdno to Invdtl.InvoiceIdno
+                        Find ge Invdtl.InvoiceIdno
+                        While ((Found) and Invdtl.InvoiceIdno = Invhdr.InvoiceIdno)
+                            //Prep all Values
+                            Relate Invdtl                        
+                            //Deviding the Total by the price gave us some wired numbers - use invdtl.quantity
+                            //Move (Invdtl.Total / Invdtl.Price)                                            to nQuantity
+                            Move (NumToStr(Invdtl.Quantity, 2))                                           to sQuantity
+                            Move (NumToStr(Invdtl.Price, 2))                                              to sPrice
+                            Move (NumToStr(Invdtl.Total, 2))                                              to sTotal
+                            Move (Trim(Invdtl.Description))                                               to sLineItem // Remove whitespace from front and back of string
+                            Move (Replaces("'", sLineItem, ""))                                           to sLineItem // Remove all apostrophies from text
+                            Move (Replaces(String(Character(7)),sLineItem," - "))                         to sLineItem // Remove all BEL (ASCII 7)
+                            Move "InvoiceLine"                                                            to sTable
+                            Move (Trim(Location.ListID))                                                  to sListId
+                            Get IsInvoiceLineColumnString                                                 to sColumns
+                            //Showln sColumns
+                            //
+                            Move (Trim(Invdtl.MastOpsIdno))                                               to iMastOpsIdno
+                            Get FindMastOpsActivityType of oInvoicePostingProcess iMastOpsIdno            to sActivityType
+                            
+                            //Showln ("InvDtl.MastOpsIdno:" * String(Invdtl.MastOpsIdno) * " - MastOps.MastOpsIdno" * String(MastOps.MastOpsIdno))
+                            
+                            //If (sQuantity eq "0.00") Move ("NULL")                                        to sQuantity
+                            If (sPrice eq "0.00") Move ("NULL")                                           to sPrice
+                            If (sTotal eq "0.00") Move ("NULL")                                           to sTotal                        
+                            
+                            If (MastOps.IsTaxable) Move ("'10000-1046219236'")                            to sTaxListID // Taxable Sale Code identifyer 10000-1106508464
+                            Else Move ("'20000-1046219236'")                                              to sTaxListID // NonTaxable sale Code identifyer 20000-1106508464
+                            
+                            Move ("'" + sListId + "',")                                                   to sV01                        
+                            Move ("'" + sActivityType + "',")                                             to sV02
+                            Move ("'" + sLineItem + "',")                                                 to sV03
+                            Move (sQuantity + ",")                                                        to sV04                              
+                            Move (sPrice + ",")                                                           to sV05
+                            Move (sTotal + ",")                                                           to sV06
+                            Move (sTaxListID + ",")                                                       to sV07
+                            Move ("1")                                                                    to sV08
+                            Move (sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08)                  to sValues
+                            //Showln sValues
+                            Move ("INSERT INTO" * sTable * "(" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+                            Showln sQuery
+                            //
+                            Get SQLOpen of hDbc to hStmt
+                            Send SQLExecDirect of hStmt sQuery
+                            If (ERR) Begin
+                                Send Stop_Box "Invoice line creation error"
+                                Send SQLClose of hStmt
+                                Set pbError to True
+                                Get DisconnectSQLConnection hDbc to bSuccess
+                                Function_Return
+                            End
+                            Send SQLClose of hStmt
+                            Find gt Invdtl.InvoiceIdno
+                        Loop
+                        //
+                        //Service Contact
+                        Get FindContactInformation of oInvoicePostingProcess Invhdr.JobNumber to sServiceContact
+                        //Showln ("Service Contact: "+ sServiceContact)                    
+                                                
+                        Move (Replaces("'",sName,""))  to sName
+                        Move (Replaces("'",sAddr1,"")) to sAddr1
+                        Move (Replaces("'",sAddr2,"")) to sAddr2
+                        Move (Replaces("'",sAddr3,"")) to sAddr3
+                        Move (Replaces("'",sCity,""))  to sCity
+                        Get IsNineDigitCode sZip       to sZip                  
+                        
+                        Move (Trim(Location.Address1))                              to sServiceAddress
+                        Move (Trim(Location.Name))                                  to sServiceLocName
+                        Move (Trim(Location.City))                                  to sServiceCity
+                        Move (Trim(Location.State))                                 to sServiceState
+                        Move (Trim(Location.Zip))                                   to sServiceZip
+                        
+                        Move (Replaces("'",sServiceContact,""))                     to sServiceContact
+                        Move (Replaces("'",sServiceLocName,""))                     to sServiceLocName
+                        Move (Replaces("'",sServiceAddress,""))                     to sServiceAddress
+                        Move (Replaces("'",sServiceCity,""))                        to sServiceCity
+                        Move (Replaces("'",sServiceState,""))                       to sServiceState
+                        Get IsNineDigitCode sServiceZip                             to sServiceZip
+                        
+                        Move "Invoice"                                                                to sTable
+                        Get IsInvoiceColumnString                                                     to sColumns
+                        Get IsSqlDate Invhdr.InvoiceDate                                              to sShipDate
+                        Get IsSqlDate Invhdr.InvoiceDate                                              to sInvoiceDate //changed from dToday 
+                        Move (Trim(SalesTaxGroup.QBItemSalesTaxID))                                   to sQBTaxListID
+                        Showln ("sQBTaxListID @ Detail:" + sQBTaxListID)
+                        
+                        Move ("'3E0000-951967379',")                                                  to sV01 //AccountRefListID
+                        Move ("{d'" + sInvoiceDate + "'},")                                           to sV02 //TxnDate
+                        Move ("'" + sName  + "',")                                                    to sV03 //BillAddressAddr1
+                        Move ("'" + sAddr1 + "',")                                                    to sV04 //BillAddressAddr2
+                        Move ("'" + sAddr2 + "',")                                                    to sV05 //BillAddressAddr3
+                        Move ("'" + sAddr3 + "',")                                                    to sV06 //BillAddressAddr4
+                        Move ("'" + sCity  + "',")                                                    to sV07 //BillAddressCity
+                        Move ("'" + sState + "',")                                                    to sV08 //BillAddressState
+                        Move ("'" + sZip   + "',")                                                    to sV09 //BillAddressZip
+                        
+                        Move ("'"+ sServiceContact +"',")                                             to sV10 //ShipAddressAddr1
+                        Move ("'"+ sServiceLocName +"',")                                             to sV11 //ShipAddressAddr2
+                        Move ("'"+ sServiceAddress +"',")                                             to sV12 //ShipAddressAddr3
+                        Move ("'"+ sServiceCity +"',")                                                to sV13 //ShipAddressCity
+                        Move ("'"+ sServiceState +"',")                                               to sV14 //ShipAddressState
+                        Move ("'"+ sServiceZip +"',")                                                 to sV15 //ShipAddressZip
+                        
+                        Move ("'" + Trim(Order.PO_Number) + "',")                                     to sV16 //PONumber
+                        Move ("{d'" + sShipDate + "'},")                                              to sV17 //ShipDate
+                        Move "0,"                                                                     to sV18 //IsPending
+                        Move ("'" + sQBTaxListID + "',")                                              to sV19 //InvoiceLineSalesTaxCodeRefListID
+                        Move ("'Tempus" * String(Invhdr.InvoiceIdno) + "',")                          to sV20 //Memo
+                        Move ("0" + ", ")                                                             to sV21 //IsToBePrinted
+                        If (Order.WorkType='S') Begin
+                            Move ("'" + (String(Trim(LocationAPForm.BillingTerms))) + "',")           to sV22 //Billing Terms 
+                        End
+                        Else Begin
+                            Move ("'" + (String(Trim(Customer.Terms))) + "',")                        to sV22 //Billing Terms
+                        End
+                        Move ("'" + (String(Trim(SalesRep.Initials))) + "',")                         to sV23 //SalesRepRefFullName
+                        Move ("'" + (String(Trim(SalesRep.InvMessage))) + "'")                        to sV24 //CustomerMsgRefListID
+                        Move ( ;
+                            sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08 * sV09 * ;
+                            sV10 * sV11 * sV12 * sV13 * sV14 * sV15 * sV16 * sV17 * sV18 * ;
+                            sV19 * sV20 * sV21 * sV22 * sV23 * sV24 )                                 to sValues
+                        Move ("INSERT INTO" * sTable * "(" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+                        Showln sQuery
+                        //
+                        Get SQLOpen of hDbc to hStmt
+                        Send SQLExecDirect of hStmt sQuery
+                        If (bError) Begin
+                            Send Info_Box "Invoice line creation error - Header"
+                            Send SQLClose of hStmt
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Set pbError to True
+                            Function_Return
+                        End
+                        Send SQLClose of hStmt
+                        //
+                        Get LastInsertedID hDbc sTable (&sError) (&sLastInsertedId) to bOk
+                        If (not(bOk)) Begin
+                            Send Info_Box sError
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Set pbError to True
+                            Procedure_Return                        
+                        End
+                        Get LastRefNumber hDbc sTable sLastInsertedId (&sError) (&sQBInvNumber) to bOk
+                        If (not(bOk)) Begin
+                            Send Info_Box sError
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Set pbError to True
+                            Procedure_Return
+                        End
+                        Else Begin
+                            Lock
+                            Move (sLastInsertedId) to Invhdr.QBInvoiceTxnId
+                            Move (Number(sQBInvNumber)) to Invhdr.QBInvoiceNumber
+                            SaveRecord Invhdr
+                            Unlock
+                        End
+                        //
+                        Get piPosted                to iPosted
+                        Move (SizeOfArray(iPosted)) to iItem
+                        Move Invhdr.InvoiceIdno     to iPosted[iItem]
+                        Set piPosted                to iPosted
+    
+                    End // If (Location.ListID <> "") Begin
+                End // If (Invhdr.PostReady) Begin
+                Find gt Invhdr.PostFlag
+            Loop
+        End
+        //
+        //Send SQLClose of hStmt
+        Get DisconnectSQLConnection hDbc to bSuccess
+        //
+        Get piPosted to iPosted
+        Function_Return (pbError(Self))
+    End_Function
+    
+    Function QuickBooksInvoicePaidStatus Integer ByRef iFoundCounter Integer ByRef iStatusChangedCounter Returns Boolean
+        Boolean bDone bSuccess
+        String sQuery sQBInvNumber sQBInvTxnId sAppliedAmount sInvoiceDate sPaidDate sError
+        String sTxnID, sRefNumber, sSubTotal, sPaidStatus
+        Integer iResult
+        Handle hStmt hDbc
+        Date dDFInvoiceDate dDFPaidDate
+        // Establish SQL Connection to QB
+        Get EstablishSQLConnection (&hDbc) to bSuccess
+        If (bSuccess) Begin
+            Move "0" to iFoundCounter
+            Open Invhdr
+            Clear Invhdr
+            
+            Showln ("Finding Tempus Invoices that have a QB Invoice Number, are not VOIDed and not paid")
+            Showln ("-----------------------------------------Start------------------------------------")
+            Showln ("Tempus InvoiceIdno - IC_QBInvNumber - IC InvoiceDate - Current PaidStatus - New InvoiceDate - New PaidStatus - AppliedAmount")            
+            Constraint_Set 1
+            Constrain Invhdr.VoidFlag eq 0
+            Constrain Invhdr.QBInvoiceNumber ne 0
+            Constrain Invhdr.QBPaidFlag eq 0
+            Constrained_Find First Invhdr by 1
+            While (Found)
+                Move Invhdr.QBInvoiceNumber to sQBInvNumber
+                Move Invhdr.QBInvoiceTxnId to sQBInvTxnId
+                // Reset variables used for QB
+                Move "" to sTxnID
+                Move "" to sRefNumber
+                Move "" to sSubTotal
+                Move "" to sAppliedAmount
+                Move "" to sPaidStatus
+                Move "" to sPaidDate
+                Move "" to sInvoiceDate
+                //
+                Increment iFoundCounter
+                // ---
+                Move ("SELECT TxnID, RefNumber, Subtotal, AppliedAmount, IsPaid, LinkedTxnTxnDate, TxnDate FROM InvoiceLinkedTxn WHERE TxnID = '"+(Trim(sQBInvTxnId))+"' ORDER by LinkedTxnTxnDate DESC") to sQuery
+                Get SQLOpen of hDbc to hStmt
+                Send SQLExecDirect of hStmt sQuery
+                //
+                If (ERR) Begin
+                    Showln ("No payment update for QB InvNumber" * trim(sQBInvNumber))
+                End
+                If (not(ERR)) Begin
+                    Repeat
+                        Get SQLFetch of hStmt to iResult
+                        If (iResult<>0) Begin 
+                            Get SQLColumnValue of hStmt 1 to sTxnID
+                            Get SQLColumnValue of hStmt 2 to sRefNumber
+                            Get SQLColumnValue of hStmt 3 to sSubTotal
+                            Get SQLColumnValue of hStmt 4 to sAppliedAmount
+                            Get SQLColumnValue of hStmt 5 to sPaidStatus
+                            Get SQLColumnValue of hStmt 6 to sPaidDate
+                            Get SQLColumnValue of hStmt 7 to sInvoiceDate
+                        End
+                        Else Move "No Results returned from SQLFetch"         to sError
+                    Until (iResult=0)            
+                End
+                Send SQLClose of hStmt
+                // Make sure the date is in DF format
+                Get IsDataFlexDate sInvoiceDate to dDFInvoiceDate
+                Get IsDataFlexDate sPaidDate to dDFPaidDate
+                //Update Output Screen
+                Showln ("T#:"*String(Invhdr.InvoiceIdno)*" | (QB#:"*String(Invhdr.QBInvoiceNumber)+") | InvDate:"*String(Invhdr.InvoiceDate)*" | QBPaidFlag:"*String(Invhdr.QBPaidFlag)*" | QB InvoicDate:"*sInvoiceDate*" | QB PaidStatus:"*String(sPaidStatus)*" | QB AppliedAmount:"*sAppliedAmount*" | QBPaidDate: "*sPaidDate)
+                Lock
+                // On Update, change record.
+                If (Invhdr.QBPaidFlag<>sPaidStatus) Begin
+                    Move sPaidStatus        to Invhdr.QBPaidFlag // Change Paid Flag
+                    Move dDFPaidDate        to Invhdr.QBPaidDate // Change Paid Date
+                    Move dDFInvoiceDate     to Invhdr.InvoiceDate // Change Invoice Date
+                    Move sAppliedAmount     to Invhdr.QBAppliedAmount // Change Applied Amount
+                    Move 1                  to Invhdr.ChangedFlag // Update Changed Flag
+                    Increment iStatusChangedCounter
+                End
+                SaveRecord Invhdr
+                Unlock              
+                //
+                Constrained_Find Next
+            Loop
+            Constraint_Set 1 Delete
+            Showln ("Found:" * String(iFoundCounter))
+        End
+        Else Begin
+            Send Info_Box ("Could not establish a connection") "No Connection"
+            Send End_Process
+            Function_Return False
+        End
+        //Disconnect and Return true boolean
+        Get DisconnectSQLConnection hDbc to bSuccess
+        Function_Return bSuccess
+    End_Function
+
+    Function QBInvPaidStatusManualDateRange Date dStart Date dStop Integer ByRef iFoundCounter Integer ByRef iStatusChangedCounter Returns Boolean
+        Boolean bDone bSuccess
+        String sQuery sQBInvNumber sAppliedAmount sInvoiceDate sPaidDate sError sSQLStartDate sSQLStopDate
+        Integer iPaidStatus iResult 
+        Handle hStmt hDbc
+        Date dDFInvoiceDate dDFPaidDate
+        // Establish SQL Connection to QB
+        Get EstablishSQLConnection (&hDbc) to bSuccess
+        If (bSuccess) Begin
+            // Transform Dates
+            Get IsSqlDate dStart to sSQLStartDate
+            Get IsSqlDate dStop to sSQLStopDate
+            // Build SQL Querry with Dates
+            Move ("SELECT RefNumber, IsPaid, LinkedTxnTxnDate, AppliedAmount FROM InvoiceLinkedTxn WHERE LinkedTxnTxnDate >= {d '"+sSQLStartDate+"'} AND LinkedTxnTxnDate <= {d '"+sSQLStopDate+"'}  ORDER BY RefNumber") to sQuery
+            Get SQLOpen of hDbc to hStmt
+            Send SQLExecDirect of hStmt sQuery
+            If (ERR) Begin
+                Showln "Could not find valid information for requested TXNID"
+            End
+            If (not(ERR)) Begin
+                Showln ("Quickbooks Inv#   |  Paid Date ")
+                Repeat
+                    Get SQLFetch of hStmt to iResult
+                    Get SQLColumnValue of hStmt 1 to sQBInvNumber
+                    Get SQLColumnValue of hStmt 2 to iPaidStatus
+                    Get SQLColumnValue of hStmt 3 to sPaidDate
+                    Get SQLColumnValue of hStmt 4 to sAppliedAmount
+                    Showln (sQBInvNumber * "  |  " * String(iPaidStatus) * "  |  " * sPaidDate * "  |  " * sAppliedAmount )
+                    // Find Invoice in Tempus and update
+                    Clear Invhdr
+                    Move sQBInvNumber to Invhdr.QBInvoiceNumber
+                    Find GE Invhdr by 9
+                    If ((Found) and Invhdr.QBInvoiceNumber = sQBInvNumber) Begin
+                        Reread Invhdr
+                            Move iPaidStatus to Invhdr.QBPaidFlag
+                            Get IsDataFlexDate sPaidDate to dDFPaidDate
+                            Move dDFPaidDate to Invhdr.QBPaidDate
+                            Move sAppliedAmount to Invhdr.QBAppliedAmount
+                            Move 1 to Invhdr.ChangedFlag
+                            SaveRecord Invhdr
+                        Unlock
+                    End
+                Until (iResult = 0)
+            End
+            Send SQLClose of hStmt
+        End
+        Else Begin
+            Send Info_Box ("Could not establish a connection") "No Connection"
+            Send End_Process
+            Function_Return False
+        End
+        Get DisconnectSQLConnection hDbc to bSuccess
+        Function_Return bSuccess
+    End_Function
+    
+    Function SyncCreditMemo Integer iCreditMemoIdno Integer ByRef iQBTxnId Date ByRef dToday String ByRef sError Returns Boolean
+        Boolean bCancel bError bOk bSuccess
+        Integer eStatus iItem iItems iMastOpsIdno
+        String  sListId sClass sColumns sValues sTable sQuery sQuantity sPrice sTotal sQBCreditNumber sLastInsertedId
+        String  sLineItem sCreditDate sName sAddr1 sAddr2 sAddr3 sCity sState sZip sShipDate sActivityType sQBTaxListID sTaxListID
+        String  sServiceContact sServiceLocName sServiceAddress sServiceCity sServiceState sServiceZip
+        String  sV01 sV02 sV03 sV04 sV05 sV06 sV07 sV08 sV09 
+        String  sV10 sV11 sV12 sV13 sV14 sV15 sV16 sV17 sV18
+        String  sV19 sV20 sV21 sV22 sV23
+        Number  nQuantity
+        Handle  hDbc hStmt
+        //
+        Sysdate dToday
+        
+        // Establish SQL Connection to QB
+        Get EstablishSQLConnection (&hDbc) to bSuccess
+        If (bSuccess) Begin
+            Showln "Connection established"
+            Open CreditHdr
+            Clear CreditHdr
+            Move iCreditMemoIdno to CreditHdr.CreditIdno
+            Find eq CreditHdr by Index.1
+            If ((Found) and CreditHdr.PostedFlag=0) Begin
+                Showln ("Found Credit Memo Idno:" *String(iCreditMemoIdno))
+                Relate CreditHdr
+                Get_Attribute DF_FILE_STATUS of Location.File_Number to eStatus
+                If (eStatus = DF_FILE_ACTIVE) Begin
+                    Move (Trim(Location.ListID)) to sListId
+                    If ((Length(sListId)) < 1 ) Begin
+                        Showln "No ListId found"
+                        Get IsLocationListId hDbc Location.LocationIdno (&sError) (&sListId) to bOk
+                        //Save ListId to Current Location record
+                        If (bOk and sListId <> "") Begin
+                            Showln ("Retrieved ListID" * sListId)
+                            Reread Location
+                                Move sListId to Location.ListID
+                                SaveRecord Location
+                            Unlock
+                        End
+                        Else Begin
+                            Send Stop_Box sError
+                            Showln ("ListID not found. Please add location to QB")
+                            Set pbError to True
+                            Procedure_Return
+                        End
+                    End
+                    If ((Length(sListId)) > 1 ) Begin
+                        Showln ("ListID found:" * sListId)
+                        Clear CreditDtl
+                        Move CreditHdr.CreditIdno to CreditDtl.CreditIdno
+                        Find ge CreditDtl by Index.2
+                        While ((Found) and CreditHdr.CreditIdno = CreditDtl.CreditIdno)
+                            Move "CreditMemoLine"                                                         to sTable
+                            Move (CreditDtl.Total / CreditDtl.Price)                                      to nQuantity
+                            Move (NumToStr(nQuantity,2))                                                  to sQuantity
+                            Move (NumToStr(CreditDtl.Price, 2))                                           to sPrice
+                            Move (NumToStr(CreditDtl.Total, 2))                                           to sTotal
+                            Move (Trim(CreditDtl.Description))                                            to sLineItem
+                            Move (Replaces("'", sLineItem, ""))                                           to sLineItem
+                            Move (Trim(Location.ListID))                                                  to sListId
+                            //
+                            Get BuildCreditLineColumnString                                               to sColumns
+                            //
+                            Move (Trim(CreditDtl.MastOpsIdno))                                            to iMastOpsIdno
+                            Get FindMastOpsActivityType of oInvoicePostingProcess iMastOpsIdno            to sActivityType
+                            
+                            If (sPrice eq "0.00") Move ("NULL")                                           to sPrice
+                            If (sTotal eq "0.00") Move ("NULL")                                           to sTotal                        
+                            
+                            If (MastOps.IsTaxable) Move ("'10000-1046219236'")                            to sTaxListID // Taxable Sale Code identifyer 10000-1106508464
+                            Else Move ("'20000-1046219236'")                                              to sTaxListID // NonTaxable sale Code identifyer 20000-1106508464
+                            //
+                            Move ("'" + sListId + "',")                                                   to sV01//CustomerRefListID
+                            Move ("'" + sActivityType + "',")                                             to sV02//CreditMemoLineItemRefListID
+                            Move ("'" + sLineItem + "',")                                                 to sV03//CreditMemoLineDesc
+                            Move (sQuantity + ",")                                                        to sV04//CreditMemoLineQuantity
+                            Move (sPrice + ",")                                                           to sV05//CreditMemoLineRate
+                            Move (sTotal + ",")                                                           to sV06//CreditMemoLineAmount
+                            Move (sTaxListID + ",")                                                       to sV07//InvoiceLineSalesTaxCodeRefListID
+                            Move ("1")                                                                    to sV08//FQSaveToCache
+                            Move (sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08)                  to sValues
+                            //Showln sValues
+                            Move ("INSERT INTO" * sTable * "(" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+                            Showln sQuery
+                            //
+                            Get SQLOpen of hDbc to hStmt
+                            Send SQLExecDirect of hStmt sQuery
+                            If (ERR) Begin
+                                Send Stop_Box "CreditLine creation error"
+                                Send SQLClose of hStmt
+                                Get DisconnectSQLConnection hDbc to bSuccess
+                                Set pbError to True
+                                Function_Return False
+                            End
+                            Find gt CreditDtl.CreditIdno
+                        Loop
+                        //
+                        //Service Address
+                        Get FindContactInformation of oInvoicePostingProcess Order.JobNumber to sServiceContact
+                        //Showln ("Service Contact: "+ sServiceContact)
+                        
+                        If      (Location.BillingAddress = "A") Begin
+                            Move (Trim(Location.BillingName))           to sName
+                            Move (Trim(Location.BillingAttn))           to sAddr1
+                            Move (Trim(Location.BillingAddress1))       to sAddr2
+                            Move (Trim(Location.BillingAddress2))       to sAddr3
+                            Move (Trim(Location.BillingCity))           to sCity
+                            Move Location.BillingState                  to sState
+                            Move (Trim(Location.BillingZip))            to sZip
+                        End
+                        Else If (Location.BillingAddress = "C") Begin
+                            Move (Trim(Customer.Name))            to sName
+                            Move ("")                             to sAddr1
+                            Move (Trim(Customer.Address1))        to sAddr2
+                            Move (Trim(Customer.Address2))        to sAddr3
+                            Move (Trim(Customer.City))            to sCity
+                            Move Customer.State                   to sState
+                            Move (Trim(Customer.Zip))             to sZip
+                        End
+                        Else Begin
+                            Move (Trim(Customer.Name))          to sName
+                            Move ("")                           to sAddr1
+                            Move (Trim(Location.Address1))      to sAddr2
+                            Move (Trim(Location.Address2))      to sAddr3
+                            Move (Trim(Location.City))          to sCity
+                            Move Location.State                 to sState
+                            Move (Trim(Location.Zip))           to sZip
+                        End
+                        
+                        Move (Replaces("'",sName,""))  to sName
+                        Move (Replaces("'",sAddr1,"")) to sAddr1
+                        Move (Replaces("'",sAddr2,"")) to sAddr2
+                        Move (Replaces("'",sAddr3,"")) to sAddr3
+                        Move (Replaces("'",sCity,""))  to sCity
+                        Get IsNineDigitCode sZip       to sZip                
+                        
+                        Move (Trim(Location.Address1))                              to sServiceAddress
+                        Move (Trim(Location.Name))                                  to sServiceLocName
+                        Move (Trim(Location.City))                                  to sServiceCity
+                        Move (Trim(Location.State))                                 to sServiceState
+                        Move (Trim(Location.Zip))                                   to sServiceZip
+                        
+                        
+                        Move (Replaces("'",sServiceContact,""))                     to sServiceContact
+                        Move (Replaces("'",sServiceLocName,""))                     to sServiceLocName
+                        Move (Replaces("'",sServiceAddress,""))                     to sServiceAddress
+                        Move (Replaces("'",sServiceCity,""))                        to sServiceCity
+                        Move (Replaces("'",sServiceState,""))                       to sServiceState
+                        Get IsNineDigitCode sServiceZip                             to sServiceZip
+                        
+                        Move "CreditMemo"                                                             to sTable
+                        Get BuildCreditMemoColumnString                                               to sColumns
+                        Get IsSqlDate CreditHdr.CreditDate                                            to sShipDate
+                        Get IsSqlDate dToday                                                          to sCreditDate
+                        
+                        Move (Trim(SalesTaxGroup.QBItemSalesTaxID))                                   to sQBTaxListID
+                        Showln ("sQBTaxListID @ Detail:" + sQBTaxListID)
+                        
+                        Move ("'3E0000-951967379',")                                                  to sV01//ARAccountRefListID
+                        Move ("{d'" + sCreditDate + "'},")                                            to sV02//TxnDate
+                        Move ("'" + sName  + "',")                                                    to sV03//BillAddressAddr1
+                        Move ("'" + sAddr1 + "',")                                                    to sV04//BillAddressAddr2
+                        Move ("'" + sAddr2 + "',")                                                    to sV05//BillAddressAddr3
+                        Move ("'" + sCity  + "',")                                                    to sV06//BillAddressCity
+                        Move ("'" + sState + "',")                                                    to sV07//BillAddressState
+                        Move ("'" + sZip   + "',")                                                    to sV08//BillAddressPostalCode
+                        
+                        Move ("'"+ sServiceContact +"',")                                             to sV09//ShipAddressAddr1
+                        Move ("'"+ sServiceLocName +"',")                                             to sV10//ShipAddressAddr2
+                        Move ("'"+ sServiceAddress +"',")                                             to sV11//ShipAddressAddr3
+                        Move ("'"+ sServiceCity +"',")                                                to sV12//ShipAddressCity
+                        Move ("'"+ sServiceState +"',")                                               to sV13//ShipAddressState
+                        Move ("'"+ sServiceZip +"',")                                                 to sV14//ShipAddressPostalCode
+                        
+                        Move ("{d'" + sShipDate + "'},")                                              to sV15//ShipDate
+                        Move ("'" + sQBTaxListID + "',")                                              to sV16//ItemSalesTaxRefListID
+                        Move ("'Tempus" * String(Invhdr.InvoiceIdno) + "',")                          to sV17//Memo
+                        Move ("'" + (String(Trim(SalesRep.Initials))) + "',")                         to sV18//SalesRepRefFullName
+                        Move ("'" + (String(Trim(SalesRep.InvMessage))) + "'")                        to sV19//CustomerMsgRefListID
+                        Move ( ;
+                            sV01 * sV02 * sV03 * sV04 * sV05 * sV06 * sV07 * sV08 * sV09 * sV10 *;
+                            sV11 * sV12 * sV13 * sV14 * sV15 * sV16 * sV17 * sV18 * sV19 )                                        to sValues
+                        Move ("INSERT INTO" * sTable * "(" + sColumns + ") VALUES (" + sValues + ")") to sQuery
+                        Showln sQuery
+                        //
+                        Send SQLExecDirect of hStmt sQuery
+                        If (ERR) Begin
+                            Send Info_Box "Credit Memo creation error - Header"
+                            Send SQLClose of hStmt
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Set pbError to True
+                            Function_Return False
+                        End
+                        Get LastInsertedID hDbc sTable (&sError) (&sLastInsertedId) to bOk
+                        If (not(bOk)) Begin
+                            Send Info_Box sError
+                            Send SQLClose of hStmt
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Set pbError to True
+                            Function_Return False                     
+                        End
+                        Get LastRefNumber hDbc sTable sLastInsertedId (&sError) (&sQBCreditNumber) to bOk
+                        If (not(bOk)) Begin
+                            Send Info_Box sError
+                            Send SQLClose of hStmt
+                            Get DisconnectSQLConnection hDbc to bSuccess
+                            Set pbError to True
+                            Function_Return False
+                        End
+                        Else Begin
+                            Move (Number(sQBCreditNumber)) to iQBTxnId
+                        End
+                    End
+                End
+            End
+        End //Established SQL Connection
+        Else Begin
+            //If not established end_process and return
+            Send End_Process
+            Function_Return False
+        End
+        //Disconnect and Return true boolean
+        Get DisconnectSQLConnection hDbc hStmt to bSuccess
+        Function_Return True        
+    End_Function
+    
+    Function FindContactInformation String sJobNumber Returns String
+        String sContactName
+        String sQuoteIdno sContactIdno
+        If (Order.JobNumber=sJobNumber) Begin
+            Move Order.QuoteReference to sQuoteIdno
+            Open Quotehdr 
+            Clear Quotehdr
+            Move sQuoteIdno to Quotehdr.QuotehdrID
+            Find GE Quotehdr by Index.1
+            If ((Found) and Quotehdr.QuotehdrID = sQuoteIdno) Begin
+                Move Quotehdr.ContactIdno to sContactIdno
+                Open Contact
+                Clear Contact
+                Showln sContactIdno
+                Move sContactIdno to Contact.ContactIdno
+                Find ge Contact by Index.2
+                If ((Found) and Contact.ContactIdno = sContactIdno) Begin
+                    Move (Contact.FirstName * Contact.LastName) to sContactName
+                End
+            End   
+        End
+        Else Showln ("use find on Order.JobNumber for contact")
+
+        Function_Return sContactName
+    End_Function
+    
+    Function FindMastOpsActivityType Integer iMastOpsIdno Returns String
+        String sQBItemRefID 
+        Clear MastOps
+        Move iMastOpsIdno to MastOps.MastOpsIdno
+        Find eq MastOps.MastOpsIdno
+        If (Found) Begin
+            Relate MastOps
+            Move WorkType.QBItemRefID to sQBItemRefID
+            //Move MastOps.ActivityType to sActivityType
+            // Stiping          = 80000338-1214588914
+            // Sweeping         = 80000335-1212689480
+            // Concrete         = 80000376-1367958926
+            // Pavement Mnt.    = 80000377-1367959202
+            // Snow Removal     = 8000033A-1228324959
+            // Excavating       = 8000034A-1243528010
+            // Other            = 8000036E-1335459269
+//
+//            Case Begin
+//                Case (sActivityType="Snow Removal")
+//                    Move ("8000033A-1228324959") to sMastOpsActivityType
+//                    Case Break 
+//                Case (sActivityType="Pavement Mnt.")
+//                    Move ("80000377-1367959202") to sMastOpsActivityType
+//                    Case Break
+//                Case (sActivityType="Concrete")
+//                    Move ("80000376-1367958926") to sMastOpsActivityType
+//                    Case Break
+//                Case (sActivityType="Striping")
+//                    Move ("80000338-1214588914") to sMastOpsActivityType
+//                    Case Break
+//                Case (sActivityType="Sweeping")
+//                    Move ("80000335-1212689480") to sMastOpsActivityType
+//                    Case Break
+//                Case (sActivityType="Excavating")
+//                    Move ("8000034A-1243528010") to sMastOpsActivityType
+//                    Case Break
+//                Case (sActivityType="Other")
+//                    Move ("8000036E-1335459269") to sMastOpsActivityType
+//                    Case Break
+//                Case Else
+//                    Move ("8000033A-1228324959") to sMastOpsActivityType
+//            Case End
+//        End
+//        Else Begin
+//            Move ("8000033A-1228324959") to sMastOpsActivityType
+        End
+        Function_Return sQBItemRefID
+    End_Function
+           
+End_Object
+

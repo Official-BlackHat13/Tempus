@@ -1,0 +1,136 @@
+// Class Name: User_DataDictionary
+// Revision  : 9
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open User
+Open System
+Open Locnotes
+Open UserRights
+Open Employee
+Open Contact
+Open SalesRep
+
+Register_Object User_State_VT
+Register_Object User_Editrights_VT
+
+
+
+Object EditLevel_VT is a FileValidationTable
+    Set Validate_State to False
+    Set Allow_Blank_State to True
+    Set Main_File         to UserRights.File_Number
+    Set Code_Field        to 1 // code is in field 1
+    Set Description_Field to 2 // description is in field 2
+    Set Ordering          to 1 // load by index 1
+End_Object
+
+Object User_State_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "A"  "ACTIVE"
+        Send Add_Table_Value  "I"  "INACTIVE"
+    End_Procedure    // Fill_List
+End_Object   // User_State_VT
+
+Object User_Editrights_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "Y"  "YES"
+        Send Add_Table_Value  "N"  "NO"
+    End_Procedure    // Fill_List
+End_Object   // User_Editrights_VT
+Register_Object User_sl
+
+Class User_DataDictionary is a DataDictionary
+    
+    //OnConstrain
+    Procedure OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain User.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+    // Update:
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+  
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to User.ChangedFlag
+        End
+    End_Procedure   // Update
+
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To User.File_Number
+
+        Set ParentNullAllowed Employee.File_Number to True
+        Set ParentNullAllowed SalesRep.File_Number to True
+        Set ParentNullAllowed Contact.File_Number to True
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+        Set Field_Auto_Increment Field User.Userid to File_Field System.Userid
+
+        // Field-based properties.......................
+
+        Set Field_Prompt_Object Field User.Userid to User_sl
+
+        Set Field_Prompt_Object Field User.LoginName to User_sl
+
+        Set Field_Prompt_Object Field User.FirstName to User_sl
+
+
+        Set Field_Prompt_Object Field User.Lastname to User_sl
+
+        Set Field_Class_Name Field User.State To "cGlblDbComboForm"
+        Set Field_Value_Table Field User.State to User_State_VT
+
+        Set Field_Class_Name Field User.Editrights To "cGlblDbComboForm"
+        Set Field_Value_Table Field User.Editrights to User_Editrights_VT
+
+        Set Field_Value_Table Field User.EditLevel to EditLevel_VT
+
+
+    End_Procedure    // Construct_Object
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field User.State To "A"
+        Set Field_Changed_Value   Field User.Editrights To "N"
+    End_Procedure    // Field_Defaults
+
+End_Class
+#IFDEF Is$WebApp
+#ELSE
+
+Use User.sl          // User_sl
+
+#ENDIF
+

@@ -1,0 +1,583 @@
+// TimeCard.rv
+// TimeCard
+Register_Object oReport
+
+Use cGlblReportView.pkg
+Use cWinReport2.pkg
+Use cGlblForm.pkg
+Use cGlblButton.pkg
+Use cGlblRadio.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblGroup.pkg
+
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use cProjectDataDictionary.dd
+Use Order.DD
+Use Trans.DD
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+ACTIVATE_VIEW Activate_oTimeCard FOR oTimeCard
+Object oTimeCard is a cGlblReportView
+    Set Location to 6 6
+    Set Size to 140 202
+    Set Label To "TimeCard"
+
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object // oEmployer_DD
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server To oEmployer_DD
+    End_Object // oEmployee_DD
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object // oSalesTaxGroup_DD
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+        Set DDO_Server To oSalesTaxGroup_DD
+    End_Object // oLocation_DD
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object // oSalesRep_DD
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object // oWorkType_DD
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server To oWorkType_DD
+    End_Object // oMastOps_DD
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server To oLocation_DD
+        Set DDO_Server To oMastOps_DD
+    End_Object // oOpers_DD
+
+    Object oProject_DD is a cProjectDataDictionary
+    End_Object // oProject_DD
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server To oLocation_DD
+        Set DDO_Server To oProject_DD
+        Set DDO_Server To oSalesRep_DD
+    End_Object // oOrder_DD
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server To oOrder_DD
+        Set DDO_Server To oEmployee_DD
+        Set DDO_Server To oOpers_DD
+        
+        Property Number pnStartEmployeeIdno
+        Property Number pnStopEmployeeIdno
+        Property Date pdStartStartDate
+        Property Date pdStopStartDate
+
+        Procedure OnConstrain 
+            Number nStart nStop
+            Date dStart dStop
+
+            Get pnStartEmployeeIdno To nStart
+            Get pnStopEmployeeIdno To nStop
+
+            Case Begin
+                Case (nStart <> 0 and nStop <> 0)
+                    Constrain Trans.EmployeeIdno between nStart and nStop
+                    Case Break
+                Case (nStart <> 0)
+                    Constrain Trans.EmployeeIdno GE nStart
+                    Case Break
+                Case (nStop <> 0)
+                    Constrain Trans.EmployeeIdno LE nStop
+            Case End
+
+            Get pdStartStartDate To dStart
+            Get pdStopStartDate To dStop
+
+            Case Begin
+                Case (dStart <> 0 and dStop <> 0)
+                    Constrain Trans.StartDate between dStart and dStop
+                    Case Break
+                Case (dStart <> 0)
+                    Constrain Trans.StartDate GE dStart
+                    Case Break
+                Case (dStop <> 0)
+                    Constrain Trans.StartDate LE dStop
+            Case End
+        End_Procedure // OnConstrain
+    End_Object // oTrans_DD
+
+    Set Main_DD To oTrans_DD
+
+
+
+    Object oEmployeeIdnoSelection is a cGlblGroup
+        Set Size to 35 179
+        Set Location to 5 12
+        Set Label to "Select EmployeeIdno"
+
+        Object oSelStart is a cGlblForm
+            Set Label to "From:"
+            Set Size to 13 60
+            Set Location to 13 30
+            Set Status_Help to "First value in selection range."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Form_datatype to 0
+        End_Object // oSelStart
+
+        Object oSelStop is a cGlblForm
+            Set Label to "To:"
+            Set Size to 14 60
+            Set Location to 13 111
+            Set Status_Help to "Last value in selection range."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Form_datatype to 0
+        End_Object // oSelStop
+
+
+        Function StartValue returns String
+            string sValue
+            Get Value of oSelStart to sValue
+            Function_return sValue
+        End_Function // StartValue
+
+        Function StopValue returns String
+            string sValue
+            Get Value of oSelStop to sValue
+            Function_return sValue
+        End_Function // StopValue
+
+    End_Object // oEmployeeIdnoSelection
+    Object oStartDateSelection is a cGlblGroup
+        Set Size to 35 179
+        Set Location to 45 12
+        Set Label to "Select StartDate"
+
+        Object oSelStart is a cGlblForm
+            Set Label to "From:"
+            Set Size to 13 60
+            Set Location to 13 30
+            Set Status_Help to "First value in selection range."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Form_datatype to mask_date_window
+        End_Object // oSelStart
+
+        Object oSelStop is a cGlblForm
+            Set Label to "To:"
+            Set Size to 14 60
+            Set Location to 13 111
+            Set Status_Help to "Last value in selection range."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Form_datatype to mask_date_window
+        End_Object // oSelStop
+
+
+        Function StartValue returns String
+            string sValue
+            Get Value of oSelStart to sValue
+            Function_return sValue
+        End_Function // StartValue
+
+        Function StopValue returns String
+            string sValue
+            Get Value of oSelStop to sValue
+            Function_return sValue
+        End_Function // StopValue
+
+    End_Object // oStartDateSelection
+
+    Object oPrintTo is a cGlblRadioGroup
+        Set Size to 38 118
+        Set Location to 90 12
+        Set Label to "Send Report to"
+
+        Object oRadio1 is a cGlblRadio
+            Set Label to "Report Viewer"
+            Set Size to 10 61
+            Set Location to 12 6
+            Set Status_Help to "Prints the report to screen"
+        End_Object // oRadio1
+
+        Object oRadio2 is a cGlblRadio
+            Set Label to "Printer"
+            Set Size to 10 42
+            Set Location to 24 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object // oRadio2
+
+
+        Function IsToPrinter Returns boolean
+            integer iRadio
+            Get Current_radio to iRadio
+            Function_return (iRadio=1)
+        End_Function // IsToPrinter
+
+    End_Object // oPrintTo
+
+    Object oBtnPrint is a cGlblButton
+        Set Label to "Print"
+        Set Location to 85 140
+        Set Status_Help to "Print the Selected report"
+        Set Default_State to TRUE
+        Procedure OnClick
+            Send StartReport
+        End_Procedure
+    End_Object // oBtnPrint
+
+    Object oBtnPrinterSetup is a cGlblButton
+        Set Label to "Printer Setup"
+        Set Location to 102 140
+        Set Status_Help to "Set up printer for report"
+        Procedure OnClick
+            Send DFPrintSetup of oReport
+        End_Procedure
+    End_Object // oBtnPrinterSetup
+
+    Object oBtnCancel is a cGlblButton
+        Set Label to "Cancel"
+        Set Location to 119 140
+        Set Status_Help to "Close this Panel"
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object // oBtnCancel
+
+
+
+    Object oReport is a cWinReport2
+
+        Set Report_Title to "TimeCard"
+
+        // Set DDO, Index and breaks for the report
+        Set Server to oTrans_DD
+        Set Ordering to 6
+        Report_Breaks Trans.StartDate
+
+        Function Starting_Main_Report Returns Integer
+            Boolean bErr
+            Send DFSetMetrics wpm_cm
+            Send DFSetmargins 1 1 1 1
+            //Send DFSetLandscape false // This can be used to force a page orientation
+            Forward Get Starting_Main_Report to bErr
+            Function_return bErr
+        End_Function // Starting_Main_Report
+
+        // Page_Top is printed first at the top margin of each page
+        Procedure Page_Top 
+            string  sFont
+            integer iFontSize
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageTop
+                DFHeaderFrame Hdr_NoFrame
+                DFHeaderPos   Hdr_Left
+                DFWriteLn ("Page:" * "#pagecount#") (Font_Right)
+            DFEndHeader
+
+        End_Procedure // Page_Top
+
+        // Report_Header is printed once in a report after Page_Top
+        //Procedure Report_Header
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader  DFReportHeader
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "Report_Header" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+        Procedure Page_Header 
+            integer iFill iBorder iStyle
+            string  sFont sReportTitle
+            integer iFontSize
+
+            Move "arial" to sFont
+            Move 16 to iFontSize
+            Move (Font_bold + rgb_White) to iStyle
+            Move (rgb_dGrey) to iFill
+            Move (rgb_dGrey) to iBorder
+            Get Report_Title to sReportTitle
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageHeader
+                DFHeaderPos   Hdr_Left
+                DFHeaderFrame Hdr_Margins 0.01 iBorder iFill
+                DFWritelnPos sReportTitle 0.1 iStyle
+                DFHeaderMargin HM_BottomOuter 0.08
+            DFEndHeader
+
+        End_Procedure // Page_Header
+
+        Procedure Page_Title 
+            string  sFont 
+            integer iFontSize iHeaderStyle iFill iBorder
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (Font_Bold + rgb_dBlue) to iHeaderStyle
+            Move (rgb_Grey) to iFill
+            Move (rgb_Grey) to iBorder
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageTitle
+                DFHeaderPos   Hdr_Left
+                DFHeaderFrame Hdr_Margins 0.01 iBorder iFill
+                DFHeaderMargin HM_TopInner    0.04
+                DFHeaderMargin HM_BottomInner 0.04
+                DFHeaderMargin HM_BottomOuter 0.08
+
+                DFWritePos "StartDate"                    0.08 iHeaderStyle -1 2.3
+                DFWritePos "StartTime"                    2.46 iHeaderStyle -1 2.3
+                DFWritePos "StopDate"                     4.84 iHeaderStyle -1 2.13
+                DFWritePos "StopTime"                     7.05 iHeaderStyle -1 2.13
+                DFWritePos "ElapsedMinutes"               (9.26 + 3.58) (iHeaderStyle + Font_Right) -1 3.58
+                DFWritePos "JobNumber"                    (12.92 + 2.3) (iHeaderStyle + Font_Right) -1 2.3
+                DFWritePos "EquipIdno"                    (15.3 + 2.3) (iHeaderStyle + Font_Right) -1 2.3
+                DFWriteLn
+            DFEndHeader
+
+        End_Procedure // Page_Title
+
+        Procedure SubHeader1 
+            string  sFont 
+            integer iFontSize iStyle
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_bold) to iStyle
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFSubHeader 1
+                DFHeaderLineCheck 5
+                DFHeaderWrap   HDR_Wrap
+                DFHeaderPos    HDR_Left
+                DFHeaderFrame HDR_NoFrame
+                DFWritePos ("Recnum: Trans.Recnum") 0.1 iStyle
+            DFEndHeader
+
+        End_Procedure // SubHeader1
+
+        Procedure Body 
+            string  sFont 
+            integer iFontSize iStyle
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_default) to iStyle
+
+            DFFont sFont
+            DFFontSize iFontSize
+
+            DFWritePos Trans.StartDate                0.08 iStyle -1 2.3
+            DFWritePos Trans.StartTime                2.46 iStyle -1 2.3
+            DFWritePos Trans.StopDate                 4.84 iStyle -1 2.13
+            DFWritePos Trans.StopTime                 7.05 iStyle -1 2.13
+            DFWritePos Trans.ElapsedMinutes           (9.26 + 3.58) (iStyle + Font_Right) 0 3.58
+            DFWritePos Trans.JobNumber                (12.92 + 2.3) (iStyle + Font_Right) 0 2.3
+            DFWritePos Trans.EquipIdno                (15.3 + 2.3) (iStyle + Font_Right) 0 2.3
+            DFWriteLn
+
+        End_Procedure // Body
+
+        // Sub-totals appear at each break
+        //Procedure SubTotal1
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader DFSubTotal
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "SubTotal1" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+        // Totals appear at the end of the report before Report_Footer
+        //Procedure Total
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader  DFTotal
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "Total" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+        // Report_Footer is printed once on the last page before Page_Footer
+        //Procedure Report_Footer
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader DFReportFooter
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "Report_Footer" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+        Procedure Page_Footer 
+            string sStart sStop sText
+            string  sFont 
+            integer iFontSize iStyle
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_default) to iStyle
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageFooter
+                DFHeaderFrame hdr_NoFrame
+                DFHeaderPos   hdr_Left
+
+                Get pnStartEmployeeIdno of oTrans_DD to sStart
+                Get pnStopEmployeeIdno  of oTrans_DD to sStop
+                Get SelectionCriteraDescription "Trans.EmployeeIdno" sStart sStop to sText
+                If (sText<>"") begin
+                    DFWriteLnPos sText 0.1
+                end
+
+                Get pdStartStartDate of oTrans_DD to sStart
+                Get pdStopStartDate  of oTrans_DD to sStop
+                Get SelectionCriteraDescription "Trans.StartDate" sStart sStop to sText
+                If (sText<>"") begin
+                    DFWriteLnPos sText 0.1
+                end
+
+            DFEndHeader
+        End_Procedure // Page_Footer
+
+        // Page_Bottom is printed last at the bottom margin of each page
+        Procedure Page_Bottom 
+            string sFont
+            integer iFontSize iBorder iStyle
+            DateTime dtDT
+
+            Move (CurrentDateTime()) to dtDT
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_default) to iStyle
+            Move (rgb_dGrey) to iBorder
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageBottom
+                DFHeaderFrame Hdr_Margins 0.01 iBorder
+                DFHeaderPos Hdr_Left
+                DFWriteln ("Report Printed on" * string(dtDT)) (iStyle+Font_Center)
+            DFEndHeader
+
+        End_Procedure // Page_Bottom
+
+        // Returns string with description of selection ranges
+        // Pass: Selection title, start value and end value. Return: description
+        Function SelectionCriteraDescription string sTitle string sStart string sStop returns String
+            string sText
+            If (sStart=""  AND sStop="")  function_return ""
+            If (sStart="0" AND sStop="0") function_return ""
+            If (sStart<>"" AND sStop<>"") begin
+                Move ("between" * sStart * "and" * sStop) to sText
+            end
+            Else if (sStart > "") begin
+                Move ("starting at" * sStart) to sText
+            end
+            Else if (sStop > "") begin
+                Move ("up to" * sStop) to sText
+            End
+            function_return (sTitle * sText)
+        End_Function
+
+    End_Object // oReport
+
+    Procedure StartReport 
+        Boolean bToPrinter
+        String sValue
+        Number nStart nStop
+        Date dStart dStop
+
+        // Set all selection critera properties
+        Get StartValue of oEmployeeIdnoSelection to sValue
+        Set pnStartEmployeeIdno of oTrans_DD To sValue
+
+        Get StopValue of oEmployeeIdnoSelection to sValue
+        Set pnStopEmployeeIdno of oTrans_DD To sValue
+
+        Get StartValue of oStartDateSelection to sValue
+        Set pdStartStartDate of oTrans_DD To sValue
+
+        Get StopValue of oStartDateSelection to sValue
+        Set pdStopStartDate of oTrans_DD To sValue
+
+
+        // determine if direct print
+        Get IsToPrinter of oPrintTo to bToPrinter
+        Set OutPut_Device_Mode of oReport to (If(bToPrinter, PRINT_TO_PRINTER, PRINT_TO_WINDOW))
+
+        // run the report
+        Send Run_Report of oReport
+
+    End_Procedure // StartReport
+
+    Procedure JumpStartReport Integer iEmplIdno
+        Date dToday dSixtyDays
+        Sysdate dToday
+        Move (dToday-60.00) to dSixtyDays
+        //
+        Set pnStartEmployeeIdno of oTrans_DD to iEmplIdno
+        Set pnStopEmployeeIdno of oTrans_DD to iEmplIdno
+        Set pdStartStartDate of oTrans_DD to dSixtyDays
+        Set pdStopStartDate of oTrans_DD to dToday
+        Set Output_Device_Mode of oReport to PRINT_TO_WINDOW
+        //
+        Send Run_Report of oReport
+    End_Procedure
+
+End_Object // oTimeCard

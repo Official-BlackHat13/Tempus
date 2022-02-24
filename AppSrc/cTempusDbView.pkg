@@ -1,0 +1,42 @@
+//***************************************************************************
+//*
+//* Class:        cTempusDbView
+//* Package Name: cTempusDbView.pkg
+//*
+//***************************************************************************
+
+//Use cGlblDbView.pkg
+Use DFAllEnt.pkg
+
+Class cTempusDbView is a DbView
+
+    // Construct_Object: Object constructor.
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        // Define new Properties: Property {Type} {pxName} {initial_value}
+        Property Boolean pbReloadStds False
+        Property Integer piMinViewRights
+        Property Integer piMinEditRights
+        
+
+        // Create child objects
+
+        // Set property values:
+        Set Icon to "Tempus.ico"
+        Set Auto_Clear_DEO_State to False
+
+        On_Key Key_Alt+Key_F11 Send DoReloadStandards
+
+    End_Procedure
+
+    // Create and augment procedure and functions
+
+    Procedure DoReloadStandards
+        If (pbReloadStds(Self)) Begin
+//            Send DoLoadStandards of oCalcEngine
+//            Send Refind_Records  of (Server(Self))
+        End
+    End_Procedure
+
+End_Class // cTempusDbView

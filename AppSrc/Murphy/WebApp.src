@@ -1,0 +1,22 @@
+Use GlobalAllWebAppClasses.pkg
+
+Object oApplication is a cGlblApplication
+End_Object
+
+Object oWebApp is a cWebApp
+    Use TransactionEntry.wo
+    Use TransactionCollection.wo
+
+    //    Procedure OnattachProcess
+    //       // perform any initialization for the newly attached process.
+    //       Showln "attach"
+    //    End_Procedure
+
+    //    Procedure OnDetachProcess
+    //       // perform any de-initialization for the process that is being detached.
+    //       Showln "detach"
+    //    End_Procedure
+
+End_Object
+
+Send StartWebApp of oWebApp

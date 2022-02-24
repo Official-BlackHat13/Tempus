@@ -1,0 +1,79 @@
+Use GlobalAllEnt.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open MastOps
+Open Opers
+Open Order
+Open Trans
+Open Jobcosts
+
+Procedure DoOrderUtility
+    Boolean bCancel
+    //
+    Get Confirm "Do Order Utility?" to bCancel
+    If bCancel Procedure_Return
+    // zero the order totals
+    Find ge Order.Recnum
+    While (Found)
+        Reread Order
+        Move 0 to Order.LaborMinutes
+        Move 0 to Order.TravelMinutes
+        Move 0 to Order.MaterialCost
+        Move 0 to Order.SuppliesCost
+        Move 0 to Order.OutsideSvcsCost
+        Move 0 to Order.EquipmentCost
+        Move 0 to Order.JobCostTotal
+        SaveRecord Order
+        Unlock
+        Find gt Order.Recnum
+    Loop
+    // rebuild totals, first from Jobcosts
+    Find ge Jobcosts.Recnum
+    While (Found)
+        Relate Jobcosts
+        Reread Order
+        If      (Jobcosts.CostType = "MATERIAL") Begin
+            Add Jobcosts.TotalCost to Order.MaterialCost
+        End
+        Else If (Jobcosts.CostType = "SUPPLIES") Begin
+            Add Jobcosts.TotalCost to Order.SuppliesCost
+        End
+        Else If (Jobcosts.CostType = "EQUIPMENT") Begin
+            Add Jobcosts.TotalCost to Order.EquipmentCost
+        End
+        Else If (Jobcosts.CostType = "CONTRACTOR") Begin
+            Add Jobcosts.TotalCost to Order.OutsideSvcsCost
+        End
+        Add Jobcosts.TotalCost to Order.JobCostTotal
+        SaveRecord Order
+        Unlock
+        Find gt Jobcosts.Recnum
+    Loop
+    //
+    Move 5/1/2010 to Trans.StartDate
+    Find ge Trans by Index.6
+    While ((Found) and Trans.StartDate >= 5/1/2010)
+        Relate Trans
+        If (Opers.CostType = "Labor" or Opers.CostType = "Travel") Begin
+            Reread Order
+            If (Opers.CostType = "Labor") Begin
+                Add Trans.ElapsedMinutes to Order.LaborMinutes
+            End
+            Else Begin
+                Add Trans.ElapsedMinutes to Order.TravelMinutes
+            End
+            SaveRecord Order
+            Unlock
+        End
+        Find gt Trans by Index.6
+    Loop
+End_Procedure
+
+Send DoOrderUtility

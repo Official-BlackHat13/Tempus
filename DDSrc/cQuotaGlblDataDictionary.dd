@@ -1,0 +1,107 @@
+Use cGlblDataDictionary.pkg
+
+//Open Quota
+//Open SalesRep
+//Open System
+
+Register_Object Quota_sl
+
+Class cQuotaGlblDataDictionary is a cGlblDataDictionary
+    
+//    Procedure Construct_Object
+//        Forward Send Construct_Object
+//        Set Main_File to Quota.File_Number
+//
+//        Set Add_System_File to System.File_Number DD_Lock_On_All
+//
+//        Set Add_Server_File to SalesRep.File_Number
+//
+//        Set Field_Prompt_Object Field Quota.Quota_Idno to Quota_sl
+//        Set Field_Auto_Increment Field Quota.Quota_Idno to File_Field System.LastQuota
+//
+//        Set Field_Prompt_Object Field Quota.SalesRepIdno to Quota_sl
+//
+//        Set Field_Mask_Type Field Quota.Asphalt_Q1 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Asphalt_Q2 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Asphalt_Q3 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Asphalt_Q4 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Concrete_Q1 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Concrete_Q2 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Concrete_Q3 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Concrete_Q4 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Excavation_Q1 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Excavation_Q2 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Excavation_Q3 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Excavation_Q4 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Snow_Q1 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Snow_Q2 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Snow_Q3 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Snow_Q4 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Sweep_Q1 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Sweep_Q2 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Sweep_Q3 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Sweep_Q4 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Marking_Q1 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Marking_Q2 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Marking_Q3 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Marking_Q4 to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Asphalt_Year to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Concrete_Year to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Excavation_Year to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Snow_Year to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Sweep__Year to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Other_Year to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota.Sls_Rep_Year to Mask_Currency_Window
+//
+//    End_Procedure
+//    
+//    Procedure Update
+//        
+//       Move (Quota.Asphalt_Q1 + Quota.Asphalt_Q2 +  Quota.Asphalt_Q3 +  Quota.Asphalt_Q4) to Quota.Asphalt_Year
+//        Move (Quota.Concrete_Q1 +  Quota.Concrete_Q2 +  Quota.Concrete_Q3 +  Quota.Concrete_Q4) to Quota.Concrete_Year
+//         Move (Quota.Excavation_Q1 +  Quota.Excavation_Q2 +  Quota.Excavation_Q3 +  Quota.Excavation_Q4) to Quota.Excavation_Year
+//          Move (Quota.Snow_Q1 +  Quota.Snow_Q2 +  Quota.Snow_Q3 +  Quota.Snow_Q4) to Quota.Snow_Year
+//           Move (Quota.Sweep_Q1 +  Quota.Sweep_Q2 +  Quota.Sweep_Q3 +  Quota.Sweep_Q4) to Quota.Sweep__Year
+//            Move (Quota.Marking_Q1 +  Quota.Marking_Q2 +  Quota.Marking_Q3 +  Quota.Marking_Q4) to Quota.Other_Year
+//            
+//            Move (Quota.Asphalt_Year +Quota.Concrete_Year + Quota.Excavation_Year + Quota.Snow_Year + Quota.Sweep__Year + Quota.Other_Year) to Quota.Sls_Rep_Year
+//    End_Procedure
+    
+
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Quota.sl
+#ENDIF

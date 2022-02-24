@@ -1,0 +1,169 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use Employer.DD
+Use Employee.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Object oTransAttachment is a BusinessProcess
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oEmployee_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+    
+    Procedure DoCreateAttachmentTransaction Integer iJobNumber Integer iAttachmentIdno Date dStartDate String sStartTime Integer iTransRef
+        Boolean bJobValid
+        Integer iLocationIdno iAltJobNumber
+        String sErrorMessage
+        //
+        Get IsJobValid iJobNumber (&iLocationIdno) (&iAltJobNumber) (&sErrorMessage) to bJobValid
+        If (not(bJobValid)) Begin
+            Send Stop_Box sErrorMessage "Error - Order not Valid"
+            Procedure_Return
+        End
+        //
+        //Get IsEquipmentValid iLocationIdno iEquipIdno (&iOpersIdno) (&iAltEquipIdno)(&sErrorMessage) to bEquipValid
+        
+    End_Procedure
+    
+    
+
+    Function BuildAttachmentSelectionList String sAttachmentCat Integer iEmployerIdno String[][] ByRef sAttachmentArray Returns Boolean
+
+        Integer iMastOpsIdno iRow
+        Move 0 to iRow
+        
+        Clear MastOps
+        Move sAttachmentCat to MastOps.IsAttachment
+        Find GE MastOps by Index.6
+        While ((Found) and MastOps.IsAttachment = sAttachmentCat and MastOps.CostType = "Attachment")
+ 
+            Move MastOps.MastOpsIdno to iMastOpsIdno
+            // Find Attchment
+            Clear Equipmnt
+            Move iEmployerIdno to Equipmnt.OperatedBy
+            Move iMastOpsIdno to Equipmnt.MastOpsIdno
+            Find GE Equipmnt by Index.4
+            While ((Found) and iEmployerIdno = Equipmnt.OperatedBy and iMastOpsIdno = Equipmnt.MastOpsIdno)
+                If (Equipmnt.Status = "A") Begin
+                    If (iRow = 0) Begin
+                        // Manually Add "No Attachment" to selection list
+                        Case Begin
+                            Case (sAttachmentCat = "SMALL") 
+                                Move "0"                to sAttachmentArray[iRow][0]    //Equipment ID
+                                Move "NONE"             to sAttachmentArray[iRow][1]    //Label
+                                Case Break
+                            Case (sAttachmentCat = "MEDIUM") 
+                                Move "0"                to sAttachmentArray[iRow][0]    //Equipment ID
+                                Move "Bucket/Loading(Skid)"   to sAttachmentArray[iRow][1]    //Label
+                                Case Break
+                            Case (sAttachmentCat = "LARGE") 
+                                Move "0"                to sAttachmentArray[iRow][0]    //Equipment ID
+                                Move "Bucket/Loading(Loader)"   to sAttachmentArray[iRow][1]    //Label
+                                Case Break
+                            Case Else
+                                Move "0"                to sAttachmentArray[iRow][0]    //Equipment ID
+                                Move "Default"          to sAttachmentArray[iRow][1]    //Label
+                        Case End
+
+                        //Showln (sAttachmentArray[iRow][0] * sAttachmentArray[iRow][1])
+                        Increment iRow
+                    End   
+                    Move (String(Equipmnt.EquipIdno)) to sAttachmentArray[iRow][0] //Equipment ID
+                    Move (Trim(Equipmnt.Description)) to sAttachmentArray[iRow][1] //Label
+                    //Showln (sAttachmentArray[iRow][0] * sAttachmentArray[iRow][1])
+                    Increment iRow    
+                End
+                Move iEmployerIdno to Equipmnt.OperatedBy
+                Move iMastOpsIdno to Equipmnt.MastOpsIdno
+                Find GT Equipmnt by Index.4
+            Loop
+            //Find next MastOps with matching AttachCat
+            Move sAttachmentCat to MastOps.IsAttachment
+            Move iMastOpsIdno to MastOps.MastOpsIdno
+            Find GT MastOps by Index.6
+        Loop
+        If (not(Found)) Begin
+            Function_Return False
+        End
+        Function_Return True
+    End_Function
+    
+    
+
+End_Object
+

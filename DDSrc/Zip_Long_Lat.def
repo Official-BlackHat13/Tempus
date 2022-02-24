@@ -1,0 +1,34 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: ZipGeo (# 47)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Zip_Long_Lat
+  USER DISPLAY NAME         : Zip_Longitude_Latitude
+  DATAFLEX FILE NAME        : ZipGeo
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 78        ( USED: 78 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 43191 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ZipCode          NUM   10.0     1  1   
+  2  City             ASC     30    12      
+  3  State            ASC      2    42      
+  4  Longitude        NUM    4.6    44      
+  5  Latitude         NUM    4.6    56      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ZipCode         NO  NO       0      0       1     ON-LINE
+

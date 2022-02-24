@@ -1,0 +1,34 @@
+Use Windows.pkg
+Use cHtmlHelp.pkg
+Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+// to combine two positive Integer values into a single Integer for subsequent disassembly by hi and low, 
+// multiply the value assigned to hi by 65,536 and Add it to the value assigned to low.
+
+Procedure TestCode
+//    UInteger iValue
+    Integer iGroup iData iValue
+    Number  nSale nTax nTotal
+    //
+    Move 654.21 to nSale
+    Move (nSale * 1.07) to nTotal
+//    Move (nTotal / 1.07) to nSale
+//    Move (nSale * 1.07) to nTax
+//    Move (nSale + nTax) to nTotal
+
+
+//    Move ((2 * 65536) + 65535) to iValue
+//    Move (Hi(iValue)) to iGroup
+//    Move (Low(iValue)) to iData
+End_Procedure
+
+Send TestCode
+

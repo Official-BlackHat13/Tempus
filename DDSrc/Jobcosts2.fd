@@ -1,0 +1,11 @@
+#REPLACE FILE99 Jobcosts2
+#REPLACE Jobcosts2.Recnum |FN99,0
+#REPLACE Jobcosts2.JobcostsId |FN99,1
+#REPLACE Jobcosts2.JobNumber |FN99,2
+#REPLACE Jobcosts2.WorkDate |FM99,3
+#REPLACE Jobcosts2.CostType |FS99,4
+#REPLACE Jobcosts2.MastOpsIdno |FN99,5
+#REPLACE Jobcosts2.Quantity |FN99,6
+#REPLACE Jobcosts2.UnitCost |FN99,7
+#REPLACE Jobcosts2.TotalCost |FN99,8
+#REPLACE Jobcosts2.Notes |FS99,9

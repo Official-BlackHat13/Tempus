@@ -1,0 +1,1018 @@
+// Class Name: Esitem_DataDictionary
+// Revision  : 7
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Use QuoteEstimateSync.bp
+
+Open Esitem
+Open Escomp
+Open Jcoper
+Open System
+Open Quotehdr
+Open Quotedtl
+Open MastOps
+
+Register_Function ValidateVar1 integer iField number nValue Returns integer
+Register_Function ValidateVar2 integer iField number nValue Returns integer
+Register_Function ValidateVar3 integer iField number nValue Returns integer
+Register_Function ValidateVar4 integer iField number nValue Returns integer
+Register_Function ValidateVar5 integer iField number nValue Returns integer
+Register_Function ValidateVar6 integer iField number nValue Returns integer
+Register_Function ValidateVar7 integer iField number nValue Returns integer
+Register_Function ValidateVar8 integer iField number nValue Returns integer
+Register_Function ValidateVar9 integer iField number nValue Returns integer
+
+Class Esitem_DataDictionary is a cGlblDataDictionary
+
+    procedure Construct_Object
+        forward send Construct_Object
+
+        Set Main_File To Esitem.File_Number
+
+        Set Add_Server_File to Escomp.File_Number
+        Set Add_Server_File to Jcoper.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+
+        Set Field_Auto_Increment Field Esitem.ITEM_ID to File_Field System.EsitemId
+
+        // Field-based properties.......................
+
+        Set Field_Validate_msg Field Esitem.Var1 To get_ValidateVar1
+
+        Set Field_Validate_msg Field Esitem.Var2 To get_ValidateVar2
+
+        Set Field_Validate_msg Field Esitem.Var3 To get_ValidateVar3
+
+        Set Field_Validate_msg Field Esitem.Var4 To get_ValidateVar4
+
+        Set Field_Validate_msg Field Esitem.Var5 To get_ValidateVar5
+
+        Set Field_Validate_msg Field Esitem.Var6 To get_ValidateVar6
+
+        Set Field_Validate_msg Field Esitem.Var7 To get_ValidateVar7
+
+        Set Field_Validate_msg Field Esitem.Var8 To get_ValidateVar8
+
+        Set Field_Validate_msg Field Esitem.Var9 To get_ValidateVar9
+
+        Set Field_Option Field Esitem.Calc_Units1 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Calc_Units1 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Calc_Units1 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Calc_Units2 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Calc_Units2 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Calc_Units2 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Calc_Units3 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Calc_Units3 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Calc_Units3 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Table_Std1 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Table_Std1 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Table_Std1 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Table_Std2 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Table_Std2 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Table_Std2 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Table_Std3 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Table_Std3 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Table_Std3 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Prod_Units1 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Prod_Units1 to "$ #,###,##0.00"
+        Set Field_Mask_Type Field Esitem.Prod_Units1 to Mask_Currency_Window
+
+        Set Field_Option Field Esitem.Prod_Units2 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Prod_Units2 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Prod_Units2 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Prod_Units3 DD_NOENTER to True
+        Set Field_Mask Field Esitem.Prod_Units3 To "##,###,##0.0000"
+        Set Field_Mask_Type Field Esitem.Prod_Units3 To MASK_NUMERIC_WINDOW
+
+        Set Field_Option Field Esitem.Est_$1 DD_NOENTER to True
+        Set Field_Mask_Type Field Esitem.Est_$1 To MASK_CURRENCY_WINDOW
+
+        Set Field_Option Field Esitem.Est_$2 DD_NOENTER to True
+        Set Field_Mask_Type Field Esitem.Est_$2 To MASK_CURRENCY_WINDOW
+
+        Set Field_Option Field Esitem.Est_$3 DD_NOENTER to True
+        Set Field_Mask_Type Field Esitem.Est_$3 to MASK_CURRENCY_WINDOW
+
+        Set Field_Option Field Esitem.Sell_1 DD_NOENTER to True
+        Set Field_Mask_Type Field Esitem.Sell_1 To MASK_CURRENCY_WINDOW
+
+        Set Field_Option Field Esitem.Sell_2 DD_NOENTER to True
+        Set Field_Mask_Type Field Esitem.Sell_2 To MASK_CURRENCY_WINDOW
+
+        Set Field_Option Field Esitem.Sell_3 DD_NOENTER to True
+        Set Field_Mask_Type Field Esitem.Sell_3 To MASK_CURRENCY_WINDOW
+
+        //
+        Property Integer pbExisting True
+        Property Integer pbEditMode False
+        Property Integer pbCalcFlag False
+        //
+//        Set piLogFile to Syslog.File_number
+    end_procedure
+
+    // ValidateVar1:
+    function ValidateVar1 integer iField number nValue returns integer
+        Integer bState
+        String  sFlag
+        //
+        Get Field_Changed_State iField to bState
+        If (not(bState)) Function_Return
+        //
+        Send Refind_Records
+        //
+        If nValue eq Esitem.Var1 Function_Return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var1_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var1_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var1_flag to sFlag
+    end_function // ValidateVar1
+
+    // ValidateVar2:
+    function ValidateVar2 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var2 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var2_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var2_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var2_flag to sFlag
+    end_function // ValidateVar2
+
+    // ValidateVar3:
+    function ValidateVar3 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var3 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var3_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var3_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var3_flag to sFlag
+    end_function // ValidateVar3
+
+    // ValidateVar4:
+    function ValidateVar4 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var4 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var4_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var4_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var4_flag to sFlag
+    end_function // ValidateVar4
+
+    // ValidateVar5:
+    function ValidateVar5 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var5 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var5_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var5_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var5_flag to sFlag
+    end_function // ValidateVar5
+
+    // ValidateVar6:
+    function ValidateVar6 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var6 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var6_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var6_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var6_flag to sFlag
+    end_function // ValidateVar6
+
+    // ValidateVar7:
+    function ValidateVar7 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var7 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var7_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var7_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var7_flag to sFlag
+    end_function // ValidateVar7
+
+    // ValidateVar8:
+    function ValidateVar8 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var8 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var8_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var8_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var8_flag to sFlag
+    end_function // ValidateVar8
+
+    // ValidateVar9:
+    function ValidateVar9 integer iField number nValue returns integer
+        local integer bState
+        local string sFlag
+        get Field_Changed_State iField to bState
+        if not bState function_return
+        send Refind_Records
+        if nValue eq Esitem.Var9 function_return
+        set pbCalcFlag to true
+        if not (pbEditMode(self)) function_return
+        // set flags if in Edit mode
+        get Field_Current_Value field Esitem.Var9_flag to sFlag
+        trim sFlag to sFlag
+        if not "X" in sFlag append sFlag "X"
+        if not "D" in sFlag if "D" in Jcoper.Var9_tag_symbl append sFlag "D"
+        set Field_Changed_Value field Esitem.Var9_flag to sFlag
+    end_function // ValidateVar9
+
+    // Update:
+    Procedure Update
+        Integer bArt bPrep bPress bBind bLabor bHelper bMatl bPaper bPurch
+        Integer bXuser bFreight bProdDollars bProdHours bMultiValue
+        Number  nProdUnits1 nProdUnits2 nProdUnits3
+        //
+        Forward Send Update
+        // Insert Code Here
+        //Temporary for updating all MastOps on recalc
+        If (Jcoper.MAST_OPS_IDNO > 0) Begin
+            Move Jcoper.MAST_OPS_IDNO to Esitem.MastOpsIdno
+        End
+
+        
+//        // Apply Sales Tax if nessasary
+//        If (MastOps.IsTaxable) Move SalesTaxGroup.Rate                          to Quotedtl.TaxRate
+//        Else Move 0 to QuoteDtl.TaxRate
+//        Move (QuoteDtl.Quantity * QuoteDtl.Price * QuoteDtl.TaxRate/100.00)     to QuoteDtl.TaxAmount
+//        //Update parent record
+//        Add QuoteDtl.TaxAmount                                                  to Quotehdr.TaxTotal
+//        Add QuoteDtl.Amount                                                     to Quotehdr.SubTotal
+//        Move (Quotehdr.TaxTotal+Quotehdr.SubTotal)                              to Quotehdr.Amount        
+        
+
+        
+        add 1 to Escomp.Item_count
+        //
+        If (pbExisting(Self) and pbCalcFlag(Self)) Begin
+            Move "Y"       to Escomp.Needs_calced
+            Set pbCalcFlag to False
+        End
+        ////
+        //if Jcoper.Nickname eq "QUANTITIES" begin
+        //    move Esitem.Var1 to Escomp.Qty1
+        //    move Esitem.Var2 to Escomp.Qty2
+        //    move Esitem.Var3 to Escomp.Qty3
+        //end
+        //
+        //procedure_return
+        // this code will update accumulator fields in Escomp record
+        if (Jcoper.Opcode = Jcpars.Quantities_Op) Begin
+        //if Jcoper.Nickname eq "QUANTITIES" begin
+            If (Esitem.Calc_units1 > 0) Begin
+                move Esitem.Calc_units1 to Escomp.QTY1
+                move Esitem.Calc_units2 to Escomp.QTY2
+                move Esitem.Calc_units3 to Escomp.QTY3
+            end
+            // BC 12/03 procedure_return
+        end
+        //
+        if (Jcoper.Opcode = Jcpars.Pagespecs_Op) begin
+        //if JCOPER.Nickname eq "PAGESPECS" begin
+            move Esitem.Var1 to Escomp.Pages
+            move Esitem.Var2 to Escomp.Width
+            move Esitem.Var3 to Escomp.Length
+            move Esitem.Var4 to Escomp.Colors_1
+            move Esitem.Var5 to Escomp.Colors_2
+        end
+        // SHTLAYOUT handling
+        if (JCOPER.Opcode = Jcpars.Shtlayout_Op) begin
+        //if JCOPER.Nickname eq "SHTLAYOUT" begin
+            move Esitem.Var1 to Escomp.Form_Pages
+            move Esitem.Var2 to Escomp.Number_Up
+        end
+        //
+        //BC 12/03 non-variable costs will now populate Q2 & Q3 fields for user-reporting ease
+        // and simplification of subtotaling logic
+        If (not(bMultiValue)) Begin
+            move Esitem.Calc_Units1 to Esitem.Calc_Units2
+            move Esitem.Calc_Units1 to Esitem.Calc_Units3
+            move Esitem.Table_Std1  to Esitem.Table_Std2
+            move Esitem.Table_Std1  to Esitem.Table_Std3
+            move Esitem.Prod_Units1 to Esitem.Prod_Units2
+            move Esitem.Prod_Units1 to Esitem.Prod_Units3
+            move Esitem.Est_$1      to Esitem.Est_$2
+            move Esitem.Est_$1      to Esitem.Est_$3
+            move Esitem.Sell_1     to Esitem.Sell_2
+            move Esitem.Sell_1     to Esitem.Sell_3
+        End
+        if (Jcoper.Sell_Formula="") begin
+            move Esitem.Est_$1 to Esitem.Sell_1
+            move Esitem.Est_$2 to Esitem.Sell_2
+            Move Esitem.Est_$3 to Esitem.Sell_3
+        end
+        //
+        //BC 12/03 if (Esitem.Prod_units_type="#" or Esitem.Prod_units_type="") procedure_return
+        if ((Jcoper.Est_Formula_Typ="#" or Jcoper.Est_Formula_Typ="") and Jcoper.Sell_Formula="") ; 
+            procedure_return
+        //
+        if "1" in Jcoper.Optype move DFTRUE to bArt
+        if "2" in Jcoper.Optype move DFTRUE to bPrep
+        if "3" in Jcoper.Optype move DFTRUE to bPress
+        if "4" in Jcoper.Optype move DFTRUE to bBind
+        if Jcoper.Optype in "L0|L1|L2|L3|L4|H0|H1|H2|H3|H4" move DFTRUE to bLabor
+        if "H" in Jcoper.Optype move DFTRUE to bHelper
+        if Jcoper.Optype in "M0|M1|M2|M3|M4" move DFTRUE to bMatl
+        if Jcoper.Optype eq "PP" move DFTRUE to bPaper
+        if Jcoper.Optype in "P0|P1|P2|P3|P4" move DFTRUE to bPurch
+        if "X" in Jcoper.Optype move DFTRUE to bXuser
+        if "F" in Jcoper.Optype move DFTRUE to bFreight
+        if Esitem.Prod_units_type eq "$" move DFTRUE to bProdDollars
+        if Esitem.Prod_units_type eq ":" move DFTRUE to bProdHours
+        if "V" in Jcoper.Calc_flags move DFTRUE to bMultiValue
+        //
+        move (Esitem.Prod_units1*100) to nProdUnits1
+        Move (round(nProdUnits1))     to nProdUnits1
+        Move (nProdUnits1/100)        to nProdUnits1
+        move (Esitem.Prod_units2*100) to nProdUnits2
+        Move (round(nProdUnits2))     to nProdUnits2
+        Move (nProdUnits2/100)        to nProdUnits2
+        move (Esitem.Prod_units3*100) to nProdUnits3
+        Move (round(nProdUnits3))     to nProdUnits3
+        Move (nProdUnits3/100)        to nProdUnits3
+        //
+        // BC 12/03 if (bMultiValue) begin
+            //
+            if (bArt) begin
+                move (Escomp.Q1_Art_$ + Esitem.Est_$1) to Escomp.Q1_Art_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Art_Hrs + nProdUnits1) to Escomp.Q1_Art_Hrs
+                move (Escomp.Q2_Art_$ + Esitem.Est_$2) to Escomp.Q2_Art_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Art_Hrs + nProdUnits2) to Escomp.Q2_Art_Hrs
+                move (Escomp.Q3_Art_$ + Esitem.Est_$3) to Escomp.Q3_Art_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Art_Hrs + nProdUnits3) to Escomp.Q3_Art_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Art_Sell + Esitem.Sell_1) to Escomp.Q1_Art_Sell
+                move (Escomp.Q2_Art_Sell + Esitem.Sell_2) to Escomp.Q2_Art_Sell
+                move (Escomp.Q3_Art_Sell + Esitem.Sell_3) to Escomp.Q3_Art_Sell
+            end // if (bArt)
+            //
+            if (bPrep) begin
+                move (Escomp.Q1_Prep_$ + Esitem.Est_$1) to Escomp.Q1_Prep_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Prep_Hrs + nProdUnits1) to Escomp.Q1_Prep_Hrs
+                Move (Escomp.Q2_Prep_$ + Esitem.Est_$2) to Escomp.Q2_Prep_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Prep_Hrs + nProdUnits2) to Escomp.Q2_Prep_Hrs
+                move (Escomp.Q3_Prep_$ + Esitem.Est_$3) to Escomp.Q3_Prep_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Prep_Hrs + nProdUnits3) to Escomp.Q3_Prep_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Prep_Sell + Esitem.Sell_1) to Escomp.Q1_Prep_Sell
+                move (Escomp.Q2_Prep_Sell + Esitem.Sell_2) to Escomp.Q2_Prep_Sell
+                move (Escomp.Q3_Prep_Sell + Esitem.Sell_3) to Escomp.Q3_Prep_Sell
+            end // if (bPrep)
+            //
+            if (bPress) begin
+                move (Escomp.Q1_Press_$ + Esitem.Est_$1) to Escomp.Q1_Press_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Press_Hrs + nProdUnits1) to Escomp.Q1_Press_Hrs
+                move (Escomp.Q2_Press_$ + Esitem.Est_$2) to Escomp.Q2_Press_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Press_Hrs + nProdUnits2) to Escomp.Q2_Press_Hrs
+                move (Escomp.Q3_Press_$ + Esitem.Est_$3) to Escomp.Q3_Press_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Press_Hrs + nProdUnits3) to Escomp.Q3_Press_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Press_Sell + Esitem.Sell_1) to Escomp.Q1_Press_Sell
+                move (Escomp.Q2_Press_Sell + Esitem.Sell_2) to Escomp.Q2_Press_Sell
+                move (Escomp.Q3_Press_Sell + Esitem.Sell_3) to Escomp.Q3_Press_Sell
+            end // if (bPress)
+            //
+            if (bBind) begin
+                move (Escomp.Q1_Bind_$ + Esitem.Est_$1) to Escomp.Q1_Bind_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Bind_Hrs + nProdUnits1) to Escomp.Q1_Bind_Hrs
+                move (Escomp.Q2_Bind_$ + Esitem.Est_$2) to Escomp.Q2_Bind_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Bind_Hrs + nProdUnits2) to Escomp.Q2_Bind_Hrs
+                move (Escomp.Q3_Bind_$ + Esitem.Est_$3) to Escomp.Q3_Bind_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Bind_Hrs + nProdUnits3) to Escomp.Q3_Bind_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Bind_Sell + Esitem.Sell_1) to Escomp.Q1_Bind_Sell
+                move (Escomp.Q2_Bind_Sell + Esitem.Sell_2) to Escomp.Q2_Bind_Sell
+                move (Escomp.Q3_Bind_Sell + Esitem.Sell_3) to Escomp.Q3_Bind_Sell
+            end // if (bBind)
+            //
+            if (bLabor) begin
+                move (Escomp.Q1_Lbr_$ + Esitem.Est_$1) to Escomp.Q1_Lbr_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Lbr_Hrs + nProdUnits1) to Escomp.Q1_LBR_Hrs
+                move (Escomp.Q2_Lbr_$ + Esitem.Est_$2) to Escomp.Q2_Lbr_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Lbr_Hrs + nProdUnits2) to Escomp.Q2_Lbr_Hrs
+                move (Escomp.Q3_Lbr_$ + Esitem.Est_$3) to Escomp.Q3_Lbr_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Lbr_Hrs + nProdUnits3) to Escomp.Q3_Lbr_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Lbr_Sell + Esitem.Sell_1) to Escomp.Q1_Lbr_Sell
+                move (Escomp.Q2_Lbr_Sell + Esitem.Sell_2) to Escomp.Q2_Lbr_Sell
+                move (Escomp.Q3_Lbr_Sell + Esitem.Sell_3) to Escomp.Q3_Lbr_Sell
+            end // if (bLabor)
+            //
+            if ((bMatl) and (bProdDollars)) begin
+                move (Escomp.Q1_Mtl_$ + Esitem.Est_$1) to Escomp.Q1_Mtl_$
+                move (Escomp.Q2_Mtl_$ + Esitem.Est_$2) to Escomp.Q2_Mtl_$
+                move (Escomp.Q3_Mtl_$ + Esitem.Est_$3) to Escomp.Q3_Mtl_$
+                // BC 12/03
+                move (Escomp.Q1_Mtl_Sell + Esitem.Sell_1) to Escomp.Q1_Mtl_Sell
+                move (Escomp.Q2_Mtl_Sell + Esitem.Sell_2) to Escomp.Q2_Mtl_Sell
+                move (Escomp.Q3_Mtl_Sell + Esitem.Sell_3) to Escomp.Q3_Mtl_Sell
+            end
+            //
+            if ((bPaper) and (bProdDollars)) begin
+                move (Escomp.Q1_PP_$ + Esitem.Est_$1) to Escomp.Q1_PP_$
+                move (Escomp.Q2_PP_$ + Esitem.Est_$2) to Escomp.Q2_PP_$
+                move (Escomp.Q3_PP_$ + Esitem.Est_$3) to Escomp.Q3_PP_$
+                // BC 12/03
+                move (Escomp.Q1_PP_Sell + Esitem.Sell_1) to Escomp.Q1_PP_Sell
+                move (Escomp.Q2_PP_Sell + Esitem.Sell_2) to Escomp.Q2_PP_Sell
+                move (Escomp.Q3_PP_Sell + Esitem.Sell_3) to Escomp.Q3_PP_Sell
+            end
+            //
+            if ((bPurch) and (bProdDollars)) begin
+                move (Escomp.Q1_Pur_$ + Esitem.Est_$1) to Escomp.Q1_Pur_$
+                move (Escomp.Q2_Pur_$ + Esitem.Est_$2) to Escomp.Q2_Pur_$
+                move (Escomp.Q3_Pur_$ + Esitem.Est_$3) to Escomp.Q3_Pur_$
+                // BC 12/03
+                move (Escomp.Q1_Pur_Sell + Esitem.Sell_1) to Escomp.Q1_Pur_Sell
+                move (Escomp.Q2_Pur_Sell + Esitem.Sell_2) to Escomp.Q2_Pur_Sell
+                move (Escomp.Q3_Pur_Sell + Esitem.Sell_3) to Escomp.Q3_Pur_Sell
+            end
+            //
+            if ((bXuser) and (bProdDollars)) begin
+                move (Escomp.Q1_X_$ + Esitem.Est_$1) to Escomp.Q1_X_$
+                move (Escomp.Q2_X_$ + Esitem.Est_$2) to Escomp.Q2_X_$
+                move (Escomp.Q3_X_$ + Esitem.Est_$3) to Escomp.Q3_X_$
+                // BC 12/03
+                move (Escomp.Q1_X_Sell + Esitem.Sell_1) to Escomp.Q1_X_Sell
+                move (Escomp.Q2_X_Sell + Esitem.Sell_2) to Escomp.Q2_X_Sell
+                move (Escomp.Q3_X_Sell + Esitem.Sell_3) to Escomp.Q3_X_Sell
+            end
+            //
+            if ((bFreight) and (bProdDollars)) begin
+                move (Escomp.Q1_Frt_$ + Esitem.Est_$1) to Escomp.Q1_Frt_$
+                move (Escomp.Q2_Frt_$ + Esitem.Est_$2) to Escomp.Q2_Frt_$
+                move (Escomp.Q3_Frt_$ + Esitem.Est_$3) to Escomp.Q3_Frt_$
+                // BC 12/03
+                move (Escomp.Q1_Frt_Sell + Esitem.Sell_1) to Escomp.Q1_Frt_Sell
+                move (Escomp.Q2_Frt_Sell + Esitem.Sell_2) to Escomp.Q2_Frt_Sell
+                move (Escomp.Q3_Frt_Sell + Esitem.Sell_3) to Escomp.Q3_Frt_Sell
+            end
+            //
+        // BC 12/03 end // if (bMultiValue)
+        // 
+        // BC 12/03 not bMultivalue block no longer needed
+        //if not (bMultiValue) begin
+        //    // amounts for fixed costs must still be copied to qty2  3
+        //    // move q1 values to q1 values!
+        //    // this bother is to allow for unforseen setups by users
+        //    // in the areas normally that would be all fixed costs
+        //    if (bArt) begin
+        //        move (Escomp.Q1_Art_$ + Esitem.Est_$1) to Escomp.Q1_Art_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Art_Hrs + nProdUnits1) to Escomp.Q1_Art_Hrs
+        //        move (Escomp.Q2_Art_$ + Esitem.Est_$1) to Escomp.Q2_Art_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Art_Hrs + nProdUnits1) to Escomp.Q2_Art_Hrs
+        //        move (Escomp.Q3_Art_$ + Esitem.Est_$1) to Escomp.Q3_Art_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Art_Hrs + nProdUnits1) to Escomp.Q3_Art_Hrs
+        //    end // if (bArt)
+        //    //
+        //    if (bPrep) begin
+        //        move (Escomp.Q1_Prep_$ + Esitem.Est_$1) to Escomp.Q1_Prep_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Prep_Hrs + nProdUnits1) to Escomp.Q1_Prep_Hrs
+        //        move (Escomp.Q2_Prep_$ + Esitem.Est_$1) to Escomp.Q2_Prep_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Prep_Hrs + nProdUnits1) to Escomp.Q2_Prep_Hrs
+        //        move (Escomp.Q3_Prep_$ + Esitem.Est_$1) to Escomp.Q3_Prep_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Prep_Hrs + nProdUnits1) to Escomp.Q3_Prep_Hrs
+        //    end // if (bPrep)
+        //    //
+        //    if (bPress) begin
+        //        move (Escomp.Q1_Press_$ + Esitem.Est_$1) to Escomp.Q1_Press_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Press_Hrs + nProdUnits1) to Escomp.Q1_Press_Hrs
+        //        move (Escomp.Q2_Press_$ + Esitem.Est_$1) to Escomp.Q2_Press_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Press_Hrs + nProdUnits1) to Escomp.Q2_Press_Hrs
+        //        move (Escomp.Q3_Press_$ + Esitem.Est_$1) to Escomp.Q3_Press_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Press_Hrs + nProdUnits1) to Escomp.Q3_Press_Hrs
+        //    end // if (bPress)
+        //    //
+        //    if (bBind) begin
+        //        move (Escomp.Q1_Bind_$ + Esitem.Est_$1) to Escomp.Q1_Bind_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Bind_Hrs + nProdUnits1) to Escomp.Q1_Bind_Hrs
+        //        move (Escomp.Q2_Bind_$ + Esitem.Est_$1) to Escomp.Q2_Bind_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Bind_Hrs + nProdUnits1) to Escomp.Q2_Bind_Hrs
+        //        move (Escomp.Q3_Bind_$ + Esitem.Est_$1) to Escomp.Q3_Bind_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Bind_Hrs + nProdUnits1) to Escomp.Q3_Bind_Hrs
+        //    end // if (bBind)
+        //    //
+        //    if (bLabor) begin
+        //        move (Escomp.Q1_Lbr_$ + Esitem.Est_$1) to Escomp.Q1_Lbr_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Lbr_Hrs + nProdUnits1) to Escomp.Q1_LBR_Hrs
+        //        move (Escomp.Q2_Lbr_$ + Esitem.Est_$1) to Escomp.Q2_Lbr_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Lbr_Hrs + nProdUnits1) to Escomp.Q2_Lbr_Hrs
+        //        move (Escomp.Q3_Lbr_$ + Esitem.Est_$1) to Escomp.Q3_Lbr_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Lbr_Hrs + nProdUnits1) to Escomp.Q3_Lbr_Hrs
+        //    end // if (bLabor)
+        //    //
+        //    if ((bMatl) and (bProdDollars)) begin
+        //        move (Escomp.Q1_Mtl_$ + Esitem.Est_$1) to Escomp.Q1_Mtl_$
+        //        move (Escomp.Q2_Mtl_$ + Esitem.Est_$1) to Escomp.Q2_Mtl_$
+        //        move (Escomp.Q3_Mtl_$ + Esitem.Est_$1) to Escomp.Q3_Mtl_$
+        //    end
+        //    //
+        //    if ((bPaper) and (bProdDollars)) begin
+        //        move (Escomp.Q1_PP_$ + Esitem.Est_$1) to Escomp.Q1_PP_$
+        //        move (Escomp.Q2_PP_$ + Esitem.Est_$1) to Escomp.Q2_PP_$
+        //        move (Escomp.Q3_PP_$ + Esitem.Est_$1) to Escomp.Q3_PP_$
+        //    end
+        //    //
+        //    if ((bPurch) and (bProdDollars)) begin
+        //        move (Escomp.Q1_Pur_$ + Esitem.Est_$1) to Escomp.Q1_Pur_$
+        //        move (Escomp.Q2_Pur_$ + Esitem.Est_$1) to Escomp.Q2_Pur_$
+        //        move (Escomp.Q3_Pur_$ + Esitem.Est_$1) to Escomp.Q3_Pur_$
+        //    end
+        //    //
+        //    if ((bXuser) and (bProdDollars)) begin
+        //        move (Escomp.Q1_X_$ + Esitem.Est_$1) to Escomp.Q1_X_$
+        //        move (Escomp.Q2_X_$ + Esitem.Est_$1) to Escomp.Q2_X_$
+        //        move (Escomp.Q3_X_$ + Esitem.Est_$1) to Escomp.Q3_X_$
+        //    end
+        //    //
+        //    if ((bFreight) and (bProdDollars)) begin
+        //        move (Escomp.Q1_Frt_$ + Esitem.Est_$1) to Escomp.Q1_Frt_$
+        //        move (Escomp.Q2_Frt_$ + Esitem.Est_$1) to Escomp.Q2_Frt_$
+        //        move (Escomp.Q3_Frt_$ + Esitem.Est_$1) to Escomp.Q3_Frt_$
+        //    end
+        //    //
+        //end // if not (bMultiValue)
+        //
+        // now lets retotal dollars and hours in component
+        move (Escomp.Q1_Lbr_$ + Escomp.Q1_Mtl_$ +Escomp.Q1_PP_$ +Escomp.Q1_Pur_$) to Escomp.Q1_TTL_$
+        move (Escomp.Q2_Lbr_$ + Escomp.Q2_Mtl_$ +Escomp.Q2_PP_$ +Escomp.Q2_Pur_$) to Escomp.Q2_TTL_$
+        move (Escomp.Q3_Lbr_$ + Escomp.Q3_Mtl_$ +Escomp.Q3_PP_$ +Escomp.Q3_Pur_$) to Escomp.Q3_TTL_$
+        // BC 12/03
+        move (Escomp.Q1_Lbr_Sell + Escomp.Q1_Mtl_Sell +Escomp.Q1_PP_Sell +Escomp.Q1_Pur_Sell) to Escomp.Q1_TTL_Sell
+        move (Escomp.Q2_Lbr_Sell + Escomp.Q2_Mtl_Sell +Escomp.Q2_PP_Sell +Escomp.Q2_Pur_Sell) to Escomp.Q2_TTL_Sell
+        move (Escomp.Q3_Lbr_Sell + Escomp.Q3_Mtl_Sell +Escomp.Q3_PP_Sell +Escomp.Q3_Pur_Sell) to Escomp.Q3_TTL_Sell
+        //        
+    End_Procedure   // Update
+
+    // Backout:
+    Procedure Backout
+        Integer bArt bPrep bPress bBind bLabor bHelper bMatl bPaper bPurch
+        Integer bXuser bFreight bProdDollars bProdHours bMultiValue
+        Number  nProdUnits1 nProdUnits2 nProdUnits3
+        //
+        Forward Send Backout
+        // Insert Code Here
+
+        // Subtract sales tax from quote again
+//        Subtract Quotedtl.TaxAmount                                     from Quotehdr.TaxTotal
+//        Subtract Quotedtl.Amount                                        from Quotehdr.SubTotal
+//        Move (Quotehdr.TaxTotal+Quotehdr.SubTotal)                      to Quotehdr.Amount
+        
+        If (Operation_Mode = MODE_DELETING) Move "Y" to Escomp.Needs_calced
+        //
+        subtract 1 from Escomp.Item_count
+        if Escomp.Item_count eq 0 begin
+            move "N" to Escomp.Needs_calced
+            //move "N" to Escomp.Needs_subs
+        end
+        //
+        // BC 12/03 if Jcoper.Nickname eq "QUANTITIES" procedure_return
+        //
+        // BC 12/03 if (Esitem.Prod_units_type="#" or Esitem.Prod_units_type="") procedure_return
+        if ((Jcoper.Est_Formula_Typ="#" or Jcoper.Est_Formula_Typ="") and Jcoper.Sell_Formula="") ; 
+            procedure_return
+        //
+        if "1" in Jcoper.Optype move DFTRUE to bArt
+        if "2" in Jcoper.Optype move DFTRUE to bPrep
+        if "3" in Jcoper.Optype move DFTRUE to bPress
+        if "4" in Jcoper.Optype move DFTRUE to bBind
+        if Jcoper.Optype in "L0|L1|L2|L3|L4|H0|H1|H2|H3|H4" move DFTRUE to bLabor
+        if "H" in Jcoper.Optype move DFTRUE to bHelper
+        if Jcoper.Optype in "M0|M1|M2|M3|M4" move DFTRUE to bMatl
+        if Jcoper.Optype eq "PP" move DFTRUE to bPaper
+        if Jcoper.Optype in "P0|P1|P2|P3|P4" move DFTRUE to bPurch
+        if "X" in Jcoper.Optype move DFTRUE to bXuser
+        if "F" in Jcoper.Optype move DFTRUE to bFreight
+        if Esitem.Prod_units_type eq "$" move DFTRUE to bProdDollars
+        if Esitem.Prod_units_type eq ":" move DFTRUE to bProdHours
+        if "V" in Jcoper.Calc_flags move DFTRUE to bMultiValue
+        //
+        move (Esitem.Prod_units1*100) to nProdUnits1
+        move (round(nProdUnits1)) to nProdUnits1
+        move (nProdUnits1/100) to nProdUnits1
+        move (Esitem.Prod_units2*100) to nProdUnits2
+        move (round(nProdUnits2)) to nProdUnits2
+        move (nProdUnits2/100) to nProdUnits2
+        move (Esitem.Prod_units3*100) to nProdUnits3
+        move (round(nProdUnits3)) to nProdUnits3
+        move (nProdUnits3/100) to nProdUnits3
+        //
+        // BC 12/03 if (bMultiValue) begin
+            //
+            if (bArt) begin
+                move (Escomp.Q1_Art_$ - Esitem.Est_$1) to Escomp.Q1_Art_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Art_Hrs - nProdUnits1) to Escomp.Q1_Art_Hrs
+                move (Escomp.Q2_Art_$ - Esitem.Est_$2) to Escomp.Q2_Art_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Art_Hrs - nProdUnits2) to Escomp.Q2_Art_Hrs
+                move (Escomp.Q3_Art_$ - Esitem.Est_$3) to Escomp.Q3_Art_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Art_Hrs - nProdUnits3) to Escomp.Q3_Art_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Art_Sell - Esitem.Sell_1) to Escomp.Q1_Art_Sell
+                move (Escomp.Q2_Art_Sell - Esitem.Sell_2) to Escomp.Q2_Art_Sell
+                move (Escomp.Q3_Art_Sell - Esitem.Sell_3) to Escomp.Q3_Art_Sell
+            end // if (bArt)
+            //
+            if (bPrep) begin
+                move (Escomp.Q1_Prep_$ - Esitem.Est_$1) to Escomp.Q1_Prep_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Prep_Hrs - nProdUnits1) to Escomp.Q1_Prep_Hrs
+                move (Escomp.Q2_Prep_$ - Esitem.Est_$2) to Escomp.Q2_Prep_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Prep_Hrs - nProdUnits2) to Escomp.Q2_Prep_Hrs
+                move (Escomp.Q3_Prep_$ - Esitem.Est_$3) to Escomp.Q3_Prep_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Prep_Hrs - nProdUnits3) to Escomp.Q3_Prep_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Prep_Sell - Esitem.Sell_1) to Escomp.Q1_Prep_Sell
+                move (Escomp.Q2_Prep_Sell - Esitem.Sell_2) to Escomp.Q2_Prep_Sell
+                move (Escomp.Q3_Prep_Sell - Esitem.Sell_3) to Escomp.Q3_Prep_Sell
+            end // if (bPrep)
+            //
+            if (bPress) begin
+                move (Escomp.Q1_Press_$ - Esitem.Est_$1) to Escomp.Q1_Press_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Press_Hrs - nProdUnits1) to Escomp.Q1_Press_Hrs
+                move (Escomp.Q2_Press_$ - Esitem.Est_$2) to Escomp.Q2_Press_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Press_Hrs - nProdUnits2) to Escomp.Q2_Press_Hrs
+                move (Escomp.Q3_Press_$ - Esitem.Est_$3) to Escomp.Q3_Press_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Press_Hrs - nProdUnits3) to Escomp.Q3_Press_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Press_Sell - Esitem.Sell_1) to Escomp.Q1_Press_Sell
+                move (Escomp.Q2_Press_Sell - Esitem.Sell_2) to Escomp.Q2_Press_Sell
+                move (Escomp.Q3_Press_Sell - Esitem.Sell_3) to Escomp.Q3_Press_Sell
+            end // if (bPress)
+            //
+            if (bBind) begin
+                move (Escomp.Q1_Bind_$ - Esitem.Est_$1) to Escomp.Q1_Bind_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Bind_Hrs - nProdUnits1) to Escomp.Q1_Bind_Hrs
+                move (Escomp.Q2_Bind_$ - Esitem.Est_$2) to Escomp.Q2_Bind_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Bind_Hrs - nProdUnits2) to Escomp.Q2_Bind_Hrs
+                move (Escomp.Q3_Bind_$ - Esitem.Est_$3) to Escomp.Q3_Bind_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Bind_Hrs - nProdUnits3) to Escomp.Q3_Bind_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Bind_Sell - Esitem.Sell_1) to Escomp.Q1_Bind_Sell
+                move (Escomp.Q2_Bind_Sell - Esitem.Sell_2) to Escomp.Q2_Bind_Sell
+                move (Escomp.Q3_Bind_Sell - Esitem.Sell_3) to Escomp.Q3_Bind_Sell
+            end // if (bBind)
+            //
+            if (bLabor) begin
+                move (Escomp.Q1_Lbr_$ - Esitem.Est_$1) to Escomp.Q1_Lbr_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q1_Lbr_Hrs - nProdUnits1) to Escomp.Q1_LBR_Hrs
+                move (Escomp.Q2_Lbr_$ - Esitem.Est_$2) to Escomp.Q2_Lbr_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q2_Lbr_Hrs - nProdUnits2) to Escomp.Q2_Lbr_Hrs
+                move (Escomp.Q3_Lbr_$ - Esitem.Est_$3) to Escomp.Q3_Lbr_$
+                if ((bProdHours) and not (bHelper)) move ;
+                    (Escomp.Q3_Lbr_Hrs - nProdUnits3) to Escomp.Q3_Lbr_Hrs
+                // BC 12/03
+                move (Escomp.Q1_Lbr_Sell - Esitem.Sell_1) to Escomp.Q1_Lbr_Sell
+                move (Escomp.Q2_Lbr_Sell - Esitem.Sell_2) to Escomp.Q2_Lbr_Sell
+                move (Escomp.Q3_Lbr_Sell - Esitem.Sell_3) to Escomp.Q3_Lbr_Sell
+            end // if (bLabor)
+            //
+            if ((bMatl) and (bProdDollars)) begin
+                move (Escomp.Q1_Mtl_$ - Esitem.Est_$1) to Escomp.Q1_Mtl_$
+                move (Escomp.Q2_Mtl_$ - Esitem.Est_$2) to Escomp.Q2_Mtl_$
+                move (Escomp.Q3_Mtl_$ - Esitem.Est_$3) to Escomp.Q3_Mtl_$
+                // BC 12/03
+                move (Escomp.Q1_Mtl_Sell - Esitem.Sell_1) to Escomp.Q1_Mtl_Sell
+                move (Escomp.Q2_Mtl_Sell - Esitem.Sell_2) to Escomp.Q2_Mtl_Sell
+                move (Escomp.Q3_Mtl_Sell - Esitem.Sell_3) to Escomp.Q3_Mtl_Sell
+            end
+            //
+            if ((bPaper) and (bProdDollars)) begin
+                move (Escomp.Q1_PP_$ - Esitem.Est_$1) to Escomp.Q1_PP_$
+                move (Escomp.Q2_PP_$ - Esitem.Est_$2) to Escomp.Q2_PP_$
+                move (Escomp.Q3_PP_$ - Esitem.Est_$3) to Escomp.Q3_PP_$
+                // BC 12/03
+                move (Escomp.Q1_PP_Sell - Esitem.Sell_1) to Escomp.Q1_PP_Sell
+                move (Escomp.Q2_PP_Sell - Esitem.Sell_2) to Escomp.Q2_PP_Sell
+                move (Escomp.Q3_PP_Sell - Esitem.Sell_3) to Escomp.Q3_PP_Sell
+            end
+            //
+            if ((bPurch) and (bProdDollars)) begin
+                move (Escomp.Q1_Pur_$ - Esitem.Est_$1) to Escomp.Q1_Pur_$
+                move (Escomp.Q2_Pur_$ - Esitem.Est_$2) to Escomp.Q2_Pur_$
+                move (Escomp.Q3_Pur_$ - Esitem.Est_$3) to Escomp.Q3_Pur_$
+                // BC 12/03
+                move (Escomp.Q1_Pur_Sell - Esitem.Sell_1) to Escomp.Q1_Pur_Sell
+                move (Escomp.Q2_Pur_Sell - Esitem.Sell_2) to Escomp.Q2_Pur_Sell
+                move (Escomp.Q3_Pur_Sell - Esitem.Sell_3) to Escomp.Q3_Pur_Sell
+            end
+            //
+            if ((bXuser) and (bProdDollars)) begin
+                move (Escomp.Q1_X_$ - Esitem.Est_$1) to Escomp.Q1_X_$
+                move (Escomp.Q2_X_$ - Esitem.Est_$2) to Escomp.Q2_X_$
+                move (Escomp.Q3_X_$ - Esitem.Est_$3) to Escomp.Q3_X_$
+                // BC 12/03
+                move (Escomp.Q1_X_Sell - Esitem.Sell_1) to Escomp.Q1_X_Sell
+                move (Escomp.Q2_X_Sell - Esitem.Sell_2) to Escomp.Q2_X_Sell
+                move (Escomp.Q3_X_Sell - Esitem.Sell_3) to Escomp.Q3_X_Sell
+            end
+            //
+            if ((bFreight) and (bProdDollars)) begin
+                move (Escomp.Q1_Frt_$ - Esitem.Est_$1) to Escomp.Q1_Frt_$
+                move (Escomp.Q2_Frt_$ - Esitem.Est_$2) to Escomp.Q2_Frt_$
+                move (Escomp.Q3_Frt_$ - Esitem.Est_$3) to Escomp.Q3_Frt_$
+                // BC 12/03
+                move (Escomp.Q1_Frt_Sell - Esitem.Sell_1) to Escomp.Q1_Frt_Sell
+                move (Escomp.Q2_Frt_Sell - Esitem.Sell_2) to Escomp.Q2_Frt_Sell
+                move (Escomp.Q3_Frt_Sell - Esitem.Sell_3) to Escomp.Q3_Frt_Sell
+            end
+            //
+        // BC 12/03 end // if (bMultiValue)
+        //
+        // BC 12/03 not bMultivalue block no longer needed
+        //if not (bMultiValue) begin
+        //    // amounts for fixed costs must still be copied to qty2  3
+        //    // move q1 values to q1 values!
+        //    // this bother is to allow for unforseen setups by users
+        //    // in the areas normally that would be all fixed costs
+        //    if (bArt) begin
+        //        move (Escomp.Q1_Art_$ - Esitem.Est_$1) to Escomp.Q1_Art_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Art_Hrs - nProdUnits1) to Escomp.Q1_Art_Hrs
+        //        move (Escomp.Q2_Art_$ - Esitem.Est_$1) to Escomp.Q2_Art_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Art_Hrs - nProdUnits1) to Escomp.Q2_Art_Hrs
+        //        move (Escomp.Q3_Art_$ - Esitem.Est_$1) to Escomp.Q3_Art_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Art_Hrs - nProdUnits1) to Escomp.Q3_Art_Hrs
+        //    end // if (bArt)
+        //    //
+        //    if (bPrep) begin
+        //        move (Escomp.Q1_Prep_$ - Esitem.Est_$1) to Escomp.Q1_Prep_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Prep_Hrs - nProdUnits1) to Escomp.Q1_Prep_Hrs
+        //        move (Escomp.Q2_Prep_$ - Esitem.Est_$1) to Escomp.Q2_Prep_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Prep_Hrs - nProdUnits1) to Escomp.Q2_Prep_Hrs
+        //        move (Escomp.Q3_Prep_$ - Esitem.Est_$1) to Escomp.Q3_Prep_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Prep_Hrs - nProdUnits1) to Escomp.Q3_Prep_Hrs
+        //    end // if (bPrep)
+        //    //
+        //    if (bPress) begin
+        //        move (Escomp.Q1_Press_$ - Esitem.Est_$1) to Escomp.Q1_Press_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Press_Hrs - nProdUnits1) to Escomp.Q1_Press_Hrs
+        //        move (Escomp.Q2_Press_$ - Esitem.Est_$1) to Escomp.Q2_Press_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Press_Hrs - nProdUnits1) to Escomp.Q2_Press_Hrs
+        //        move (Escomp.Q3_Press_$ - Esitem.Est_$1) to Escomp.Q3_Press_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Press_Hrs - nProdUnits1) to Escomp.Q3_Press_Hrs
+        //    end // if (bPress)
+        //    //
+        //    if (bBind) begin
+        //        move (Escomp.Q1_Bind_$ - Esitem.Est_$1) to Escomp.Q1_Bind_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Bind_Hrs - nProdUnits1) to Escomp.Q1_Bind_Hrs
+        //        move (Escomp.Q2_Bind_$ - Esitem.Est_$1) to Escomp.Q2_Bind_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Bind_Hrs - nProdUnits1) to Escomp.Q2_Bind_Hrs
+        //        move (Escomp.Q3_Bind_$ - Esitem.Est_$1) to Escomp.Q3_Bind_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Bind_Hrs - nProdUnits1) to Escomp.Q3_Bind_Hrs
+        //    end // if (bBind)
+        //    //
+        //    if (bLabor) begin
+        //        move (Escomp.Q1_Lbr_$ - Esitem.Est_$1) to Escomp.Q1_Lbr_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q1_Lbr_Hrs - nProdUnits1) to Escomp.Q1_LBR_Hrs
+        //        move (Escomp.Q2_Lbr_$ - Esitem.Est_$1) to Escomp.Q2_Lbr_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q2_Lbr_Hrs - nProdUnits1) to Escomp.Q2_Lbr_Hrs
+        //        move (Escomp.Q3_Lbr_$ - Esitem.Est_$1) to Escomp.Q3_Lbr_$
+        //        if ((bProdHours) and not (bHelper)) move ;
+        //            (Escomp.Q3_Lbr_Hrs - nProdUnits1) to Escomp.Q3_Lbr_Hrs
+        //    end // if (bLabor)
+        //    //
+        //    if ((bMatl) and (bProdDollars)) begin
+        //        move (Escomp.Q1_Mtl_$ - Esitem.Est_$1) to Escomp.Q1_Mtl_$
+        //        move (Escomp.Q2_Mtl_$ - Esitem.Est_$1) to Escomp.Q2_Mtl_$
+        //        move (Escomp.Q3_Mtl_$ - Esitem.Est_$1) to Escomp.Q3_Mtl_$
+        //    end
+        //    //
+        //    if ((bPaper) and (bProdDollars)) begin
+        //        move (Escomp.Q1_PP_$ - Esitem.Est_$1) to Escomp.Q1_PP_$
+        //        move (Escomp.Q2_PP_$ - Esitem.Est_$1) to Escomp.Q2_PP_$
+        //        move (Escomp.Q3_PP_$ - Esitem.Est_$1) to Escomp.Q3_PP_$
+        //    end
+        //    //
+        //    if ((bPurch) and (bProdDollars)) begin
+        //        move (Escomp.Q1_Pur_$ - Esitem.Est_$1) to Escomp.Q1_Pur_$
+        //        move (Escomp.Q2_Pur_$ - Esitem.Est_$1) to Escomp.Q2_Pur_$
+        //        move (Escomp.Q3_Pur_$ - Esitem.Est_$1) to Escomp.Q3_Pur_$
+        //    end
+        //    //
+        //    if ((bXuser) and (bProdDollars)) begin
+        //        move (Escomp.Q1_X_$ - Esitem.Est_$1) to Escomp.Q1_X_$
+        //        move (Escomp.Q2_X_$ - Esitem.Est_$1) to Escomp.Q2_X_$
+        //        move (Escomp.Q3_X_$ - Esitem.Est_$1) to Escomp.Q3_X_$
+        //    end
+        //    //
+        //    if ((bFreight) and (bProdDollars)) begin
+        //        move (Escomp.Q1_Frt_$ - Esitem.Est_$1) to Escomp.Q1_Frt_$
+        //        move (Escomp.Q2_Frt_$ - Esitem.Est_$1) to Escomp.Q2_Frt_$
+        //        move (Escomp.Q3_Frt_$ - Esitem.Est_$1) to Escomp.Q3_Frt_$
+        //    end
+        //    //
+        //end // if not (bMultiValue)
+        //
+        // now lets retotal dollars and hours in component
+        move (Escomp.Q1_Lbr_$ + Escomp.Q1_Mtl_$ +Escomp.Q1_PP_$ +Escomp.Q1_Pur_$) to Escomp.Q1_TTL_$
+        move (Escomp.Q2_Lbr_$ + Escomp.Q2_Mtl_$ +Escomp.Q2_PP_$ +Escomp.Q2_Pur_$) to Escomp.Q2_TTL_$
+        Move (Escomp.Q3_Lbr_$ + Escomp.Q3_Mtl_$ +Escomp.Q3_PP_$ +Escomp.Q3_Pur_$) to Escomp.Q3_TTL_$
+        // BC 12/03
+        move (Escomp.Q1_Lbr_Sell + Escomp.Q1_Mtl_Sell +Escomp.Q1_PP_Sell +Escomp.Q1_Pur_Sell) to Escomp.Q1_TTL_Sell
+        move (Escomp.Q2_Lbr_Sell + Escomp.Q2_Mtl_Sell +Escomp.Q2_PP_Sell +Escomp.Q2_Pur_Sell) to Escomp.Q2_TTL_Sell
+        move (Escomp.Q3_Lbr_Sell + Escomp.Q3_Mtl_Sell +Escomp.Q3_PP_Sell +Escomp.Q3_Pur_Sell) to Escomp.Q3_TTL_Sell
+        //
+    End_Procedure   // Backout
+
+    // Creating:
+    Procedure Creating
+        Forward Send Creating
+        //
+        Move Escomp.ESTIMATE_ID         to Esitem.ESTIMATE_ID
+        Add 1                           to Escomp.Next_item_no
+        Move (Escomp.Next_item_no * 10) to Esitem.Line_number
+        //
+        If (Esitem.MastOpsIdno>0 or Jcoper.MAST_OPS_IDNO>0) Begin // On Regular Item, If set Use Default MastOps
+            Move (If(Esitem.MastOpsIdno<>0,Esitem.MastOpsIdno,Jcoper.MAST_OPS_IDNO)) to MastOps.MastOpsIdno
+            Find EQ MastOps by Index.1
+            If ((Found) and MastOps.Status = "A") Begin
+                // Adding Default Description and MastOps to the EsItem Record
+                Move MastOps.MastOpsIdno to Esitem.MastOpsIdno
+                Move MastOps.Description to Esitem.INSTRUCTION
+                Move Escomp.NEXT_ITEM_NO to Esitem.Sequence
+            End    
+        End        
+        
+    End_Procedure   // Creating
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    // Field_Defaults
+
+    function EditStatus returns string
+        local string sStatus sCalcFlags
+        move "*" to sStatus
+        get File_Field_Current_Value file_field Jcoper.Calc_flags to sCalcFlags
+        if "D" in sCalcFlags if not "O" in sCalcFlags move "" to sStatus
+        if Esitem.Instruction ne "" append sStatus "T"
+        function_return sStatus
+    end_function
+
+    procedure Request_Find integer iMode integer iFile integer iIndex
+        set pbCalcFlag to false
+        forward send Request_Find iMode iFile iIndex
+    end_procedure
+
+    Procedure Deleting
+        Forward Send Deleting
+    End_Procedure
+
+    Procedure OnNewCurrentRecord RowID riOldRowId RowID riNewRowId
+        Forward Send OnNewCurrentRecord riOldRowId riNewRowId
+        If (IsNullRowID(riNewRowId)) Begin
+            Integer iNull
+            Move 0 to iNull
+        End
+    End_Procedure
+
+    Procedure Save_Main_File
+        Forward Send Save_Main_File
+    End_Procedure
+
+    Procedure OnSaveRecord
+        Forward Send OnSaveRecord
+    End_Procedure
+    
+    
+
+End_Class
+
+
+

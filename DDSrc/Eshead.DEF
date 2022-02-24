@@ -1,0 +1,169 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Eshead (# 56)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Eshead
+  USER DISPLAY NAME         : Eshead
+  DATAFLEX FILE NAME        : Eshead
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 2078      ( USED: 2078 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 499 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ESTIMATE_ID      NUM   10.0     1  1   
+  2  COMP_COUNT       NUM    5.0    12      
+  3  NEXT_COMP_NO     NUM    5.0    18      
+  4  TITLE            ASC     50    24      
+  5  PRODCODE         ASC      6    74      
+  6  CUSTOMER         ASC      5    80      
+  7  SLS_REP          NUM    5.0    85      
+  8  ESTIMATOR        ASC      3    91      
+  9  CREATION_DATE    DAT     10    94      
+ 10  REVISION_DATE    DAT     10   117      
+ 11  REVISION_NO      NUM    5.0   140      
+ 12  NEEDS_CALCED     ASC      1   146      
+ 13  Q1_ART_$         NUM    8.2   147      
+ 14  Q1_ART_SELL      NUM    8.2   159      
+ 15  Q1_ART_HRS       NUM    6.2   171      
+ 16  Q2_ART_$         NUM    8.2   181      
+ 17  Q2_ART_SELL      NUM    8.2   193      
+ 18  Q2_ART_HRS       NUM    6.2   205      
+ 19  Q3_ART_$         NUM    8.2   215      
+ 20  Q3_ART_SELL      NUM    8.2   227      
+ 21  Q3_ART_HRS       NUM    6.2   239      
+ 22  Q1_PREP_$        NUM    8.2   249      
+ 23  Q1_PREP_SELL     NUM    8.2   261      
+ 24  Q1_PREP_HRS      NUM    6.2   273      
+ 25  Q2_PREP_$        NUM    8.2   283      
+ 26  Q2_PREP_SELL     NUM    8.2   295      
+ 27  Q2_PREP_HRS      NUM    6.2   307      
+ 28  Q3_PREP_$        NUM    8.2   317      
+ 29  Q3_PREP_SELL     NUM    8.2   329      
+ 30  Q3_PREP_HRS      NUM    6.2   341      
+ 31  Q1_PRESS_$       NUM    8.2   351      
+ 32  Q1_PRESS_SELL    NUM    8.2   363      
+ 33  Q1_PRESS_HRS     NUM    6.2   375      
+ 34  Q2_PRESS_$       NUM    8.2   385      
+ 35  Q2_PRESS_SELL    NUM    8.2   397      
+ 36  Q2_PRESS_HRS     NUM    6.2   409      
+ 37  Q3_PRESS_$       NUM    8.2   419      
+ 38  Q3_PRESS_SELL    NUM    8.2   431      
+ 39  Q3_PRESS_HRS     NUM    6.2   443      
+ 40  Q1_BIND_$        NUM    8.2   453      
+ 41  Q1_BIND_SELL     NUM    8.2   465      
+ 42  Q1_BIND_HRS      NUM    6.2   477      
+ 43  Q2_BIND_$        NUM    8.2   487      
+ 44  Q2_BIND_SELL     NUM    8.2   499      
+ 45  Q2_BIND_HRS      NUM    6.2   511      
+ 46  Q3_BIND_$        NUM    8.2   521      
+ 47  Q3_BIND_SELL     NUM    8.2   533      
+ 48  Q3_BIND_HRS      NUM    6.2   545      
+ 49  Q1_LBR_$         NUM    8.2   555      
+ 50  Q1_LBR_SELL      NUM    8.2   567      
+ 51  Q1_LBR_HRS       NUM    6.2   579      
+ 52  Q2_LBR_$         NUM    8.2   589      
+ 53  Q2_LBR_SELL      NUM    8.2   601      
+ 54  Q2_LBR_HRS       NUM    6.2   613      
+ 55  Q3_LBR_$         NUM    8.2   623      
+ 56  Q3_LBR_SELL      NUM    8.2   635      
+ 57  Q3_LBR_HRS       NUM    6.2   647      
+ 58  Q1_MTL_$         NUM    8.2   657      
+ 59  Q1_MTL_SELL      NUM    8.2   669      
+ 60  Q2_MTL_$         NUM    8.2   681      
+ 61  Q2_MTL_SELL      NUM    8.2   693      
+ 62  Q3_MTL_$         NUM    8.2   705      
+ 63  Q3_MTL_SELL      NUM    8.2   717      
+ 64  Q1_PP_$          NUM    8.2   729      
+ 65  Q1_PP_SELL       NUM    8.2   741      
+ 66  Q2_PP_$          NUM    8.2   753      
+ 67  Q2_PP_SELL       NUM    8.2   765      
+ 68  Q3_PP_$          NUM    8.2   777      
+ 69  Q3_PP_SELL       NUM    8.2   789      
+ 70  Q1_PUR_$         NUM    8.2   801      
+ 71  Q1_PUR_SELL      NUM    8.2   813      
+ 72  Q2_PUR_$         NUM    8.2   825      
+ 73  Q2_PUR_SELL      NUM    8.2   837      
+ 74  Q3_PUR_$         NUM    8.2   849      
+ 75  Q3_PUR_SELL      NUM    8.2   861      
+ 76  Q1_TTL_$         NUM    8.2   873      
+ 77  Q1_TTL_SELL      NUM    8.2   885      
+ 78  Q2_TTL_$         NUM    8.2   897      
+ 79  Q2_TTL_SELL      NUM    8.2   909      
+ 80  Q3_TTL_$         NUM    8.2   921      
+ 81  Q3_TTL_SELL      NUM    8.2   933      
+ 82  Q1_X_$           NUM    8.2   945      
+ 83  Q1_X_SELL        NUM    8.2   957      
+ 84  Q2_X_$           NUM    8.2   969      
+ 85  Q2_X_SELL        NUM    8.2   981      
+ 86  Q3_X_$           NUM    8.2   993      
+ 87  Q3_X_SELL        NUM    8.2  1005      
+ 88  Q1_FRT_$         NUM    8.2  1017      
+ 89  Q1_FRT_SELL      NUM    8.2  1029      
+ 90  Q2_FRT_$         NUM    8.2  1041      
+ 91  Q2_FRT_SELL      NUM    8.2  1053      
+ 92  Q3_FRT_$         NUM    8.2  1065      
+ 93  Q3_FRT_SELL      NUM    8.2  1077      
+ 94  QTY1             NUM   10.0  1089      
+ 95  QTY2             NUM   10.0  1100      
+ 96  QTY3             NUM   10.0  1111      
+ 97  SPECS1           ASC     50  1122      
+ 98  SPECS2           ASC     50  1172      
+ 99  SPECS3           ASC     50  1222      
+100  SPECS4           ASC     50  1272      
+101  LOCKED           ASC      1  1322      
+102  WIDTH            NUM    2.4  1323      
+103  LENGTH           NUM    2.4  1331      
+104  REFERENCE_ID     NUM   10.0  1339      
+105  UPDATES          NUM   10.0  1350      
+106  ESTNUM           NUM   10.0  1361      
+107  TRIGGER_OPCODE   NUM   10.0  1372      
+108  FILE_ID          ASC     20  1383      
+109  FILE_NAME        ASC    255  1403      
+110  FILE_URL         ASC    255  1658      
+111  DIVISION_CODE    ASC      1  1913      
+112  CustomerIdno     NUM   10.0  1914  4   
+113  LocationIdno     NUM   10.0  1925  3   Location.FIELD_2 (3,2)
+114  ContactIdno      NUM   10.0  1936  5   Contact.FIELD_2 (6,2)
+115  RepIdno          NUM   10.0  1947      SalesRep.FIELD_1 (5,1)
+116  QuoteReference   NUM   10.0  1958      
+117  OrderReference   NUM   10.0  1969  6   
+118  LockedFlag       NUM    5.0  1980      
+119  TotalSell        NUM    8.4  1986      
+120  WorkType         ASC      2  2000      
+121  BillingType      ASC      2  2002      
+122  Status           ASC      2  2004      
+123  OrderDate        DAT     10  2006      
+124  TaxTotal         NUM    8.4  2029      
+125  SubTotal         NUM    8.4  2043      
+126  CloneReference   NUM   10.0  2057      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ESTIMATE_ID     NO  NO       0      0       1     ON-LINE
+
+  2    ESTIMATE_ID     YES NO       0      0       1     ON-LINE
+
+  3    LocationIdno    NO  NO       0      0       2     ON-LINE
+       ESTIMATE_ID     NO  NO 
+
+  4    CustomerIdno    NO  NO       0      0       2     ON-LINE
+       ESTIMATE_ID     NO  NO 
+
+  5    ContactIdno     NO  NO       0      0       2     ON-LINE
+       ESTIMATE_ID     NO  NO 
+
+  6    OrderReference  NO  NO       0      0       2     ON-LINE
+       ESTIMATE_ID     NO  NO 
+

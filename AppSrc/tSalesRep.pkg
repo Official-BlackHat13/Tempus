@@ -1,0 +1,18 @@
+// tSalesRep.pkg
+// used to update remote server data
+
+Struct tSalesRep
+    Integer    iRecId
+    Integer    iRepIdno
+    String     sFirstName
+    String     sLastName
+    String     sAddress1
+    String     sCity
+    String     sState
+    String     sZip
+    String     sPhone1
+    String     sPhone2
+    String     sEmailAddress
+    String     sStatus
+    Integer    iChangedFlag
+End_Struct // tSalesRep

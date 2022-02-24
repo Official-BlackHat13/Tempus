@@ -1,0 +1,283 @@
+// Instruction.DG
+
+Use GlobalAllEnt.pkg
+Use cGlblDbEdit.pkg
+Use OPCODEHP.DG
+
+// include the necessary files and DD packages
+// system parameter file
+open Jcpars
+// common
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+use Jcoper.dd
+// Order Maintenance
+#IFDEF CE_CALC_ORDER
+use Jcreps.dd
+use Jccust.dd
+use Jccrep.dd
+use Jcorep.dd
+use Jccntc.dd
+use Jcprod.dd
+use Jcjobs.dd
+use Esjcmp.dd
+use Esjitm.dd
+#ENDIF
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+use Eshead.dd
+use Escomp.dd
+use Esitem.dd
+#ENDIF
+// Component Library
+#IFDEF CE_CALC_LIBRARY
+use Esctyp.dd
+use Esclib.dd
+use Eslitm.dd
+#ENDIF
+
+Object oInstructionDialog is a dbModalPanel
+    Set Size to 92 135
+
+    property integer phServer 0
+    property integer piFile   0
+    property integer piField  0
+
+    set Locate_Mode  to CENTER_ON_PANEL
+    //set SysMenu_Icon to false
+    set Border_Style to Border_None
+    set GUILocation  to 322 94
+    set GUISize      to 168 580
+
+// Data dictionary objects
+#IFDEF CE_CALC_TEST
+    // no DDO's are used
+#ELSE
+    // common
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    end_object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(self))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to (Jccntr_DD(self))
+    End_Object    // Jcoper_DD
+    // Order Maintenance
+    #IFDEF CE_CALC_ORDER
+
+    Object Jcreps_DD is a Jcreps_DataDictionary
+    End_Object // Jcreps_DD
+
+    Object Jccust_DD is a Jccust_DataDictionary
+        Set DDO_Server to (Jcreps_DD(self))
+    End_Object // Jccust_DD
+
+    Object Jccrep_DD is a Jccrep_DataDictionary
+    End_Object    // Jccrep_DD
+
+    Object Jcorep_DD is a Jcorep_DataDictionary
+    End_Object    // Jcorep_DD
+
+    Object Jccntc_DD is a Jccntc_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jccrep_DD(self))
+    End_Object    // Jccntc_DD
+
+    Object Jcprod_DD is a Jcprod_DataDictionary
+    End_Object    // Jcprod_DD
+
+    Object Jcjobs_DD is a Jcjobs_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jcprod_DD(self))
+        Set DDO_Server to (Jcorep_DD(self))
+        Set DDO_Server to (Jccntc_DD(self))
+    End_Object    // Jcjobs_DD
+
+    Object Esjcmp_DD is a Esjcmp_DataDictionary
+        Set DDO_Server to (Jcjobs_DD(self))
+    End_Object    // Esjcmp_DD
+
+    Object Esjitm_DD is a Esjitm_DataDictionary
+        Set DDO_Server to (Esjcmp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+        // no log
+        set pbUsesSystemLog to FALSE
+        set phServer        to self
+        set piFile          to Esjitm.File_number
+        set piField         to 53
+        //
+        send DefineExtendedField field Esjitm.Instruction
+    End_Object // Esjitm_DD
+
+    #ENDIF // #IFDEF CE_CALC_ORDER
+    // Estimating
+    #IFDEF CE_CALC_ESTIMATE
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object // oSalesTaxGroup_DD
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oCustomer_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oSalesTaxGroup_DD
+    End_Object // oLocation_DD
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object // oSalesRep_DD
+
+    Object oSnowrep_DD is a cSnowrepDataDictionary
+    End_Object // oSnowrep_DD
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oSnowrep_DD
+        Set DDO_Server to oSalesrep_DD
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object Eshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oLocation_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oSalesRep_DD
+    End_Object    // Eshead_DD
+
+    Object Escomp_DD is a Escomp_DataDictionary
+        Set DDO_Server to (Eshead_DD(self))
+    End_Object    // Escomp_DD
+
+    Object Esitem_DD is a Esitem_DataDictionary
+        Set DDO_Server to (Escomp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+        set phServer   to self
+        set piFile     to Esitem.File_number
+        set piField    to 52
+        //
+        send DefineExtendedField field Esitem.Instruction
+    End_Object // Esitem_DD
+
+    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+    // component library
+    #IFDEF CE_CALC_LIBRARY
+
+    Object Esctyp_DD is a Esctyp_DataDictionary
+    End_Object    // Esctyp_DD
+
+    Object Esclib_DD is a Esclib_DataDictionary
+        Set DDO_Server to (Esctyp_DD(self))
+    End_Object    // Esclib_DD
+
+    Object Eslitm_DD is a Eslitm_DataDictionary
+        set DDO_Server to (Esclib_DD(self))
+        set DDO_Server to (Jcoper_DD(self))
+        set phServer   to self
+        set piFile     to Eslitm.File_number
+        set piField    to 52
+        //
+        send DefineExtendedField field Eslitm.Instruction
+    End_Object // Eslitm_DD
+
+    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+#ENDIF // #IFDEF CE_CALC_TEST
+
+    Set Main_DD to (phServer(self))
+    Set Server  to (phServer(self))
+
+    object oPrompt is a cGlblTextbox
+        Set GUILocation to 10 15
+        Set GUISize to 20 150
+        set Value to "Instructions"
+    end_object // oPrompt
+
+    Object Item_Instruction is a cGlblDbEdit
+
+        // Order Maintenance
+        #IFDEF CE_PRODUCTION
+        Entry_Item Esjitm.Instruction
+        #ENDIF // #IFDEF CE_PRODUCTION
+        // Estimating
+        #IFDEF CE_CALC_ESTIMATE
+        Entry_Item Esitem.Instruction
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        Entry_Item Eslitm.Instruction
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+        On_Key kSave_Record Send AcceptOk
+        On_Key kCancel Send AcceptOk
+        on_key kClear  send ClearText
+        on_key kHelp   send DisplayHelpFile
+
+        Set GUILocation to 6 125
+        Set GUISize to 135 260
+
+        procedure AcceptOk
+            delegate send AcceptOk
+        end_procedure
+
+        procedure DisplayHelpFile
+            string sStandard
+            //
+            send Refind_Records of (Server(self))
+            //
+            move (string(Jcoper.Opcode) * Jcoper.Name) to sStandard
+            // show it
+            send RetrieveHelp of OpcodeHelpDialog Jcoper.Cstctr_idno Jcoper.Opcode sStandard
+        end_procedure
+
+    End_Object    // Item_Instruction
+
+    Object oOkButton is a Button
+        Set Label to "Ok"
+        Set GUILocation TO 6 393
+        Set GUISize     TO 28 87
+        procedure OnClick
+            send AcceptOk
+        end_procedure
+    End_Object    // oNextButton
+
+    Object oClearButton is a Button
+        Set Label to "Clear"
+        Set GUILocation TO 6 482
+        Set GUISize     TO 28 87
+        procedure OnClick
+            send ClearText
+        end_procedure
+    End_Object    // oCancel_bn
+
+    procedure AcceptOk
+        send Request_Save of (Server(self))
+        send Close_Panel
+    end_procedure
+
+    procedure ClearText
+        send Close_Panel
+    end_procedure
+
+    procedure DoRetrieveText integer iRecnum string sStandard boolean bInitem
+        integer hDD iFile iField
+        //
+        set Label   to sStandard
+        get Server  to hDD
+        get piFile  to iFile
+        get piField to iField
+        //
+        send Clear          of hDD
+        send Find_By_Recnum of hDD iFile iRecnum
+        //
+        send Popup_Modal
+    end_procedure
+
+End_Object    // oInstructionDialog
+
+//AB/ End_Object    // prj

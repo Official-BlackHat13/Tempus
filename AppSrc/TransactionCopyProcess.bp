@@ -1,0 +1,239 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use Employer.DD
+Use Employee.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Object oTransactionCopyProcess is a BusinessProcess
+    
+    Property Integer piCopyFromEmployee
+    Property Integer piCopyToEmployee
+    Property Date pdStartDate
+    Property Date pdStopDate
+
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+    
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oEmployee_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+
+    Function DoCopyTransactions Integer iFromEmpl Integer iToEmpl Date dStart Date dStop String ByRef sErrorMsg Returns Boolean
+        Boolean bFail
+        Handle hoDD
+        String sFromEmpl sToEmpl
+        Integer iTransCount iLoopCount
+        
+        Struct tTransaction
+            Integer iJobNumber
+            Integer iEquipIdno
+            Integer iOpersIdno
+            Integer iAttachIdno
+            Integer iAttachMastOps
+            Integer iAttachOpers
+            Date dStartDate
+            String sStartTime
+            Date dStopDate
+            String sStopTime
+            Integer iQTY
+        End_Struct
+        
+        tTransaction[] Transactions
+        //
+        // Collect additional information for confirmation message 
+        Clear Employee
+        Move iFromEmpl to Employee.EmployeeIdno
+        Find EQ Employee by 1
+        If ((Found) and Employee.EmployeeIdno = iFromEmpl) Begin
+            Move (Employee.FirstName * Employee.LastName) to sFromEmpl
+        End
+        Clear Employee
+        Move iToEmpl to Employee.EmployeeIdno
+        Find EQ Employee by 1
+        If ((Found) and Employee.EmployeeIdno = iToEmpl) Begin
+            Move (Employee.FirstName * Employee.LastName) to sToEmpl
+        End
+        // Post confirmation message
+        Get Confirm ("Copy all Labor Transactions between " + String(dStart) + " and " + String(dStop) + "\n"+;
+                    " --> FROM: ( Empl#: "+ String(iFromEmpl) +" ) " + (Trim(sFromEmpl)) + "\n" +;                    
+                    " --> TO:   ( Empl#: "+ String(iToEmpl) +" ) " + (Trim(sToEmpl))) to bFail
+        If (not(bFail)) Begin         
+            Clear Trans
+            Move iFromEmpl to Trans.EmployeeIdno
+            Move dStart to Trans.StartDate
+            Find GE Trans by 3
+            While ((Found) and Trans.EmployeeIdno = iFromEmpl and Trans.StartDate >= dStart and Trans.StartDate <= dStop)
+                Relate Trans
+                If (MastOps.CostType<>"Material") Begin
+                    Move Trans.JobNumber            to Transactions[iTransCount].iJobNumber
+                    Move Trans.EquipIdno            to Transactions[iTransCount].iEquipIdno
+                    Move Trans.OpersIdno            to Transactions[iTransCount].iOpersIdno
+                    Move Trans.AttachEquipIdno      to Transactions[iTransCount].iAttachIdno
+                    Move Trans.AttachMastOpsIdno    to Transactions[iTransCount].iAttachMastOps
+                    Move Trans.AttachOpersIdno      to Transactions[iTransCount].iAttachOpers
+                    Move Trans.StartDate            to Transactions[iTransCount].dStartDate
+                    Move Trans.StartTime            to Transactions[iTransCount].sStartTime
+                    Move Trans.StopDate             to Transactions[iTransCount].dStopDate
+                    Move Trans.StopTime             to Transactions[iTransCount].sStopTime
+                    Move Trans.Quantity             to Transactions[iTransCount].iQTY    
+                    //
+                    //Showln ("Transaction#" + String(iTransCount) +" - Job#: " + String(Transactions[iTransCount].iJobNumber) + " - Equip#: " + String(Transactions[iTransCount].iEquipIdno) + " - StartDate: " + String(Transactions[iTransCount].dStartDate) + " - StartTime: " + String(Transactions[iTransCount].sStartTime))
+                    Increment iTransCount 
+                End
+                Find GT Trans by 3
+            Loop
+            // Delete existing transactions to avoid doubling up
+            Integer iDelTransCount eResponse
+            Integer[] iDelTransIdno
+            Number nElapsedHours
+            //
+            Send Clear of oTrans_DD
+            Move iToEmpl to Trans.EmployeeIdno
+            Move dStart to Trans.StartDate
+            Send Request_Find of oTrans_DD GE Trans.File_Number 3
+            While ((Found) and Trans.EmployeeIdno = iToEmpl and Trans.StartDate >= dStart and Trans.StartDate <= dStop)
+                Relate Trans
+                If (MastOps.CostType <> "Material") Begin
+                    Move Trans.TransIdno to iDelTransIdno[iDelTransCount]
+                    Add Trans.ElapsedHours to nElapsedHours
+                    Increment iDelTransCount
+                End
+                Send Request_Find of oTrans_DD GT Trans.File_Number 3
+            Loop
+            If (iDelTransCount>0) Begin
+                Move (YesNoCancel_Box("Delete "+String(iDelTransCount)+" exsisting Transactions for ( Empl#: "+String(iToEmpl)+" ) "+(Trim(sToEmpl))+"\n"+;
+                        "HourTotal: "+ String(nElapsedHours))) to eResponse
+                If (eResponse = MBR_Cancel) Begin // Cancel entire procedure
+                    Move "User canceled process before deleting transactions" to sErrorMsg
+                    Function_Return True                
+                End
+                If (eResponse = MBR_Yes) Begin // Delete exsiting transactions
+                    For iLoopCount from 0 to (SizeOfArray(iDelTransIdno)-1)
+                        Send Clear of oTrans_DD
+                        Move iDelTransIdno[iLoopCount] to Trans.TransIdno
+                        Send Request_Find of oTrans_DD EQ Trans.File_Number 1
+                        If ((Found) and Trans.TransIdno = iDelTransIdno[iLoopCount]) Begin
+                            Send Request_Delete of oTrans_DD
+                        End
+                    Loop                
+                End
+                If (eResponse = MBR_No) Begin
+                    // Nothing to do here, new transactions are added to exsisting transaction
+                    
+                End                
+            End
+            // Start creating of new transactions
+            //Showln ("SizeOfArray:" + SizeOfArray(Transactions))
+            For iLoopCount from 0 to (SizeOfArray(Transactions)-1)
+                //Showln ("Transaction#" + String(iLoopCount) +" - Job#: " + String(Transactions[iLoopCount].iJobNumber) + " - Equip#: " + String(Transactions[iLoopCount].iEquipIdno) + " - StartDate: " + String(Transactions[iLoopCount].dStartDate) + " - StartTime: " + String(Transactions[iLoopCount].sStartTime))
+                Set Main_DD to oTrans_DD
+                Get Main_DD to hoDD
+                //
+                Send Clear_All of hoDD
+                Move iToEmpl to Employee.EmployeeIdno
+                Send Request_Find of hoDD EQ Employee.File_Number 1
+                Move Transactions[iLoopCount].iJobNumber to Order.JobNumber
+                Send Request_Find of hoDD EQ Order.File_Number 1
+                Move Transactions[iLoopCount].iOpersIdno to Opers.OpersIdno
+                Send Request_Find of hoDD EQ Opers.File_Number 1
+                If (Found) Begin
+                    // Populate rest of values to the new transaction
+                    Set Field_Changed_Value of hoDD Field Trans.EquipIdno           to Transactions[iLoopCount].iEquipIdno
+                    Set Field_Changed_Value of hoDD Field Trans.AttachEquipIdno     to Transactions[iLoopCount].iAttachIdno
+                    Set Field_Changed_Value of hoDD Field Trans.AttachMastOpsIdno   to Transactions[iLoopCount].iAttachMastOps
+                    Set Field_Changed_Value of hoDD Field Trans.AttachOpersIdno     to Transactions[iLoopCount].iAttachOpers
+                    Set Field_Changed_Value of hoDD Field Trans.StartDate           to Transactions[iLoopCount].dStartDate
+                    Set Field_Changed_Value of hoDD Field Trans.StartTime           to Transactions[iLoopCount].sStartTime
+                    Set Field_Changed_Value of hoDD Field Trans.StopDate            to Transactions[iLoopCount].dStopDate
+                    Set Field_Changed_Value of hoDD Field Trans.StopTime            to Transactions[iLoopCount].sStopTime
+                    Set Field_Changed_Value of hoDD Field Trans.Quantity            to Transactions[iLoopCount].iQTY
+                    Get Request_Validate    of hoDD                                 to bFail
+                    If (bFail) Begin
+                        Showln ("Transaction#" + String(iLoopCount) +" - Job#: " + String(Transactions[iLoopCount].iJobNumber) + " - WAS NOT SAVED!")
+                    End
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD    
+                    End
+                End
+            Loop
+            Move "Transaction copy successful" to sErrorMsg
+            Function_Return False
+        End
+        
+    End_Function
+
+End_Object
+

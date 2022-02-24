@@ -1,0 +1,41 @@
+//***************************************************************************
+//*
+//* Class:        cIscDbList
+//* Package Name: cIscDbList.pkg
+//*
+//***************************************************************************
+
+Use cGlblDbList.pkg
+
+Class cIscDbList is a cGlblDbList
+
+    // Construct_Object: Object constructor.
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        // Define new Properties: Property {Type} {pxName} {initial_value}
+
+        // Create child objects
+
+        // Set property values:
+        Set Color to clWhite
+        Set TextColor to clBlack
+        Set peDisabledTextColor to clBlack
+        Set peDisabledColor to clWhite
+
+    End_Procedure
+
+    // Create and augment procedure and functions
+
+    procedure Request_Lookup
+        integer iItem iCol
+        // save the current coloumn #
+        get Current_Item to iItem
+        move (mod(iItem,Item_Limit(self))) to iCol
+        // request_lookup seems to mangling the current item
+        forward send Request_Lookup
+        // restore the current item to the original column #
+        set Current_Item to (Base_Item(self)+iCol)
+    end_procedure
+
+End_Class // cLsdDbList

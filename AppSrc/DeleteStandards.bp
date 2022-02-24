@@ -1,0 +1,211 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use Contact.DD
+Use SalesRep.DD
+Use Eshead.DD
+Use Escomp.DD
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+Use Esitem.DD
+Use cQuotehdrDataDictionary.dd
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use cQuotedtlDataDictionary.dd
+
+Object oDeleteStandards is a BusinessProcess
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oJcdept_DD is a cJcdeptDataDictionary
+    End_Object
+
+    Object oJccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to oJcdept_DD
+    End_Object
+
+    Object oJcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to oJccntr_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oQuotehdr_DD is a cQuotehdrDataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oQuotedtl_DD is a cQuotedtlDataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oQuotehdr_DD
+    End_Object
+
+    Object oEshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oEscomp_DD is a Escomp_DataDictionary
+        Set DDO_Server to oEshead_DD
+    End_Object
+
+    Object oEsitem_DD is a Esitem_DataDictionary
+        Set DDO_Server to oJcoper_DD
+        Set DDO_Server to oEscomp_DD
+    End_Object
+
+    Set Main_DD to oEsitem_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+        Integer iEstimateID iCompIdno iEsitemId iOpcode iCostCenter iItemCount iQuoteDtlRef iRet
+        //
+        Move Escomp.Item_count to iItemCount
+        Move Esitem.Estimate_id  to iEstimateID
+        Move Esitem.Component_id to iCompIdno
+        Move Esitem.Opcode       to iOpcode
+        Move Jcoper.CON9_VALUE   to iCostCenter
+        //
+        Get YesNo_Box ("Delete all items of CostCenter" * Jccntr.NAME * "from this component?") "Confirm" to iRet
+        If (iRet = MBR_No) Procedure_Return
+        //
+//        Constraint_Set 1
+//        Constrain Jcoper.CON9_VALUE eq iCostCenter
+//        Constrain Escomp.COMPONENT_ID eq iCompIdno
+//        Constrain Esitem.ESTIMATE_ID eq iEstimateID
+//        Constrained_Find First Esitem by 2
+//        While (Found)
+//            Showln (Escomp.DESCRIPTION * " - " * String(Esitem.OPCODE) * " - " * Jcoper.NAME * " - " * String(Esitem.LINE_NUMBER) * " - " * Esitem.INSTRUCTION)
+//            // Find and Delete
+//            Move Esitem.ITEM_ID to iEsitemId
+//            Send Request_Find EQ oEsitem_DD
+//            //Send Request_Delete of oEsitem_DD
+//            Constrained_Find Next                
+//        Loop
+//        Constraint_Set 1 Delete
+
+        Send Clear of oEsitem_DD
+        Move iEstimateID to Esitem.ESTIMATE_ID
+        Move iCompIdno to Esitem.COMPONENT_ID
+        Send Find of oEsitem_DD GE 3
+        While ((Found) and iEstimateID = Esitem.ESTIMATE_ID and iCompIdno = Esitem.COMPONENT_ID)
+            Showln (Escomp.DESCRIPTION * " - " * String(Esitem.OPCODE) * " - " * Jcoper.NAME * " - " * String(Esitem.LINE_NUMBER) * " - " * Esitem.INSTRUCTION)
+            If (Jcoper.CON9_VALUE = iCostCenter) Begin
+                Showln ("DELETE: " * Escomp.DESCRIPTION * " - " * String(Esitem.OPCODE) * " - " * Jcoper.NAME * " - " * String(Esitem.LINE_NUMBER) * " - " * Esitem.INSTRUCTION)
+                Send Request_Delete of oEsitem_DD
+                If (Esitem.QuoteDtlReference<>0) Begin
+                    Send DeleteQuoteDetail Esitem.QuoteDtlReference
+                End
+                
+            End
+            Send Find of oEsitem_DD GT 3
+        Loop
+
+        Move Escomp.Item_count to iItemCount
+
+//            If (iItemCount > 0) Begin
+//                // Order Maintenance
+//                #IFDEF CE_PRODUCTION
+//                Move sHeaderId    to Esjitm.Job_no
+//                Move sComponentId to Esjitm.Component_id
+//                Move iOpcode      to Esjitm.Opcode
+//                #ENDIF // #IFDEF CE_PRODUCTION
+//                // Estimating
+//                #IFDEF CE_CALC_ESTIMATE
+//                Move sHeaderId    to Esitem.Estimate_id
+//                Move sComponentId to Esitem.Component_id
+//                Move iOpcode      to Esitem.Opcode
+//                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//                // component library
+//                #IFDEF CE_CALC_LIBRARY
+//                Move sHeaderId    to Eslitm.Ctyp_code
+//                Move sComponentId to Eslitm.Clib_id
+//                Move iOpcode      to Eslitm.Opcode
+//                #ENDIF // #IFDEF CE_CALC_LIBRARY
+//                Send Find of hItemDD GE Index.1
+//                If (not(Found)) Begin
+//                    // Order Maintenance
+//                    #IFDEF CE_PRODUCTION
+//                    Move sHeaderId    to Esjitm.Job_No
+//                    Move sComponentId to Esjitm.Component_id
+//                    Move iOpcode      to Esjitm.Opcode
+//                    #ENDIF // #IFDEF CE_PRODUCTION
+//                    // Estimating
+//                    #IFDEF CE_CALC_ESTIMATE
+//                    Move sHeaderId    to Esitem.Estimate_id
+//                    Move sComponentId to Esitem.Component_id
+//                    Move iOpcode      to Esitem.Opcode
+//                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//                    // component library
+//                    #IFDEF CE_CALC_LIBRARY
+//                    Move sHeaderId    to Eslitm.Ctyp_code
+//                    Move sComponentId to Eslitm.Clib_id
+//                    Move iOpcode      to Eslitm.Opcode
+//                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+//                    Send Find of hItemDD LE Index.1
+//                End
+//                //
+//                Send Refresh_Page of oItemList FILL_FROM_CENTER
+//            End
+//            Else Begin
+//                Send Delete_Data of oItemList
+//                Send Delete_Data of oInstructionEdit
+//                Send EnableCalculate False
+//            End
+//            Send EnableButtons True
+//            Send Activate of oItemList
+//            Send Mouse_Down of (oComponentItemDialog(Self))  //trick focus back to obj
+    End_Procedure
+    
+    Procedure DeleteQuoteDetail Integer iQuoteDtlIdno
+        // Delete QuoteDetail Line
+        If (iQuoteDtlIdno>0) Begin
+            Clear Quotedtl
+            Move iQuoteDtlIdno to Quotedtl.QuotedtlID
+            Find GE Quotedtl by Index.1
+            If ((Found) and iQuoteDtlIdno = Quotedtl.QuotedtlID) Begin
+                Relate Quotedtl
+                Send Request_Assign of oQuotedtl_DD
+                Send Request_Delete of oQuotedtl_DD
+            End
+        End
+    End_Procedure
+End_Object
+

@@ -1,0 +1,310 @@
+//AB/ Project Cost Center Listing
+//AB/ Object prj is a Report_Project
+    //AB/ Set ProjectName to "Cost Center Listing"
+    //AB/ Set ProjectFileName to "Jca031L1.rv"
+
+// Project Object Structure
+//   Jca031L1_rpt is a ReportView
+//     oPrintTo is a RadioGroup
+//       oRadio1 is a Radio
+//       oRadio2 is a Radio
+//     oFilterCode is a cForm
+//     oBtnPrint is a Button
+//     oBtnCancel is a Button
+//     RptJca031L1 is a vpe_Winreport
+
+// Register all objects
+Register_Object Jca031L1_rpt
+Register_Object oBtnCancel
+Register_Object oBtnPrint
+Register_Object oFilterCode
+Register_Object oPrintTo
+Register_Object oRadio1
+Register_Object oRadio2
+Register_Object RptJca031L1
+
+
+//AB-StoreTopStart
+Use DFAllRpt.pkg
+Use VWinRpt.pkg
+
+Open Jcdept
+Open Jccntr
+
+//AB-StoreTopEnd
+
+//AB-IgnoreStart
+Use dfrptvw.pkg
+Use dfRadio.pkg
+Use Windows.pkg
+//AB-IgnoreEnd
+
+
+ACTIVATE_VIEW Activate_Jca031L1_rpt FOR Jca031L1_rpt
+
+Object Jca031L1_rpt is a ReportView
+
+    //AB-StoreTopStart
+    property string psFilterCode ""
+    set Icon to "Winprint.ico"
+    //AB-StoreTopEnd
+
+    Set Label to "Cost Center Listing"
+    Set Location to 6 6
+    // Visual DataFlex 14.0 Client Size Adjuster, modified May 23, 2008: 14:36:26
+//    Set Size to 81 182
+    Set Size to 66 178
+
+    //AB-DDOStart
+
+
+    //AB-DDOEnd
+
+    Object oPrintTo is a RadioGroup
+        Set Size to 38 105
+        Set Location to 5 5
+        Set Label to "Print to"
+        Object oRadio1 is a Radio
+            Set Label to "Preview"
+            Set Size to 10 42
+            Set Location to 12 6
+            Set Status_Help to "Prints the report to screen"
+        End_Object    // oRadio1
+
+        Object oRadio2 is a Radio
+            Set Label to "Printer"
+            Set Size to 10 42
+            Set Location to 24 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object    // oRadio2
+
+    End_Object    // oPrintTo
+
+    Object oFilterCode is a Form
+
+        //AB-StoreTopStart
+        set Capslock_State to true
+        //AB-StoreTopEnd
+
+        Set Label to "CC Filter Code"
+        Set Size to 13 18
+        Set Location to 47 71
+        Set Status_Help to "Cost Centers selected must have matching filter code. If blank, all cost centers will be output."
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+
+        //AB-StoreStart
+        set form_mask to capslock
+        //Procedure OnChange
+        //    String sValue
+        //    Get value to sValue
+        //
+        //End_Procedure  // OnChange
+        //AB-StoreEnd
+
+    End_Object    // oFilterCode
+
+    Object oBtnPrint is a Button
+        Set Label to "Print"
+        Set Location to 11 120
+        Set Status_Help to "Print the Selected report"
+        Set Default_State to TRUE
+
+        //AB-StoreStart
+        Procedure OnClick
+            Send StartReport
+        End_Procedure
+        //AB-StoreEnd
+
+    End_Object    // oBtnPrint
+
+    Object oBtnCancel is a Button
+        Set Label to "Cancel"
+        Set Location to 29 120
+        Set Status_Help to "Close this Panel"
+
+        //AB-StoreStart
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+        //AB-StoreEnd
+
+    End_Object    // oBtnCancel
+
+
+    //AB-StoreStart
+    // Procedures and functions used by the user interface
+    
+    //This function is called by the procedure StartReport
+    Function Print_to_Screen_State Returns Integer
+        Local Integer iRad
+        Get Current_Radio of (oPrintTo(Current_Object)) To iRad
+        Function_Return (iRad=1)
+    End_Function
+    
+    // Use this procedure to do print setup
+    Procedure SetupReport
+        send DFPrintSetup to (Report_Object_Id(Current_Object))
+    End_Procedure
+    
+    // Use this procedure to start the report
+    Procedure StartReport
+        Integer iToPrinter iRepObj
+        String  sVal sSetupFile sFilterCode
+        Get Report_Object_Id To iRepObj
+    
+        get value of oFilterCode to sFilterCode
+        set psFilterCode to sFilterCode
+        Get Print_to_Screen_State to iToPrinter
+        If iToPrinter Set OutPut_Device_Mode to PRINT_TO_PRINTER
+        Else Set OutPut_Device_Mode to PRINT_TO_WINDOW
+        // set the VPE setup file
+        get_environment "TEMP" to sSetupFile
+        move (trim(sSetupFile) + "\Vpe.prs") to sSetupFile
+        set pSetupFile   of oVpePrint to sSetupFile
+        //
+        set pCaption     of oVpePrint to "Cost Centers"
+        set pVpeDocFlags of oVpePrint to (VPE_NO_RULERS+VPE_NO_MAILBUTTON)
+        //
+        Send Run_Report to iRepObj
+    
+    End_Procedure
+    
+    
+    // The Report
+    Object RptJca031L1 is a vpe_Winreport
+    
+        //Set the title on the information box (sentinel)
+        Set Report_Title to "Printing Cost Center Listing"
+        //Main File for the report
+        Report_Main_File JCCNTR
+        //Breaks and Index for the report
+        Report_Index By Index.1
+    
+        Begin_Constraints
+            string sFilterCode
+            get psFilterCode to sFilterCode
+            if (not(sFilterCode="")) constrain Jccntr.Picklist_Code EQ sFilterCode
+        End_Constraints
+    
+        // Starting_Main_Report should ALWAYS be used!
+        // Setting of margins should be set inside
+        // Starting_Main_Report and after the Forward Get.
+        Function Starting_Main_Report Returns Integer
+            Integer iRetVal
+            Send DFSetMetrics To WinPrintId "INCH" // Must Set Before Forward!
+            Forward Get Starting_Main_Report To iRetVal
+            If iRetVal Function_return iRetVal
+            send DFSetmargins       of WinPrintId 0.5 0.5 0.5 0.5
+            send DFSetSpecPrintFlag of WinPrintId DF_PAPER_LETTER
+        End_Function
+    
+        Procedure_Section Page_Top
+    
+            integer iHr iMn
+            string  sDateTime sHr sMn
+            date    dToday
+    
+            sysdate dToday iHr iMn
+            move "" to sHr
+            if iHr lt 10 append sHr "0" iHr
+            else move iHr to sHr
+            move "" to sMn
+            if iMn lt 10 append sMn "0" iMn
+            else move iMn to sMn
+            move "" to sDateTime
+            append sDateTime dToday "  " sHr ":" sMn
+    
+            DFFont "Arial" //  Use Arial size 16
+    
+              DFBeginHeader DFPageTop          //Header of type DFPageTop
+    
+                DFHeaderPos   HDR_LEFT         //Write data from left margin in the header
+                DFHeaderFrame HDR_MARGINS 0.02 //Set the box from margin to margin using size 0.02
+    
+                //DFWriteBMP "RPTHEAD.BMP" 0.2 0.5 1.5 0.75 // Write the BMP in the header so it wraps with the header
+    
+                DFFontSize 10
+                DFWritePos sDateTime       0.2     (FONT_DEFAULT) -1 0
+                DFWritePos "Page "         6.4
+                DFWritePos "#pagecount#"   6.9
+                DFWriteln ""                  // Write data to the header
+                DFWriteln ""                  // Write data to the header
+    
+                DFFontSize 16
+                DFWritelnPos "Cost Center Capacities Check List" 2.0    (FONT_ITALIC+FONT_BOLD) -1 0
+                DFWriteln ""                  // Write data to the header
+                //DFWriteln ""                  // Write data to the header
+    
+                DFFontSize 8
+    
+                DFWritePos    "Department"              0.1    (FONT_BOLD) //-1 0.24
+                DFWritePos    "Cost Center"             1.1    (FONT_BOLD) //-1 0.24
+                DFWritePos    "Days"                2.5     (FONT_BOLD+FONT_RIGHT) -1 0.48
+                DFWritePos    "Shifts"                  2.9    (FONT_BOLD+FONT_RIGHT) -1 0.36
+                DFWritePos    "Hours"                3.4    (FONT_BOLD+FONT_RIGHT) -1 0.48
+                DFWritePos    "Units"              4.0    (FONT_BOLD+FONT_RIGHT) -1 0.6
+                DFWritePos    "Utilgoal"                4.6    (FONT_BOLD+FONT_RIGHT) -1 0.48
+                DFWritePos    "Qtr Hrs"                5.4    (FONT_BOLD+FONT_RIGHT) -1 0.48
+                DFWritePos    "Ttl Hrs"                6.0    (FONT_BOLD+FONT_RIGHT) -1 0.48
+                DFWritePos    "Fullrate"                6.6    (FONT_BOLD+FONT_RIGHT) -1 0.48
+                DFWritePos    "Markup"                  7.1    (FONT_BOLD+FONT_RIGHT) -1 //0.36
+                DFWritePos    "Code"                    7.5    (FONT_BOLD+FONT_RIGHT) -1 //0.36
+                DFWriteln ""
+                // Remove comment to display a metric ruler
+                //Send ShowRuler // displays a ruler for aligning fields
+              DFEndHeader                     //End and print header
+    
+              //DFWriteln ""
+    
+        End_Procedure
+    
+        Procedure_Section Body
+    
+            // Update the information box (sentinel) for each body record
+            Send Update_Status ("Cost Center" * String(JCCNTR.IDNO))
+    
+            DFFontSize 8
+    
+    
+            DFWritePos    Jcdept.IDNO                 0.2     (FONT_DEFAULT+FONT_RIGHT)  0 //0.24
+            DFWritePos    Jcdept.NICKNAME             0.27    (FONT_DEFAULT)            -1 //0.53
+            DFWritePos    Jccntr.IDNO                 1.2     (FONT_DEFAULT+FONT_RIGHT)  0 //0.24
+            DFWritePos    Jccntr.NICKNAME             1.27    (FONT_DEFAULT)            -1 //0.53
+            DFWritePos    Jccntr.WEEKDAYS             2.5     (FONT_DEFAULT+FONT_RIGHT)  2 //0.48
+            DFWritePos    Jccntr.SHIFTS               2.9    (FONT_DEFAULT+FONT_RIGHT)  2 //0.36
+            DFWritePos    Jccntr.SHIFTHRS             3.4    (FONT_DEFAULT+FONT_RIGHT)  2 //0.48
+            DFWritePos    Jccntr.SHIFTUNITS           4.0    (FONT_DEFAULT+FONT_RIGHT)  2 //0.6
+            DFWritePos    Jccntr.UTILGOAL             4.6    (FONT_DEFAULT+FONT_RIGHT)  4 //0.48
+            DFWritePos    (Jccntr.Weekdays * Jccntr.Shifts * Jccntr.Shifthrs * ;
+                Jccntr.Shiftunits * Jccntr.Utilgoal*13) 5.4     (FONT_DEFAULT+FONT_RIGHT)  2 //0.48
+            DFWritePos    (Jccntr.Weekdays * Jccntr.Shifts * Jccntr.Shifthrs * ;
+                Jccntr.Shiftunits * Jccntr.Utilgoal*13*4) 6.0   (FONT_DEFAULT+FONT_RIGHT)  2 //0.48
+            DFWritePos    Jccntr.FULLRATE             6.6    (FONT_DEFAULT+FONT_RIGHT)  2 //0.48
+            DFWritePos    Jccntr.MARKUP               7.1    (FONT_DEFAULT+FONT_RIGHT)  2 //0.36
+            DFWritePos    Jccntr.Picklist_Code        7.4    (FONT_DEFAULT+FONT_RIGHT)  -1 //0.36
+            DFWriteln ""
+    
+        End_Procedure
+    
+        //Procedure_Section Page_Bottom
+        //    DFFont "Arial" //  Use Arial
+            //DFFontSize 9
+          //    DFBeginHeader DFPageBottom       //Header of type DFPageBottom
+        //        DFHeaderPos   HDR_CENTER       //Write data in center
+            //    DFHeaderFrame HDR_MARGINS 0.03 //Set the box from margin to margin using size 0.03
+          //      DFWrite     "Report Wizard version 1.1. Printed on: " (FONT_ITALIC)
+         //       DFWriteln   (RptToday(Current_Object)) (FONT_ITALIC)
+        //      DFEndHeader                     //End and print header
+        //End_Procedure
+    
+    End_Object    //  RptJca031L1
+    
+    On_Key Key_Escape Send close_panel
+    
+    //AB-StoreEnd
+
+End_Object    // Jca031L1_rpt
+
+//AB/ End_Object    // prj
+

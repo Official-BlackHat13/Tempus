@@ -1,0 +1,65 @@
+Use cGlblDataDictionary.pkg
+
+Open Locequip
+Open Location
+Open System
+Open Employer
+
+
+Class cLocequipDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Locequip.File_Number
+
+        Set Add_Server_File to Location.File_Number
+        Set Add_Server_File to Employer.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Locequip.LocequipIdno to File_Field System.LocequipIdno
+
+    End_Procedure
+
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Locequip.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1                 to Locequip.ChangedFlag
+        End
+    End_Procedure   // Update
+
+    Procedure Delete_Main_File
+        //Triggered, set Delete Flag to hide the record.
+        If (Locequip.DeleteFlag = 0) Begin
+            Move 1 to Locequip.DeleteFlag
+            Move 1 to Locequip.ChangedFlag
+            SaveRecord Locequip
+            Procedure_Return
+        End
+        //If the DeleteFlag was already set, remove the record
+        Else Begin
+            Forward Send Delete_Main_File
+        End
+    End_Procedure
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+#ENDIF

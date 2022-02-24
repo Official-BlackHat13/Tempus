@@ -1,0 +1,52 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Syslog (# 17)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:SYSLOG
+  USER DISPLAY NAME         : Syslog
+  DATAFLEX FILE NAME        : Syslog
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16480     ( USED: 16480 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 891578 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LOG_FILE         NUM    5.0     1  1   
+  2  LOG_DATE         DAT     10     7  1   
+  3  LOG_TIME         ASC      8    30  1   
+  4  RECORD_KEY1      ASC     12    38  2   
+  5  RECORD_KEY2      ASC     12    50  2   
+  6  RECORD_KEY3      ASC     12    62  2   
+  7  USER             ASC     12    74      
+  8  LOG_TYPE         ASC      1    86      
+  9  DESCRIPTION      TEX   2048    87      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LOG_FILE        NO  NO       0      0       4     ON-LINE
+       LOG_DATE        NO  NO 
+       LOG_TIME        NO  NO 
+       Recnum          NO  NO 
+
+  2    LOG_FILE        NO  NO       0      0       7     ON-LINE
+       RECORD_KEY1     NO  NO 
+       RECORD_KEY2     NO  NO 
+       RECORD_KEY3     NO  NO 
+       LOG_DATE        NO  NO 
+       LOG_TIME        NO  NO 
+       Recnum          NO  NO 
+
+  3    LOG_DATE        NO  NO       0      0       2     ON-LINE
+       Recnum          NO  NO 
+

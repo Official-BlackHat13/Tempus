@@ -1,0 +1,28 @@
+Use cGlblDataDictionary.pkg
+
+Open pminvdtl
+Open pminvhdr
+Open Jcoper
+
+Class pminvdtl_DataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to pminvdtl.File_Number
+
+        Set Add_Server_File to pminvhdr.File_Number
+        Set Add_Server_File to Jcoper.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        //Set Field_Auto_Increment Field pminvdtl.DetailIdno to File_Field pminvhdr.NextLineNo
+
+    End_Procedure
+
+
+End_Class

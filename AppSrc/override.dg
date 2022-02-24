@@ -1,0 +1,149 @@
+use DFAllEnt.pkg
+
+register_object oCalcEngine
+
+object DefaultLinkDialog is a ModalPanel
+    Set Size to 149 227
+
+    property number pnValue 0
+
+    set Locate_Mode   to NO_LOCATE
+    set SysMenu_Icon  to false
+    set Border_Style  to Border_None
+    set GUILocation   to 410 60
+    set GUISize       to 68 710
+
+    object oPrompt is a Textbox
+        Set GUILocation to 10 20
+        Set GUISize     to 20 170
+    end_object // oPrompt
+
+    object ValueForm is a Form
+
+        on_key kEnter  send AcceptOk
+        on_key kClear  send ClearLink
+		on_key kCancel send QuitPreview
+
+        Set GUILocation         to 10 242
+        Set GUISize             to 20 85
+        Set Numeric_Mask item 0 to 8 4 "*,"
+
+        procedure AcceptOk
+            delegate send AcceptOk
+        end_procedure
+
+        procedure CalcValue
+            number nValue
+            //
+            get Value item 0 to nValue
+            set pnValue      to nValue
+        end_procedure
+
+        procedure DoColorForm boolean bOverride
+            if (bOverride) set Color to clYellow
+            else           set Color to clWindow
+        end_procedure
+
+    end_object // ValueForm
+
+    object oOverride is a Textbox
+        Set GUILocation to 10 344
+        Set GUISize     to 20 20
+        //set Value to "Over-ridden"
+    end_object // oPrompt
+
+    Object oOkButton is a Button
+        Set Label to "Ok"
+        Set GUILocation TO 6 433
+        Set GUISize     TO 28 87
+        procedure OnClick
+            send AcceptOk
+        end_procedure
+    End_Object    // oNextButton
+
+    Object oClearButton is a Button
+        Set Label to "Clear"
+        Set GUILocation TO 6 522
+        Set GUISize     TO 28 87
+        procedure OnClick
+            send ClearLink
+        end_procedure
+    End_Object    // oClearButton
+
+    Object oExitButton is a Button
+        Set Label to "Exit Links"
+        Set GUILocation TO 6 611
+        Set GUISize     TO 28 87
+        procedure OnClick
+            send ExitLinks
+        end_procedure
+    End_Object    // oClearButton
+
+    procedure EnableClearButton boolean bState
+        set Enabled_State of oClearButton to bState
+    end_procedure
+
+    procedure set StandardTitle string sStandard
+        set Label to sStandard
+    end_procedure
+
+    procedure set Prompt string sPrompt
+        set Value of oPrompt to sPrompt
+    end_procedure
+
+    procedure set DefaultValue string nValue
+        set Value of ValueForm to nValue
+    end_procedure
+
+    procedure set Override string sOverride
+        set Value of oOverride to sOverride
+    end_procedure
+
+    procedure AcceptOk
+        send CalcValue of ValueForm
+        send Close_Panel
+    end_procedure
+
+    procedure ClearLink
+        set pnValue to -999998
+        send Close_Panel
+    end_procedure
+
+    procedure ExitLinks
+        set pnValue to -999999
+        send Close_Panel
+    end_procedure
+
+	procedure QuitPreview
+        set pbCanceled of oCalcEngine to TRUE
+		send Close_Panel
+	end_procedure
+
+    function RetrieveLink ;
+        string sStandard  ;
+        string sPrompt    ;
+        number nDefault   ;
+        integer bOverride ;
+        integer bNonzero  ;
+        returns number
+        //
+        integer bState
+        string  sOverride
+        number  nValue
+        //
+        if (bOverride) move "Over-ridden" to sOverride
+        send DoColorForm of ValueForm bOverride
+        send EnableClearButton        bOverride
+        set StandardTitle to sStandard
+        set pnValue       to 0
+        set Prompt        to sPrompt
+        set DefaultValue  to nDefault
+        set Override      to sOverride
+        send Popup //_Modal
+        get pnValue to nValue
+        function_return nValue
+    end_function
+
+end_object // DefaultLinkDialog
+
+// ----------------------------------------------------------------------------

@@ -1,0 +1,839 @@
+//AB/ Project Est_Std
+//AB/ Object prj is a Report_Project
+//AB/     Set ProjectName to "Est_Std"
+//AB/     Set ProjectFileName to "Est_Std.rv"
+
+// Project Object Structure
+//   Est_Std_rpt is a ReportView
+//     oSelectGroup1 is a Group
+//       oSelStart1 is a Form
+//       oSelStop1 is a Form
+//     oPrintTo is a RadioGroup
+//       oRadio1 is a Radio
+//       oRadio2 is a Radio
+//     oBtnPrint is a Button
+//     oBtnCancel is a Button
+//     RptEst_Std is a vpe_Winreport
+
+// Register all objects
+Register_Object Est_Std_rpt
+Register_Object oBtnCancel
+Register_Object oBtnPrint
+Register_Object oPrintTo
+Register_Object oRadio1
+Register_Object oRadio2
+Register_Object oSelectGroup1
+Register_Object oSelStart1
+Register_Object oSelStop1
+Register_Object RptEst_Std
+
+
+//AB/ Report View
+
+
+//AB-StoreTopStart
+
+Use DFAllRpt.pkg
+Use VWinRpt.pkg
+
+//Open Jcdept
+Open Jcoper
+Open Jccntr
+
+//AB-StoreTopEnd
+
+//AB-IgnoreStart
+
+
+//AB-IgnoreEnd
+
+ACTIVATE_VIEW Activate_Est_Std_rpt FOR Est_Std_rpt
+
+Object Est_Std_rpt is a ReportView
+    //AB-StoreTopStart
+    property string psFilterCode ""
+    //AB-StoreTopEnd
+
+    Set Label to "Est_Std"
+    // Visual DataFlex 14.0 Client Size Adjuster, modified May 23, 2008: 14:36:25
+//    Set Size to 105 182
+    Set Size to 90 178
+    Set Location to 6 6
+
+    //AB-DDOStart
+
+    //AB-DDOEnd
+
+    Object oSelectGroup1 is a Group
+        Set Label to "Select Opcode"
+        Set Size to 34 165
+        Set Location to 5 5
+        Object oSelStart1 is a Form
+            Set Label to "From:"
+            Set Size to 13 50
+            Set Location to 13 30
+            Set Status_Help to "First value in selection range."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Form_DataType to 0
+
+        End_Object    // oSelStart1
+
+        Object oSelStop1 is a Form
+            Set Label to "To:"
+            Set Size to 13 50
+            Set Location to 13 104
+            Set Status_Help to "Last value in selection range."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Form_DataType to 0
+        End_Object    // oSelStop1
+
+    End_Object    // oSelectGroup1
+
+    Object oPrintTo is a RadioGroup
+        Set Label to "Print to"
+        Set Size to 38 105
+        Set Location to 43 5
+        Object oRadio1 is a Radio
+            Set Label to "Preview"
+            Set Size to 10 42
+            Set Location to 12 6
+            Set Status_Help to "Prints the report to screen"
+        End_Object    // oRadio1
+
+        Object oRadio2 is a Radio
+            Set Label to "Printer"
+            Set Size to 10 42
+            Set Location to 24 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object    // oRadio2
+
+    End_Object    // oPrintTo
+
+    Object oBtnPrint is a Button
+        Set Label to "Print"
+        Set Default_State to TRUE
+        Set Location to 49 120
+        Set Status_Help to "Print the Selected report"
+
+        //AB-StoreStart
+        Procedure OnClick
+            Send StartReport
+        End_Procedure
+        //AB-StoreEnd
+
+    End_Object    // oBtnPrint
+
+    Object oBtnCancel is a Button
+        Set Label to "Cancel"
+        Set Location to 67 120
+        Set Status_Help to "Close this Panel"
+
+        //AB-StoreStart
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+        //AB-StoreEnd
+
+    End_Object    // oBtnCancel
+
+
+    //AB-StoreStart
+    // Procedures and functions used by the user interface
+
+    //This function is called by the procedure StartReport
+    Function Print_to_Screen_State Returns Integer
+        Integer iRad
+        Get Current_Radio of oPrintTo To iRad
+        Function_Return (iRad=1)
+    End_Function
+
+    // Use this procedure to do print setup
+    Procedure SetupReport
+        send DFPrintSetup to (Report_Object_Id(self))
+    End_Procedure
+
+    Procedure JumpStartReport Number nStart Number nStop integer bPrint string sFilterCode
+        Integer iRepObj
+        string  sSetupFile
+        Get Report_Object_Id To iRepObj
+        Set pSelStart1 of iRepObj to nStart
+        Set pSelStop1  of iRepObj to nStop
+        If (bPrint) Set OutPut_Device_Mode to PRINT_TO_PRINTER // _NO_DIALOG
+        Else Set OutPut_Device_Mode to PRINT_TO_WINDOW
+        // set the VPE setup file
+        get_environment "TEMP" to sSetupFile
+        move (trim(sSetupFile) + "\Vpe.prs") to sSetupFile
+        set pSetupFile   of oVpePrint to sSetupFile
+        //
+        set pCaption     of oVpePrint to "Estimating Standards"
+        set pVpeDocFlags of oVpePrint to (VPE_NO_RULERS+VPE_NO_MAILBUTTON)
+        //
+        set psFilterCode to sFilterCode
+   
+        Send Run_Report to iRepObj
+    End_Procedure // JumpStartReport
+
+    // Use this procedure to start the report
+    Procedure StartReport
+        Integer iToPrinter iRepObj
+        String sVal sSetupFile
+        Get Report_Object_Id To iRepObj
+
+        Get Value of (oSelStart1(oSelectGroup1(self))) item 0 To sVal
+        Set pSelStart1 of iRepObj To sVal
+
+        Get Value of (oSelStop1(oSelectGroup1(self))) item 0 To sVal
+        Set pSelStop1  of iRepObj To sVal
+
+        // set the VPE setup file
+        get_environment "TEMP" to sSetupFile
+        move (trim(sSetupFile) + "\Vpe.prs") to sSetupFile
+        set pSetupFile   of oVpePrint to sSetupFile
+        //
+        set pCaption     of oVpePrint to "Production Report"
+        set pVpeDocFlags of oVpePrint to (VPE_NO_RULERS+VPE_NO_MAILBUTTON)
+        //
+
+//        Get Print_to_Screen_State to iToPrinter
+//        If iToPrinter Set OutPut_Device_Mode to PRINT_TO_PRINTER
+//        Else Set OutPut_Device_Mode to PRINT_TO_WINDOW
+
+        Send Run_Report to iRepObj
+
+    End_Procedure
+
+
+    // The Report
+    Object RptEst_Std is a vpe_Winreport
+
+        Property Number pSelStart1 ""
+        Property Number pSelStop1  ""
+
+        //Set the title on the information box (sentinel)
+        Set Report_Title to "Printing Estimating Standards Details"
+
+        //Main File for the report
+        Report_Main_File JCOPER
+
+        // Constrain to use depending on users choice
+        // This is a smart constraint. If either start or
+        // stop is blank we will assume that there is no limit
+        Begin_Constraints
+            String sStart sStop sFilterCode
+            Number nStart nStop
+            Date   dStart dStop
+            //
+            Get pSelStart1 to nStart
+            Get pSelStop1 to nStop
+            get psFilterCode to sFilterCode
+            If (nStart<>0 and nStop<>0) ;
+                Constrain Jcoper.OPCODE Between nStart And nStop
+            Else if (nStart > 0);
+                Constrain Jcoper.OPCODE GE nStart
+            Else if (nStop  > 0);
+                Constrain Jcoper.OPCODE LE nStop
+            constrain Jcoper.Est_std eq "Y"
+            if (not(sFilterCode="")) constrain Jccntr.Picklist_Code EQ sFilterCode
+        End_Constraints
+
+        //Breaks and Index for the report
+        //Breaks and Index for the report
+        Report_Breaks JCOPER.Opcode
+        Report_Index By Index.2
+
+        // Starting_Main_Report should ALWAYS be used!
+        // Setting of margins should be set inside
+        // Starting_Main_Report and after the Forward Get.
+        Function Starting_Main_Report Returns Integer
+            Integer iRetVal
+            Send DFSetMetrics To WinPrintId "CM" // Must Set Before Forward!
+            Forward Get Starting_Main_Report To iRetVal
+            If iRetVal Function_return iRetVal
+            Send DFSetmargins To WinPrintId 1 1 1 0.5
+        End_Function
+
+        // Selection is a good choice if you are doing a slow
+        // finds like (as) in constrain. The advantage is that the
+        // report could be interupted
+//        Function Selection Returns Integer
+            //If ????.???? Eq ???? Function_return RPT_OK
+            //Else Function_return RPT_NOT_SELECT
+//        End_Function
+
+
+        // Display selection ranges in the header section.
+        // Pass: Selection title, start value and end value
+        Procedure ShowRange string sTitle string sStart string sStop
+            string sText
+            If (sStart="" AND sStop="") Procedure_return
+            If (sStart="0" AND sStop="0") Procedure_return
+            If (sStart<>"" and sStop<>"") ;
+                Move ("between" * sStart * "and" * sStop) to sText
+            Else if (sStart > "");
+                Move ("starting at " * sStart) to sText
+            Else if (sStop > "");
+                Move ("up to " * sStop) to sText
+            dfWriteLn ("   Print records" * sTitle * sText) (FONT_BOLD)
+        End_Procedure
+
+        // Send ShowRuler // displays a ruler for aligning fields
+
+        //Will only be printet once in a report after page_top
+        //Procedure_Section Report_Header
+        //      DFBeginHeader DFReportHeader
+        //        DFWrite     "Report_Header" (FONT_ITALIC)
+        //      DFEndHeader
+        //End_Procedure
+
+
+        //Page header is printed after Page_Top (Report_Headrer) on each page
+        //Procedure_Section Page_Header
+        //      DFBeginHeader DFPageHeader
+        //        DFWrite     "Page_Header" (FONT_ITALIC)
+        //      DFEndHeader
+        //End_Procedure
+
+
+        //Page title is printed on each page after Page_Header
+        //Procedure_Section Page_Title
+        //      DFBeginHeader DFPageTitle
+        //        DFWrite     "Page_Title" (FONT_ITALIC)
+        //      DFEndHeader
+        //End_Procedure
+
+        Procedure_Section Body
+            Send Update_Status ("Record" * String(JCOPER.RECNUM))
+            String sCalc_Std_Descr sTemp_String
+            String sStart sStop
+            Number nTag     nTagSy  nDflt   nLink   nLnkSy  nNum     nVal    nLnkCd  nLnkSm
+            Number nCol1    nCol2   nCol3   nCol4   nCol5   nCol6
+            date dToday
+            integer iHr iMn
+            string sDateTime sHr sMn
+            sysdate dToday iHr iMn
+            move "" to sHr
+            if iHr lt 10 append sHr "0" iHr
+            else move iHr to sHr
+            move "" to sMn
+            if iMn lt 10 append sMn "0" iMn
+            else move iMn to sMn
+            move "" to sDateTime
+            append sDateTime dToday "  " sHr ":" sMn
+            DFFont "Arial"
+            DFFontSize 10
+            DFLineCheck 60
+            DFWritePos sDateTime       0.2 (FONT_DEFAULT) -1 0
+                DFFontSize 12
+                Move (JCCNTR.Nickname*"@ $"+(String((JCCNTR.FullRate*JCCNTR.Markup*JCDEPT.Markup))) + ;
+                      "/hr.  "+(Trim(JCOPER.Nickname))+"  "+(String(JCOPER.Opcode))) to sTemp_String
+                DfWritePos sTemp_String 19.5 (FONT_BOLD+FONT_RIGHT) -1
+            DFWriteln ""
+            DfWriteLn ""
+            DFFontSize 9
+            DFWritelnPos    "ESTIMATE STANDARD DETAIL" 0    (FONT_BOLD+FONT_CENTER)
+            DfWriteLn ""
+            DFWritePos      "OPCODE:"                5.0    (FONT_BOLD+FONT_RIGHT)
+            DFWritePos      Jcoper.OPCODE            5.25   (FONT_DEFAULT)              -1
+            DFWritePos      Jcoper.Name              6.50   (FONT_DEFAULT)              -1
+            DFWritePos      "CC:"                   13.0    (FONT_BOLD+FONT_RIGHT)
+            DFWritePos      Jcoper.Cstctr_idno      13.25   (FONT_DEFAULT)              -1
+            DFWritelnPos    Jccntr.NickName         14.0    (FONT_DEFAULT)
+            DfWritePos      "Operation Markup:"      5.0    (FONT_RIGHT)
+            DfWritePos      Jcoper.Markup            5.25   (FONT_DEFAULT) -1
+            DfWritePos      "CC Markup:"            13.0    (FONT_RIGHT) 
+            DfWritePos      Jccntr.Markup           13.25   (FONT_DEFAULT) -1
+            DfwriteLn ""
+
+            // Line 2
+            DFWritePos      "TABLE PARAMETERS:"   5.0 (FONT_BOLD+FONT_RIGHT)
+            DFWritePos      "Table row is selected by variable #"       5.25    (FONT_DEFAULT)
+            DFWritelnPos    Jcoper.Lookup_Var       11.5    (FONT_DEFAULT)
+
+            // Line 3
+            DFWritePos      "Table column selected by variable #"       5.25    (FONT_DEFAULT)
+            DFWritelnPos    Jcoper.Bracket_Var      11.5    (FONT_DEFAULT)
+
+            // Line 4
+            DFWritePos      "Pro-rate calculations between rows?"       5.25    (FONT_DEFAULT)
+            DFWritelnPos    Jcoper.Prorate_Lookup   11.5    (FONT_DEFAULT)
+
+            // Line 5
+            DFWritePos      "Pro-rate calculations between columns?"    5.25    (FONT_DEFAULT)
+            DFWritelnPos    Jcoper.Prorate_Bracket  11.5    (FONT_DEFAULT)
+            DfwriteLn ""
+
+            // Line 6
+            DFWritePos      "Calc Flags:"           5.0     (FONT_BOLD+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CALC_FLAGS       5.25    (FONT_DEFAULT)
+            // Line 7
+            DFWritePos      "Print Flags:"          5.0     (FONT_BOLD+FONT_RIGHT)
+            DFWritelnPos    Jcoper.PRINT_FLAGS      5.25    (FONT_DEFAULT)
+            DfwriteLn ""
+            // Line 8
+            DFWritePos      "Calc Units Formula:"   5.0     (FONT_BOLD+FONT_RIGHT)
+            DFWritePos      Jcoper.FORMULA          5.25    (FONT_DEFAULT)
+            //DFWritePos      "="                     12.5    (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    ("=" *Jcoper.CALC_UNITS_DESC) ; 
+                                                   15.5    (FONT_DEFAULT)
+            // Line 9 
+            DFWritePos      "Prod.Units Formula:"   5.0     (FONT_BOLD+FONT_RIGHT)
+            DFWritePos      Jcoper.EST_FORMULA      5.25    (FONT_DEFAULT)
+            //DFWritePos      "="                     12.5    (FONT_DEFAULT+FONT_RIGHT)
+            //DFWritePos      Jcoper.EST_FORMULA_TYP  13.0    (FONT_DEFAULT)
+            Move Jcoper.CALC_STD_DESC                           to sCalc_Std_Descr
+            IF (JCOPER.EST_FORMULA_TYP = ":") Move "HOURS"      to sCalc_Std_Descr
+            IF (JCOPER.EST_FORMULA_TYP = "$") Move "DOLLARS"    to sCalc_Std_Descr
+            DFWritelnPos    ("="*Jcoper.Est_Formula_Typ*sCalc_Std_Descr) ; 
+                                                   15.5    (FONT_DEFAULT)
+            //Line 10
+            DFWritePos      "Sell Cost Formula:"    5.0     (FONT_BOLD+FONT_RIGHT)
+            DFWriteLnPos     Jcoper.Sell_FORMULA    5.25    (FONT_DEFAULT)
+            DFWriteln ""
+            DFWritePos      "Calculation Export Parameters:"   5.0 (FONT_BOLD+FONT_RIGHT)
+            DFWritePos "Tag Symbols"  5.5 (FONT_BOLD)
+            DFWritePos "Link Opcode"  8.5 (FONT_BOLD)
+            DFWritePos "Link Symbol" 11.5 (FONT_BOLD)
+            DFWriteLn ""
+            DfWritePos "1)" 5.0 (FONT_DEFAULT+FONT_RIGHT)
+            DFWritePos JCOPER.C1_Tag_Symbl 6.0 (FONT_DEFAULT)
+            If (JCOPER.C1_Link_Code) ;
+              DfWritePos JCOPER.C1_Link_Code 9.75 (FONT_DEFAULT+FONT_RIGHT) 1
+            DfWritePos JCOPER.C1_Link_Symbl 12.5
+            DFWriteLn ""
+            DfWritePos "2)" 5.0 (FONT_DEFAULT+FONT_RIGHT)
+            DFWritePos JCOPER.C2_Tag_Symbl 6.0 (FONT_DEFAULT)
+            If (JCOPER.C2_Link_Code) ;
+              DfWritePos JCOPER.C2_Link_Code 9.75 (FONT_DEFAULT+FONT_RIGHT) 1
+            DfWritePos JCOPER.C2_Link_Symbl 12.5
+            DFWriteLn ""
+            DfWritePos "3)" 5.0 (FONT_DEFAULT+FONT_RIGHT)
+            DFWritePos JCOPER.C3_Tag_Symbl 6.0 (FONT_DEFAULT)
+            If (JCOPER.C3_Link_Code) ;
+              DfWritePos JCOPER.C3_Link_Code 9.75 (FONT_DEFAULT+FONT_RIGHT) 1
+            DfWritePos JCOPER.C3_Link_Symbl 12.5
+            DFWriteLn ""
+            DFWriteLn ""
+            DFWriteLine DFGR_CURRLINE 0 DFGR_RB_MARGIN DFGR_HORI RGB_BLACK 0.1
+            DFWriteln ""
+
+            DFWritelnPos    "FORMULA VARIABLES"    0   (FONT_BOLD+FONT_CENTER)
+            DFWriteLn ""
+            DFWritePos      "Prompt/Tag"           2.0 (FONT_BOLD)
+            DFWritePos      "Modifier Signs"       9.0 (FONT_BOLD)
+            DFWritePos      "Default Value"       12.0 (FONT_BOLD)
+            DFWritelnPos    "Link Opcode/Symbol"  14.5 (FONT_BOLD)
+            DfwriteLn ""
+
+            Move 1.0    to nNum
+            Move 2.0    to nTag
+            Move 9.5   to nTagSy
+            Move 14.0   to nDflt
+            Move 16.0   to nLink
+            Move 16.5   to nLnkSy
+
+            DFWritePos      "1)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR1_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR1_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var1_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR1_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var1_Link_Code) ;
+              DFWritePos      Jcoper.VAR1_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR1_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "2)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR2_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR2_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var2_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR2_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var2_Link_Code) ;
+              DFWritePos      Jcoper.VAR2_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR2_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "3)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR3_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR3_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var3_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR3_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var3_Link_Code) ;
+              DFWritePos      Jcoper.VAR3_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR3_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "4)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR4_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR4_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var4_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR4_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var4_Link_Code) ;
+              DFWritePos      Jcoper.VAR4_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR4_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "5)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR5_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR5_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var5_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR5_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var5_Link_Code) ;
+              DFWritePos      Jcoper.VAR5_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR5_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "6)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR6_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR6_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var6_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR6_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var6_Link_Code) ;
+              DFWritePos      Jcoper.VAR6_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR6_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "7)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR7_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR7_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var7_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR7_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var7_Link_Code) ;
+              DFWritePos      Jcoper.VAR7_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR7_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "8)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR8_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR8_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var8_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR8_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var8_Link_Code) ;
+              DFWritePos      Jcoper.VAR8_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR8_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+
+            DFWritePos      "9)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR9_TAG         nTag    (FONT_DEFAULT)
+            DFWritePos      Jcoper.VAR9_TAG_SYMBL   nTagSy  (FONT_DEFAULT)
+            If (JCOPER.Var9_Dflt_Value) ;
+              DFWritePos      Jcoper.VAR9_DFLT_VALUE  nDflt   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Var9_Link_Code) ;
+              DFWritePos      Jcoper.VAR9_LINK_CODE   nLink   (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.VAR9_LINK_SYMBL  nLnkSy  (FONT_DEFAULT)
+            DFWriteln ""
+            DFWriteLine DFGR_CURRLINE 0 DFGR_RB_MARGIN DFGR_HORI RGB_BLACK 0.1
+            DFWriteln ""
+
+            Move 10   to nVal
+            Move 13     to nLnkCd
+            Move 13.5   to nLnkSm
+
+            DFWritelnPos    "FORMULA CONSTANTS"     0       (FONT_BOLD+FONT_CENTER)
+            DFWriteLn ""
+            DFWritePos      "Description"           2.0     (FONT_BOLD)
+            DFWritePos      "Value"                 8.5     (FONT_BOLD)
+            DFWritelnPos    "Link Opcode / Symbol" 11.0     (FONT_BOLD)
+            DfwriteLn ""
+
+            DFWritePos      "A)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON1_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con1_Value) ;
+              DFWritePos      Jcoper.CON1_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con1_Link_Code) ;
+              DFWritePos      Jcoper.CON1_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON1_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "B)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON2_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con2_Value) ;
+              DFWritePos      Jcoper.CON2_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con2_Link_Code) ;
+              DFWritePos      Jcoper.CON2_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON2_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "C)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON3_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con3_Value) ;
+              DFWritePos      Jcoper.CON3_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con3_Link_Code) ;
+              DFWritePos      Jcoper.CON3_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON3_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "D)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON4_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con4_Value) ;
+              DFWritePos      Jcoper.CON4_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con4_Link_Code) ;
+              DFWritePos      Jcoper.CON4_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON4_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "E)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON5_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con5_Value) ;
+              DFWritePos      Jcoper.CON5_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con5_Link_Code) ;
+              DFWritePos      Jcoper.CON5_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON5_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "F)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON6_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con6_Value) ;
+              DFWritePos      Jcoper.CON6_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con6_Link_Code) ;
+              DFWritePos      Jcoper.CON6_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON6_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "G)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON7_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con7_Value) ;
+              DFWritePos      Jcoper.CON7_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con7_Link_Code) ;
+              DFWritePos      Jcoper.CON7_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON7_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "H)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON8_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con8_Value) ;
+              DFWritePos      Jcoper.CON8_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con8_Link_Code) ;
+              DFWritePos      Jcoper.CON8_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON8_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+
+            DFWritePos      "I)"                    nNum    (FONT_DEFAULT)
+            DFWritePos      Jcoper.CON9_DESC        nTag    (FONT_DEFAULT)
+            If (JCOPER.Con9_Value) ;
+              DFWritePos      Jcoper.CON9_VALUE       nVal    (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Con9_Link_Code) ;
+              DFWritePos      Jcoper.CON9_LINK_CODE   nLnkCd  (FONT_DEFAULT+FONT_RIGHT)
+            DFWritelnPos    Jcoper.CON9_LINK_SYMBL  nLnkSm  (FONT_DEFAULT)
+            DFWriteln ""
+            DFWriteLine DFGR_CURRLINE 0 DFGR_RB_MARGIN DFGR_HORI RGB_BLACK 0.1
+            DFWriteln ""
+
+            Move 3      to nCol1
+            Move 5.75    to nCol2
+            Move 8.5      to nCol3
+            Move 11.25   to nCol4
+            Move 14     to nCol5
+            Move 16.25   to nCol6
+            DFWritePos      "STANDARD TABLE:"         0.5     (FONT_BOLD)              -1
+            DFWriteLnPos    Jcoper.TABLE_STD_DESC     3.75     (FONT_BOLD)           -1
+            DfWriteLn ""
+            //DFWritePos      "Column Brackets:"   nCol3   (FONT_BOLD)
+            If (JCOPER.Bracket_Desc>"") ;
+              DFWritePos      ((Trim(Jcoper.BRACKET_DESC))+":") nCol1 (FONT_BOLD+FONT_RIGHT) -1
+            If (JCOPER.Bracket1_Value) ;
+              DFWritePos      Jcoper.BRACKET1_VALUE   nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Bracket2_Value) ;
+              DFWritePos      Jcoper.BRACKET2_VALUE   nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Bracket3_Value) ;
+              DFWritePos      Jcoper.BRACKET3_VALUE   nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Bracket4_Value) ;
+              DFWritePos      Jcoper.BRACKET4_VALUE   nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.Bracket5_Value) ;
+              DFWritePos      Jcoper.BRACKET5_VALUE   nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DFWriteLn ""
+            DfWriteLn ""
+            //DFWriteLnPos      "Row Lookup"          1.0     (FONT_BOLD)              -1 2.15
+            If (JCOPER.Lookup_Desc>"") ;
+              DFWritePos ((Trim(Jcoper.LOOKUP_DESC))+":") 0.5 (FONT_BOLD)              -1
+            DfwriteLn ""
+            DFFontSize 4
+            DFWriteLn ""
+            DFFontSize 9
+
+            If (JCOPER.Lookup1_Value) ;
+              DFWritePos      Jcoper.LOOKUP1_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L1B1_Std) ;
+              DFWritePos      Jcoper.L1B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L1B2_Std) ;
+              DFWritePos      Jcoper.L1B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L1B3_Std) ;
+              DFWritePos      Jcoper.L1B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L1B4_Std) ;
+              DFWritePos      Jcoper.L1B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L1B5_Std) ;
+              DFWritePos    Jcoper.L1B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup2_Value) ;
+              DFWritePos      Jcoper.LOOKUP2_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L2B1_Std) ;
+              DFWritePos      Jcoper.L2B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L2B2_Std) ;
+              DFWritePos      Jcoper.L2B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L2B3_Std) ;
+              DFWritePos      Jcoper.L2B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L2B4_Std) ;
+              DFWritePos      Jcoper.L2B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L2B5_Std) ;
+              DFWritePos    Jcoper.L2B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup3_Value) ;
+              DFWritePos      Jcoper.LOOKUP3_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L3B1_Std) ;
+              DFWritePos      Jcoper.L3B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L3B2_Std) ;
+              DFWritePos      Jcoper.L3B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L3B3_Std) ;
+              DFWritePos      Jcoper.L3B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L3B4_Std) ;
+              DFWritePos      Jcoper.L3B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L3B5_Std) ;
+              DFWritePos    Jcoper.L3B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup4_Value) ;
+              DFWritePos      Jcoper.LOOKUP4_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L4B1_Std) ;
+              DFWritePos      Jcoper.L4B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L4B2_Std) ;
+              DFWritePos      Jcoper.L4B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L4B3_Std) ;
+              DFWritePos      Jcoper.L4B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L4B4_Std) ;
+              DFWritePos      Jcoper.L4B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L4B5_Std) ;
+              DFWritePos    Jcoper.L4B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup5_Value) ;
+              DFWritePos      Jcoper.LOOKUP5_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L5B1_Std) ;
+              DFWritePos      Jcoper.L5B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L5B2_Std) ;
+              DFWritePos      Jcoper.L5B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L5B3_Std) ;
+              DFWritePos      Jcoper.L5B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L5B4_Std) ;
+              DFWritePos      Jcoper.L5B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L5B5_Std) ;
+              DFWritePos    Jcoper.L5B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup6_Value) ;
+              DFWritePos      Jcoper.LOOKUP6_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L6B1_Std) ;
+              DFWritePos      Jcoper.L6B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L6B2_Std) ;
+              DFWritePos      Jcoper.L6B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L6B3_Std) ;
+              DFWritePos      Jcoper.L6B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L6B4_Std) ;
+              DFWritePos      Jcoper.L6B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L6B5_Std) ;
+              DFWritePos    Jcoper.L6B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup7_Value) ;
+              DFWritePos      Jcoper.LOOKUP7_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L7B1_Std) ;
+              DFWritePos      Jcoper.L7B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L7B2_Std) ;
+              DFWritePos      Jcoper.L7B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L7B3_Std) ;
+              DFWritePos      Jcoper.L7B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L7B4_Std) ;
+              DFWritePos      Jcoper.L7B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L7B5_Std) ;
+              DFWritePos    Jcoper.L7B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup8_Value) ;
+              DFWritePos      Jcoper.LOOKUP8_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L8B1_Std) ;
+              DFWritePos      Jcoper.L8B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L8B2_Std) ;
+              DFWritePos      Jcoper.L8B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L8B3_Std) ;
+              DFWritePos      Jcoper.L8B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L8B4_Std) ;
+              DFWritePos      Jcoper.L8B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L8B5_Std) ;
+              DFWritePos    Jcoper.L8B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup9_Value) ;
+              DFWritePos      Jcoper.LOOKUP9_VALUE    nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L9B1_Std) ;
+              DFWritePos      Jcoper.L9B1_STD         nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L9B2_Std) ;
+              DFWritePos      Jcoper.L9B2_STD         nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L9B3_Std) ;
+              DFWritePos      Jcoper.L9B3_STD         nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L9B4_Std) ;
+              DFWritePos      Jcoper.L9B4_STD         nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L9B5_Std) ;
+              DFWritePos    Jcoper.L9B5_STD         nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            If (JCOPER.Lookup10_Value) ;
+              DFWritePos      Jcoper.LOOKUP10_VALUE   nCol1   (FONT_DEFAULT+FONT_RIGHT)   4
+              DFWritePos      ":"                     (nCol1 + 0.1)      (FONT_DEFAULT)
+            If (JCOPER.L10B1_Std) ;
+              DFWritePos      Jcoper.L10B1_STD        nCol2   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L10B2_Std) ;
+              DFWritePos      Jcoper.L10B2_STD        nCol3   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L10B3_Std) ;
+              DFWritePos      Jcoper.L10B3_STD        nCol4   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L10B4_Std) ;
+              DFWritePos      Jcoper.L10B4_STD        nCol5   (FONT_DEFAULT+FONT_RIGHT)   4
+            If (JCOPER.L10B5_Std) ;
+              DFWritePos    Jcoper.L10B5_STD        nCol6   (FONT_DEFAULT+FONT_RIGHT)   4
+            DfwriteLn ""
+
+            DFWriteln ""
+            DFWriteLine DFGR_CURRLINE 0 DFGR_RB_MARGIN DFGR_HORI RGB_BLACK 0.1
+
+        End_Procedure
+
+//        procedure_section SubTotal1
+//            DFWrite "#zerosubpagecount#"
+//            send DFNew_Page
+//        end_procedure
+
+
+        //Report footer is only printed on the last page before Page_Footer
+        //Procedure_Section Report_Footer
+        //      DFBeginHeader DFReportFooter
+        //        DFWrite     "Report_Footer" (FONT_ITALIC)
+        //      DFEndHeader
+        //End_Procedure
+
+
+        //Page footer is printed on each page before Page_Bottom
+        //Procedure_Section Page_Footer
+        //      DFBeginHeader DFPageFooter
+        //        DFWrite     "Page_Footer" (FONT_ITALIC)
+        //      DFEndHeader
+        //End_Procedure
+
+
+        //Procedure_Section Page_Bottom
+        //
+        //    DFFont "Arial" //  Use Arial
+        //    DFFontSize 9
+        //
+        //      DFBeginHeader DFPageBottom       //Header of type DFPageBottom
+        //
+        //        DFHeaderPos   HDR_CENTER       //Write data in center
+        //        DFHeaderFrame HDR_MARGINS 0.07 //Set the box from margin to margin using size 0.07
+
+        //        DFWrite     "Printed on: " (FONT_ITALIC)
+        //        DFWriteln   (RptToday(self)) (FONT_ITALIC)
+        //
+        //      DFEndHeader                     //End and print header
+        //
+        //End_Procedure
+
+    End_Object    //  RptEst_Std
+
+    //AB-StoreEnd
+
+End_Object    // Est_Std_rpt
+
+//AB/ End_Object    // prj
+

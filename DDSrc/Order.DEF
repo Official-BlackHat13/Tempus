@@ -1,0 +1,143 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Order (# 8)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Order
+  USER DISPLAY NAME         : Order
+  DATAFLEX FILE NAME        : Order
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 50067     ( USED: 50067 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 9674 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CustomerIdno     NUM   10.0     1  3   
+  2  LocationIdno     NUM   10.0    12  2   Location.FIELD_2 (3,2)
+  3  JobNumber        NUM   10.0    23  1   
+  4  Title            ASC     60    34      
+  5  WorkType         ASC      2    94  7   
+  6  Planner          ASC      3    96      
+  7  EstimatedHours   NUM    4.2    99      
+  8  JobOpenDate      DAT     10   107 12   
+  9  JobCloseDate     DAT     10   130  7   
+ 10  EventOpenDate    DAT     10   153      
+ 11  EventCloseDate   DAT     10   176      
+ 12  EventIdno        NUM   10.0   199      
+ 13  BilledDollars    NUM    6.2   210      
+ 14  Description      TEX    512   220      
+ 15  Specification    TEX    512 16603      
+ 16  ChangedFlag      NUM    5.0 32986  4   
+ 17  QuoteReference   NUM   10.0 32992      
+ 18  QuoteAmount      NUM    8.2 33003      
+ 19  Organization     ASC     60 33015  5   
+ 20  ProjectId        NUM   10.0 33075  6   
+ 21  PO_Number        ASC     50 33086      
+ 22  LocationName     ASC     40 33136  8   
+ 23  PropertyManager  ASC     40 33176      
+ 24  RoundingExempt   NUM    5.0 33216      
+ 25  MonthlyBilling   NUM    5.0 33222      
+ 26  MilesToWorksite  NUM    5.0 33228      
+ 27  SalesInvoiceOK   DAT     10 33234 14   
+ 28  OpsCostOK        DAT     10 33257 10   
+ 29  WorkStopped      DAT     10 33280      
+ 30  LaborMinutes     NUM   10.0 33303      
+ 31  TravelMinutes    NUM   10.0 33314      
+ 32  MaterialCost     NUM    8.2 33325      
+ 33  SuppliesCost     NUM    8.2 33337      
+ 34  OutsideSvcsCost  NUM    8.2 33349      
+ 35  EquipmentCost    NUM    8.2 33361      
+ 36  JobCostTotal     NUM    8.2 33373      
+ 37  PromiseDate      DAT     10 33385      
+ 38  RepIdno          NUM   10.0 33408      SalesRep.FIELD_1 (5,1)
+ 39  CostStatus       NUM    5.0 33419      
+ 40  InvoiceAmt       NUM    8.2 33425      
+ 41  BillingType      ASC      1 33437      
+ 42  BillStatus       ASC     10 33438      
+ 43  Division         ASC     20 33448      
+ 44  InvoiceOnly      ASC      1 33468      
+ 45  LaborCost        NUM    6.2 33469      
+ 46  TravelCost       NUM    6.2 33479      
+ 47  SalesComm        NUM    6.2 33489      
+ 48  NetProfit        NUM    6.2 33499      
+ 49  InvoiceReference  NUM   10.0 33509      
+ 50  ReturnFlag       NUM    5.0 33520      
+ 51  LastReturnDate   DAT     10 33526      
+ 52  ReturnMemo       TEX    512 33549      
+ 53  PO_Flag          NUM    5.0 49932      
+ 54  RecordOwner      NUM   10.0 49938      
+ 55  CEPM_JobNumber   NUM   10.0 49949 11   
+ 56  Status           ASC      2 49960 12   
+ 57  PrevWageStatus   ASC      2 49962      
+ 58  OrderSubtotal    NUM    8.4 49964      
+ 59  OrderTaxTotal    NUM    8.4 49978      
+ 60  OrderTotalAmount  NUM    8.4 49992      
+ 61  LockedFlag       NUM    5.0 50006      
+ 62  EsheadReference  NUM   10.0 50012      
+ 63  EsheadAmount     NUM    8.2 50023      
+ 64  EstHoursTotal    NUM    6.2 50035      
+ 65  OpsCostOK_Flag   NUM    5.0 50045 15   
+ 66  SalesInvoiceOK_Flag  NUM    5.0 50051 16   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    JobNumber       NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  3    CustomerIdno    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  5    Organization    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  6    ProjectId       NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  7    WorkType        NO  NO       0      0       3     ON-LINE
+       JobCloseDate    NO  NO 
+       JobNumber       NO  NO 
+
+  8    LocationName    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  9    JobNumber       YES NO       0      0       1     ON-LINE
+
+  10   OpsCostOK       NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  11   CEPM_JobNumber  NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  12   Status          NO  NO       0      0       3     ON-LINE
+       JobOpenDate     NO  NO 
+       JobNumber       NO  NO 
+
+  13   LocationIdno    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  14   SalesInvoiceOK  NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  15   OpsCostOK_Flag  NO  NO       0      0       3     ON-LINE
+       OpsCostOK       NO  NO 
+       JobNumber       NO  NO 
+
+  16   SalesInvoiceOK_Flag NO  NO       0      0       3     ON-LINE
+       SalesInvoiceOK  NO  NO 
+       JobNumber       NO  NO 
+

@@ -1,0 +1,7 @@
+#REPLACE FILE47 ZipGeo
+#REPLACE ZipGeo.Recnum |FN47,0
+#REPLACE ZipGeo.ZipCode |FN47,1
+#REPLACE ZipGeo.City |FS47,2
+#REPLACE ZipGeo.State |FS47,3
+#REPLACE ZipGeo.Longitude |FN47,4
+#REPLACE ZipGeo.Latitude |FN47,5

@@ -1,0 +1,262 @@
+Use Batchdd.pkg
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use Employer.DD
+Use Employee.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use MastOps.DD
+Use Opers.DD
+Use Trans.DD
+Use cDivisionMgrGlblDataDictionary.dd
+Use cWebAppUserRightsGlblDataDictionary.dd
+
+Use OperationsProcess.bp
+
+Object oTransactionJobCostMove is a BusinessProcess
+    Object oWebAppUserRights_DD is a cWebAppUserRightsGlblDataDictionary
+    End_Object
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oWebAppUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oOpers_DD is a Opers_DataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oTrans_DD is a Trans_DataDictionary
+        Set DDO_Server to oOpers_DD
+        Set DDO_Server to oEmployee_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oTrans_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+
+    Function MoveTransactionsToJob Integer iOldJobNumber Integer iNewJobNumber Date dStartDate Date dStopDate Returns Boolean
+        Boolean bSuccess
+        Integer iOldCustIdno iOldLocIdno iOldOpersIdno
+        Integer iNewCustIdno iNewLocIdno iNewOpersIdno iNewAttachOpersIdno
+        Integer iCurrentOpers iCurrentMastOps iCurrentAttachMastOps iOldLocOpersCount iNewLocOpersCount iMissingOpersAtNewLoc
+        Integer eResponse
+        String sErrMsg
+        Number nNewSellRate nNewAttachSellRate
+        
+        // REQUIRED STEPS
+        //  STEP 1: Gather Old and New numbers for Customer and Location 
+        Showln ("Start - Gathering Information")
+        Clear Order
+        Move iOldJobNumber to Order.JobNumber
+        Find EQ Order.JobNumber
+        If ((Found) and iOldJobNumber = Order.JobNumber) Begin
+            Move Order.CustomerIdno to iOldCustIdno
+            Move Order.LocationIdno to iOldLocIdno
+        End
+        Else Begin
+            Function_Return (False)
+        End
+        Clear Order
+        Move iNewJobNumber to Order.JobNumber
+        Find EQ Order.JobNumber
+        If ((Found) and iNewJobNumber = Order.JobNumber) Begin
+            Move Order.CustomerIdno to iNewCustIdno
+            Move Order.LocationIdno to iNewLocIdno
+        End
+        Else Begin
+            Function_Return (False)
+        End
+        //  STEP 2: Compare Operations list between Old and New Location
+        Showln ("Comparing Operations Records")
+        Clear Opers
+        Move iOldLocIdno to Opers.LocationIdno
+        Find GE Opers by 4
+        While ((Found) and Opers.LocationIdno = iOldLocIdno)
+            Increment iOldLocOpersCount
+            Move Opers.MastOpsIdno to iCurrentMastOps
+            //
+            Clear Opers
+            Move iNewLocIdno to Opers.LocationIdno
+            Move iCurrentMastOps to Opers.MastOpsIdno
+            Find EQ Opers by 4
+            If ((Found) and Opers.LocationIdno = iNewLocIdno and Opers.MastOpsIdno = iCurrentMastOps) Begin
+                Increment iNewLocOpersCount
+            End
+            Else Increment iMissingOpersAtNewLoc
+            //
+            Clear Opers
+            Move iOldLocIdno to Opers.LocationIdno
+            Move iCurrentMastOps to Opers.MastOpsIdno
+            Find GT Opers by 4
+        Loop
+        Showln (" - OldLocOpersCount/NewLocOpersCount: " * String(iOldLocOpersCount)+"/"+String(iNewLocOpersCount))
+        If ((iOldLocOpersCount <> iNewLocOpersCount) or iMissingOpersAtNewLoc<>0) Begin
+            Showln ("Unequal or Missing Opers Record")
+            If (iMissingOpersAtNewLoc<>0) Begin
+                Move (YesNo_Box("The new location is missing Operations records. \n\n Would you like to copy the records to the new location?","Missing Opers Record",MBR_Yes)) to eResponse
+                If (eResponse=MBR_Yes) Begin
+                    Get CopyOpersRecords of oOpersProcess iOldLocIdno iNewLocIdno False (&sErrMsg) to bSuccess
+                    If (not(bSuccess)) Begin
+                        Send UserError sErrMsg "Error"
+                        Function_Return (False)
+                    End
+                    // Reload view
+                    If bSuccess Begin
+                        Send Info_Box sErrMsg "Copying completed"
+                    End
+                End
+                Else Begin
+                    Function_Return (False)
+                End
+                
+            End
+        End
+        Showln ("So far, so good - Moving Transactions now.")
+        Clear Trans
+        Move iOldJobNumber to Trans.JobNumber
+        Move dStartDate to Trans.StartDate
+        Find GE Trans by 2
+        While ((Found) and Trans.JobNumber = iOldJobNumber and Trans.StartDate <= dStopDate)
+            Integer iCurrentTransIdno iCurrentEquipIdno iTransFoundCount iTransChangeCount
+            Move 0 to iNewAttachOpersIdno
+            Move 0 to nNewAttachSellRate
+            //
+            Increment iTransChangeCount
+            //
+            Move Trans.TransIdno to iCurrentTransIdno
+            Move Trans.MastOpsIdno to iCurrentMastOps
+            Move Trans.AttachMastOpsIdno to iCurrentAttachMastOps
+            // Attachment Opers Record
+            If (iCurrentAttachMastOps <> 0) Begin
+                Move iNewLocIdno to Opers.LocationIdno
+                Move iCurrentAttachMastOps to Opers.MastOpsIdno
+                Find EQ Opers by 4
+                If ((Found) and iNewLocIdno = Opers.LocationIdno and iCurrentAttachMastOps = Opers.MastOpsIdno) Begin
+                    Move Opers.OpersIdno to iNewAttachOpersIdno
+                    Move Opers.SellRate to nNewAttachSellRate
+                End
+            End
+            // Regular Opers Record
+            Clear Opers
+            Move iNewLocIdno to Opers.LocationIdno
+            Move iCurrentMastOps to Opers.MastOpsIdno
+            Find EQ Opers by 4
+            If ((Found) and iNewLocIdno = Opers.LocationIdno and iCurrentMastOps = Opers.MastOpsIdno) Begin
+                Move Opers.OpersIdno to iNewOpersIdno
+                Move Opers.SellRate to nNewSellRate
+                //
+                Integer hoDD
+                Boolean bFail
+                Set Main_DD to oTrans_DD
+                Get Main_DD to hoDD
+                //
+                Send Clear_All of hoDD
+                Move iCurrentTransIdno to Trans.TransIdno
+                Send Request_Find of hoDD EQ Trans.File_Number 1
+                If ((Found) and Trans.TransIdno = iCurrentTransIdno) Begin
+                    // Replace JobNumber
+                    Move iNewJobNumber to Order.JobNumber
+                    Send Request_Find of hoDD EQ Order.File_Number 1
+                    Move iNewOpersIdno to Opers.OpersIdno
+                    Send Request_Find of hoDD EQ Opers.File_Number 1
+                    //Set Field_Changed_Value of hoDD Field Trans.CustomerIdno to iNewCustIdno
+                    //Set Field_Changed_Value of hoDD Field Trans.LocationIdno to iNewLocIdno
+                    //Set Field_Changed_Value of hoDD Field Trans.JobNumber to iNewJobNumber
+                    //Set Field_Changed_Value of hoDD Field Trans.OpersIdno to iNewOpersIdno
+                    //Set Field_Changed_Value of hoDD Field Trans.CurrentSellRate to nNewSellRate
+                    Set Field_Changed_Value of hoDD Field Trans.AttachOpersIdno to iNewAttachOpersIdno
+                    Get Request_Validate of hoDD to bFail
+                    If (not(bFail)) Begin
+                        Send Request_Save of hoDD
+                    End
+                End
+                
+                // REPLACE IN TRANSRECORD
+//                Reread Trans
+//                    Move iNewCustIdno to Trans.CustomerIdno
+//                    Move iNewLocIdno to Trans.LocationIdno
+//                    Move iNewJobNumber to Trans.JobNumber
+//                    Move iNewOpersIdno to Trans.OpersIdno
+//                    Move nNewSellRate to Trans.CurrentSellRate
+//                    Move iNewAttachOpersIdno to Trans.AttachOpersIdno
+//                    SaveRecord Trans
+//                Unlock
+                
+            End
+            Clear Trans
+            Move iOldJobNumber to Trans.JobNumber
+            Move dStartDate to Trans.StartDate
+            Find GE Trans by 2
+        Loop
+        //      STEP 2.1: Please run Copy or Clone Process for adding missing operation records to the new locations operations table
+        //  STEP 3: Open Transactions Table constrained to iOldJobNumber
+        //      STEP 3.1: Find first old record
+        //          STEP 3.2: Use current Trans.MastOpsIdno & iNewLocIdno 
+        //          STEP 3.2.1: Move
+        //              - Opers.OpersIdno to iNewOpersIdno
+        //              - Opers.SellRate to iNewSellRate
+        //          STEP 3.3: Replace 
+        //              - Trans.CustomerIdno with iNewCustIdno
+        //              - Trans.LocationIdno with iNewLocIdno
+        //              - Trans.JobNumber with iNewJobNumber
+        //              - Trans.OpersIdno with iNewOpersIdno
+        
+        
+    End_Function
+
+
+End_Object
+

@@ -1,0 +1,488 @@
+// PrntFlag.DG
+
+Use DFAllEnt.pkg
+Use cGlblGroup.pkg
+Use cGlblCheckBox.pkg
+Use cGlblTextbox.pkg
+Use cGlblForm.pkg
+
+Object oDialogPrintFlags is a dbModalPanel
+
+    //AB-StoreTopStart
+    property integer Invoking_Object_Id 0
+    property string  psPrintFlags        ""
+    property string  psUserFlags         ""
+    //
+    property boolean pbError            FALSE
+    
+    Set Label to "Print Flags"
+    Set Size to 211 272
+    Set Location to 5 5
+    Set Locate_Mode to CENTER_ON_PANEL
+
+    Object oBox is a Container3d
+        Set Size to 182 262
+        Set Location to 4 5
+        Set Border_Style to Border_StaticEdge
+        Object oGroup1 is a cGlblGroup
+            Set Size to 170 245
+            Set Location to 4 8
+            Object oCheckboxNoPrintFlag is a cGlblCheckBox
+                Set Label to "# = Do not print on estimate reports"
+                Set Size to 10 127
+                Set Location to 10 10
+
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+            End_Object    // oCheckboxNoPrintFlag
+
+            Object oCheckboxJFlag is a cGlblCheckBox
+                Set Label to "J = Print on Job Jackets"
+                Set Size to 10 92
+                Set Location to 25 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxJFlag
+
+            Object oCheckboxSFlag is a cGlblCheckBox
+                Set Label to "S = Display item to Shop Floor"
+                Set Size to 10 111
+                Set Location to 40 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxSFlag
+
+            Object oCheckbox0Flag is a cGlblCheckBox
+                Set Label to "0 = Output Calc. Units formula label and value"
+                Set Size to 10 161
+                Set Location to 55 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked bChecked0Flag bCheckedTFlag bCheckedPFlag
+                    Get Checked_State to bChecked
+                    //Get Checked_State to bChecked0Flag
+                    //Get Checked_State of oCheckboxTFlag to bCheckedTflag
+                    //Get Checked_State of oCheckboxPFlag to bCheckedPflag
+                    //Move ((not(bChecked0Flag)) or (not(bCheckedTflag)) or (not(bCheckedPflag))) ; 
+                    //     to bchecked
+                    //Set Checked_State of oCheckboxIFlag to bChecked
+                     
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox0Flag
+
+            Object oCheckboxTFlag is a cGlblCheckBox
+                Set Label to "T = Output Table Units label and retrieved value"
+                Set Size to 10 168
+                Set Location to 70 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked bChecked0Flag bCheckedTFlag bCheckedPFlag
+                    Get Checked_State to bChecked
+                    //Get Checked_State to bChecked0Flag
+                    //Get Checked_State of oCheckboxTFlag to bCheckedTflag
+                    //Get Checked_State of oCheckboxPFlag to bCheckedPflag
+                    //Set Checked_State of oCheckboxIFlag to ;
+                    // ((not(bChecked0Flag)) or (not(bCheckedTflag)) or (not(bCheckedPflag)))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxTFlag
+
+            Object oCheckboxPFlag is a cGlblCheckBox
+                Set Label to "P = Output Prod. Units formula label and value"
+                Set Size to 10 162
+                Set Location to 85 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked bChecked0Flag bCheckedTFlag bCheckedPFlag
+                    Get Checked_State to bChecked
+                    //Get Checked_State to bChecked0Flag
+                    //Get Checked_State of oCheckboxTFlag to bCheckedTflag
+                    //Get Checked_State of oCheckboxPFlag to bCheckedPflag
+                    //Set Checked_State of oCheckboxIFlag to ;
+                    // ((not(bChecked0Flag)) or (not(bCheckedTflag)) or (not(bCheckedPflag)))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxPFlag
+
+            Object oCheckboxIFlag is a cGlblCheckBox
+                Set Label to "I = Information flag: output all 3 calculations' labels and values"
+                Set Size to 10 211
+                Set Location to 100 10
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                    if (bChecked) begin
+                        set Checked_State of oCheckbox0Flag to (not(bChecked))
+                        set Checked_State of oCheckboxPFlag to (not(bChecked))
+                        set Checked_State of oCheckboxTFlag to (not(bChecked))
+                    end
+                    set Enabled_State of oCheckbox0Flag to (not(bChecked))
+                    set Enabled_State of oCheckboxPFlag to (not(bChecked))
+                    set Enabled_State of oCheckboxTFlag to (not(bChecked))
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckboxIFlag
+
+            Object oTextBox1 is a cGlblTextbox
+                Set Label to "Output Prompt/Variable labels and values for variable numbers: "
+                Set Location to 115 10
+                Set Size to 10 201
+                Set TypeFace to "MS Sans Serif"
+            End_Object    // oTextBox1
+
+            Object oCheckbox1Flag is a cGlblCheckBox
+                Set Label to "1"
+                Set Size to 10 21
+                Set Location to 125 15
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox1Flag
+
+            Object oCheckbox2Flag is a cGlblCheckBox
+                Set Label to "2"
+                Set Size to 10 21
+                Set Location to 125 40
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox2Flag
+
+            Object oCheckbox3Flag is a cGlblCheckBox
+                Set Label to "3"
+                Set Size to 10 21
+                Set Location to 125 65
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox3Flag
+
+            Object oCheckbox4Flag is a cGlblCheckBox
+                Set Label to "4"
+                Set Size to 10 21
+                Set Location to 125 90
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox4Flag
+
+            Object oCheckbox5Flag is a cGlblCheckBox
+                Set Label to "5"
+                Set Size to 10 21
+                Set Location to 125 115
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox5Flag
+
+            Object oCheckbox6Flag is a cGlblCheckBox
+                Set Label to "6"
+                Set Size to 10 21
+                Set Location to 125 140
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox6Flag
+
+            Object oCheckbox7Flag is a cGlblCheckBox
+                Set Label to "7"
+                Set Size to 10 21
+                Set Location to 125 165
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox7Flag
+
+            Object oCheckbox8Flag is a cGlblCheckBox
+                Set Label to "8"
+                Set Size to 10 21
+                Set Location to 125 190
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox8Flag
+
+            Object oCheckbox9Flag is a cGlblCheckBox
+                Set Label to "9"
+                Set Size to 10 21
+                Set Location to 125 215
+
+                //AB-StoreStart
+                Procedure OnChange
+                    Boolean bChecked
+                    Get Checked_State to bChecked
+                
+                End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oCheckbox9Flag
+
+            Object oFormUserFlags is a cGlblForm
+                Set Label to "User-defined flags"
+                Set Size to 13 85
+                Set Location to 145 71
+                Set Status_Help to "User-defined flags for use in custom user reports"
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+
+                //AB-StoreStart
+                Set Capslock_State to True
+                //Procedure OnChange
+                //    String sValue
+                //    Get value to sValue
+                //
+                //End_Procedure  // OnChange
+                //AB-StoreEnd
+
+            End_Object    // oFormUserFlags
+
+
+            //AB-StoreStart
+            
+            function IsInput returns string
+                string sInput sUserFlags
+                get value of oFormUserFlags to sUserFlags
+                //
+                if (Checked_State(oCheckboxNoPrintFlag(self))) move "#"            to sInput
+                if (Checked_State(oCheckboxJFlag(self)))       move (sInput + "J") to sInput
+                if (Checked_State(oCheckboxSFlag(self)))       move (sInput + "S") to sInput
+                if (Checked_State(oCheckboxIFlag(self)))       move (sInput + "I") to sInput
+                else begin
+                    if (Checked_State(oCheckbox0Flag(self)))   move (sInput + "0") to sInput
+                    if (Checked_State(oCheckboxTFlag(self)))   move (sInput + "T") to sInput
+                    if (Checked_State(oCheckboxPFlag(self)))   move (sInput + "P") to sInput
+                    if (sInput contains "0TP") ; 
+                       move (replace("0TP",sInput,"I"))                            to sInput
+                end
+                if (Checked_State(oCheckbox1Flag(self)))       move (sInput + "1") to sInput
+                if (Checked_State(oCheckbox2Flag(self)))       move (sInput + "2") to sInput
+                if (Checked_State(oCheckbox3Flag(self)))       move (sInput + "3") to sInput
+                if (Checked_State(oCheckbox4Flag(self)))       move (sInput + "4") to sInput
+                if (Checked_State(oCheckbox5Flag(self)))       move (sInput + "5") to sInput
+                if (Checked_State(oCheckbox6Flag(self)))       move (sInput + "6") to sInput
+                if (Checked_State(oCheckbox7Flag(self)))       move (sInput + "7") to sInput
+                if (Checked_State(oCheckbox8Flag(self)))       move (sInput + "8") to sInput
+                if (Checked_State(oCheckbox9Flag(self)))       move (sInput + "9") to sInput
+                //
+                move (sInput + sUserFlags) to sInput
+                function_return sInput
+            end_function
+            
+            procedure DoReset string sCurrent string sUserFlags
+                boolean bChecked
+                //
+                move (sCurrent CONTAINS "#") to bChecked
+                set Checked_State of oCheckboxNoPrintFlag  to bChecked
+                move (sCurrent CONTAINS "J") to bChecked
+                set Checked_State of oCheckboxJFlag  to bChecked
+                move (sCurrent CONTAINS "S") to bChecked
+                set Checked_State of oCheckboxSFlag  to bChecked
+                move (sCurrent CONTAINS "I") to bChecked
+                set Checked_State of oCheckboxIFlag  to bChecked
+                if (bChecked) begin
+                    set Checked_State of oCheckbox0Flag  to (not(bChecked))
+                    set Checked_State of oCheckboxTFlag  to (not(bChecked))
+                    set Checked_State of oCheckboxPFlag  to (not(bChecked))
+                end
+                else if ((sCurrent contains "0") and (sCurrent contains "T") and (sCurrent contains "P")) begin
+                        set Checked_State of oCheckboxIFlag to true
+                        set Checked_State of oCheckbox0Flag to false
+                        set Checked_State of oCheckboxTFlag to false
+                        set Checked_State of oCheckboxPFlag to false
+                    end
+                    else begin
+                        move (sCurrent CONTAINS "0") to bChecked
+                        set Checked_State of oCheckbox0Flag  to bChecked
+                        move (sCurrent CONTAINS "T") to bChecked
+                        set Checked_State of oCheckboxTFlag  to bChecked
+                        move (sCurrent CONTAINS "P") to bChecked
+                        set Checked_State of oCheckboxPFlag  to bChecked
+
+                    end
+                move (sCurrent CONTAINS "1") to bChecked
+                set Checked_State of oCheckbox1Flag  to bChecked
+                move (sCurrent CONTAINS "2") to bChecked
+                set Checked_State of oCheckbox2Flag  to bChecked
+                move (sCurrent CONTAINS "3") to bChecked
+                set Checked_State of oCheckbox3Flag  to bChecked
+                move (sCurrent CONTAINS "4") to bChecked
+                set Checked_State of oCheckbox4Flag  to bChecked
+                move (sCurrent CONTAINS "5") to bChecked
+                set Checked_State of oCheckbox5Flag  to bChecked
+                move (sCurrent CONTAINS "6") to bChecked
+                set Checked_State of oCheckbox6Flag  to bChecked
+                move (sCurrent CONTAINS "7") to bChecked
+                set Checked_State of oCheckbox7Flag  to bChecked
+                move (sCurrent CONTAINS "8") to bChecked
+                set Checked_State of oCheckbox8Flag  to bChecked
+                move (sCurrent CONTAINS "9") to bChecked
+                set Checked_State of oCheckbox9Flag  to bChecked
+                set value of oFormUserFlags to sUserFlags
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // oGroup1
+
+
+        //AB-StoreStart
+        function IsReturnString returns string
+            string sInput
+            //
+            get IsInput       of oGroup1       to sInput
+            function_return sInput
+        end_function
+        
+        procedure DoReset string sCurrent string sUserFlags
+            send DoReset of oGroup1 sCurrent sUserFlags
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oBox
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Location to 192 162
+
+        //AB-StoreStart
+        procedure OnClick
+            send DoReturnString
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oOK_bn
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Location to 192 217
+
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oCancel_bn
+
+    on_key kCancel       send KeyAction of oCancel_bn
+    on_key Key_Alt+Key_O send KeyAction of oOK_bn
+    on_key Key_Alt+Key_C send KeyAction of oCancel_bn
+    
+    procedure DoReturnString
+        string sPrintFlags
+        set pbError  to FALSE
+        //
+        get IsReturnString of oBox to sPrintFlags
+        //
+        if (pbError(self)) begin
+            send Stop_Box sPrintFlags
+            procedure_return
+        end
+        //
+        set psPrintFlags to sPrintFlags
+        send Close_Panel
+    end_procedure
+    
+    function IsPrintFlags string sCurrent returns string
+        string sUserFlags
+        set psPrintFlags to "CANCEL"
+        //
+        Move sCurrent to sUserFlags
+        Move (Replace("#",sUserFlags,"")) to sUserFlags
+        Move (Replace("J",sUserFlags,"")) to sUserFlags
+        Move (Replace("S",sUserFlags,"")) to sUserFlags
+        Move (Replace("0",sUserFlags,"")) to sUserFlags
+        Move (Replace("T",sUserFlags,"")) to sUserFlags
+        Move (Replace("P",sUserFlags,"")) to sUserFlags
+        Move (Replace("I",sUserFlags,"")) to sUserFlags
+        Move (Replace("1",sUserFlags,"")) to sUserFlags
+        Move (Replace("2",sUserFlags,"")) to sUserFlags
+        Move (Replace("3",sUserFlags,"")) to sUserFlags
+        Move (Replace("4",sUserFlags,"")) to sUserFlags
+        Move (Replace("5",sUserFlags,"")) to sUserFlags
+        Move (Replace("6",sUserFlags,"")) to sUserFlags
+        Move (Replace("7",sUserFlags,"")) to sUserFlags
+        Move (Replace("8",sUserFlags,"")) to sUserFlags
+        Move (Replace("9",sUserFlags,"")) to sUserFlags
+        set psUserFlags to sUserFlags
+        //
+        send DoReset of oBox sCurrent sUserFlags
+        send Popup_Modal
+        function_return (psPrintFlags(self))
+    end_function
+
+End_Object    // oDialogPrintFlags

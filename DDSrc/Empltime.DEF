@@ -1,0 +1,51 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Empltime (# 23)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:EMPLTIME
+  USER DISPLAY NAME         : Empltime
+  DATAFLEX FILE NAME        : Empltime
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 185       ( USED: 185 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 18663 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  EmpltimeId       NUM   10.0     1  1   
+  2  EmployeeId       NUM   10.0    12  2   Employee.FIELD_1 (1,1)
+  3  StartDate        DAT     10    23  2   
+  4  StartHr          NUM    5.0    46  2   
+  5  StartMn          NUM    5.0    52  2   
+  6  LunchOutDate     DAT     10    58      
+  7  LunchOutHr       NUM    5.0    81      
+  8  LunchOutMn       NUM    5.0    87      
+  9  LunchInDate      DAT     10    93      
+ 10  LunchInHr        NUM    5.0   116      
+ 11  LunchInMn        NUM    5.0   122      
+ 12  StopDate         DAT     10   128      
+ 13  StopHr           NUM    5.0   151      
+ 14  StopMn           NUM    5.0   157      
+ 15  LunchMinutes     NUM    5.0   163      
+ 16  DayMinutes       NUM    5.0   169      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    EmpltimeId      NO  NO       0      0       1     ON-LINE
+
+  2    EmployeeId      NO  NO       0      0       5     ON-LINE
+       StartDate       YES NO 
+       StartHr         NO  NO 
+       StartMn         NO  NO 
+       EmpltimeId      NO  NO 
+

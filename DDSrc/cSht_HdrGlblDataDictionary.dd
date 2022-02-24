@@ -1,0 +1,36 @@
+Use cGlblDataDictionary.pkg
+
+Open Sht_Hdr
+Open Invhdr
+Open System
+
+Register_Object Sht_Hdr_sl
+
+Class cSht_HdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Sht_Hdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Invhdr.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field Sht_Hdr.Wind_Dir DD_CAPSLOCK to True
+
+        Set Field_Auto_Increment Field Sht_Hdr.Sht_Hdr_ID to File_Field System.SnowShtHdr
+        Set Field_Prompt_Object Field Sht_Hdr.Sht_Hdr_ID to Sht_Hdr_sl
+
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use Sht_Hdr.sl
+#ENDIF

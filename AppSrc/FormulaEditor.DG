@@ -1,0 +1,677 @@
+// FormulaEditor.DG
+
+open Jcoper
+
+Use DFAllEnt.pkg
+Use cGlblTreeView.pkg
+Use cGlblForm.pkg
+Use cGlblButton.pkg
+Use cGlblEdit.pkg
+
+Object oFormulaEditor is a dbModalPanel
+
+    enumeration_list
+        define feCalc
+        define feProd
+        define feSell
+        define feOperands
+        define feVariables
+        define feConstants
+        define feFormulas
+        define feOperators
+        define feArithmetic
+        define feComparison
+    end_enumeration_list
+    
+    object oOperandArray is an Array
+    end_object
+    
+    object oFormulaArray is an Array
+    
+        function IsFormula returns string
+            integer iCount iItem
+            string  sItem sFormula
+            //
+            get Item_Count to iCount
+            // array is zero based
+            decrement iCount
+            //
+            for iItem from 0 to iCount
+                get String_Value item iItem to sItem
+                move (sFormula * sItem)     to sFormula
+            loop
+            //
+            function_return sFormula
+        end_function
+    
+        function DoAppend string sItem returns string
+            integer iCount
+            string  sFormula
+            //
+            get Item_Count to iCount
+            // add the latest addition
+            set Array_Value item iCount to sItem
+            // we've got one more
+            increment iCount
+            // get the formula
+            get IsFormula to sFormula
+            //
+            function_return sFormula
+        end_function
+    
+        function DoBackspace returns string
+            integer iCount
+            string  sFormula
+            //
+            get Item_Count to iCount
+            // zero based
+            decrement iCount
+            // delete the last one
+            send Delete_Item iCount
+            // if there's items left get the formula
+            if (iCount) get IsFormula to sFormula
+            //
+            function_return sFormula
+        end_function
+    
+        function IsOperandValue string sValue returns integer
+            if      (sValue = "A") function_return 10
+            else if (sValue = "B") function_return 11
+            else if (sValue = "C") function_return 12
+            else if (sValue = "D") function_return 13
+            else if (sValue = "E") function_return 14
+            else if (sValue = "F") function_return 15
+            else if (sValue = "G") function_return 16
+            else if (sValue = "H") function_return 17
+            else if (sValue = "I") function_return 18
+            else if (sValue = "0") function_return 19
+            else if (sValue = "T") function_return 20
+            else if (sValue = "P") function_return 21
+            else if (sValue = "$") function_return 22
+            else if (sValue = "J") function_return 23
+            else if (sValue = "S") function_return 24
+            else if (sValue = "O") function_return 25
+            else if (sValue = "R") function_return 26
+        end_function // IsOperandValue
+    
+        function DoInitializeFormula string sFormula returns string
+            integer iLength iValue iItem
+            string  sItem sText
+            //
+            move (length(sFormula)) to iLength
+            //
+            while (sFormula <> "")
+                // check for MIN MAX
+                if (left(sFormula,3) = "MIN" OR left(sFormula,3) = "MAX") begin
+                    // set the value
+                    move (left(sFormula,3))    to sText
+                    set Array_Value item iItem to sText
+                    // trim the formula
+                    move (iLength - 3)             to iLength
+                    move (right(sFormula,iLength)) to sFormula
+                end
+                // check for <>
+                else if (left(sFormula,2) = "<>") begin
+                    // set the value
+                    move (left(sFormula,2))    to sText
+                    set Array_Value item iItem to sText
+                    // trim the formula
+                    move (iLength - 2)             to iLength
+                    move (right(sFormula,iLength)) to sFormula
+                end
+                // its a one character item
+                else begin
+                    move (left(sFormula,1)) to sItem
+                    // is it an operator?
+                    if ("()+-*/=<>W" CONTAINS sItem) set Array_Value item iItem to sItem
+                    else begin
+                        if ("123456789" CONTAINS sItem) begin
+                            move sItem to iValue
+                            get String_Value of oOperandArray item iValue to sText
+                            set Array_Value item iItem                    to sText
+                        end
+                        else begin
+                            get IsOperandValue sItem to iValue
+                            // BC
+                            Case Begin
+                                Case (sItem = "0")
+                                    move Jcoper.Calc_Units_Desc to sText
+                                    case break
+                                Case (sItem = "P")
+                                    move Jcoper.Calc_Std_Desc to sText
+                                    case break
+                                Case (sItem = "$")
+                                    move "Base Cost Amt." to sText
+                                    case break
+                                Case (sItem = "J")
+                                    move "Cost Center cost rate" to sText
+                                    case break
+                                Case (sItem = "R")
+                                    move "Raw material inventory rate" to sText
+                                    case break
+                                Case (sItem = "S")
+                                    move "Cost Center sell rate" to sText
+                                    case break
+                                Case (sItem = "O")
+                                    move "Helper global sell rate" to sText
+                                    case break
+                                Case Else
+                                    get String_Value of oOperandArray item iValue to sText
+                            Case End
+                            //
+                            //get String_Value of oOperandArray item iValue to sText
+                            set Array_Value item iItem                         to sText
+                        end
+                    end
+                    decrement iLength
+                    move (right(sFormula,iLength)) to sFormula
+                end
+                increment iItem
+            loop
+            //
+            get IsFormula to sText
+            //
+            function_return sText
+        end_function
+    
+    end_object // oFormulaArray
+    
+    property integer piOpcode   -1881
+    property integer peFormula  feSell
+    property integer pfVariable 0
+    property integer pfConstant 0
+    //
+    property string  psFormula  ""
+    
+    function IsOperandSymbol integer iValue returns string
+        if      (iValue = 10) function_return "A"
+        else if (iValue = 11) function_return "B"
+        else if (iValue = 12) function_return "C"
+        else if (iValue = 13) function_return "D"
+        else if (iValue = 14) function_return "E"
+        else if (iValue = 15) function_return "F"
+        else if (iValue = 16) function_return "G"
+        else if (iValue = 17) function_return "H"
+        else if (iValue = 18) function_return "I"
+        else if (iValue = 19) function_return "0"
+        else if (iValue = 20) function_return "T"
+        else if (iValue = 21) function_return "P"
+        else if (iValue = 22) function_return "$"
+        else if (iValue = 23) function_return "J"
+        else if (iValue = 24) function_return "S"
+        else if (iValue = 25) function_return "O"
+        else if (iValue = 26) function_return "R"
+    end_function // IsOperandSymbol
+    
+    function IsOperatorSymbol integer iValue returns string
+        if      (iValue =  1) function_return "("
+        else if (iValue =  2) function_return ")"
+        else if (iValue =  3) function_return "+"
+        else if (iValue =  4) function_return "-"
+        else if (iValue =  5) function_return "*"
+        else if (iValue =  6) function_return "/"
+        else if (iValue =  7) function_return "W"
+        else if (iValue = 11) function_return "="
+        else if (iValue = 12) function_return "<>"
+        else if (iValue = 13) function_return "<"
+        else if (iValue = 14) function_return ">"
+        else if (iValue = 15) function_return "MIN"
+        else if (iValue = 16) function_return "MAX"
+    end_function // IsOperatorSymbol
+
+    Set Label to "Formula Editor"
+    Set Size to 263 354
+    Set Location to 10 133
+    Set Locate_Mode to CENTER_ON_PANEL
+    
+    Object oOperandTreeView is a cGlblTreeView
+        Set Size to 180 170
+        Set Location to 60 5
+
+        on_key kEnter  send DoItemEnter
+        on_key kCancel send KeyAction of oCancelButton
+        
+        Object oImageList is a cImageList
+            Set piMaxImages To 6
+            Procedure OnCreate // add the images
+                Integer iImage
+                Get AddTransparentImage "ClYellow16.bmp" clFuchsia To iImage
+                Get AddTransparentImage "OpYellow16.bmp" clFuchsia To iImage
+                Get AddTransparentImage "Variable16.bmp" clLtGray  To iImage
+                Get AddTransparentImage "Constant16.bmp" clLtGray  To iImage
+                Get AddTransparentImage "Formula16.bmp"  clLtGray  To iImage
+                Get AddTransparentImage "Operand16.bmp"  clFuchsia To iImage
+            End_Procedure
+        End_Object
+        // Now assign the ImageList to the TreeView
+        Set ImageListObject To (oImageList(self))
+        
+        Procedure OnCreateTree
+            integer iOpcode eFormula fVariable fConstant iCounter
+            handle  hArray hRoot hVariable hConstant hFormula hOperand
+            string  sDescription sConstant
+            //
+            move (oOperandArray(self)) to hArray
+            send Delete_Data           of hArray
+            //
+            get piOpcode   to iOpcode
+            get peFormula  to eFormula
+            get pfVariable to fVariable
+            get pfConstant to fConstant
+            //
+            clear Jcoper
+            move iOpcode to Jcoper.Opcode
+            find EQ Jcoper.Opcode
+            //
+            get AddTreeItem "Operands"  0     0 0 1 to hRoot
+            // Variables
+            get AddTreeItem "Variables" hRoot 0 2 2 to hVariable
+            //
+            for iCounter from 1 to 9
+                get_field_value Jcoper.File_number fVariable        to sDescription
+                if (sDescription = "") break
+                // add to the array
+                set Array_Value of hArray item iCounter             to sDescription
+                //
+                move (string(iCounter) * "-" * trim(sDescription))  to sDescription
+                get AddTreeItem sDescription hVariable iCounter 5 5 to hOperand
+                increment fVariable
+            loop
+            // Constants
+            get AddTreeItem "Constants" hRoot 0 3 3 to hConstant
+            //
+            for iCounter from 10 to 18
+                get_field_value Jcoper.File_number fConstant        to sDescription
+                if (sDescription = "") break
+                // add to the array
+                set Array_Value of hArray item iCounter             to sDescription
+                //
+                get IsOperandSymbol iCounter to sConstant
+                move (sConstant * "-" * trim(sDescription))         to sDescription
+                get AddTreeItem sDescription hConstant iCounter 5 5 to hOperand
+                increment fConstant
+            loop
+            // Formulas
+            get AddTreeItem "Formulas/Other"  hRoot 0 4 4 to hFormula
+            // if it's Calc units, no other formulas are available
+            if (eFormula = feCalc) begin
+                send DoExpandAll hRoot
+                procedure_return
+            end
+            // Calc units
+            //if (Jcoper.Formula <> "") begin
+            if (Jcoper.Calc_Units_Desc <> "") begin
+                set Array_Value of hArray item 19 to (trim(Jcoper.Formula))
+                //
+                move ("0" * "-" * trim(Jcoper.Calc_units_desc) * "[" * trim(Jcoper.Formula) * "]") to sDescription
+                get AddTreeItem sDescription hFormula 19 5 5                                       to hOperand
+            end
+            // Table value if defined
+            //if (Jcoper.Lookup_var) begin
+            if (Jcoper.Table_std_desc<>"") begin
+                set Array_Value of hArray item 20 to (trim(Jcoper.Table_std_desc))
+                //
+                move ("T -" * trim(Jcoper.Table_std_desc))   to sDescription
+                get AddTreeItem sDescription hFormula 20 5 5 to hOperand
+            end
+            // if it's Prod units, no other formulas are available
+            if (eFormula = feProd) begin
+                if (Jcoper.Calc_Flags contains "S") ; 
+                    get AddTreeItem "R - Raw material inentory rate"  hFormula 26 5 5 to hOperand
+                // start expanded
+                send DoExpandAll hRoot
+                procedure_return
+            end
+            // Prod units
+            if (Jcoper.Est_formula <> "") begin
+                set Array_Value of hArray item 21 to (trim(Jcoper.Est_formula))
+                //
+                move ("P" * "-" * trim(Jcoper.Calc_std_desc) * "[" * trim(Jcoper.Est_formula * "]"))  to sDescription
+                get AddTreeItem sDescription hFormula 21 5 5                                          to hOperand
+                get AddTreeItem "$ - Base cost amount"        hFormula 22 5 5 to hOperand
+                // Cost Center cost rate
+            end
+            // Base cost
+            get AddTreeItem "J - Cost Center cost rate"   hFormula 23 5 5 to hOperand
+            // Cost Center sell rate
+            get AddTreeItem "S - Cost Center sell rate"   hFormula 24 5 5 to hOperand
+            // Helper rate
+            get AddTreeItem "O - Helper global sell rate" hFormula 25 5 5 to hOperand
+            // Material Inventory rate
+            send DoExpandAll hRoot
+        End_Procedure  // OnCreateTree
+        
+        procedure OnItemDblClick handle hItem
+            send DoAppendItem hItem
+        end_procedure
+        
+        procedure DoItemEnter
+            handle hItem
+            //
+            get CurrentTreeItem to hItem
+            send DoAppendItem hItem
+        end_procedure
+        
+        procedure DoAppendItem handle hItem
+            integer iSymbol
+            //
+            get ItemData hItem to iSymbol
+            if (NOT(iSymbol)) procedure_return
+            send DoAppendFormula of oFormulaForm iSymbol TRUE
+        end_procedure
+
+    End_Object    // oOperandTreeView
+
+    Object oOperatorTreeView is a cGlblTreeView
+        Set Size to 180 170
+        Set Location to 60 180
+
+        //AB-StoreStart
+        on_key kEnter  send DoItemEnter
+        on_key kCancel send KeyAction of oCancelButton
+        
+        Object oImageList is a cImageList
+            Set piMaxImages To 5
+            Procedure OnCreate // add the images
+                Integer iImage
+                Get AddTransparentImage "ClYellow16.bmp"   clFuchsia To iImage
+                Get AddTransparentImage "OpYellow16.bmp"   clFuchsia To iImage
+                Get AddTransparentImage "Arithmetic16.bmp" clFuchsia To iImage
+                Get AddTransparentImage "Comparison16.bmp" clFuchsia To iImage
+                Get AddTransparentImage "Operand16.bmp"    clFuchsia To iImage
+            End_Procedure
+        End_Object
+        // Now assign the ImageList to the TreeView
+        Set ImageListObject To (oImageList(self))
+        
+        Procedure OnCreateTree
+            handle hRoot hArithmetic hComparison hOperator
+            //
+            get AddTreeItem "Operators"                0            0 0 1 to hRoot
+            // Arithmetic Operators
+            get AddTreeItem "Arithmetic"               hRoot        0 2 2 to hArithmetic
+            // 1 = (
+            get AddTreeItem "( Left parenthesis"       hArithmetic  1 4 4 to hOperator
+            // 2 = -
+            get AddTreeItem ") Right parenthesis"      hArithmetic  2 4 4 to hOperator
+            // 3 = +
+            get AddTreeItem "+ Add"                    hArithmetic  3 4 4 to hOperator
+            // 4 = -
+            get AddTreeItem "- Subtract"               hArithmetic  4 4 4 to hOperator
+            // 5 = *
+            get AddTreeItem "* Multiply"               hArithmetic  5 4 4 to hOperator
+            // 6 = /
+            get AddTreeItem "/ Divide"                 hArithmetic  6 4 4 to hOperator
+            // 7 = /
+            get AddTreeItem "W Whole Number"           hArithmetic  7 4 4 to hOperator
+            // Comparison Operators
+            get AddTreeItem "Comparisons"              hRoot        0 3 3 to hComparison
+            // 11 = =
+            get AddTreeItem "= Equal"                  hComparison 11 4 4 to hOperator
+            // 12 = <>
+            get AddTreeItem "<> Not equal"             hComparison 12 4 4 to hOperator
+            // 13 = <
+            get AddTreeItem "< Less than"              hComparison 13 4 4 to hOperator
+            // 14 = >
+            get AddTreeItem "> Greater than"           hComparison 14 4 4 to hOperator
+            // 15 = MIN
+            get AddTreeItem "MIN return minimum value" hComparison 15 4 4 to hOperator
+            // 16 = MAX
+            get AddTreeItem "MAX return maximum value" hComparison 16 4 4 to hOperator
+            // start expanded
+            send DoExpandAll hRoot
+            send DoInitializeEdit of oFormulaEdit
+        End_Procedure  // OnCreateTree
+        
+        procedure OnItemDblClick handle hItem
+            send DoAppendItem hItem
+        end_procedure
+        
+        procedure DoItemEnter
+            handle hItem
+            //
+            get CurrentTreeItem to hItem
+            send DoAppendItem hItem
+        end_procedure
+        
+        procedure DoAppendItem handle hItem
+            integer iSymbol
+            //
+            get ItemData hItem to iSymbol
+            if (NOT(iSymbol)) procedure_return
+            send DoAppendFormula of oFormulaForm iSymbol FALSE
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oOperatorTreeView
+
+    Object oFormulaForm is a cGlblForm
+        Set Size to 13 285
+        Set Location to 5 50
+        Set TextColor to clBlue
+
+        //AB-StoreStart
+        set Enabled_State to FALSE
+        set Form_Border   to BORDER_NONE
+        
+        procedure DoAppendFormula integer iSymbol boolean bOperand
+            string sFormula sSymbol sText
+            //
+            get Value             to sFormula
+            move (trim(sFormula)) to sFormula
+            //
+            if (bOperand) begin
+                if (iSymbol > 9) get IsOperandSymbol iSymbol   to sSymbol
+                else move iSymbol                              to sSymbol
+                // BC
+                Case Begin
+                    Case (sSymbol = "0")
+                        move Jcoper.Calc_Units_Desc to sText
+                        case break
+                    Case (sSymbol = "P")
+                        move Jcoper.Calc_Std_Desc to sText
+                        case break
+                    Case (sSymbol = "$")
+                        move "Base Cost Amt." to sText
+                        case break
+                    Case (sSymbol = "J")
+                        move "Cost Center cost rate" to sText
+                        case break
+                    Case (sSymbol = "S")
+                        move "Cost Center sell rate" to sText
+                        case break
+                    Case (sSymbol = "O")
+                        move "Helper global sell rate" to sText
+                        case break
+                    Case (sSymbol = "R")
+                        move "Raw material inventory rate" to sText
+                        case break
+                    Case Else
+                        get String_Value of oOperandArray item iSymbol to sText
+                Case End
+                // 
+                //get String_Value of oOperandArray item iSymbol to sText
+            end
+            else begin
+                get IsOperatorSymbol iSymbol to sSymbol
+                move sSymbol                 to sText
+            end
+            //
+            move (sFormula + sSymbol) to sFormula
+            set Value                 to sFormula
+            //
+            send DoUpdateEdit of oFormulaEdit sText
+        end_procedure
+        
+        procedure DoClearEntry
+            integer iLength
+            string  sFormula sSymbol
+            //
+            get Value               to sFormula
+            move (trim(sFormula))   to sFormula
+            move (length(sFormula)) to iLength
+            if (iLength = 1) begin
+                set Value to ""
+                procedure_return
+            end
+            // check for MIN/MAX
+            move (right(sFormula,3)) to sSymbol
+            if (sSymbol CONTAINS "MIN" OR sSymbol CONTAINS "MAX") begin
+                move (left(sFormula,(iLength - 3))) to sFormula
+                set Value                           to sFormula
+                procedure_return
+            end
+            // check for <>
+            move (right(sFormula,2)) to sSymbol
+            if (sSymbol CONTAINS "<>") begin
+                move (left(sFormula,(iLength - 2))) to sFormula
+                set Value                           to sFormula
+                procedure_return
+            end
+            // else just 1
+            move (left(sFormula,(iLength - 1))) to sFormula
+            set Value                           to sFormula
+        end_procedure
+        
+        procedure DoClearFormula
+            set Value to ""
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // oFormulaForm
+
+    Object oOkButton is a Button
+        Set Label to "&OK"
+        Set Location to 246 245
+
+        procedure OnClick
+            send DoReturnFormula
+        end_procedure
+    End_Object    // oOkButton
+
+    Object oCancelButton is a Button
+        Set Label to "&Cancel"
+        Set Location to 246 300
+
+        procedure OnClick
+            //set psFormula to "CANCEL" 
+            // close_panel  augmented to set psformula  to cancel  so windows close panel button
+            // will also  have  same logic as cancel button
+            send Close_Panel
+        end_procedure
+    End_Object    // oCancelButton
+
+    Object oClearButton is a cGlblButton
+        Set Label to "Cl&ear"
+        Set Location to 246 5
+
+        Procedure OnClick
+            send DoClearFormula of oFormulaForm
+            send Delete_Data    of oFormulaEdit
+        End_Procedure // OnClick
+    End_Object    // oClearButton
+
+    Object oBackspaceButton is a cGlblButton
+        Set Label to "&Backspace"
+        Set Location to 246 60
+
+        Procedure OnClick
+            send DoClearEntry of oFormulaForm
+            send DoBackspace  of oFormulaEdit
+        End_Procedure // OnClick
+    End_Object    // oBackspaceButton
+
+    Object oFormulaEdit is a cGlblEdit
+        Set Size to 37 345
+        Set Location to 20 5
+        Set Border_Style to Border_None
+        Set Enabled_State to False
+        //set Scroll_Bar_Visible_State to FALSE
+        
+        procedure DoBackspace
+            string sFormula
+            //
+            get DoBackspace of oFormulaArray     to sFormula
+            send Delete_Data
+            if (sFormula <> "") set Value item 0 to sFormula
+        end_procedure
+        
+        procedure DoUpdateEdit string sItem
+            string sFormula
+            //
+            get DoAppend of oFormulaArray sItem  to sFormula
+            send Delete_Data
+            if (sFormula <> "") set Value item 0 to sFormula
+        end_procedure
+        
+        procedure DoInitializeEdit
+            string sFormula
+            //
+            get Value of oFormulaForm to sFormula
+            if (sFormula <> "") begin
+                get DoInitializeFormula of oFormulaArray sFormula to sFormula
+                set Value item 0                                  to sFormula
+            end
+        end_procedure
+
+    End_Object    // oFormulaEdit
+
+    procedure End_Construct_Object
+        integer fVariable fConstant
+        //
+        forward send End_Construct_Object
+        //
+        Get_FieldNumber Jcoper.Var1_tag  to fVariable
+        Get_FieldNumber Jcoper.Con1_desc to fConstant
+        //
+        set pfVariable to fVariable
+        set pfConstant to fConstant
+    end_procedure
+    
+    procedure DoReturnFormula
+        string sFormula
+        //
+        get Value of oFormulaForm to sFormula
+        set psFormula             to sFormula
+        Forward send Close_Panel // there isn't a separate message for closing the panel vs. the 
+                                 // windows close panel button, leading to a catch-22 for exiting
+                                 // the editor when an edit should not be changed
+                                 // this is a workaround to close the panel without invoking the local
+                                 // augmentation of that procedure which sets ps formula to "CANCEL"
+    end_procedure
+    
+    function IsFormula integer iOpcode integer eFormula string sFormula returns string
+        string sLabel
+        //
+        set psFormula             to ""
+        set piOpcode              to iOpcode
+        set peFormula             to eFormula
+        set Value of oFormulaForm to sFormula
+        //
+        if      (eFormula = feCalc) move ("CALC. UNITS =" * (trim(Jcoper.Calc_Units_Desc))) to sLabel
+        else if (eFormula = feProd) move ("PROD. UNITS =" * (trim(Jcoper.Calc_Std_Desc)))   to sLabel
+        else                        move "BASE SELL"    to sLabel
+        move ("Formula Editor" * "   [" + sLabel + "]") to sLabel
+        set Label                                       to sLabel
+        //
+        send Delete_Data of oFormulaArray
+        send Delete_Data of oFormulaEdit
+        //
+        set pbEnterKeyAsTabKey of ghoApplication to FALSE
+        send Popup_Modal
+        set pbEnterKeyAsTabKey of ghoApplication to TRUE
+        //
+        function_return (psFormula(self))
+    end_function
+
+    procedure Close_Panel
+        set psFormula to "CANCEL" // this prevents wiping out an existing formula when clicking 
+        Forward send Close_Panel
+    end_procedure
+
+    on_key Key_Alt+Key_O send KeyAction of oOkButton
+    on_key Key_Alt+Key_C send KeyAction of oCancelButton
+    on_key Key_Alt+Key_E send KeyAction of oClearButton
+    on_key Key_Alt+Key_B send KeyAction of oBackspaceButton
+
+End_Object    // oFormulaEditor

@@ -1,0 +1,7 @@
+#REPLACE FILE80 GlobalJobCost
+#REPLACE GlobalJobCost.Recnum |FN80,0
+#REPLACE GlobalJobCost.CostIdno |FN80,1
+#REPLACE GlobalJobCost.Description |FS80,2
+#REPLACE GlobalJobCost.Status |FS80,3
+#REPLACE GlobalJobCost.MastOpsIdno |FN80,4
+#REPLACE GlobalJobCost.Rate |FN80,5

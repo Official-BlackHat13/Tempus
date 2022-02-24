@@ -1,0 +1,10 @@
+#REPLACE FILE74 WorkType
+#REPLACE WorkType.Recnum |FN74,0
+#REPLACE WorkType.WorkTypeId |FS74,1
+#REPLACE WorkType.Description |FS74,2
+#REPLACE WorkType.ShortCut |FS74,3
+#REPLACE WorkType.Sequence |FN74,4
+#REPLACE WorkType.ManagedBy |FN74,5
+#REPLACE WorkType.QBItemRefID |FS74,6
+#REPLACE WorkType.ChangedFlag |FN74,7
+#REPLACE WorkType.HourlyCost |FN74,8

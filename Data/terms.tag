@@ -1,0 +1,11 @@
+TermsIdno
+Terms
+DueDays
+DiscountDay
+DiscountPercent
+DayOfMonthDue
+DueNextMonthDays
+DiscountDayOfMonth
+DiscountPercentOfMonth
+Status
+QBTermsRefListId

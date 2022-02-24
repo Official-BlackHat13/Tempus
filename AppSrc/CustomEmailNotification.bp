@@ -1,0 +1,283 @@
+Use Batchdd.pkg
+Use cComChilkatMailMan.pkg
+Use HtmlEncode.pkg
+Use WinUuid.pkg
+Use cCharTranslate.pkg
+Use cSeqFileHelper.pkg
+Use tAttachment.pkg
+//
+Object oCustomEmailNotification is a BusinessProcess
+
+    Struct tRecipients
+        String sFriendlyName
+        String sEmailAddress
+    End_Struct
+
+    Struct tEmail
+        tRecipients[] stToEmail
+        tRecipients[] stCCEmail
+        tRecipients[] stBCCEmail
+        tRecipients[] stReplyTo
+        String  sFromEmail
+        String  sSubject
+        String  sBody
+        String[] sAttachmentFilePath
+    End_Struct
+    
+    Property tEmail ptEmail
+    Property String psFileName
+
+    Set Process_Title to "Sending Email Notification"
+            
+    Object oChilkatMailMan is a cComChilkatMailMan
+        
+        Function InitMail Handle ByRef hoMailman Handle ByRef hoEmail Returns Integer
+            Integer iSuccess
+            //  Create a MailMan for the purpose
+            //  of unlocking the component.
+            Get Create (RefClass(cComChilkatMailMan)) to hoMailman
+            If (not(IsComObjectCreated(hoMailman))) Begin
+                Send CreateComObject of hoMailman
+            End
+            Get ComUnlockComponent of hoMailman "INTERSMAILQ_EtgQk9ew6R0M" to iSuccess
+            
+            Get Create (RefClass(cComChilkatEmail)) to hoEmail
+            If (not(IsComObjectCreated(hoEmail))) Begin
+                Send CreateComObject of hoEmail
+            End
+      
+            Function_Return iSuccess
+        End_Function
+    
+    End_Object
+    
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess Boolean ByRef bSuccess
+        Boolean bTemp
+        tEmail eMessage
+        String sFrom sTo sCC sBCC sReplyTo sSubject sHTML_Message sRepIdno sSalesRep sSalesRepEmail sSalesRepPhone sOrderStatus
+        String sFileName sProgramPath sHomePath sJobSheetPDFFilePath sOrderDtlPDFFilePath sErrorLog sErrorText
+        String sContentType sTemp 
+        Handle  hoDD hoMailman hoEmail
+        Variant vNewMail
+        Integer i iJobNumber iOrderDtlCount iJobCount iIsOk iRetval iSuccess
+        //
+        Get ptEmail to eMessage
+        Get psProgramPath of (phoWorkspace(ghoApplication)) to sProgramPath
+        Move (sProgramPath + "\ChilkatErrorLog.txt")        to sErrorLog
+        
+        Get InitMail of oChilkatMailMan (&hoMailman) (&hoEmail) to iIsOk
+        If (iIsOk) Begin //
+            //SMTP Server Settings
+            Set ComSmtpHost     of hoMailman to "smtp.office365.com"            // "smtp.office365.com" // "mail.interstatepm.com" //"64.122.223.194"
+            Set ComSmtpPort     of hoMailman to 587                             // "25"
+            Set ComStartTls     of hoMailman to True
+            //Login Info
+            Set ComSmtpUsername of hoMailman to "interstate@interstatepm.com"   // ""
+            Set ComSmtpPassword of hoMailman to "IC_Adm#2016!"                  // ""
+            //Prepare email to recipients
+            // - FROM
+            Move (Trim(eMessage.sFromEmail)) to sFrom
+            If (Length(sFrom)=0) Begin
+                Move ("dispatch@interstatepm.com") to sFrom //If nothing is set, it goes out as dispatch@interstatepm.com
+            End
+            Set ComFrom of hoEmail to sFrom
+            // - SUBJECT
+            Set ComSubject of hoEmail to (Trim(eMessage.sSubject))
+            // - FILE ATTACHMENTS
+            For i from 0 to (SizeOfArray(eMessage.sAttachmentFilePath)-1)
+                Get ComAddFileAttachment of hoEmail eMessage.sAttachmentFilePath[i] to sContentType
+                Get ComLastMethodSuccess of hoEmail to bTemp
+                If (bTemp <> True) Begin
+                    Get ComLastErrorText of hoEmail to sTemp
+                    Showln sTemp
+                End
+            Loop
+            // - BODY
+            Move (HtmlEncode(eMessage.sBody)) to sHTML_Message
+            Send ComSetHtmlBody   of hoEmail sHTML_Message
+            // - TO
+            For i from 0 to (SizeOfArray(eMessage.stToEmail)-1)
+                Append sTo (eMessage.stToEmail[i].sFriendlyName*"<"+eMessage.stToEmail[i].sEmailAddress+">,")
+            Loop
+            Get ComAddMultipleTo of hoEmail sTo to iRetval
+            // - CC
+            For i from 0 to (SizeOfArray(eMessage.stCCEmail)-1)
+                Append sCC (eMessage.stCCEmail[i].sFriendlyName*"<"+eMessage.stCCEmail[i].sEmailAddress+">,")
+            Loop
+            Get ComAddMultipleCC of hoEmail sCC to iRetval
+            // - BCC
+            For i from 0 to (SizeOfArray(eMessage.stBCCEmail)-1)
+                Append sBCC (eMessage.stBCCEmail[i].sFriendlyName*"<"+eMessage.stBCCEmail[i].sEmailAddress+">,")
+            Loop
+            Get ComAddMultipleBCC of hoEmail sBCC to iRetval
+            // - REPLY TO
+            For i from 0 to (SizeOfArray(eMessage.stReplyTo)-1)
+                Append sReplyTo (eMessage.stReplyTo[i].sFriendlyName*"<"+eMessage.stReplyTo[i].sEmailAddress+">,")
+            Loop
+            Set ComReplyTo of hoEmail to sReplyTo
+        End
+        //
+        Get pvComObject of hoEmail to vNewMail
+        Get ComSendEmail of hoMailman vNewMail to iSuccess           //Send it (finally)
+        If (iSuccess <> True) Begin
+            Get ComLastErrorText of hoMailman to sErrorText
+            Append_Output sErrorLog
+            Writeln ("Message"*sSubject)
+            Writeln sErrorText
+            Close_Output
+            Move (False) to bSuccess
+        End
+        Else Begin
+            Move (True) to bSuccess
+        End
+        
+        Get ComCloseSmtpConnection of hoMailman to iSuccess
+        If (iSuccess <> True) Begin
+            Append_Output sErrorLog
+            Writeln "Connection to SMTP server not closed cleanly."
+            Close_Output
+        End
+        Append_Output sErrorLog
+        Writeln ("Mail Sent")
+        //
+    End_Procedure
+
+    Function DoSendCustomEmail tEmail eMessage Returns Boolean
+        Boolean bSuccess
+        Set ptEmail to eMessage 
+        //
+        Send DoProcess (&bSuccess)
+        
+        Function_Return bSuccess
+    End_Function
+
+    Object oCharTranslate is a cCharTranslate
+    End_Object
+
+    Object oSeqFileHelper is a cSeqFileHelper
+    End_Object
+
+    Function BuildOutlookEmailObject tEmail eMessage Returns Boolean
+        String sHexUUID sTargetAddress sTargetFilename sFileExt sTarget  
+        String sPlainTxtMsg sPlain_Desc sHTML_Message sHTML_Desc
+        String sDateStampWTime sObjectStart sObjectEnd
+        
+        
+        DateTime dtNow
+        Integer iYear iMonth iDay iHr iMin iSec
+        //DateTime
+        Get DateTimeToTimeStamp dtNow (&iYear) (&iMonth) (&iDay) (&iHr)  (&iMin) (&iSec) to sDateStampWTime
+        
+        
+        // Read Config.ws file information for RootURL
+        String sWorkspaceWSFile sWebsiteRoot
+        Handle hoWorkspace hoIniFile
+        //
+        Forward Send Construct_object
+        //
+        Move (phoWorkSpace(ghoApplication))                                    to hoWorkspace
+        Get psWorkspaceWSFile of hoWorkspace                                   to sWorkspaceWSFile 
+        Get Create U_cIniFile                                                  to hoIniFile
+        Set psFilename        of hoIniFile                                     to sWorkspaceWSFile 
+        Get ReadString        of hoIniFile "WebServices" "WebsiteRoot"     " " to sWebsiteRoot
+        Send Destroy          of hoIniFile 
+        //
+        // PREPARE MAX ARGUMENT SIZE
+        Integer iArgSize 
+        Get_Argument_Size to iArgSize
+        Set_Argument_Size (20971520) // 20MB
+        //PREPARE FILE ATTACHMENTS
+        Integer iAttachCount iVoid iEncodeBinSize 
+        Integer iLen iRPos
+        String sProgramPath sHomePath
+        tAttachment[] stAttachment
+        Address pBase64 aEncodeBuffer
+        //
+        Get psProgramPath of (phoWorkspace(ghoApplication)) to sProgramPath
+        Get psHome of (phoWorkspace(ghoApplication)) to sHomePath
+        For iAttachCount from 0 to (SizeOfArray(eMessage.sAttachmentFilePath)-1)
+            Get ReadBinFileToBuffer of oSeqFileHelper (eMessage.sAttachmentFilePath[iAttachCount]) (&iEncodeBinSize) to aEncodeBuffer
+            Move (Base64EncodeToStr(oCharTranslate,aEncodeBuffer,iEncodeBinSize)) to stAttachment[iAttachCount].sBase64
+            Move (Free(aEncodeBuffer)) to iVoid
+            //D:\Development Projects\VDF19.1 Workspaces\Tempus\Reports\Cache\Emplr#356-EquipmentList.pdf
+            Move (Length(eMessage.sAttachmentFilePath[iAttachCount])) to iLen
+            // Parse FileName
+            Move (RightPos("\",eMessage.sAttachmentFilePath[iAttachCount])) to iRPos
+            Move (Mid(eMessage.sAttachmentFilePath[iAttachCount],(iLen-iRPos),iRPos+1)) to stAttachment[iAttachCount].sFileName
+            // Parse FileType
+            Move (RightPos(".",eMessage.sAttachmentFilePath[iAttachCount])) to iRPos
+            Move (Mid(eMessage.sAttachmentFilePath[iAttachCount],(iLen-iRPos),iRPos+1)) to stAttachment[iAttachCount].sFileType
+        Loop
+        //
+        // CREATE .eml FILE in Data folder on server
+        Get psHome of (phoWorkspace(ghoApplication)) to sTarget
+        If (not(Right(sTarget,1) = "\")) Begin
+            Move (sTarget + "\")                     to sTarget
+        End
+        Get RandomHexUUID to sHexUUID
+        Move ".eml" to sFileExt
+        Move (sTarget + "Data\Email_Items\" + sHexUUID + sFileExt) to sTargetAddress
+        Integer iTo iCC iBCC iReply
+        Direct_Output sTargetAddress  
+            //Add all TO recipients
+            For iTo from 0 to (SizeOfArray(eMessage.stToEmail)-1)
+                Writeln ("TO:"*Trim(eMessage.stToEmail[iTo].sFriendlyName)*"<"+Trim(eMessage.stToEmail[iTo].sEmailAddress)+">")
+            Loop
+            //Add all CC recipients
+            For iCC from 0 to (SizeOfArray(eMessage.stCCEmail)-1)
+                Writeln ("CC:"*Trim(eMessage.stCCEmail[iCC].sFriendlyName)*"<"+Trim(eMessage.stCCEmail[iCC].sEmailAddress)+">")
+            Loop
+            //Add all BCC recipients
+            For iBCC from 0 to (SizeOfArray(eMessage.stBCCEmail)-1)
+                Writeln ("BCC:"*Trim(eMessage.stBCCEmail[iBCC].sFriendlyName)*"<"+Trim(eMessage.stBCCEmail[iBCC].sEmailAddress)+">")
+            Loop
+            //Add all ReplyTo recipients - if needed
+            Writeln ("Subject:"+eMessage.sSubject)
+            Writeln "X-Unsent: 1"
+            Writeln "MIME-Version: 1.0"
+            Writeln 'Content-Type: multipart/mixed; boundary="boundary_text_string"'
+            Writeln ("")
+            Writeln ("--boundary_text_string")
+            Writeln ("Content-Type: text/html; charset=UTF-8")
+            Writeln ("Content-Transfer-Encoding: quoted-printable")
+            Writeln ("")
+            Writeln ("<html><body>")
+            Writeln (eMessage.sBody)
+            Writeln ("</body></html>")
+            For iAttachCount from 0 to (SizeOfArray(stAttachment)-1)
+                Writeln ("")
+                Writeln ("--boundary_text_string")                 
+                Writeln ('Content-Type: application/'+stAttachment[iAttachCount].sFileType+'; name="'+stAttachment[iAttachCount].sFileName+'"')
+                Writeln ("Content-Transfer-Encoding: base64")
+                Writeln ("Content-Disposition: attachment")
+                Writeln ("")
+                Writeln (stAttachment[iAttachCount].sBase64)
+                Writeln ("")
+            Loop
+            Writeln ("")
+            Writeln ("--boundary_text_string--")
+            //
+        Close_Output 
+        // Reset Argument size
+        Set_Argument_Size iArgSize
+        //Open the File
+        Runprogram Shell background sTargetAddress
+        
+        Function_Return True
+    End_Function
+
+
+End_Object
+
+
+

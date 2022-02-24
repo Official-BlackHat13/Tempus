@@ -1,0 +1,12 @@
+// TempusPrecompile.pkg 
+//
+// 15.0.92.1  - 06/18/09 - added About & versioning
+// 15.0.93.1  - 07/19/09 - added Prompt_Callback procedures to Contact & Location dbForms in QuoteWizard & removed Parklots & Accessory pages
+
+Use GlobalAllEnt.pkg
+//Use cTempusClientArea.pkg
+Use cCJStandardCommandBarSystem.pkg
+Use oEditContextMenu.pkg
+Use oDEOEditContextMenu.pkg
+Use cCJCommandBarSystem.pkg
+Use Regserver.pkg

@@ -1,0 +1,77 @@
+#Exclude the following files for DataFlex Projects
+####################################
+programs/*.exe
+programs/*.dbg
+programs/*.exe.manifest
+programs/webapp.log
+appsrc/*.dep
+appsrc/*.fld
+appsrc/*.pbg
+appsrc/*.pdp
+appsrc/*.pkd
+appsrc/*.prp
+appsrc/*.prn
+appsrc/*.err
+appsrc/config/classlist.xml
+data/*.int
+data/*.dat
+data/*.cch
+ddsrc/*.bak
+ddsrc/*.ini
+idesrc/studiometadata.mtd
+idesrc/workspace.loc
+
+#personal preference
+####################################
+appsrc/*.prn
+idesrc/*.dsk
+data/Cal_Items
+Data/[invalid folder]
+Data/Images/Uploads/
+Data/Uploads/
+Data/Email_Items
+Reports/Cache
+Bitmaps/Attachments
+Bitmaps/Snowbooks
+
+
+#Ignore following file types
+*.zip
+*.cch
+*.tmp
+#Ignore thumbnails created by Windows
+Thumbs.db
+#Ignore files built by Visual Studio
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Dd]ebug*/
+*.lib
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+.vs/
+#Nuget packages folder
+packages/
+/DAT BACKUP.zip
+/Data/INT FILE BACKUP
+/Programs/ChilkatErrorLog.txt
+/Programs/TempusEstimating.tmp
+/Reports/

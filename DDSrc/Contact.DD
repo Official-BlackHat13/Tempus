@@ -1,0 +1,260 @@
+// Class Name: Contact_DataDictionary
+// Revision  : 10
+// Version   : 2
+
+Use  Windows.pkg           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  Ddvaltbl.pkg          // Validation Table Class Definitions
+
+Open Contact
+Open Customer
+Open System
+Open Quotehdr
+Open Maillist
+Open Listlink
+Open SalesRep
+Open Location
+Open Snowrep
+Open Propmgr
+Open User
+Open pminvhdr
+Open Eshead
+Open MarketMember
+Open WebAppUser
+
+
+Register_Object Contact_Phonetype1_VT
+Register_Object Contact_Phonetype2_VT
+Register_Object Contact_Phonetype3_VT
+Register_Object Contact_Status_VT
+
+Object Contact_Phonetype1_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Contact_Phonetype1_VT
+
+Object Contact_Phonetype2_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Contact_Phonetype2_VT
+
+Object Contact_Phonetype3_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Contact_Phonetype3_VT
+
+Object Contact_Status_VT  is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "A"  "Active"
+        Send Add_Table_Value  "I"  "Inactive"
+    End_Procedure    // Fill_List
+End_Object   // Contact_Status_VT
+
+
+Set_Attribute DF_FILE_ALIAS of Contact.File_number to DF_FILE_IS_MASTER
+Set_Attribute DF_FILE_ALIAS of Propmgr.File_number to DF_FILE_IS_ALIAS
+
+Register_Function ValidateWebLoginID Integer iField String sLoginName Returns Integer
+
+Register_Object Contact_sl
+
+Class Contact_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Main_File To Contact.File_Number
+
+        Set Add_Server_File to Customer.File_Number
+
+        Set Add_Client_File to Quotehdr.File_Number
+        Set Add_Client_File to Listlink.File_Number
+        Set Add_Client_File to pminvhdr.File_Number
+        Set Add_Client_File to Eshead.File_Number
+        Set Add_Client_File to MarketMember.File_Number
+        Set Cascade_Delete_State To FALSE
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+//        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to Listlink.File_Number DD_LOCK_ON_ALL
+        Set Add_System_File to WebAppUser.File_Number DD_Lock_On_All
+
+//        Set Field_Auto_Increment Field Contact.Contactidno to File_Field System.Lastcontact
+
+        // Field-based properties.......................
+
+        Set Field_Option Field Contact.Contactidno DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Contact.Contactidno to Contact_sl
+        Set Key_Field_State Field Contact.Contactidno To TRUE
+
+        Set Field_Prompt_Object Field Contact.Lastname to Contact_sl
+        Set Field_Option Field Contact.LastName DD_REQUIRED to True
+
+        Set Field_Option Field Contact.FirstName DD_REQUIRED to True
+        Set Field_Prompt_Object Field Contact.FirstName to Contact_sl
+
+
+        Set Field_Option Field Contact.State DD_CAPSLOCK to True
+
+        Set Field_Mask_Type Field Contact.Zip to Mask_Window
+        Set Field_Mask Field Contact.Zip to "#####-####"
+
+
+        Set Field_Validate_msg Field Contact.Phone1 To get_PhoneValidation
+
+        Set Field_Class_Name Field Contact.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Option Field Contact.Phonetype1 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Contact.Phonetype1 to Contact_Phonetype1_VT
+
+        Set Field_Validate_msg Field Contact.Phone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Contact.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Option Field Contact.Phonetype2 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Contact.Phonetype2 to Contact_Phonetype2_VT
+
+        Set Field_Validate_msg Field Contact.Phone3 To get_PhoneValidation
+
+        Set Field_Class_Name Field Contact.Phonetype3 To "cGlblDbComboForm"
+        Set Field_Option Field Contact.Phonetype3 DD_CAPSLOCK to True
+        Set Field_Value_Table Field Contact.Phonetype3 to Contact_Phonetype3_VT
+
+
+        Set Field_Class_Name Field Contact.Status To "cGlblDbComboForm"
+        Set Field_Option Field Contact.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Contact.Status to Contact_Status_VT
+
+        Set Field_Option Field Contact.MiddleInitial DD_CAPSLOCK to True
+
+        Set Field_Option Field Contact.WebUserID DD_ZERO_SUPPRESS to True
+        Set Field_Option Field Contact.WebUserID DD_NOENTER to True
+
+        Set Field_Validate_msg Field Contact.WebLoginID to get_ValidateWebLoginID
+
+        Set Field_Class_Name Field Contact.FollowUpFlag to "Checkbox"
+
+        Property Boolean pbCreateListLink
+
+        Set pbAllowNullRelateState      to True
+        Set Validate_Foreign_File_State to False
+
+    End_Procedure    // Construct_Object
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Contact.Phonetype1 To "O"
+        Set Field_Changed_Value   Field Contact.Phonetype2 To "F"
+        Set Field_Changed_Value   Field Contact.Status To "A"
+    End_Procedure    // Field_Defaults
+
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            Constrain Contact.RecordOwner eq giCompanyIdno
+//        End        
+        #ELSE
+        #ENDIF
+
+    End_Procedure 
+
+    Function Validate_Save Returns Integer
+        Integer iRetval
+        //
+        Forward Get Validate_Save to iRetval
+        //
+        If (not(iRetval)) Begin
+            If (Contact.ContactIdno = 0) Begin
+                Send UserError "Invalid Contact ID" "Validation Error"
+                Move 1 to iRetval
+            End
+        End
+        Function_Return iRetval
+    End_Function
+
+    Procedure Update
+        Forward Send Update
+        //
+        Move 1 to Contact.ChangedFlag            
+    
+        //Update only Status and ChangedFlag to Contact Name etc. to the WebAppUser table
+        Clear WebAppUser
+        Move Contact.ContactIdno to WebAppUser.PropertyMgrIdno
+        Find GE WebAppUser by 6
+        While ((Found) and Contact.ContactIdno = WebAppUser.PropertyMgrIdno)
+            Move (Trim(Contact.FirstName)+" "+Trim(Contact.LastName)) to WebAppUser.FullName
+            Move Contact.EmailAddress to WebAppUser.EmailAddress
+            Move Contact.Status to WebAppUser.Status
+            Move 1 to WebAppUser.ChangedFlag
+            SaveRecord WebAppUser
+            Find GT WebAppUser by 6
+        Loop
+        
+    End_Procedure
+
+    Procedure Creating
+        Forward Send Creating
+        //
+        Set pbCreateListLink to True
+    End_Procedure
+
+    Procedure Save_Main_File
+        Forward Send Save_Main_File
+        //
+        If (pbCreateListLink(Self)) Begin
+            Clear Maillist
+            Move 1 to Maillist.AutoCreateFlag
+            Find ge Maillist.AutoCreateFlag
+            While ((Found) and Maillist.AutoCreateFlag = 1)
+                Add 1 to System.ListlinkID
+                SaveRecord System
+                Clear Listlink
+                Move System.ListlinkID   to Listlink.ListlinkID
+                Move Maillist.ListCode   to Listlink.ListCode
+                Move Contact.ContactIdno to Listlink.ContactIdno
+                SaveRecord Listlink
+                Find gt Maillist.AutoCreateFlag
+            Loop
+            Set pbCreateListLink to False
+        End
+    End_Procedure
+
+    Function ValidateWebLoginID Integer iField String sLoginName Returns Integer
+        Boolean bState
+        //
+        Get Field_Changed_State iField to bState
+        If (bState) Begin
+            Send Refind_Records
+            If (Contact.WebLoginID = sLoginName) Break
+            Clear User
+            Move sLoginName to User.LoginName
+            Find Eq User.LoginName
+            If (Found) Begin
+                Send UserError "Login name in use" "Validation Error"
+                Function_Return 1
+            End
+        End
+    End_Function
+
+End_Class    // Contact_DataDictionary
+#IFDEF Is$WebApp
+#ELSE
+//Use Contact2.sl
+Use Contact.sl
+
+#ENDIF
+

@@ -1,0 +1,41 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: MarketMember (# 72)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:MarketMember
+  USER DISPLAY NAME         : MarketMember
+  DATAFLEX FILE NAME        : MarketMember
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 127       ( USED: 127 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 1051 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  MemberIdno       NUM   10.0     1  1   
+  2  ContactIdno      NUM   10.0    12  2   Contact.FIELD_2 (6,2)
+  3  MktGroupIdno     NUM   10.0    23  3   MarketGroup.FIELD_1 (71,1)
+  4  GroupName        ASC     40    34      
+  5  CreatedBy        ASC     20    74      
+  6  Created          DAT     10    94      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    MemberIdno      NO  NO       0      0       1     ON-LINE
+
+  2    MemberIdno      NO  NO       0      0       2     ON-LINE
+       ContactIdno     NO  NO 
+
+  3    MktGroupIdno    NO  NO       0      0       2     ON-LINE
+       ContactIdno     NO  NO 
+

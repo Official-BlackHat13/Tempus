@@ -1,0 +1,44 @@
+Use cGlblDataDictionary.pkg
+
+Open PropHdr
+Open PropDtl
+Open Customer
+Open SalesRep
+Open Location
+Open Contact
+Open System
+
+Register_Object PropHdr_sl
+
+Class cPropHdrGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to PropHdr.File_Number
+
+        Set Add_Server_File to Customer.File_Number
+        Set Add_Server_File to SalesRep.File_Number
+        Set Add_Server_File to Location.File_Number
+
+        Set Add_Client_File to propdtl.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Prompt_Object Field PropHdr.PropHdr_Idno to PropHdr_sl
+        Set Field_Auto_Increment Field PropHdr.PropHdr_Idno to File_Field System.LastProposal
+
+    End_Procedure
+    
+    
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+Use PropHdr.sl
+#ENDIF

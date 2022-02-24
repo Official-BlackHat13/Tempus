@@ -1,0 +1,351 @@
+// Class Name: Location_DataDictionary
+// Revision  : 24
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Location
+Open Opers
+Open Order
+Open Customer
+Open Areas
+Open System
+Open Quotehdr
+Open Parklots
+Open Contact
+Open Project
+Open Locequip
+Open SalesTaxGroup
+Open Eshead
+Open PropHdr
+
+//SQL Filter
+Use cli.pkg
+Use Functions.pkg
+
+Register_Object Location_Phonetype1_VT
+Register_Object Location_Phonetype2_VT
+Register_Object Location_Phonetype3_VT
+Register_Object Location_Contactphntype1_VT
+Register_Object Location_Contactphntype2_VT
+Register_Object Location_Status_VT
+
+Object Location_Phonetype1_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Location_Phonetype1_VT
+
+Object Location_Phonetype2_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Location_Phonetype2_VT
+
+Object Location_Phonetype3_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Location_Phonetype3_VT
+
+Object Location_Contactphntype1_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Location_Contactphntype1_VT
+
+Object Location_Contactphntype2_VT  is a CodeValidationTable
+    Set Validate_State    to False
+    Set Type_Value        To "PHONETYPE"
+    Set Allow_Blank_State To TRUE
+End_Object   // Location_Contactphntype2_VT
+
+Object Location_Status_VT  is a DescriptionValidationTable
+
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "A"  "Active"
+        Send Add_Table_Value  "I"  "Inactive"
+    End_Procedure    // Fill_List
+End_Object   // Location_Status_VT
+
+Object LocationBillingAddressVT is a DescriptionValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "C" "CUSTOMER"
+        Send Add_Table_Value "L" "LOCATION"
+        Send Add_Table_Value "A" "ALTERNATE"
+    End_Procedure
+End_Object
+
+Object LocationBldTypeVT is a ValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Retail"
+        Send Add_Table_Value "Industrial"
+        Send Add_Table_Value "Campus"
+        Send Add_Table_Value "School"
+        Send Add_Table_Value "Medical"
+    End_Procedure
+End_Object
+
+Object LocationOptionsVT is a ValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Yes"
+        Send Add_Table_Value "No"
+        Send Add_Table_Value "On Request"
+    End_Procedure
+End_Object
+
+Object LocationSpcEquipVT is a ValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "No"
+        Send Add_Table_Value "Special Instructions"
+    End_Procedure
+End_Object
+
+Object LocationMgtAreasVT is a ValidationTable
+    Set Allow_Blank_State to True
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "North"
+        Send Add_Table_Value "South"
+        Send Add_Table_Value "East"
+        Send Add_Table_Value "West"
+        Send Add_Table_Value "Central"
+    End_Procedure
+End_Object
+
+Register_Object LOCATION_SL
+Register_Object oLocationWebLookup
+
+Class Location_DataDictionary is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+
+        Set Main_File To Location.File_Number
+
+        Set Add_Server_File to Customer.File_Number
+        Set Add_Server_File to Areas.File_Number
+        Set Add_Server_File to SalesTaxGroup.File_Number
+
+        Set Add_Client_File to Opers.File_Number
+        Set Add_Client_File to Order.File_Number
+        Set Add_Client_File to Quotehdr.File_Number
+        Set Add_Client_File to Parklots.File_Number
+        Set Add_Client_File to Locequip.File_Number
+        Set Add_Client_File to Eshead.File_Number
+        Set Add_Client_File to PropHdr.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_AUTOFIND to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        // Child (Client) file structure................
+
+        // Parent (Server) file structure...............
+
+        // External (System) file structure.............
+        Set Add_System_File to System.File_Number DD_LOCK_ON_ALL
+
+
+        Set Field_Auto_Increment Field Location.Locationidno to File_Field System.Lastlocation
+
+        // Field-based properties.......................
+
+
+        Set Field_Option Field Location.Locationidno DD_AUTOFIND to True
+        Set Field_Prompt_Object Field Location.Locationidno to LOCATION_SL
+        Set Key_Field_State Field Location.Locationidno To TRUE
+
+
+        Set Field_Prompt_Object Field Location.Locationnbr to LOCATION_SL
+
+        Set Field_Prompt_Object Field Location.Name to LOCATION_SL
+        Set Field_Option Field Location.Name DD_REQUIRED to True
+
+        Set Field_Prompt_Object Field Location.Address1 to LOCATION_SL
+
+
+        Set Field_Option Field Location.State DD_CAPSLOCK to True
+
+        Set Field_Validate_msg Field Location.Zip to get_ZipValidation
+        Set Field_Mask_Type Field Location.Zip to Mask_Window
+        Set Field_Mask Field Location.Zip to "#####-####"
+
+
+        Set Field_Validate_msg Field Location.Phone1 To get_PhoneValidation
+
+        Set Field_Class_Name Field Location.Phonetype1 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Phonetype1 to Location_Phonetype1_VT
+
+        Set Field_Validate_msg Field Location.Phone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Location.Phonetype2 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Phonetype2 to Location_Phonetype2_VT
+
+        Set Field_Validate_msg Field Location.Phone3 To get_PhoneValidation
+
+        Set Field_Class_Name Field Location.Phonetype3 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Phonetype3 to Location_Phonetype3_VT
+
+
+        Set Field_Validate_msg Field Location.Contactphone1 To get_PhoneValidation
+
+        Set Field_Class_Name Field Location.Contactphntype1 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Contactphntype1 to Location_Contactphntype1_VT
+
+        Set Field_Validate_msg Field Location.Contactphone2 To get_PhoneValidation
+
+        Set Field_Class_Name Field Location.Contactphntype2 To "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Contactphntype2 to Location_Contactphntype2_VT
+
+
+        Set Field_Class_Name Field Location.Status To "cGlblDbComboForm"
+        Set Field_Option Field Location.Status DD_CAPSLOCK to True
+        Set Field_Value_Table Field Location.Status to Location_Status_VT
+
+        Set Field_Option Field Location.AreaNumber DD_REQUIRED to True
+
+
+        Set Field_Class_Name Field Location.Invoicelocation To "cGlblDbCheckBox"
+
+        Set Field_Option Field Location.BillingState DD_CAPSLOCK to True
+
+        Set Field_Validate_msg Field Location.BillingZip to get_ZipValidation
+        Set Field_Mask_Type Field Location.BillingZip to Mask_Window
+        Set Field_Mask Field Location.BillingZip to "#####-####"
+
+        Set Field_Option Field Location.PropmgrIdno DD_ZERO_SUPPRESS to True
+
+        Set Field_Option Field Location.BillingAddress DD_CAPSLOCK to True
+        Set Field_Class_Name Field Location.BillingAddress to "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.BillingAddress to LocationBillingAddressVT
+
+        Set Field_Class_Name Field Location.BuildingType to "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.BuildingType to LocationBldTypeVT
+
+        Set Field_Value_Table Field Location.Hauling to LocationOptionsVT
+        Set Field_Class_Name Field Location.Hauling to "cGlblDbComboForm"
+
+        Set Field_Class_Name Field Location.Melting to "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Melting to LocationOptionsVT
+
+        Set Field_Class_Name Field Location.Awnings to "cGlblDbComboForm"
+        Set Field_Value_Table Field Location.Awnings to LocationOptionsVT
+
+        Set Field_Value_Table Field Location.SpcEquipment to LocationSpcEquipVT
+        Set Field_Class_Name Field Location.SpcEquipment to "cGlblDbComboForm"
+
+        Set Field_Value_Table Field Location.CityWalks to LocationOptionsVT
+
+        Set Field_Value_Table Field Location.DeIcing to LocationOptionsVT
+
+        Set Field_Value_Table Field Location.PreTreatWalk to LocationOptionsVT
+        Set Field_Class_Name Field Location.PreTreatWalk to "Combo"
+
+        Set Field_Class_Name Field Location.PreTreatWalkSqft to "Form"
+
+        Set Field_Value_Table Field Location.PreTreatLot to LocationOptionsVT
+        Set Field_Class_Name Field Location.PreTreatLot to "Combo"
+
+        Set Field_Class_Name Field Location.PreTreatLotSqft to "Form"
+
+        Set Field_Class_Name Field Location.Geo1ManualFlag to "Checkbox"
+        Set Cascade_Delete_State to False
+
+    End_Procedure    // Construct_Object
+
+    Procedure OnConstrain
+        Forward Send OnConstrain
+        
+        #IFDEF TEMPUS
+//        If (giCompanyIdno>0) Begin
+//            //Send FilterData Location.File_Number "Location"
+//            Constrain Location.RecordOwner eq giCompanyIdno
+//        End
+        #ELSE
+        #ENDIF
+        
+
+    End_Procedure 
+
+    Procedure Backout
+        Forward Send Backout
+        //
+        Subtract 1 from Customer.OrderCount
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here    
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Location.ChangedFlag
+        End
+        //
+        If (Location.BillingAddress = "") Begin
+            Move "L" to Location.BillingAddress
+        End
+        //
+        Add 1 to Customer.OrderCount
+    End_Procedure   // Update
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value   Field Location.Phonetype1 To "O"
+        Set Field_Changed_Value   Field Location.Phonetype2 To "F"
+        Set Field_Changed_Value   Field Location.Contactphntype1 To "O"
+        Set Field_Changed_Value   Field Location.Contactphntype2 To "C"
+        Set Field_Changed_Value   Field Location.Status To "A"
+        Set Field_Changed_Value Field Location.AreaNumber to 0
+        Set Field_Changed_Value Field Location.BillingAddress to "C"
+    End_Procedure    // Field_Defaults
+
+    Function Validate_Save Returns Integer
+        Integer iRetval
+        //
+        Forward Get Validate_Save to iRetval
+        If (not(iRetval)) Begin
+            If (Location.LocationIdno = 0) Begin
+                Send UserError "ID cannot be 0" "Validation Error"
+                Move 1 to iRetval
+            End
+            If (Location.Name = "") Begin
+                Send UserError "Location Name cannot be blank" "Validation Error"
+                Move 1 to iRetval
+            End
+        End
+        Function_Return iRetval
+    End_Function
+
+End_Class
+
+#IFDEF Is$WebApp
+//Use LocationWebLookup.wo
+#ELSE
+
+Use LOCATION.SL      // LOCATION_SL
+
+#ENDIF
+
+
+#IFDEF Is$WebApp
+#ELSE
+#ENDIF

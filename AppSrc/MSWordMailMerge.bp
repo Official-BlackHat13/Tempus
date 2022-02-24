@@ -1,0 +1,524 @@
+// MSWordMailMerge.bp
+//
+#IFDEF CR_LF
+#ELSE
+define CR_LF for (Character(13) + Character(10))
+#ENDIF
+
+Use GlobalAllEnt.pkg
+Use MSWORD9.pkg
+Use Dates.nui
+Use Strings.nui
+
+Open System
+Open Customer
+Open Contact
+Open Listlink
+
+// MailMerge application
+Class cMergeApp is a cMsWordApplication
+    Function AttachActiveObject Returns Boolean
+        Boolean bSuccess
+        Variant vComObject
+        String  sProgId
+        //
+        Send Ignore_Error of Error_Object_Id 4381
+        //
+        Get psProgID                            to sProgId
+        Get ComActiveObject sProgId             to vComObject
+        Set pvComObject                         to vComObject
+        Move (not(IsNullComObject(vComObject))) to bSuccess // success of variant is not null
+        //
+        Send Trap_Error of Error_Object_Id 4381
+        //
+        Function_Return bSuccess
+    End_Function
+End_Class // cMergeApp
+
+Object WordDocumentsProcess is a BusinessProcess
+
+    Property Boolean pbError
+    Property String  psMessage
+
+    Property Integer piHeaderMsg
+    Property Integer piDataMsg
+    Property String  psMergeFile
+
+    Property String  psListCode
+
+//    // medical evidence system
+//    Property Boolean pbMedsys
+//    // evidence reminder letters
+//    Property Boolean pbProviders
+//    Property Boolean pbProvider
+//    //
+//    // third party property record & strings
+//    Property Integer piTpRecord
+//    Property String  psTpTitle
+//    Property String  psTpFirst
+//    Property String  psTpMi
+//    Property String  psTpLast
+//    Property String  psTpDba
+//    Property String  psTpAttn
+//    Property String  psTpAddr1
+//    Property String  psTpAddr2
+//    Property String  psTpCity
+//    Property String  psTpSt
+//    Property String  psTpZip
+//    Property String  psTpPhone1
+//    Property String  psTpPhone2
+
+//    // MailMerge application
+//    Object oMergeApp is a cMsWordApplication
+//        Function AttachActiveObject Returns Boolean
+//            Boolean bSuccess
+//            Variant vComObject
+//            String  sProgId
+//            //
+//            Send Ignore_Error of Error_Object_Id 4381
+//            //
+//            Get psProgID                            to sProgId
+//            Get ComActiveObject sProgId             to vComObject
+//            Set pvComObject                         to vComObject
+//            Move (not(IsNullComObject(vComObject))) to bSuccess // success of variant is not null
+//            //
+//            Send Trap_Error of Error_Object_Id 4381
+//            //
+//            Function_Return bSuccess
+//        End_Function
+//    End_Object // oMergeApp
+//    //
+//    Object oDocuments is a cMsWordDocuments
+//    End_Object // oDocuments
+//    //
+//    Object oDocument is a cMsWordDocument
+//    End_Object // oDocument
+//    //
+//    Object oContent is a cMsWordRange
+//    End_Object
+//    //
+//    Object oMailMerge is a cMsWordMailMerge
+//    End_Object // oMailMerge
+
+    // mail merge functions
+    function DoCreateDateString date dDate returns string
+        string  sDay sMonth
+        integer iMonth iDay iYear
+        //
+        Move (vdfq_DateDayName(dDate))          to sDay
+        Move (vdfq_DateSegment(dDate,DS_MONTH)) to iMonth
+        Move (vdfq_DateSegment(dDate,DS_DAY))   to iDay
+        Move (vdfq_DateSegment(dDate,DS_YEAR))  to iYear
+        move (vdfq_MonthName(iMonth))           to sMonth
+        Function_Return (trim(sDay) + "," * trim(sMonth) * String(iDay) + "," * String(iYear))
+    end_function
+//    //
+//    function DoCreateTimeString string sTimeNumber returns string
+//        integer iHr
+//        string  sMn sTime
+//        if (length(trim(sTimeNumber)) = 6) begin
+//            move (left(sTimeNumber,2))  to iHr
+//            move (mid(sTimeNumber,2,3)) to sMn
+//        end
+//        else begin
+//            move (left(sTimeNumber,1))  to iHr
+//            move (mid(sTimeNumber,2,2)) to sMn
+//        end
+//        if (iHr > 12) begin
+//            move "p.m."     to sTime
+//            move (iHr - 12) to iHr
+//        end
+//        else move "a.m."    to sTime
+//        function_return (string(iHr) + ":" + sMn * sTime)
+//    end_function // DoCreateTimeString
+
+    // Header string functions
+    Function ContactHeaderString Returns String
+        Function_Return ("ContactIdno," ;
+            + "ContactOrganization,"  ;
+            + "ContactTitle,"         ;
+            + "ContactTermOfAddress," ;
+            + "ContactFirstname,"     ;
+            + "ContactMiddleInitial," ;
+            + "ContactLastname,"      ;
+            + "ContactNameSuffix,"    ;
+            + "ContactAddress1,"      ;
+            + "ContactAddress2,"      ;
+            + "ContactCity, "         ;
+            + "ContactState,"         ;
+            + "ContactZipcode,"       ;
+            + "ContactEmailAddress")
+    End_Function // ContactHeaderString
+
+    // data string functions
+    Function ContactDataString Returns String
+        String sContactIdno
+        //
+        Move Contact.ContactIdno to sContactIdno
+        Function_Return ('"' + sContactIdno  + '","' ;
+            + trim(Customer.Name)            + '","' ;
+            + trim(Contact.Title)            + '","' ;
+            + Trim(Contact.TermOfAddress)    + '","' ;
+            + trim(Contact.FirstName)        + '","' ;
+            + Trim(Contact.MiddleInitial)    + '","' ;
+            + trim(Contact.LastName)         + '","' ;
+            + Trim(Contact.NameSuffix)       + '","' ;
+            + trim(Contact.Address1)         + '","' ;
+            + trim(Contact.Address2)         + '","' ;
+            + trim(Contact.City)             + '","' ;
+            + trim(Contact.State)            + '","' ;
+            + trim(Contact.Zip)              + '","' ;
+            + trim(Contact.EmailAddress)     + '"')
+    End_Function // ContactDataString
+
+    Function IsAllContactDataByMailingList Returns String
+        Boolean bValid
+        String  sListCode sContacts sContact
+        //
+        Get psListCode to sListCode
+        //
+        Clear Listlink
+        Move sListCode to Listlink.ListCode
+        Find ge Listlink by Index.3
+        While ((Found) and Listlink.ListCode = sListCode)
+            Clear Contact Customer
+            Move Listlink.ContactIdno to Contact.ContactIdno
+            Find eq Contact.ContactIdno
+            If (Found) Begin
+                Move (Contact.Status = "A" and Contact.FirstName <> "" and Contact.LastName <> "") to bValid
+                If (not(bValid)) Break
+                Relate Contact
+                Get ContactDataString to sContact
+                If (sContacts <> "") Begin
+                    Move (CR_LF + sContact) to sContact
+                End
+                Move (sContacts + sContact) to sContacts
+            End
+            Find gt Listlink by Index.3
+        Loop
+        Function_Return sContacts
+    End_Function
+
+//    // Clients
+//    function CreateClientsHeaderString returns string
+//        string sClientHeader sThirdPartyHeader
+//        get ClientHeaderString     to sClientHeader
+//        get ThirdPartyHeaderString to sThirdPartyHeader
+//        function_return (sClientHeader + "," + sThirdPartyHeader)
+//    end_function // CreateClientsHeaderString
+
+//    procedure DoSelectThirdParty
+//        integer iExperts iThirdParty
+//        //
+//        move Experts.Recnum to iExperts
+//        //
+//        get IsThirdParty of Experts_SL to iThirdParty
+//        //
+//        set piTpRecord  to Experts.Recnum
+//        set psTpTitle   to (trim(Experts.Title))
+//        set psTpFirst   to (trim(Experts.First))
+//        set psTpMi      to (trim(Experts.Mi))
+//        set psTpLast    to (trim(Experts.Last))
+//        Set psTpDba     to (trim(Experts.Exp_name))
+//        Set psTpAttn    to (trim(Experts.Attention))
+//        set psTpAddr1   to (trim(Experts.Address))
+//        set psTpAddr2   to (trim(Experts.Address2))
+//        set psTpCity    to (trim(Experts.City))
+//        set psTpSt      to (trim(Experts.State))
+//        Set psTpZip     to (trim(Experts.Zip))
+//        Set psTpPhone1  to (trim(Experts.PHONE1))
+//        Set psTpPhone2  to (trim(Experts.PHONE2))
+//        //
+//        If (not(iExperts)) Begin
+//            Procedure_Return
+//        End
+//        move iExperts to Experts.Recnum
+//        Find Eq Experts.Recnum
+//    end_procedure // DoSelectThirdParty
+
+//    function IsSelectedProvider string sClient returns boolean
+//        integer iExperts iDoctors iThirdParty
+//        //
+//        move Experts.Recnum to iExperts
+//        move Doctors.Recnum to iDoctors
+//        //
+//        get IsProvider of Doctors_SL sClient to iThirdParty
+//        //
+//        set piTpRecord  to Experts.Recnum
+//        set psTpTitle   to (trim(Experts.Title))
+//        set psTpFirst   to (trim(Experts.First))
+//        set psTpMi      to (trim(Experts.Mi))
+//        set psTpLast    to (trim(Experts.Last))
+//        Set psTpDba     to (trim(Experts.Exp_name))
+//        Set psTpAttn    to (trim(Experts.Attention))
+//        set psTpAddr1   to (trim(Experts.Address))
+//        set psTpAddr2   to (trim(Experts.Address2))
+//        set psTpCity    to (trim(Experts.City))
+//        set psTpSt      to (trim(Experts.State))
+//        set psTpZip     to (trim(Experts.Zip))
+//        Set psTpPhone1  to (trim(Experts.PHONE1))
+//        Set psTpPhone2  to (trim(Experts.PHONE2))
+//        //
+//        if (iExperts) begin
+//            move iExperts to Experts.Recnum
+//            find EQ Experts.Recnum
+//        end
+//        if (iDoctors) begin
+//            move iDoctors to Doctors.Recnum
+//            find EQ Doctors.Recnum
+//        end
+//        function_return iThirdParty
+//    end_function // IsSelectedProvider
+
+    Procedure DoMergeProcess String sDataSource
+        Boolean bIsComObjectCreated bPrint bMedsys bProviders bProvider bFeePetition
+        Integer iCount iAppId iVoid
+        Integer iHeaderMsg iDataMsg iItem iRecId iCaseId
+        Variant vDocuments vDocument vContent vDataSource vFileName vMergeDoc vApplication
+        Variant vMailMerge vPause vSave
+        String  sHeaderString sDataString sProvider sTime
+        String  sFileName sFolder sTempfile sInitials sDateTime sAction
+        Number  nTime
+        Handle  hoWnd hoArray hoMergeApp hoDocuments hoDocument hoContent hoMailMerge
+        //
+//        Get pbFeePetition to bFeePetition
+//        Get piCaseId      to iCaseId
+//        Get pbMedsys      to bMedsys
+//        Get pbProviders   to bProviders
+//        Get pbProvider    to bProvider
+        Get Window_Handle to hoWnd
+        // set Third Party property strings
+//        If (not(bMedSys) and not(bProviders) and not(bProvider)) begin
+//            Send DoSelectThirdParty
+//        End
+//        // clean up the screen
+//        If (hoWnd) Begin
+//            Move (Integer(UpdateWindow(hoWnd))) to iVoid
+//        End
+        //
+        get piHeaderMsg to iHeaderMsg
+        get piDataMsg   to iDataMsg
+        //
+        get iHeaderMsg                          to sHeaderString
+//        move (sHeaderString + ",StaffInitials") to sHeaderString
+        //
+//        get psUser of ghoApplication to sInitials
+//        move (lowercase(sInitials))  to sInitials
+        //
+        get iDataMsg                           to sDataString
+//        Move (sDataString + "," + sInitials)   to sDataString
+        //
+        Get psMergeFile to sFileName
+        if (sFileName = "") begin
+            Move (trim(System.LetterFolder))                                               to sFolder
+            Get IsSelectFile "Word Documents|*.DOC; *.DOT" "Select Merge Document" sFolder to sFileName
+        end
+        If (sFileName = "") Begin
+            Procedure_Return
+        End
+        // clean up the screen
+        If (hoWnd) Begin
+            Move (Integer(UpdateWindow(hoWnd)))  to iVoid
+        End
+        // confirm edit
+        Get Confirm "Edit before printing?" to bPrint
+        // clean up the screen
+        If (hoWnd) Begin
+            Move (Integer(UpdateWindow(hoWnd))) to iVoid
+        End
+        //
+        send Cursor_Wait of Cursor_Control
+        //
+        Get Create U_cMergeApp               to hoMergeApp
+        Get IsComObjectCreated of hoMergeApp to bIsComObjectCreated
+        If (not(bIsComObjectCreated)) Begin
+            Get AttachActiveObject of hoMergeApp to bIsComObjectCreated
+            // now try to attach to a running instance of word...
+            If (not(bIsComObjectCreated)) Begin
+                // If we got here then we have to create our own instance of word.
+                Send CreateComObject of hoMergeApp
+            End
+            Get IsComObjectCreated of hoMergeApp to bIsComObjectCreated
+            If (not(bIsComObjectCreated)) Begin
+                Send Stop_Box "MS Word object not created"
+                Procedure_Return
+            End
+        End
+        // find the Documents Collection
+        Get ComDocuments of hoMergeApp to vDocuments
+        If (IsNullComObject(vDocuments)) Begin
+            Set pbError   to True
+            Set psMessage to "Document collection not found"
+            Procedure_Return
+        End
+        // attach the collection
+        Get Create U_cMsWordDocuments  to hoDocuments
+        Set pvComObject of hoDocuments to vDocuments
+//        // launch the application & execute
+//        Get ComApplication of oMergeApp to vApplication
+//        If (IsNullComObject(vApplication)) Begin
+//            Set pbError   to True
+//            Set psMessage to "Application object not found"
+//            Procedure_Return
+//        End
+        // open a new document
+        Get ComAdd of hoDocuments Nothing Nothing Nothing Nothing to vDocument
+        If (IsNullComObject(vDocument)) Begin
+            Set pbError   to True
+            Set psMessage to "New document not added to collection"
+            Procedure_Return
+        End
+        // attach the document
+        Get Create U_cMsWordDocument  to hoDocument
+        Set pvComObject of hoDocument to vDocument
+        // find the range
+        Get ComContent of hoDocument to vContent
+        If (IsNullComObject(vContent)) Begin
+            Set pbError   to True
+            Set psMessage to "Content object not found"
+            Procedure_Return
+        End
+        // attach the range
+        Get Create U_cMsWordRange                 to hoContent        
+        Set pvComObject              of hoContent to vContent
+        // write the header
+        Send ComInsertAfter          of hoContent    sHeaderString
+        // start a new line
+        Send ComInsertParagraphAfter of hoContent
+        // write the data
+        Send ComInsertAfter          of hoContent    sDataString
+        // release the range
+        Send Destroy                 of hoContent
+        // save the document
+        Move sDatasource to vDataSource
+        Send ComSaveAs of hoDocument vDataSource ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing
+        // get the source data name
+        Get ComFullName of hoDocument to sDatasource
+        // close the document
+        Send ComClose   of hoDocument Nothing Nothing Nothing
+        // release the document
+        Send Destroy    of hoDocument
+        // open the merge document document
+        Move sFileName to vFileName
+        Get ComOpen of hoDocuments vFileName ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            Nothing ;
+            to vMergeDoc
+        If (IsNullComObject(vMergeDoc)) Begin
+            Set pbError   to True
+            Set psMessage to "Merge document not opened"
+            Procedure_Return
+        End
+        // attach the document
+        Get Create U_cMsWordDocument   to hoDocument
+        Set pvComObject  of hoDocument to vMergeDoc
+        Get ComMailMerge of hoDocument to vMailMerge
+        If (IsNullComObject(vMailMerge)) Begin
+            Set pbError   to True
+            Set psMessage to "MailMerge object not found"
+            Procedure_Return
+        End
+        Get Create U_cMsWordMailMerge   to hoMailMerge
+        Set pvComObject  of hoMailMerge to vMailMerge
+        //
+        Send ComOpenDataSource of hoMailMerge ;
+            sDatasource ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing     ;
+            Nothing
+        //
+        If (bPrint) Begin
+            Set comDestination of hoMailMerge to OLEwdSendToPrinter
+        End
+        Else Begin
+            Set comDestination of hoMailMerge to OLEwdSendToNewDocument
+        End
+        //
+        Move False                     to vPause
+        Send comExecute of hoMailMerge    vPause
+        Set ComVisible  of hoMergeApp  to True
+        Send Destroy    of hoMailMerge
+        //
+        Move False                     to vSave
+        Send ComClose   of hoDocument     vSave Nothing Nothing
+        Send Destroy    of hoDocument
+        EraseFile sDatasource
+        //
+        send Cursor_Ready of Cursor_Control
+        //
+        Send Destroy      of hoDocuments
+        If (bPrint) Begin
+            Send ComQuit  of hoMergeApp Nothing Nothing Nothing
+        End
+        Send Destroy      of hoMergeApp
+    end_procedure // DoMergeProcess
+
+//    procedure DoClientsMergeProcess string sDatasource integer iRecnum
+//        set psMergeFile to ""
+//        set piHeaderMsg to get_CreateClientsHeaderString
+//        set piDataMsg   to get_CreateClientsDataString
+//        send DoMergeProcess sDatasource
+//    end_procedure // DoClientsMergeProcess
+
+    Procedure DoAllContactsOnMailingList String sListCode
+        Set psMergeFile to ""
+        Set psListCode  to sListCode
+        Set piHeaderMsg to get_ContactHeaderString
+        Set piDataMsg   to get_IsAllContactDataByMailingList
+        //
+        Send DoMergeProcess "DataSource.doc"
+    End_Procedure
+
+//    Procedure DoPrintFaxCover
+//        Boolean bExists
+//        String  sMergeFile
+//        //
+//        Move (Trim(DOCSYS.Fax_cover_sheet)) to sMergeFile
+//        File_Exist sMergeFile bExists
+//        If (bExists) Begin
+//            Set psMergeFile to sMergeFile
+//            Set piHeaderMsg to get_CreateCatsHeaderString
+//            Set piDataMsg   to get_CreateCatsDataString
+//            Send DoMergeProcess  "CatsMmDs"
+//        End
+//    End_Procedure
+
+End_Object // WordDocumentsProcess

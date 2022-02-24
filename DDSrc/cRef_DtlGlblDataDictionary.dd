@@ -1,0 +1,28 @@
+Use cGlblDataDictionary.pkg
+
+Open Ref_Dtl
+Open Ref_Hdr
+Open Referenc
+Open System
+
+Class cRef_DtlGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Ref_Dtl.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Add_Server_File to Ref_Hdr.File_Number
+        Set Add_Server_File to Referenc.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field Ref_Dtl.Ref_Dtl_idno to File_Field System.CrewMemberId
+
+    End_Procedure
+
+End_Class

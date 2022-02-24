@@ -1,0 +1,6 @@
+#REPLACE FILE38 Assigned
+#REPLACE Assigned.Recnum |FN38,0
+#REPLACE Assigned.AssignedCode |FS38,1
+#REPLACE Assigned.Description |FS38,2
+#REPLACE Assigned.Status |FS38,3
+#REPLACE Assigned.ChangedFlag |FN38,4

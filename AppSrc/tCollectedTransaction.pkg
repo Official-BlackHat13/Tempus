@@ -1,0 +1,6 @@
+// tCollectedTransaction.pkg
+
+Struct tCollectedTransaction
+    Integer iTransIdno
+    Integer iTransReference
+End_Struct

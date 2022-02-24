@@ -1,0 +1,283 @@
+// TempusLogin.DG
+
+//Use cHexHandler.pkg
+//Use ChangePassword.dg
+
+// program name list
+//Enumeration_List
+//    Define pnCaseManagement
+//    Define pnSystemAdministration
+//    Define pnDatabaseQuery
+//    Define pnAccountingAdministration
+//    Define pnClientLedger
+//    Define pnAccountsPayable
+//    Define pnGeneralLedger
+//    Define pnCashManagement
+//    Define pnAdminReports
+//    Define pnHearingProcessing
+//    Define pnTOSOInterface
+//End_Enumeration_List
+
+
+
+Use dfdbmdpn.pkg
+Use DataDict.pkg
+Use cGlblDbGroup.pkg
+Use cGlblForm.pkg
+Use cGlblCheckBox.pkg
+Use Windows.pkg
+
+Use User.DD
+Use Employer.DD
+Use cUserRightsGlblDataDictionary.dd
+Use dfBitmap.pkg
+
+//Register_Object oAppointmentTimer
+
+Object oLoginDialog is a cGlblDbModalPanel
+
+    Property Boolean pbValid
+    Property Integer piError
+
+    Set Label to "User Login"
+    Set Location to 26 79
+    Set Size to 83 223
+    Set piMinSize to 75 212
+    //set Extended_WIndow_Style to WS_EX_TOOLWINDOW FALSE
+    //set Icon                  to Claims.ico
+    Set Locate_Mode to CENTER_ON_PANEL
+
+    Object oUserRights_DD is a cUserRightsGlblDataDictionary
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oUser_DD is a User_DataDictionary
+        Set DDO_Server to oUserRights_DD
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    Set Main_DD to oUser_DD
+    Set Server to oUser_DD
+
+    Object oLoginGroup is a cGlblDbGroup
+        Set Size to 57 210
+        Set Location to 3 5
+
+        Object oNameForm is a cGlblForm
+            Set Label to "Login Name"
+            Set Size to 13 85
+            Set Location to 15 115
+            Set Label_Col_Offset to 50
+        End_Object    // oNameForm
+
+        Object oPasswordForm is a cGlblForm
+            Set Label to "Password"
+            Set Size to 13 85
+            Set Location to 31 115
+            Set Label_Col_Offset to 50
+            Set Password_State item 0 to True
+
+            On_Key kEnter Send DoLoginUser
+        End_Object    // oPasswordForm
+
+        Object oBitmapContainer1 is a BitmapContainer
+            Set Size to 39 46
+            Set Location to 11 9
+            Set Bitmap to "logo.bmp"
+            Set Enabled_State to False
+            Set Bitmap_Style to Bitmap_Stretch
+            Set piMaxSize to 39 73
+            Set piMinSize to 39 46
+        End_Object
+
+//        Object oCompanySelectionComboForm is a ComboForm
+//            Set Size to 12 135
+//            Set Location to 10 64
+//            Set Entry_State to False
+//        
+//            //Combo_Fill_List is called when the list needs filling
+//        
+//            Procedure Combo_Fill_List
+//                String sValue sValue2
+//                Send Combo_Delete_Data
+//                
+//                // Fill the combo list with Send Combo_Add_Item
+//                Send Combo_Add_Item "Interstate Companies"
+//                Send Combo_Add_Item "Northern Salt"
+//                //default (0) Interstate Companies
+//                Get Combo_Value 0 to sValue
+//                Set Value to sValue
+//                
+//            End_Procedure
+//        
+//            //OnChange is called on every changed character
+//            Procedure OnChange
+//                Get Value to gsCompanyName // the current selected item
+//                
+//                Case Begin
+//                    Case (gsCompanyName="Interstate Companies")
+//                        Move 101 to giCompanyIdno
+//                    Case Break
+//                    Case (gsCompanyName="Northern Salt")
+//                        Move 211 to giCompanyIdno
+//                    Case Break
+//                Case End
+//
+//                
+//            End_Procedure
+//        
+//            //Notification that the list has dropped down
+//        
+//            //Procedure OnDropDown
+//            //End_Procedure
+//        
+//            //Notification that the list was closed
+//        
+//            //Procedure OnCloseUp
+//            //End_Procedure
+//        
+//        End_Object
+
+    End_Object    // oLoginGroup
+
+    Object oLoginButton is a Button
+        Set Label to "&Login"
+        Set Location to 63 111
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send DoLoginUser
+        End_Procedure
+
+    End_Object    // oLoginButton
+
+    Object oCancelButton is a Button
+        Set Label to "&Cancel"
+        Set Location to 63 166
+        Set peAnchors to anBottomRight
+
+        procedure OnClick
+            send Exit_Application
+        end_procedure
+
+    End_Object    // oCancelButton
+
+    procedure DoLoginUser
+        Boolean bValid //bChange
+        integer eProgram iRecnum
+        String  sUser sPassword sEncrypted sCompany sProduct sProgram sVersion
+        Handle hoWorkspace
+        //
+//        get Checked_State of oChangeCheckbox to bChange
+        //
+        get Value of oNameForm     to sUser
+        get Value of oPasswordForm to sPassword
+//        Get peProgram              to eProgram
+        // user name cannot be blank
+        if (sUser = "") begin
+            send Stop_Box "No User Name"
+            procedure_return
+        end
+        //
+//        get IsEncryptedPassword sPassword to sEncrypted
+//        Move (StrToHex(sEncrypted))       to sEncrypted
+        //
+        Clear User
+        Move sUser      to User.LoginName
+//        move sEncrypted to Staff.User_password
+        Find eq User.LoginName
+        Relate User
+        //
+        Move ((Found)                      and ;
+            User.LoginName     = sUser     and ;
+            User.Password      = sPassword and ;
+            User.CustContactId = 0         and ;
+            User.EditRights    = "Y"       and ;
+            User.State         = "A") to bValid
+        //
+//        If (bValid and bChange) Begin
+//            Send DoChangePassword of oChangePasswordDialog Staff.Recnum
+//        End
+        //
+        If (bValid) Begin
+            Move User.SalesIdno to giSalesRepId
+            Move User.EditLevel to giUserRights
+//            Clear UserRights
+//            Move User.EditLevel to UserRights.EditLevel
+//            Find EQ UserRights.EditLevel
+//            If ((Found) and User.EditLevel = UserRights.EditLevel) Begin
+//                Move (Trim(UserRights.Discription)) to gsUserGroup
+//            End
+            Get psCompany of ghoApplication to sCompany
+            Get psProduct of ghoApplication to sProduct
+            Get psProgram of ghoApplication to sProgram
+            Get psVersion of ghoApplication to sVersion
+            Move (Trim(UserRights.Discription)) to gsUserGroup
+            Move User.UserId to giUserId
+            Move User.LoginName to gsUsername
+            Move User.Password to gsPassword
+            Move Employer.EmployerIdno to giCompanyIdno
+            Move (Trim(Employer.Name)) to gsCompanyName
+            Move ((Trim(User.FirstName)) * (Trim(User.LastName))) to gsUserFullName
+            Set psUser of ghoApplication to (Trim(User.LoginName))
+//            If (giCompanyIdno > 0) Begin
+//                Set Label of oMain to ("Tempus [" * gsCompanyName * "(" + (String(giCompanyIdno)) + ")" * "-" *  gsUserFullName * "]")
+//            End
+//            Else 
+            If (gsUserFullName) Begin
+                Set Label of oMain to (sProgram*sVersion*"[" * Trim(System.CompanyName) * "-" *  gsUserFullName*"-"*gsUserGroup+"]")
+            End
+            Else Begin
+                Set Label to (sProgram*sVersion*"[" * Trim(System.CompanyName) * "]")   
+            End
+            // ToDo: Load Default view
+            Case Begin
+                Case (giUserRights = 90)
+                    //Send Activate_oEmployerContract
+                Case Break
+            Case End
+            // properties used for security and auto-CATS creation
+//            set psUser of ghoApplication to Staff.Stf_code
+//            Set psUsr                    to Staff.Stf_code
+//            Set psOffice                 to Staff.Office
+//            set psType                   to Staff.Type
+//            Set piLevel                  to Staff.Security_level
+//            Set psStatusOverride         to Staff.StatusOverride
+        end
+        else begin
+            send Stop_Box "Invalid User Name or Password"
+            if (piError(self) = 2) break
+            set piError to (piError(self) + 1)
+            procedure_return
+        end
+        // now check permissions
+        If (bValid) Begin
+            Case Begin
+                Case (sProgram = "TempusMaintenance") 
+                    Move (gsUserGroup = "System Admin (90)") to bValid
+                    Case Break
+                Case Else
+                    Move bValid to bValid
+            Case End
+        End
+        //
+        Set pbValid to bValid
+        //
+        Send Close_Panel
+        
+    end_procedure
+
+    Function IsValidLogin Returns Boolean // Integer eProgram
+        //set pbValid                to FALSE
+        //set piError                to 0
+        set Value of oNameForm     to ""
+        set Value of oPasswordForm to ""
+//        Set peProgram              to eProgram
+        send Popup
+        function_return (pbValid(self))
+    End_Function
+
+End_Object    // oLoginDialog
+

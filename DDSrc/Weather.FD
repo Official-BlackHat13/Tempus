@@ -1,0 +1,12 @@
+#REPLACE FILE18 Weather
+#REPLACE Weather.Recnum |FN18,0
+#REPLACE Weather.WeatherId |FN18,1
+#REPLACE Weather.AreaNumber |FN18,2
+#REPLACE Weather.EventDate |FD18,3
+#REPLACE Weather.EventTime |FS18,4
+#REPLACE Weather.WindVelocity |FN18,5
+#REPLACE Weather.WindDirection |FS18,6
+#REPLACE Weather.AirTemperature |FN18,7
+#REPLACE Weather.GndTemperature |FN18,8
+#REPLACE Weather.SnowInches |FN18,9
+#REPLACE Weather.Description |FS18,10

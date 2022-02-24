@@ -1,0 +1,67 @@
+//DDB-FileStart
+//DDB-HeaderStart
+
+// File Name : Syslog.DD
+// Class Name: Syslog_DataDictionary
+// Revision  : 0
+// Version   : 2
+
+Use  Windows           // Basic Definitions
+Use  cGlblDataDictionary.pkg          // DataDictionary Class Definition
+Use  DDvalTbl          // Validation Table Class Definitions
+
+Open Syslog
+
+//DDB-HeaderEnd
+
+Class Syslog_DataDictionary  is a cGlblDataDictionary
+
+    // Define_Fields:
+    // This procedure is used to set up all data-dictionary rules.
+
+    Procedure Define_Fields
+        Forward Send Define_Fields
+        //DDB-Generated-Code-Location
+        //DDB-DefineFieldStart
+
+        Set Main_File            To Syslog.File_Number
+
+        Set Foreign_Field_Options  DD_KEYFIELD   To DD_AUTOFIND    DD_NOPUT       DD_FINDREQ    
+        Set Foreign_Field_Options  DD_INDEXFIELD To DD_NOPUT       DD_FINDREQ    
+        Set Foreign_Field_Options  DD_DEFAULT    To DD_DISPLAYONLY
+
+        // Field-based properties.......................
+
+        // Syslog.Log_File
+
+        // Syslog.Log_Date
+
+        // Syslog.Log_Time
+
+        // Syslog.Record_Key1
+
+        // Syslog.Record_Key2
+
+        // Syslog.Record_Key3
+
+        // Syslog.User
+
+        // Syslog.Log_Type
+
+        // Syslog.Description
+
+        //DDB-DefineFieldEnd
+    End_Procedure    // Define_Fields
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        //DDB-Generated-Code-Location
+        //DDB-FieldDefaultStart
+        //DDB-FieldDefaultEnd
+    End_Procedure    // Field_Defaults
+
+End_Class    // Syslog_DataDictionary
+//DDB-FileEnd

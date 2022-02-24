@@ -1,0 +1,3153 @@
+// StdFuncs.pkg
+//
+// file and array handling methods for the calc engine
+// compiler directives are used to make each method specific
+// to the program that is using it
+
+register_object oCalcWizard
+register_object InstructionDialog
+register_object Initem_SL
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+
+// Data dictionary objects
+#IFDEF CE_CALC_TEST
+// no DDO's are used
+#ELSE
+// common
+Object Jcdept_DD is a cJcdeptDataDictionary
+end_object    // Jcdept_DD
+
+Object Jccntr_DD is a cJccntrDataDictionary
+    Set DDO_Server to (Jcdept_DD(self))
+End_Object    // Jccntr_DD
+
+Object Jcoper_DD is a Jcoper_DataDictionary
+    Set DDO_Server to (Jccntr_DD(self))
+End_Object    // Jcoper_DD
+// Order Maintenance
+#IFDEF CE_CALC_ORDER
+
+Object Jcreps_DD is a Jcreps_DataDictionary
+End_Object // Jcreps_DD
+
+Object Jccust_DD is a Jccust_DataDictionary
+    Set DDO_Server to (Jcreps_DD(self))
+End_Object // Jccust_DD
+
+Object Jccrep_DD is a Jccrep_DataDictionary
+End_Object    // Jccrep_DD
+
+Object Jcorep_DD is a Jcorep_DataDictionary
+End_Object    // Jcorep_DD
+
+Object Jccntc_DD is a Jccntc_DataDictionary
+    Set DDO_Server to (Jccust_DD(self))
+    Set DDO_Server to (Jccrep_DD(self))
+End_Object    // Jccntc_DD
+
+Object Jcprod_DD is a Jcprod_DataDictionary
+End_Object    // Jcprod_DD
+
+Object Jcjobs_DD is a Jcjobs_DataDictionary
+    Set DDO_Server to (Jccust_DD(self))
+    Set DDO_Server to (Jcprod_DD(self))
+    Set DDO_Server to (Jcorep_DD(self))
+    Set DDO_Server to (Jccntc_DD(self))
+End_Object    // Jcjobs_DD
+
+Object Esjcmp_DD is a Esjcmp_DataDictionary
+    Set DDO_Server to (Jcjobs_DD(self))
+End_Object    // Esjcmp_DD
+
+Object Esjitm_DD is a Esjitm_DataDictionary
+    Set DDO_Server to (Esjcmp_DD(self))
+    Set DDO_Server to (Jcoper_DD(self))
+    //Set Constrain_File to Esjcmp.File_Number
+    // no log
+    set pbUsesSystemLog to FALSE
+    //
+    send DefineExtendedField field Esjitm.Instruction
+    //
+    procedure Backout
+        if (pbNoBackout(self)) begin
+            subtract 1 from Esjcmp.Item_count
+            procedure_return
+        end
+        forward send Backout
+    end_procedure
+    //
+    procedure Creating
+        forward send Creating
+        //
+        if (Jcpars.Recalc_on_adds AND NOT(pbAddMaster(self))) ;
+            move "Y" to Esjcmp.Needs_calced
+    end_procedure
+    //
+End_Object // Esjitm_DD
+
+#ENDIF // #IFDEF CE_CALC_ORDER
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+Use Eshead.DD
+Use Escomp.DD
+Use Esitem.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use SalesRep.DD
+Use Contact.DD
+
+
+Object oCustomer_DD is a Customer_DataDictionary
+End_Object // oCustomer_DD
+
+Object oAreas_DD is a Areas_DataDictionary
+End_Object // oAreas_DD
+
+Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+End_Object
+
+Object oLocation_DD is a Location_DataDictionary
+    Set DDO_Server to oSalesTaxGroup_DD
+    Set DDO_Server to oAreas_DD
+    Set DDO_Server to oCustomer_DD
+End_Object
+
+Object oSalesRep_DD is a Salesrep_DataDictionary
+End_Object // oSalesRep_DD
+
+Object oContact_DD is a Contact_DataDictionary
+    Set DDO_Server to oCustomer_DD
+End_Object // oContact_DD
+
+Object Eshead_DD is a Eshead_DataDictionary
+    Set DDO_Server to oLocation_DD
+    Set DDO_Server to oContact_DD
+    Set DDO_Server to oSalesRep_DD
+    // this lets you save a new parent DD from within child DD
+    //Set Allow_Foreign_New_Save_State to True
+End_Object    // Eshead_DD
+
+Object Escomp_DD is a Escomp_DataDictionary
+    Set DDO_Server to (Eshead_DD(self))
+End_Object    // Escomp_DD
+
+Object Esitem_DD is a Esitem_DataDictionary
+    Set DDO_Server to (Escomp_DD(self))
+    Set DDO_Server to (Jcoper_DD(self))
+    //Set Constrain_File to Escomp.File_Number
+    send DefineExtendedField field Esitem.Instruction
+    //
+    procedure Backout
+        if (pbNoBackout(self)) begin
+            subtract 1 from Escomp.Item_count
+            procedure_return
+        end
+        forward send Backout
+    end_procedure
+    //
+    procedure Creating
+        forward send Creating
+        //
+        if (Jcpars.Recalc_on_adds AND NOT(pbAddMaster(self))) ;
+            move "Y" to Escomp.Needs_calced
+    end_procedure
+    //
+End_Object // Esitem_DD
+
+#ENDIF // #IFDEF CE_CALC_ESTIMATE
+// component library
+#IFDEF CE_CALC_LIBRARY
+
+Object Esctyp_DD is a Esctyp_DataDictionary
+End_Object    // Esctyp_DD
+
+Object Esclib_DD is a Esclib_DataDictionary
+    Set DDO_Server to (Esctyp_DD(self))
+End_Object    // Esclib_DD
+
+Object Eslitm_DD is a Eslitm_DataDictionary
+    set DDO_Server to (Esclib_DD(self))
+    set DDO_Server to (Jcoper_DD(self))
+    //set Constrain_File to Esclib.File_Number
+    //
+    send DefineExtendedField field Eslitm.Instruction
+    //
+    procedure Backout
+        if (pbNoBackout(self)) begin
+            subtract 1 from Esclib.Item_count
+            procedure_return
+        end
+        forward send Backout
+    end_procedure
+    //
+    procedure Creating
+        forward send Creating
+        //
+        if (Jcpars.Recalc_on_adds AND NOT(pbAddMaster(self))) ;
+            move "Y" to Esclib.Needs_calced
+    end_procedure
+    //
+End_Object // Eslitm_DD
+#ENDIF // #IFDEF CE_CALC_LIBRARY
+#ENDIF // #IFDEF CE_CALC_TEST
+
+// set the status of the component for conditional processing
+procedure set NewComponentFlag integer bState
+	#IFDEF CE_CALC_TEST
+        // N/A
+    #ELSE
+        #IFDEF CE_CALC_ORDER
+        set pbExisting of Esjitm_DD to bState
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        #IFDEF CE_CALC_ESTIMATE
+        set pbExisting of Esitem_DD to bState
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        #IFDEF CE_CALC_LIBRARY
+        set pbExisting of Eslitm_DD to bState
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // NewComponentFlag
+
+// reset properties
+procedure StartingQuantities
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer hComponent iCompFile iRow iValue
+        integer fQty1 fQty2 fQty3
+        integer fWidth fLength fPages fColors1 fColors2 fFormPages fNumberUp
+        number  nValue
+        //
+        #IFDEF CE_CALC_ORDER
+        move Esjcmp.File_number to iCompFile
+        move 93                 to fQty1
+        move 94                 to fQty2
+        move 95                 to fQty3
+        move 100                to fWidth
+        move 101                to fLength
+        move 102                to fPages
+        move 103                to fColors1
+        move 104                to fColors2
+        move 105                to fFormPages
+        move 106                to fNumberUp
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        //
+        #IFDEF CE_CALC_ESTIMATE
+        move Escomp.File_number to iCompFile
+        Move 92                 to fQty1
+        Move 93                 to fQty2
+        Move 94                 to fQty3
+        Move 99                 to fWidth
+        Move 100                to fLength
+        Move 101                to fPages
+        Move 102                to fColors1
+        Move 103                to fColors2
+        Move 104                to fFormPages
+        Move 105                to fNumberUp
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        //
+        #IFDEF CE_CALC_LIBRARY
+        move Esclib.File_number to iCompFile
+        move 90                 to fQty1
+        move 91                 to fQty2
+        move 92                 to fQty3
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        move oComponentArray  to hComponent
+        get  piComponentIndex to iRow
+        //
+        if (pbBatchMode(self)) get piQty1 of hComponent iRow        to iValue
+        else                   get_field_value iCompFile fQty1      to iValue
+        set piQty1                                                  to iValue
+        //
+        if (pbBatchMode(self)) get piQty2 of hComponent iRow        to iValue
+        else                   get_field_value iCompFile fQty2      to iValue
+        set piQty2                                                  to iValue
+        //
+        if (pbBatchMode(self)) get piQty3 of hComponent iRow        to iValue
+        else                   get_field_value iCompFile fQty3      to iValue
+        set piQty3                                                  to iValue
+        //
+        #IFDEF CE_CALC_LIBRARY
+        #ELSE
+        if (pbBatchMode(self)) get piPages of hComponent iRow       to iValue
+        else                   get_field_value iCompFile fPages     to iValue
+        set piPages                                                 to iValue
+        //
+        if (pbBatchMode(self)) get pnWidth of hComponent iRow       to nValue
+        else                   get_field_value iCompFile fWidth     to nValue
+        set pnWidth                                                 to nValue
+        //
+        if (pbBatchMode(self)) get pnLength of hComponent iRow      to nValue
+        else                   get_field_value iCompFile fLength    to nValue
+        set pnLength                                                to nValue
+        //
+        if (pbBatchMode(self)) get piColors1 of hComponent iRow     to iValue
+        else                   get_field_value iCompFile fColors1   to iValue
+        set piColors1                                               to iValue
+        //
+        if (pbBatchMode(self)) get piColors2 of hComponent iRow     to iValue
+        else                   get_field_value iCompFile fColors2   to iValue
+        set piColors2                                               to iValue
+        //
+        if (pbBatchMode(self)) get piFormPages of hComponent iRow   to iValue
+        else                   get_field_value iCompFile fFormPages to iValue
+        set piFormPages                                             to iValue
+        //
+        if (pbBatchMode(self)) get piNumberUp of hComponent iRow    to iValue
+        else                   get_field_value iCompFile fNumberUp  to iValue
+        set piNumberUp                                              to iValue
+        #ENDIF // #IFDEF_CALC_LIBRARY
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // StartingQuantities
+
+procedure ReadBatchItems
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer hComponent hKey hData
+        integer iRow iKeyIndex iDataIndex bStandard bCalc iItemCount
+        integer iCompFile iCompIndex iItemFile iItemIndex iValue iFieldIndex
+        integer fCompId fCompComp fItemCount fNeedsCalced fQty1 fWidth
+        integer fItemId fItemComp fOpcode fVar1 fEst1 fVar1Flag fCalcFlags
+        string  sHeaderId sComponentId sThisComponent sFlags
+        string  sCompId sCompComp sItemId sItemComp sNeedsCalced
+        number  nValue
+        //
+        move oComponentArray        to hComponent
+        move OpcodeKeyStorageArray  to hKey
+        move OpcodeDataStorageArray to hData
+        //
+        get psHeaderId    to sHeaderId
+        get psComponentId to sComponentId
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjcmp.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 2                  to fCompId
+        move 3                  to fCompComp
+        move 8                  to fItemCount
+        move 10                 to fNeedsCalced
+        move 93                 to fQty1
+        move 100                to fWidth
+        move Esjitm.File_number to iItemFile
+        move 2                  to iItemIndex
+        move 2                  to fItemId
+        move 3                  to fItemComp
+        move 6                  to fOpcode
+        move 11                 to fVar1
+        move 30                 to fEst1
+        move 36                 to fVar1Flag
+        move 10                 to fCalcFlags
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        Move Escomp.File_number to iCompFile
+        Move 2                  to iCompIndex
+        move 1                  to fCompId
+        move 2                  to fCompComp
+        Move 7                  to fItemCount
+        Move 9                  to fNeedsCalced
+        Move 92                 to fQty1
+        Move 99                 to fWidth
+        move Esitem.File_number to iItemFile
+        move 2                  to iItemIndex
+        move 1                  to fItemId
+        move 2                  to fItemComp
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        move 29                 to fEst1
+        move 35                 to fVar1Flag
+        move 9                  to fCalcFlags
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esclib.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 1                  to fCompId
+        move 2                  to fCompComp
+        move 5                  to fItemCount
+        move 7                  to fNeedsCalced
+        move 90                 to fQty1
+        move Eslitm.File_number to iItemFile
+        move 2                  to iItemIndex
+        move 1                  to fItemId
+        move 2                  to fItemComp
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        move 29                 to fEst1
+        move 35                 to fVar1Flag
+        move 9                  to fCalcFlags
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        move (NOT(pbNoBackout(self)) AND NOT(pbComponentId(self))) to bStandard
+        //
+        clear iCompFile
+        set_field_value iCompFile fCompId   to sHeaderId
+        set_field_value iCompFile fCompComp to sComponentId
+        vfind iCompFile iCompIndex GE
+        if (NOT(FOUND)) procedure_return
+        //
+        get_field_value iCompFile fCompId   to sCompId
+        get_field_value iCompFile fCompComp to sCompComp
+        //
+        while (sCompId = sHeaderId)
+            get_field_value iCompFile fItemCount   to iItemCount
+            get_field_value iCompFile fNeedsCalced to sNeedsCalced
+            if (bStandard) move (sNeedsCalced = "Y" AND iItemCount > 0) to bCalc
+            else           move (iItemCount > 0)                        to bCalc
+            if (bCalc) begin
+                get Row_Count     of hComponent        to iRow
+                set psComponentId of hComponent iRow   to sCompComp
+                //
+                get_field_value iCompFile  fQty1       to iValue
+                set piQty1        of hComponent iRow   to iValue
+                //
+                get_field_value iCompFile (fQty1 + 1)  to iValue
+                set piQty2        of hComponent iRow   to iValue
+                //
+                get_field_value iCompFile (fQty1 + 2)  to iValue
+                set piQty3        of hComponent iRow   to iValue
+                //
+                #IFDEF CE_CALC_LIBRARY
+                #ELSE
+                get_field_value iCompFile  fWidth      to nValue
+                set pnWidth       of hComponent iRow   to nValue
+                //
+                get_field_value iCompFile (fWidth + 1) to nValue
+                set pnLength      of hComponent iRow   to nValue
+                //
+                get_field_value iCompFile (fWidth + 2) to iValue
+                set piPages       of hComponent iRow   to iValue
+                //
+                get_field_value iCompFile (fWidth + 3) to iValue
+                set piColors1     of hComponent iRow   to iValue
+                //
+                get_field_value iCompFile (fWidth + 4) to iValue
+                set piColors2     of hComponent iRow   to iValue
+                //
+                get_field_value iCompFile (fWidth + 5) to iValue
+                set piFormPages   of hComponent iRow   to iValue
+                //
+                get_field_value iCompFile (fWidth + 6) to iValue
+                set piNumberUp    of hComponent iRow   to iValue
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+                //
+                clear iItemFile
+                set_field_value iItemFile fItemId   to sCompId
+                set_field_value iItemFile fItemComp to sCompComp
+                Set_Field_Value iItemFile fOpcode   to -9999999
+                Vfind iItemFile iItemIndex GE
+                if (NOT(FOUND)) break
+                //
+                get_field_value iItemFile fItemId   to sItemId
+                get_field_value iItemFile fItemComp to sItemComp
+                //
+                while (sItemId = sCompId AND sItemComp = sCompComp)
+                    relate iItemFile
+                    // set the key
+                    get_field_value iItemFile fOpcode      to iValue
+                    set Array_Value of hKey item iKeyIndex to iValue
+                    increment iKeyIndex
+                    // store the data, begin with record number
+                    // to facilitate saving when done
+                    get_field_value iItemFile 0              to iValue
+                    set Array_Value of hData item iDataIndex to iValue
+                    increment iDataIndex
+                    //
+                    move 0 to iFieldIndex
+                    //  0 to  8 load stored variable values
+                    //  9 to 11 load stored Calc Units values
+                    // 12 to 14 load stored Table values
+                    // 15 to 17 load stored Prod Units values
+                    for iFieldIndex from 0 to 17
+                        get_field_value iItemFile (fVar1 + iFieldIndex) to nValue
+                        set Array_Value of hData item iDataIndex        to nValue
+                        increment iDataIndex
+                    loop
+                    // 0 to 2 load stored Est$ values
+                    // 3 to 5 load stored Sell values
+                    for iFieldIndex from 0 to 5
+                        get_field_value iItemFile (fEst1 + iFieldIndex) to nValue
+                        set Array_Value of hData item iDataIndex        to nValue
+                        increment iDataIndex
+                    loop
+                    // load stored Var flag values
+                    for iFieldIndex from 0 to 8
+                        get_field_value iItemFile (fVar1Flag + iFieldIndex) to sFlags
+                        set Array_Value of hData item iDataIndex            to sFlags
+                        increment iDataIndex
+                    loop
+                    // load Jcoper flags
+                    set Array_Value of hData item iDataIndex to Jcoper.Calc_flags
+                    increment iDataIndex
+                    // load Esjitm flags
+                    get_field_value iItemFile fCalcFlags     to sFlags
+                    set Array_Value of hData item iDataIndex to sFlags
+                    increment iDataIndex
+                    // load Component Recnum
+                    get_field_value iCompFile 0              to iValue
+                    set Array_Value of hData item iDataIndex to iValue
+                    increment iDataIndex
+                    // load Component Id
+                    set Array_Value of hData item iDataIndex to sCompComp
+                    increment iDataIndex
+                    // find the next record
+                    vfind iItemFile iItemIndex GT
+                    if (NOT(FOUND)) break
+                    get_field_value iItemFile fItemId   to sItemId
+                    get_field_value iItemFile fItemComp to sItemComp
+                loop // while (Esitem.Estimate_id = Escomp.Estimate_id AND ;
+                set piLastItem of hComponent iRow to (iKeyIndex-1)
+                if (pbComponentId(self)) procedure_return
+            end // if (bCalc)
+            vfind iCompFile iCompIndex GT
+            if (NOT(FOUND)) break
+            get_field_value iCompFile fCompId   to sCompId
+            get_field_value iCompFile fCompComp to sCompComp
+        loop // (Escomp.Estimate_id = sHeaderId)
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // ReadBatchItems
+
+function FindNextBatchItem integer bNext returns integer
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer bCalc bMultiValue hKey hData hComponent hDD iOpcode iItemFile
+        integer iKeyIndex iRecnum iRangeStart iRangeStop iComponentRec
+        string  sTitle sHeaderId sComponentId sStatusTitle sStatusMessage
+        string  sOperFlags sItemFlags
+        //
+        get  psHeaderId             to sHeaderId
+        move OpcodeKeyStorageArray  to hKey
+        move OpcodeDataStorageArray to hData
+        move oComponentArray        to hComponent
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move "Job"              to sTitle
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move "Estimate"         to sTitle
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move "Type"             to sTitle
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // if first record, setup status panel
+        if (NOT(bNext)) begin
+            get psComponentId of hComponent 0 to sComponentId
+            move (sTitle * trim(sHeaderId))   to sStatusTitle
+            set psStatusTitle                 to sStatusTitle
+            move ("Component" * sComponentId) to sStatusMessage
+            set psStatusMessage               to sStatusMessage
+        end
+        //
+        repeat
+            get piKeyIndex to iKeyIndex
+            move TRUE to bCalc
+            get String_Value of hData item ;
+                (34 + (iKeyIndex * 38)) to sOperFlags
+            get String_Value of hData item ;
+                (35 + (iKeyIndex * 38)) to sItemFlags
+            if "L" in sItemFlags move FALSE to bCalc
+            // either of the following 2 conditions override the "L"
+            // if a trigger, calc it
+            if "T" in sOperFlags move TRUE to bCalc
+            // if "OP" or "OPCODE" generated
+            if "1" in sItemFlags move TRUE to bCalc
+            //
+            if (NOT(bCalc)) set piKeyIndex to (piKeyIndex(self)+1)
+            // check to see if we're done
+            if (piKeyIndex(self) = piKeyCount(self)) function_return CE_FINISHED
+        until (bCalc)
+        // get the opcode value & set the property
+        get Integer_Value of hKey item iKeyIndex to iOpcode
+        set piOpcode                             to iOpcode
+        // put the record in the buffer
+//        get Integer_Value of hData item (0 + (iKeyIndex * 38)) to iRecnum
+//        if (NOT(iRecnum)) begin
+//            send Stop_Box ("Missing record!  FindNextBatchItem" * string(iKeyIndex))
+//            function_return
+//        end
+//        send Clear_All of hDD
+//        send Find_By_Recnum of hDD iItemFile iRecnum
+        //
+        get Integer_Value of hData item (36 + (iKeyIndex * 38)) to iComponentRec
+        get String_Value  of hData item (37 + (iKeyIndex * 38)) to sComponentId
+        //
+        set piComponentRec to iComponentRec
+        set psComponentId  to sComponentId
+        // if the first record, set the quantities
+        if (NOT(bNext)) send StartingQuantities
+        // set the MultiValue flag
+        move (sOperFlags CONTAINS "V") to bMultiValue
+        //
+        if (iKeyIndex > piRangeStop(self)) begin
+            set piComponentIndex to (piComponentIndex(self) + 1)
+            set piRangeStart     to (piRangeStop(self) + 1)
+            get piLastItem of oComponentArray (piComponentIndex(self)) to iRangeStop
+            set piRangeStop                                            to iRangeStop
+            //
+            send StartingQuantities
+            //
+            move ("Component" * sComponentId) to sStatusMessage
+            set psStatusMessage               to sStatusMessage
+            send ReinitializeStatusPanel
+            //
+        end
+        send LoadStorageToArrays iKeyIndex 0 bMultiValue
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_function // FindNextBatchItem
+
+procedure ResetNeedsCalcedFlag integer bComponentId
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer bJobCalcFlag iHeadFile iHeadIndex iCompfile iCompIndex iMode
+        integer fId fHeadId fCompId fHeadCalced fCompCalced
+        string  sHeaderId sComponentId sHeadId sCompId sNeedsCalced
+        //
+        get psHeaderId to sHeaderId
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Jcjobs.File_number to iHeadFile
+        move 2                  to iHeadIndex
+        move 1                  to fId
+        move 114                to fHeadCalced
+        move Esjcmp.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 2                  to fHeadId
+        move 3                  to fCompId
+        move 10                 to fCompCalced
+        move 3                  to iMode // GE
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Eshead.File_number to iHeadFile
+        move 1                  to iHeadIndex
+        move 1                  to fId
+        move 12                 to fHeadCalced
+        move Escomp.File_number to iCompFile
+        move 2                  to iCompIndex
+        move 1                  to fHeadId
+        move 2                  to fCompId
+        Move 9                  to fCompCalced
+        move 3                  to iMode // GE
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esclib.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 1                  to fHeadId
+        move 2                  to fCompId
+        move 7                  to fCompCalced
+        move 2                  to iMode // EQ
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        if (bComponentId) get psComponentId to sComponentId
+        clear iCompFile
+        set_field_value iCompFile fHeadId to sHeaderId
+        #IFDEF CE_CALC_LIBRARY
+        set_field_value iCompFile fCompId to sComponentId
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        vfind iCompFile iCompIndex iMode
+        if (NOT(FOUND)) procedure_return
+        //
+        get_field_value iCompFile fHeadId to sHeadId
+        get_field_value iCompFile fCompId to sCompId
+        //
+        while (sHeadId = sHeaderId)
+            reread
+            if (bComponentId) begin
+                if (sCompId = sComponentId) set_field_value iCompFile fCompCalced to "N"
+            end
+            else                            set_field_value iCompFile fCompCalced to "N"
+            #IFDEF CE_CALC_ORDER
+            if (NOT(Esjcmp.Quoted_price)) move Esjcmp.Est_price to Esjcmp.Quoted_price
+            #ENDIF
+            saverecord iCompFile
+            unlock
+            #IFDEF CE_CALC_LIBRARY
+            procedure_return
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            get_field_value iCompFile fCompCalced to sNeedsCalced
+            move (sNeedsCalced = "Y") to bJobCalcFlag
+            //
+            vfind iCompFile iCompIndex GT
+            if (NOT(FOUND)) break
+            get_field_value iCompFile fHeadId to sHeadId
+            get_field_value iCompFile fCompId to sCompId
+        loop
+        // reset the Job flag
+        clear iHeadFile
+        set_field_value iHeadFile fId to sHeaderId
+        vfind iHeadFile iHeadIndex EQ
+        reread
+        if bJobCalcFlag move "Y" to sNeedsCalced
+        else            move "N" to sNeedsCalced
+        set_field_value iHeadFile fHeadCalced to sNeedsCalced
+        saverecord iHeadFile
+        unlock
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // ResetNeedsCalcedFlag
+
+function AddNewItem      ;
+    integer iOpcode      ;
+    string  sComponentId ;
+    string  sHeaderId    ;
+    returns integer
+    //
+    #IFDEF CE_CALC_TEST
+    #ELSE
+        integer iContinue bFound bMultiValue iFile iIndex fHeader fComponent fOpcode
+        string  sStandard
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm.File_number to iFile
+        move 1                  to iIndex
+        move 2                  to fHeader
+        move 3                  to fComponent
+        move 6                  to fOpcode
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem.File_number to iFile
+        Move 2                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm.File_number to iFile
+        move 1                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        clear iFile
+        set_field_value iFile fHeader    to sHeaderId
+        set_field_value iFile fComponent to sComponentId
+        set_field_value iFile fOpcode    to iOpcode
+        vfind iFile iIndex EQ
+        //
+        Move (Found) to bFound
+        If (not(bFound)) Begin
+            Send SaveNewItem iOpcode "" //TRUE
+        End
+        //
+        //if (pbQtySet(self)=0 and Jcoper.Nickname="QUANTITIES") set pbQtyStd to true
+        //if (pbPgeSet(self)=0 and Jcoper.Nickname="PAGESPECS") set pbPgeStd to true
+        //if (pbShtSet(self)=0 and Jcoper.Nickname="SHTLAYOUT") set pbShtStd to true
+        //
+        if (bFound) begin
+            relate iFile
+            //set piCalcMode to CE_EDIT
+            move (Jcoper.Calc_flags CONTAINS "V") to bMultiValue
+            send LoadFileToArrays 0 bMultiValue //TRUE
+        End
+        Send LoadFileToStorage
+    #ENDIF // #IFDEF CE_CALC_TEST
+End_Function // AddNewItem
+
+procedure FindLinkedItem integer iOpcode integer bReturnValue
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer iFile iIndex fHeader fComponent fOpcode
+        string  sHeaderId sComponentId sFlags
+        //
+        get psHeaderId    to sHeaderId
+        get psComponentId to sComponentId
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm.File_number to iFile
+        move 1                  to iIndex
+        move 2                  to fHeader
+        move 3                  to fComponent
+        move 6                  to fOpcode
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem.File_number to iFile
+        Move 2                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm.File_number to iFile
+        move 1                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        clear iFile
+        set_field_value iFile fHeader    to sHeaderId
+        set_field_value iFile fComponent to sComponentId
+        set_field_value iFile fOpcode    to iOpcode
+        vfind iFile iIndex EQ
+        if (NOT(FOUND)) begin
+            if (bReturnValue) move "L"  to sFlags
+            else              move "L1" to sFlags //if NOT bReturnValue append sFlags "1"
+            send SaveNewItem iOpcode sFlags //TRUE
+        end
+        relate iFile
+        //if (pbQtySet(self)=0 and Jcoper.Nickname="QUANTITIES") set pbQtyStd to true
+        //if (pbPgeSet(self)=0 and Jcoper.Nickname="PAGESPECS") set pbPgeStd to true
+        //if (pbShtSet(self)=0 and Jcoper.Nickname="SHTLAYOUT") set pbShtStd to true
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // FindLinkedItem
+
+procedure SaveNewItem integer iOpcode string sFlags //boolean bExecuting
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        boolean bExisting bInitem
+        integer hDD iCompFile iCompRec hoBatchCreatedOpcodeArray iRow
+        // "f" integer variables denote field numbers in
+        // the 3 item files; Esjitm, Esitem, Eslitm
+        integer fVar1 fProdUnitsType fCalcFlags fValQSymbol fInitemId fInstruction
+        // and component files: Escomp, Esjcmp, Esclib
+        string  sStandard sInitemId sInstruction sComponentId
+        //
+        get piComponentRec to iCompRec
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm_DD          to hDD
+        move Esjcmp.File_number to iCompFile
+        move 11                 to fVar1
+        move 29                 to fProdUnitsType
+        move 10                 to fCalcFlags
+        move 45                 to fInitemId
+        move 50                 to fValQSymbol
+        move 53                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem_DD          to hDD
+        move Escomp.File_number to iCompFile
+        move 10                 to fVar1
+        move 28                 to fProdUnitsType
+        move  9                 to fCalcFlags
+        move 44                 to fInitemId
+        move 49                 to fValQSymbol
+        Move 51                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm_DD          to hDD
+        move Esclib.File_number to iCompFile
+        move 10                 to fVar1
+        move 28                 to fProdUnitsType
+        move  9                 to fCalcFlags
+        move 44                 to fInitemId
+        move 49                 to fValQSymbol
+        move 52                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        get pbExisting of hDD to bExisting
+        // start fresh
+        send Clear_All of hDD
+        // make sure the component record is in place & save component_id for message displays
+        send Find_By_Recnum of hDD iCompFile iCompRec
+        //BC: 03/07 need to save component_id for warning message when items are created by recalc.
+        #IFDEF CE_CALC_ORDER
+            move Esjcmp.Component_Id to sComponentId
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+            move Escomp.Component_Id to sComponentId
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+            move Esclib.Idno to sComponentId
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // find the Jcoper
+        move iOpcode to Jcoper.Opcode
+        send Request_Find of hDD EQ Jcoper.File_number 2
+        //
+        if (NOT(Current_Record(Jcoper_DD(self)))) begin
+            if (pbBatchMode(self)) send StoppingBatchCalculation FALSE
+            //send StopStatusPanel
+            send Info_Box ("Opcode" * string(iOpcode) * "is missing. Component=" + sComponentId)
+            //send ResumeStatusPanel
+            set pbCanceled to TRUE
+            procedure_return
+        end
+        // only if not inventory
+        if (NOT(Jcoper.Calc_flags CONTAINS "S")) begin
+            move (trim(Jcoper.Instrctn_form))                             to sInstruction
+            if (Jcoper.Calc_flags CONTAINS ">") move (">" + sInstruction) to sInstruction
+        end
+        //
+        set Field_Changed_Value of hDD fProdUnitsType to Jcoper.Est_formula_typ
+        set Field_Changed_Value of hDD fCalcFlags     to sFlags
+        set Field_Changed_Value of hDD fInitemId      to sInitemId
+        set Field_Changed_Value of hDD fValQSymbol    to "$"
+        set Field_Changed_Value of hDD fInstruction   to sInstruction
+        //
+        //BC 09/12/07 to support old & new stds coexisting added "or" condition to next line
+        if (Jcoper.Opcode = Jcpars.Quantities_Op or Jcoper.Nickname = "QUANTITIES") Begin
+        //if      (Jcoper.Nickname = "QUANTITIES") begin
+            set Field_Changed_Value of hDD  fVar1      to (piQty1(self))
+            set Field_Changed_Value of hDD (fVar1 + 1) to (piQty2(self))
+            set Field_Changed_Value of hDD (fVar1 + 2) to (piQty3(self))
+            // for default purposes
+            set piQtyOpcode                            to Jcoper.Opcode
+        end // if (Jcoper.Nickname = "QUANTITIES")
+        else if (Jcoper.Opcode = Jcpars.Pagespecs_Op) begin
+        //else if (Jcoper.Nickname = "PAGESPECS") begin
+            set Field_Changed_Value of hDD  fVar1      to (piPages(self))
+            set Field_Changed_Value of hDD (fVar1 + 1) to (pnWidth(self))
+            set Field_Changed_Value of hDD (fVar1 + 2) to (pnLength(self))
+            set Field_Changed_Value of hDD (fVar1 + 3) to (piColors1(self))
+            set Field_Changed_Value of hDD (fVar1 + 4) to (piColors2(self))
+        end // if (Jcoper.Nickname = "PAGESPECS")
+        else if (Jcoper.Opcode = Jcpars.Shtlayout_Op) begin
+        //else if (Jcoper.Nickname = "SHTLAYOUT") begin
+            set Field_Changed_Value of hDD  fVar1      to (piFormPages(self))
+            set Field_Changed_Value of hDD (fVar1 + 1) to (piNumberUp(self))
+        end // if Jcoper.Nickname eq "SHTLAYOUT"
+        else begin
+            if (pbWizardMode(self)) break
+            set Field_Changed_Value of hDD  fVar1      to Jcoper.Var1_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 1) to Jcoper.Var2_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 2) to Jcoper.Var3_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 3) to Jcoper.Var4_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 4) to Jcoper.Var5_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 5) to Jcoper.Var6_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 6) to Jcoper.Var7_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 7) to Jcoper.Var8_dflt_value
+            set Field_Changed_Value of hDD (fVar1 + 8) to Jcoper.Var9_dflt_value
+        end
+        //
+        send Request_Save of hDD
+        //
+    //    if (pbWizardMode(self) AND Jcoper.Calc_flags CONTAINS "I") begin
+    //        // only process now if flags don't contain ">"
+    //        if (Jcoper.Calc_flags CONTAINS ">") break
+    //        //
+    //        else begin
+    //            move (Jcoper.Calc_flags CONTAINS "S")            to bInitem
+    //            move (string(Jcoper.Opcode) * trim(Jcoper.Name)) to sStandard
+    //            // get it
+    //            send DoRetrieveText of oInstructionDialog (Current_Record(hDD)) sStandard bInitem
+    //        end // else
+    //    end // if "I" in Jcoper.Calc_flags
+        // if in batch mode we want to advise the user of the
+        // item re-creation
+        if (pbBatchMode(self)) begin
+            move (oBatchCreatedOpcodeArray(self))           to hoBatchCreatedOpcodeArray
+            get Row_Count     of hoBatchCreatedOpcodeArray      to iRow
+            set piCode        of hoBatchCreatedOpcodeArray iRow to Jcoper.Opcode
+            set psName        of hoBatchCreatedOpcodeArray iRow to Jcoper.Name
+            set psComponentId of hoBatchCreatedOpcodeArray iRow to sComponentId
+            set piBatchCreatedCount                         to (piBatchCreatedCount(self) + 1)
+        end
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // SaveNewItem
+
+procedure DoEnterItemInventory integer iOpcode
+//	#IFDEF CE_CALC_TEST
+//    #ELSE
+//        integer iFile iIndex iIsOpcode fHeader fComponent fOpcode fInitemId fInstruction
+//        string  sHeaderId sComponentId sInitemId sInstruction
+//        //
+//        get psHeaderId    to sHeaderId
+//        get psComponentId to sComponentId
+//        // order maintenance
+//        #IFDEF CE_CALC_ORDER
+//        move Esjitm.File_number to iFile
+//        move 1                  to iIndex
+//        move 2                  to fHeader
+//        move 3                  to fComponent
+//        move 6                  to fOpcode
+//        move 45                 to fInitemId
+//        move 53                 to fInstruction
+//        #ENDIF // #IFDEF CE_CALC_ORDER
+//        // estimating
+//        #IFDEF CE_CALC_ESTIMATE
+//        move Esitem.File_number to iFile
+//        move 2                  to iIndex
+//        move 1                  to fHeader
+//        move 2                  to fComponent
+//        move 5                  to fOpcode
+//        move 44                 to fInitemId
+//        move 52                 to fInstruction
+//        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//        // component library
+//        #IFDEF CE_CALC_LIBRARY
+//        move Eslitm.File_number to iFile
+//        move 1                  to iIndex
+//        move 1                  to fHeader
+//        move 2                  to fComponent
+//        move 5                  to fOpcode
+//        move 44                 to fInitemId
+//        move 52                 to fInstruction
+//        #ENDIF // #IFDEF CE_CALC_LIBRARY
+//        get_field_value iFile fOpcode to iIsOpcode
+//        if (iIsOpcode <> iOpcode) begin
+//            clear iFile
+//            set_field_value iFile fHeader    to sHeaderId
+//            set_field_value iFile fComponent to sComponentId
+//            set_field_value iFile fOpcode    to iOpcode
+//            vfind iFile iIndex EQ
+//        end
+//        relate iFile
+//        // check to see if it's been done
+//        get_field_value iFile fInitemId to sInitemId
+//        if (sInitemId <> "") procedure_return
+//        //
+//        Repeat //BC: 07/26/04
+//            get DoSelectInventoryItem of Initem_SL iOpcode to sInitemId
+//            if (sInitemID = "") Send Stop_Box "You must select an item."
+//        Until (sInitemID <> "")
+//        if (sInitemId = "") procedure_return
+//        if (Initem.Item_id <> sInitemId) begin
+//            clear Initem
+//            move sInitemId to Initem.Item_id
+//            find EQ Initem.Item_id
+//        end
+//        move ("Stock ID:" * trim(Initem.Item_Id) +character(13) +character(10) +trim(Initem.Description)) to sInstruction
+//        if (Jcoper.Calc_flags CONTAINS ">") move (">" + sInstruction)                                     to sInstruction
+//        //
+//        reread
+//        set_field_value iFile fInitemId    to sInitemId
+//        set_field_value iFile fInstruction to sInstruction
+//        saverecord iFile
+//        unlock
+//    #ENDIF // #IFDEF CE_CALC_TEST
+End_Procedure // DoEnterItemInventory
+
+Function IsInventoryParameterValue Integer iOpcode Integer eParameter Returns Number
+//    number nPrice
+//    #IFDEF CE_CALC_TEST
+//    #ELSE
+//        integer iFile iIndex fHeader fComponent fOpcode fInitemId
+//        string  sHeaderId sComponentId sInitemId
+//        //
+//        get psHeaderId    to sHeaderId
+//        get psComponentId to sComponentId
+//        // order maintenance
+//        #IFDEF CE_CALC_ORDER
+//        move Esjitm.File_number to iFile
+//        move 1                  to iIndex
+//        move 2                  to fHeader
+//        move 3                  to fComponent
+//        move 6                  to fOpcode
+//        move 45                 to fInitemId
+//        #ENDIF // #IFDEF CE_CALC_ORDER
+//        // estimating
+//        #IFDEF CE_CALC_ESTIMATE
+//        move Esitem.File_number to iFile
+//        move 2                  to iIndex
+//        move 1                  to fHeader
+//        move 2                  to fComponent
+//        move 5                  to fOpcode
+//        move 44                 to fInitemId
+//        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//        // component library
+//        #IFDEF CE_CALC_LIBRARY
+//        move Eslitm.File_number to iFile
+//        move 1                  to iIndex
+//        move 1                  to fHeader
+//        move 2                  to fComponent
+//        move 5                  to fOpcode
+//        move 44                 to fInitemId
+//        #ENDIF // #IFDEF CE_CALC_LIBRARY
+//        // find the item record
+//        clear iFile
+//        set_field_value iFile fHeader    to sHeaderId
+//        set_field_value iFile fComponent to sComponentId
+//        set_field_value iFile fOpcode    to iOpcode
+//        vfind iFile iIndex EQ
+//        // get the inventory id
+//        get_field_value iFile fInitemId to sInitemId
+//        if (sInitemId = "") function_return
+//        clear Initem
+//        move sInitemId to Initem.Item_id
+//        find EQ Initem.Item_id
+//        //
+//        if      (eParameter = CE_INVENTORY_BASIS ) function_return Initem.Basis_wgt
+//        else if (eParameter = CE_INVENTORY_WIDTH ) function_return Initem.Width
+//        else if (eParameter = CE_INVENTORY_LENGTH) function_return Initem.Length
+//        else if (eParameter = CE_INVENTORY_MWGT)   function_return Initem.M_WGT
+//        else begin
+//            // 01/02/08 implemented UOM conversion logic to price retrieved
+//            //if      (Initem.Est_rate = "1") function_return Initem.Current_cost
+//            //else if (Initem.Est_rate = "2") function_return Initem.Last_cost
+//            //else                            function_return Initem.Avg_cost
+//            if      (Initem.Est_rate = "1") move Initem.Current_cost to nPrice
+//            else if (Initem.Est_rate = "2") move Initem.Last_cost    to nPrice
+//            else                            move Initem.Avg_cost     to nPrice
+//            move (nPrice / Initem.UseInStk_Units) to nPrice
+//            function_return nPrice
+//        end
+//    #ENDIF // #IFDEF CE_CALC_TEST
+End_Function // IsInventoryParameterValue
+
+Procedure DoPromptForMastOpsRecord Integer iOpcode Boolean bPostProcess
+    #IFDEF CE_CALC_TEST
+    #ELSE
+        Boolean bInitem
+        Integer iFile iIndex iRecnum iIsOpcode fHeader fComponent fOpcode fInstruction
+        String  sHeaderId sComponentId sFlags sStandard sInstruction sInitemId
+        //
+        Get psHeaderId    to sHeaderId
+        Get psComponentId to sComponentId
+//        // order maintenance
+//        #IFDEF CE_CALC_ORDER
+//        Move Esjitm.File_number to iFile
+//        Move 1                  to iIndex
+//        Move 2                  to fHeader
+//        Move 3                  to fComponent
+//        Move 6                  to fOpcode
+//        Move 53                 to fInstruction
+//        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        Move Esitem.File_number to iFile
+        Move 2                  to iIndex
+        Move 1                  to fHeader
+        Move 2                  to fComponent
+        Move 5                  to fOpcode
+        Move 52                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//        // component library
+//        #IFDEF CE_CALC_LIBRARY
+//        Move Eslitm.File_number to iFile
+//        Move 1                  to iIndex
+//        Move 1                  to fHeader
+//        Move 2                  to fComponent
+//        Move 5                  to fOpcode
+//        Move 52                 to fInstruction
+//        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        Get_Field_Value iFile fOpcode to iIsOpcode
+        If (iIsOpcode <> iOpcode) Begin
+            Clear iFile
+            Set_Field_Value iFile fHeader    to sHeaderId
+            Set_Field_Value iFile fComponent to sComponentId
+            Set_Field_Value iFile fOpcode    to iOpcode
+            Vfind iFile iIndex EQ
+        End
+        Get_Field_Value iFile 0 to iRecnum
+        Relate iFile
+        Move (String(Jcoper.Opcode) * trim(Jcoper.Name)) to sStandard
+        Move (Jcoper.Calc_flags contains "S")            to bInitem
+        //
+        // Prompt for MastOpsSelection when required
+        // utilize bPostProcess to store the entered MastOps Value
+        //
+        If (bPostProcess) Begin
+            // check to see if it's been done
+            Get_Field_Value iFile fInstruction to sInstruction
+            If (left(sInstruction,1) <> ">") Procedure_Return
+            // remove the >
+            Move (mid(sInstruction,(length(sInstruction)-1),2)) to sInstruction
+            Reread
+            Set_Field_Value iFile fInstruction to sInstruction
+            SaveRecord iFile
+            Unlock
+        End // if (bPostProcess)
+
+        //
+        //Send DoRetrieveText of oInstructionDialog iRecnum sStandard bInitem
+    #ENDIF // #IFDEF CE_CALC_TEST
+End_Procedure // DoEnterItemInstruction
+
+procedure DoEnterItemInstruction integer iOpcode boolean bPostProcess
+    #IFDEF CE_CALC_TEST
+    #ELSE
+        boolean bInitem
+        integer iFile iIndex iRecnum iIsOpcode fHeader fComponent fOpcode fInstruction
+        string  sHeaderId sComponentId sFlags sStandard sInstruction sInitemId
+        //
+        get psHeaderId    to sHeaderId
+        get psComponentId to sComponentId
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm.File_number to iFile
+        move 1                  to iIndex
+        move 2                  to fHeader
+        move 3                  to fComponent
+        move 6                  to fOpcode
+        move 53                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem.File_number to iFile
+        Move 2                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        move 52                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm.File_number to iFile
+        move 1                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        move 52                 to fInstruction
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        get_field_value iFile fOpcode to iIsOpcode
+        if (iIsOpcode <> iOpcode) begin
+            clear iFile
+            set_field_value iFile fHeader    to sHeaderId
+            set_field_value iFile fComponent to sComponentId
+            set_field_value iFile fOpcode    to iOpcode
+            vfind iFile iIndex EQ
+        end
+        get_field_value iFile 0 to iRecnum
+        relate iFile
+        move (string(Jcoper.Opcode) * trim(Jcoper.Name)) to sStandard
+        move (Jcoper.Calc_flags CONTAINS "S")            to bInitem
+
+        //
+        if (bPostProcess) begin
+            // check to see if it's been done
+            get_field_value iFile fInstruction to sInstruction
+            if (left(sInstruction,1) <> ">") procedure_return
+            // remove the >
+            move (mid(sInstruction,(length(sInstruction)-1),2)) to sInstruction
+            reread
+            set_field_value iFile fInstruction to sInstruction
+            saverecord iFile
+            unlock
+        end // if (bPostProcess)
+
+        //
+        send DoRetrieveText of oInstructionDialog iRecnum sStandard bInitem
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // DoEnterItemInstruction
+
+procedure LoadFileToArrays integer iLinkLevel integer bMultiValue //integer bNoflags
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer iArrayIndex iCounter hQty1 hQty2 hQty3 hoQtyArray hFlagArray
+        integer iFieldIndex iFile fVar1 fVar1Flag
+        number  nValue
+        string  sFlags
+        //
+        move oQty1Array to hQty1
+        move oQty2Array to hQty2
+        move oQty3Array to hQty3
+        move oFlagArray to hFlagArray
+        // clear the arrays
+        if (NOT(iLinkLevel)) send ClearArrayValues 0 iLinkLevel
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm.File_number to iFile
+        move 11                 to fVar1
+        move 36                 to fVar1Flag
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem.File_number to iFile
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm.File_number to iFile
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // load stored variable values
+        for iFieldIndex from 0 to 8
+            get_field_value iFile (fVar1 + iFieldIndex) to nValue
+            for iCounter from 1 to 3
+                if      (iCounter = 1) move hQty1 to hoQtyArray
+                else if (iCounter = 2) move hQty2 to hoQtyArray
+                else if (iCounter = 3) move hQty3 to hoQtyArray
+                set Array_Value of hoQtyArray item ;
+                    (iArrayIndex + (iLinkLevel * 23)) to nValue
+                if (NOT(bMultiValue)) break
+            loop
+            increment iArrayIndex
+        Loop
+        // load stored Calc Units values
+        move 18 to iArrayIndex
+        for iFieldIndex from 9 to 11
+            get_field_value iFile (fVar1 + iFieldIndex) to nValue
+            if      (iFieldIndex =  9) move hQty1 to hoQtyArray
+            else if (iFieldIndex = 10) move hQty2 to hoQtyArray
+            else if (iFieldIndex = 11) move hQty3 to hoQtyArray
+            set Array_Value of hoQtyArray item (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Table values
+        move 19 to iArrayIndex
+        for iFieldIndex from 12 to 14
+            get_field_value iFile (fVar1 + iFieldIndex) to nValue
+            if      (iFieldIndex = 12) move hQty1 to hoQtyArray
+            else if (iFieldIndex = 13) move hQty2 to hoQtyArray
+            else if (iFieldIndex = 14) move hQty3 to hoQtyArray
+            set Array_Value of hoQtyArray item (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Prod Units values
+        move 20 to iArrayIndex
+        for iFieldIndex from 15 to 17
+            get_field_value iFile (fVar1 + iFieldIndex) to nValue
+            if      (iFieldIndex = 15) move hQty1 to hoQtyArray
+            else if (iFieldIndex = 16) move hQty2 to hoQtyArray
+            else if (iFieldIndex = 17) move hQty3 to hoQtyArray
+            set Array_Value of hoQtyArray item (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        //
+        // load stored Est$ values
+        // ??? I'm a little confused regarding the need to save this
+        // item since Procedure SaveArraysToFile calculates this value
+        // using produnits and/or produnits and hourly $ rates
+        move 21 to iArrayIndex
+        for iFieldIndex from 19 to 21
+            get_field_value iFile (fVar1 + iFieldIndex) to nValue
+            if      (iFieldIndex = 19) move hQty1 to hoQtyArray
+            else if (iFieldIndex = 20) move hQty2 to hoQtyArray
+            else if (iFieldIndex = 21) move hQty3 to hoQtyArray
+            set Array_Value of hoQtyArray item (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        // load stored Sell values
+        move 22 to iArrayIndex
+        for iFieldIndex from 22 to 24
+            get_field_value iFile (fVar1 + iFieldIndex) to nValue
+            if      (iFieldIndex = 22) move hQty1 to hoQtyArray
+            else if (iFieldIndex = 23) move hQty2 to hoQtyArray
+            else if (iFieldIndex = 24) move hQty3 to hoQtyArray
+            set Array_Value of hoQtyArray item (iArrayIndex + (iLinkLevel * 23)) to nValue
+        loop
+        //
+//        if (bNoflags) procedure_return
+//        // load stored Var flag values
+        for iFieldIndex from 0 to 8
+            get_field_value iFile (fVar1Flag + iFieldIndex) to sFlags
+            set Array_Value of hFlagArray item (iFieldIndex + (iLinkLevel * 23)) to sFlags
+        loop
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // LoadFileToArrays
+
+procedure LoadFileToStorage
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        integer hKey hData iKeyIndex iDataIndex iCompFile iItemFile iValue iIndex
+        integer fOpcode fVar1 fEst1 fVar1Flag fCalcFlags fCompId
+        number  nValue
+        string  sValue
+        //
+        move OpcodeKeyStorageArray  to hKey
+        move OpcodeDataStorageArray to hData
+        get Item_Count of hKey      to iKeyIndex
+        move (iKeyIndex * 38)       to iDataIndex
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjcmp.File_number to iCompFile
+        move Esjitm.File_number to iItemFile
+        move 6                  to fOpcode
+        move 11                 to fVar1
+        move 30                 to fEst1
+        move 36                 to fVar1Flag
+        move 10                 to fCalcFlags
+        move 3                  to fCompId
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Escomp.File_number to iCompFile
+        move Esitem.File_number to iItemFile
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        move 29                 to fEst1
+        move 35                 to fVar1Flag
+        move 9                  to fCalcFlags
+        move 2                  to fCompId
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esclib.File_number to iCompFile
+        move Eslitm.File_number to iItemFile
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        move 29                 to fEst1
+        move 35                 to fVar1Flag
+        move 9                  to fCalcFlags
+        move 2                  to fCompId
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // set the key
+        get_field_value iItemFile fOpcode      to iValue
+        set Array_Value of hKey item iKeyIndex to iValue
+        // store the data, begin with record number
+        // to facilitate saving when done
+        get_field_value iItemFile 0              to iValue
+        set Array_Value of hData item iDataIndex to iValue //Esjitm.Recnum
+        increment iDataIndex
+        //  Store file values
+        //  0 to  8 load stored variable values
+        //  9 to 11 load stored Calc Units values
+        // 12 to 14 load stored Table values
+        // 15 to 17 load stored Prod Units values
+        for iIndex from 0 to 17
+            get_field_value iItemFile (fVar1 + iIndex) to nValue
+            set Array_Value of hData item iDataIndex   to nValue
+            increment iDataIndex
+        loop
+        // 0 - 2 load stored Est$ values
+        // 3 - 5 load stored Sell values
+        for iIndex from 0 to 5
+            get_field_value iItemFile (fEst1 + iIndex) to nValue
+            set Array_Value of hData item iDataIndex   to nValue
+            increment iDataIndex
+        loop
+        // load stored Var flag values
+        for iIndex from 0 to 8
+            get_field_value iItemFile (fVar1Flag + iIndex) to sValue
+            set Array_Value of hData item iDataIndex       to sValue
+            increment iDataIndex
+        loop
+        // load Jcoper flags
+        set Array_Value of hData item iDataIndex to Jcoper.Calc_flags
+        increment iDataIndex
+        // load item flags
+        get_field_value iItemFile fCalcFlags     to sValue
+        set Array_Value of hData item iDataIndex to sValue
+        increment iDataIndex
+        // load Component Recnum
+        get_field_value iCompFile 0              to iValue
+        set Array_Value of hData item iDataIndex to iValue
+        increment iDataIndex
+        // load Component Id
+        get_field_value iCompFile fCompId        to sValue
+        set Array_Value of hData item iDataIndex to sValue
+        // increment the range count
+        set piRangeStop to (piRangeStop(self) + 1)
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // LoadFileToStorage
+
+procedure SaveArraysToFile integer iOpcode integer iLinkLevel
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        boolean bNoSellFormula
+        integer hDD iRec iCounter hoQtyArray iQty1 iQty2 iQty3 bBaddata
+        integer hQty1 hQty2 hQty3 hFlagArray bSuspendExisting iFieldIndex iItemFile
+        integer fHeadId fCompId fOpcode
+        integer fValQSymbol fVar1 fVar1Flag fProdUnits1 fEst$1 fSell1
+        integer iPages iWidth iLength iColors1 iColors2 iFormPages iNumberUp
+        integer bProdDollars bProdHours bHelper bGlobalHelperRate
+        string  sHeadId sCompId sFlags sValue
+        number  nFileValue nArrayValue
+        //
+        move oQty1Array to hQty1
+        move oQty2Array to hQty2
+        move oQty3Array to hQty3
+        move oFlagArray to hFlagArray
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm_DD          to hDD
+        move Esjitm.File_number to iItemFile
+        move 2                  to fHeadId
+        move 3                  to fCompId
+        move 6                  to fOpcode
+        move 50                 to fValQSymbol
+        move 11                 to fVar1
+        move 36                 to fVar1Flag
+        move 26                 to fProdUnits1
+        move 30                 to fEst$1
+        move 33                 to fSell1
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem_DD          to hDD
+        move Esitem.File_number to iItemFile
+        move 1                  to fHeadId
+        move 2                  to fCompId
+        move 5                  to fOpcode
+        move 49                 to fValQSymbol
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        move 25                 to fProdUnits1
+        move 29                 to fEst$1
+        move 32                 to fSell1
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm_DD          to hDD
+        move Eslitm.File_number to iItemFile
+        move 1                  to fHeadId
+        move 2                  to fCompId
+        move 5                  to fOpcode
+        move 49                 to fValQSymbol
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        move 25                 to fProdUnits1
+        move 29                 to fEst$1
+        move 32                 to fSell1
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        get psHeaderId    to sHeadId
+        get psComponentId to sCompId
+        //get_field_value iItemFile 0 to iRec
+        send Clear of hDD
+
+        //send Find_By_Recnum of hDD iItemFile iRec
+        set_field_value iItemFile fHeadId to sHeadId
+        set_field_value iItemFile fCompId to sCompId
+        set_field_value iItemFile fOpcode to iOpcode
+        vfind iItemFile 1 EQ
+        // this should never be required
+        if (NOT(FOUND)) saverecord iItemFile
+        //
+        get_field_value iItemFile 0 to iRec
+        send Find_By_Recnum of hDD iItemFile iRec
+
+        // THIS SHOULDN'T OCCUR
+        if (NOT(Current_Record(hDD))) begin
+            if (pbBatchMode(self)) send StoppingBatchCalculation FALSE
+            //send StopStatusPanel
+            //send info_box "no record"
+            //send info_box ("linklevel" * string(piLinkLevel(self)))
+            send Info_Box ("Opcode" * string(piOpcode(self)) * "is missing.")
+            //send info_box ("opcode" * string(piOpcode(self)))
+            //send exit_application
+            //send ResumeStatusPanel
+            set pbCanceled to TRUE
+            procedure_return
+        end
+        // setup pbValidateMode
+        if (pbWizardMode(self)) begin
+            get_field_value iItemFile fValQSymbol to sValue
+            set pbValidateMode to (sValue <> "$")
+        end
+        //
+        move (Jcoper.Sell_Formula="")            to bNoSellFormula
+        move (Jcoper.Est_formula_typ = "$")      to bProdDollars
+        move (Jcoper.Est_formula_typ = ":")      to bProdHours
+        move (Jcoper.Optype CONTAINS "H")        to bHelper
+        move (bHelper AND Jcpars.Hfull_rate > 0) to bGlobalHelperRate
+        // save variable values
+        get Number_Value        of hQty1 item (0 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD    fVar1                       to nArrayValue
+        get Number_Value        of hQty1 item (1 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 1)                  to nArrayValue
+        get Number_Value        of hQty1 item (2 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 2)                  to nArrayValue
+        get Number_Value        of hQty1 item (3 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 3)                  to nArrayValue
+        get Number_Value        of hQty1 item (4 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 4)                  to nArrayValue
+        get Number_Value        of hQty1 item (5 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 5)                  to nArrayValue
+        get Number_Value        of hQty1 item (6 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 6)                  to nArrayValue
+        get Number_Value        of hQty1 item (7 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 7)                  to nArrayValue
+        get Number_Value        of hQty1 item (8 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 8)                  to nArrayValue
+        // save Calc Units formula - non multi-value items will write qty1 value to qty2/3 destinations
+        get Number_Value        of hQty1 item (18 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 +  9)                  to nArrayValue
+        if (pbMultiValue(self)) ;
+            get Number_Value    of hQty2 item (18 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 10)                  to nArrayValue
+        if (pbMultiValue(self)) ;
+            get Number_Value    of hQty3 item (18 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 11)                  to nArrayValue
+        // save Table standards - non multi-value items will write qty1 value to qty2/3 destinations
+        get Number_Value        of hQty1 item (19 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 12)                  to nArrayValue
+        if (pbMultiValue(self)) ;
+            get Number_Value    of hQty2 item (19 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 13)                  to nArrayValue
+        if (pbMultiValue(self)) ;
+            get Number_Value    of hQty3 item (19 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 14)                  to nArrayValue
+        // save Prod Units formula - non multi-value items will write qty1 value to qty2/3 destinations
+        get Number_Value        of hQty1 item (20 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 15)                  to nArrayValue
+        if (pbMultiValue(self)) ;
+            get Number_Value    of hQty2 item (20 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 16)                  to nArrayValue
+        if (pbMultiValue(self)) ;
+            get Number_Value    of hQty3 item (20 + (iLinkLevel * 23)) to nArrayValue
+        set Field_Changed_Value of hDD   (fVar1 + 17)                  to nArrayValue
+        // save Variable flags
+        if (pbWizardMode(self)) begin
+            get String_Value of hFlagArray item (0 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD  fVar1Flag               to sFlags
+            get String_Value of hFlagArray item (1 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 1)          to sFlags
+            get String_Value of hFlagArray item (2 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 2)          to sFlags
+            get String_Value of hFlagArray item (3 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 3)          to sFlags
+            get String_Value of hFlagArray item (4 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 4)          to sFlags
+            get String_Value of hFlagArray item (5 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 5)          to sFlags
+            get String_Value of hFlagArray item (6 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 6)          to sFlags
+            get String_Value of hFlagArray item (7 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 7)          to sFlags
+            get String_Value of hFlagArray item (8 + (iLinkLevel * 23)) to sFlags
+            if (NOT(sFlags CONTAINS "0")) ;
+                set Field_Changed_Value of hDD (fVar1Flag + 8)          to sFlags
+        end
+        //
+        if (bProdDollars) begin
+            get Field_Current_Value of hDD  fProdUnits1                       to nFileValue
+            move (nFileValue * Jcoper.Markup * Jccntr.Markup * Jcdept.Markup) to nArrayValue
+            set Field_Changed_Value of hDD  fEst$1                            to nArrayValue
+            If (bNoSellFormula) set Field_Changed_Value of hDD  fSell1       to nArrayValue
+            //if (NOT(pbMultiValue(self))) break
+            if (pbMultiValue(self)) ;
+                get Field_Current_Value of hDD (fProdUnits1 + 1)              to nFileValue
+            move (nFileValue * Jcoper.Markup * Jccntr.Markup * Jcdept.Markup) to nArrayValue
+            set Field_Changed_Value of hDD (fEst$1 + 1)                       to nArrayValue
+            If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 1)  to nArrayValue
+            if (pbMultiValue(self)) ;
+                get Field_Current_Value of hDD (fProdUnits1 + 2)              to nFileValue
+            move (nFileValue * Jcoper.Markup * Jccntr.Markup * Jcdept.Markup) to nArrayValue
+            set Field_Changed_Value of hDD (fEst$1 + 2)                       to nArrayValue
+            If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 2)  to nArrayValue
+        end
+        //
+        if (bProdHours AND NOT(Jcoper.Calc_flags CONTAINS "$")) begin
+            if (bHelper AND bGlobalHelperRate) begin
+                get Field_Current_Value of hDD  fProdUnits1                      to nFileValue
+                move (nFileValue * Jcpars.HFull_Rate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD  fEst$1                           to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD  fSell1      to nArrayValue
+                //if (NOT(pbMultiValue(self))) break
+                if (pbMultiValue(self)) ;
+                    get Field_Current_Value of hDD (fProdUnits1 + 1)             to nFileValue
+                move (nFileValue * Jcpars.HFull_Rate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD (fEst$1 + 1)                      to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 1) to nArrayValue
+                if (pbMultiValue(self)) ;
+                    get Field_Current_Value of hDD (fProdUnits1 + 2)             to nFileValue
+                move (nFileValue * Jcpars.HFull_Rate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD (fEst$1 + 2)                      to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 2) to nArrayValue
+            end
+            if (bHelper AND NOT(bGlobalHelperRate)) begin
+                get Field_Current_Value of hDD  fProdUnits1                      to nFileValue
+                move (nFileValue * Jccntr.Fullrate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD  fEst$1                           to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD  fSell1      to nArrayValue
+                //if (NOT(pbMultiValue(self))) break
+                if (pbMultiValue(self)) ;
+                    get Field_Current_Value of hDD (fProdUnits1 + 1)             to nFileValue
+                move (nFileValue * Jccntr.Fullrate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD (fEst$1 + 1)                      to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 1) to nArrayValue
+                if (pbMultiValue(self)) ;
+                    get Field_Current_Value of hDD (fProdUnits1 + 2)             to nFileValue
+                move (nFileValue * Jccntr.Fullrate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD (fEst$1 + 2)                      to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 2) to nArrayValue
+            end
+            if (NOT(bHelper)) begin
+                get Field_Current_Value of hDD  fProdUnits1                      to nFileValue
+                move (nFileValue * Jccntr.Fullrate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD  fEst$1                           to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD  fSell1      to nArrayValue
+                //if (NOT(pbMultiValue(self))) break
+                if (pbMultiValue(self)) ;
+                    get Field_Current_Value of hDD (fProdUnits1 + 1)             to nFileValue
+                move (nFileValue * Jccntr.Fullrate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD (fEst$1 + 1)                      to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 1) to nArrayValue
+                if (pbMultiValue(self)) ;
+                    get Field_Current_Value of hDD (fProdUnits1 + 2)             to nFileValue
+                move (nFileValue * Jccntr.Fullrate * Jcoper.Markup ;
+                    * Jccntr.Markup * Jcdept.Markup)                             to nArrayValue
+                set Field_Changed_Value of hDD (fEst$1 + 2)                      to nArrayValue
+                If (bNoSellFormula) set Field_Changed_Value of hDD (fSell1 + 2) to nArrayValue
+            end
+        end
+        // save Sell Units formula --
+        // also need logic that if the sell formula is blank to copy Est$1,2,3 value to Sell1,2,3
+        If not (bNoSellFormula) Begin
+            get Number_Value        of hQty1 item (22 + (iLinkLevel * 23)) to nArrayValue
+            set Field_Changed_Value of hDD   fSell1                       to nArrayValue
+            get Number_Value        of hQty2 item (22 + (iLinkLevel * 23)) to nArrayValue
+            set Field_Changed_Value of hDD   (fSell1 + 1)                 to nArrayValue
+            get Number_Value        of hQty3 item (22 + (iLinkLevel * 23)) to nArrayValue
+            set Field_Changed_Value of hDD   (fSell1 + 2)                 to nArrayValue
+        End
+
+        // save quantities if appropriate
+        //if (pbQtySet(self)=0 and pbQtyStd(self)) begin
+        //    get piQty1 to iQty1
+        //    get piQty2 to iQty2
+        //    get piQty3 to iQty3
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Qty1 to iQty1
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Qty2 to iQty2
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Qty3 to iQty3
+        //    set pbQtySet to true
+        //    set pbQtyStd to false
+        //end
+        // save pagespecs if appropriate
+        //if (pbPgeSet(self)=0 and pbPgeStd(self)) begin
+        //    get piPages to iPages
+        //    get pnWidth to iWidth
+        //    get pnLength to iLength
+        //    get piColors1 to iColors1
+        //    get piColors2 to iColors2
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Pages to iPages
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Width to iWidth
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Length to iLength
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Colors_1 to iColors1
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Colors_2 to iColors2
+        //    set pbPgeSet to true
+        //    set pbPgeStd to false
+        //end
+        // save shtlayout if appropriate
+        //if (pbShtSet(self)=0 and pbShtStd(self)) begin
+        //    get piFormPages to iFormPages
+        //    get piNumberUp to iNumberUp
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Form_pages to iFormPages
+        //    set File_Field_Changed_Value of hDD file_field Esjcmp.Number_up to iNumberUp
+        //    set pbShtSet to true
+        //    set pbShtStd to false
+        //end
+        //
+        set Field_Changed_Value of hDD fValQSymbol to ""
+        //
+        if (pbWizardMode(self) AND pbValidateMode(self)) ;
+            get Request_Validate of hDD to bBaddata
+        send Request_Save to hDD
+        if bSuspendExisting set pbExisting of hDD to TRUE
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // SaveArraysToFile
+
+procedure WriteBatchItems
+	#IFDEF CE_CALC_TEST
+    #ELSE
+        boolean bProdDollars bProdHours bHelper bGlobalHelperRate bMultiValue bNoBackout bNoSellFormula
+        boolean bQtyStd bPgeStd bShtStd
+        integer hKey hData hDD iItemCount iKeyIndex iRecnum iItemFile
+        integer fVar1 fVar1Flag fProdUnits1 fEst$1 fSell1 fValQSymbol fQty1 fQty2 fQty3
+        integer fWidth fLength fPages fColors1 fColors2 fFormPages fNumberUp
+        string  sFlags
+        number  nArrayValue nFileValue
+        // add'l var's used by component total update logic
+        boolean bArt bPrep bPress bBind bLabor bMatl bPaper bPurch
+        boolean bXuser bFreight bDone
+        integer hCompDD iCompRecnum iCompfile fCompTotal
+        number  nProdUnits1 nProdUnits2 nProdUnits3 nEst$1 nEst$2 nEst$3 nSell1 nSell2 nSell3
+        number  nWasProdUnits1 nWasProdUnits2 nWasProdUnits3 nWasEst$1 nWasEst$2 nWasEst$3 nWasSell1 nWasSell2 nWasSell3
+        number  nQ1_Art_$   nQ1_Art_Sell   nQ1_Art_Hrs   nQ2_Art_$   nQ2_Art_Sell   nQ2_Art_Hrs   nQ3_Art_$   nQ3_Art_Sell   nQ3_Art_Hrs
+        number  nQ1_Prep_$  nQ1_Prep_Sell  nQ1_Prep_Hrs  nQ2_Prep_$  nQ2_Prep_Sell  nQ2_Prep_Hrs  nQ3_Prep_$  nQ3_Prep_Sell  nQ3_Prep_Hrs
+        number  nQ1_Press_$ nQ1_Press_Sell nQ1_Press_Hrs nQ2_Press_$ nQ2_Press_Sell nQ2_Press_Hrs nQ3_Press_$ nQ3_Press_Sell nQ3_Press_Hrs
+        number  nQ1_Bind_$  nQ1_Bind_Sell  nQ1_Bind_Hrs  nQ2_Bind_$  nQ2_Bind_Sell  nQ2_Bind_Hrs  nQ3_Bind_$  nQ3_Bind_Sell  nQ3_Bind_Hrs
+        number  nQ1_Lbr_$   nQ1_Lbr_Sell   nQ1_Lbr_Hrs   nQ2_Lbr_$   nQ2_Lbr_Sell   nQ2_Lbr_Hrs   nQ3_Lbr_$   nQ3_Lbr_Sell   nQ3_Lbr_Hrs
+        number  nQ1_Mtl_$   nQ1_Mtl_Sell                 nQ2_Mtl_$   nQ2_Mtl_Sell                 nQ3_Mtl_$   nQ3_Mtl_Sell
+        number  nQ1_PP_$    nQ1_PP_Sell                  nQ2_PP_$    nQ2_PP_Sell                  nQ3_PP_$    nQ3_PP_Sell
+        number  nQ1_Pur_$   nQ1_Pur_Sell                 nQ2_Pur_$   nQ2_Pur_Sell                 nQ3_Pur_$   nQ3_Pur_Sell
+        number  nQ1_X_$     nQ1_X_Sell                   nQ2_X_$     nQ2_X_Sell                   nQ3_X_$     nQ3_X_Sell
+        number  nQ1_Frt_$   nQ1_Frt_Sell                 nQ2_Frt_$   nQ2_Frt_Sell                 nQ3_Frt_$   nQ3_Frt_Sell
+        // maintenance calc?
+        get pbNoBackout to bNoBackout
+        // sentinel display
+        if (pbBatchMode(self)) send UpdateStatusPanel "Saving item records..."
+        //
+        move OpcodeKeyStorageArray  to hKey
+        move OpcodeDataStorageArray to hData
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjcmp_DD          to hCompDD
+        move Esjcmp.File_number to iCompFile
+        move 12                 to fCompTotal
+        move 93                 to fQty1
+        move 94                 to fQty2
+        move 95                 to fQty3
+        move 100                to fWidth
+        move 101                to fLength
+        move 102                to fPages
+        move 103                to fColors1
+        move 104                to fColors2
+        move 105                to fFormPages
+        move 106                to fNumberUp
+        move Esjitm_DD          to hDD
+        move Esjitm.File_number to iItemFile
+        move 11                 to fVar1
+        move 36                 to fVar1Flag
+        move 26                 to fProdUnits1
+        move 30                 to fEst$1
+        move 33                 to fSell1
+        move 50                 to fValQSymbol
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Escomp_DD          to hCompDD
+        move Escomp.File_number to iCompFile
+        Move 11                 to fCompTotal
+        Move 92                 to fQty1
+        Move 93                 to fQty2
+        Move 94                 to fQty3
+        Move 99                 to fWidth
+        Move 100                to fLength
+        Move 101                to fPages
+        Move 102                to fColors1
+        Move 103                to fColors2
+        Move 104                to fFormPages
+        Move 105                to fNumberUp
+        move Esitem_DD          to hDD
+        move Esitem.File_number to iItemFile
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        move 25                 to fProdUnits1
+        move 29                 to fEst$1
+        move 32                 to fSell1
+        move 49                 to fValQSymbol
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esclib_DD          to hCompDD
+        move Esclib.File_number to iCompFile
+        move 9                  to fCompTotal
+        move 90                 to fQty1
+        move 91                 to fQty2
+        move 92                 to fQty3
+        move Eslitm_DD          to hDD
+        move Eslitm.File_number to iItemFile
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        move 25                 to fProdUnits1
+        move 29                 to fEst$1
+        move 32                 to fSell1
+        move 49                 to fValQSymbol
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        // the header record is locked, no one else access the item records
+        set_attribute DF_FILE_MODE of iItemFile to DF_FILEMODE_SINGLE_USER
+        set_attribute DF_REREAD_REQUIRED        to DFFALSE
+        // start fresh
+        send Clear_All of hDD
+        //
+        get Item_Count of hKey to iItemCount
+        // make the count fit our zero-based scheme
+        decrement iItemCount
+        // find the first Item and seed the Comp DD
+        get Integer_Value of hData item (0 + (iKeyIndex * 38)) to iRecnum
+        //
+        clear iItemFile
+        set_field_value iItemFile 0 to iRecnum
+        vfind iItemFile 0 EQ
+        relate iItemFile
+        get_field_value iCompFile 0 to iCompRecnum
+        // first time through we need to seed the hCompDD
+        send Find_By_Recnum of hCompDD iCompFile iCompRecnum
+        // initialize variables
+        if (NOT(bNoBackout)) begin
+            get_field_value iCompFile  fCompTotal       to nQ1_Art_$
+            get_field_value iCompFile (fCompTotal +  1) to nQ1_Art_Sell
+            get_field_value iCompFile (fCompTotal +  2) to nQ1_Art_Hrs
+            get_field_value iCompFile (fCompTotal +  3) to nQ2_Art_$
+            get_field_value iCompFile (fCompTotal +  4) to nQ2_Art_Sell
+            get_field_value iCompFile (fCompTotal +  5) to nQ2_Art_Hrs
+            get_field_value iCompFile (fCompTotal +  6) to nQ3_Art_$
+            get_field_value iCompFile (fCompTotal +  7) to nQ3_Art_Sell
+            get_field_value iCompFile (fCompTotal +  8) to nQ3_Art_Hrs
+            get_field_value iCompFile (fCompTotal +  9) to nQ1_Prep_$
+            get_field_value iCompFile (fCompTotal + 10) to nQ1_Prep_Sell
+            get_field_value iCompFile (fCompTotal + 11) to nQ1_Prep_Hrs
+            get_field_value iCompFile (fCompTotal + 12) to nQ2_Prep_$
+            get_field_value iCompFile (fCompTotal + 13) to nQ2_Prep_Sell
+            get_field_value iCompFile (fCompTotal + 14) to nQ2_Prep_Hrs
+            get_field_value iCompFile (fCompTotal + 15) to nQ3_Prep_$
+            get_field_value iCompFile (fCompTotal + 16) to nQ3_Prep_Sell
+            get_field_value iCompFile (fCompTotal + 17) to nQ3_Prep_Hrs
+            get_field_value iCompFile (fCompTotal + 18) to nQ1_Press_$
+            get_field_value iCompFile (fCompTotal + 19) to nQ1_Press_Sell
+            get_field_value iCompFile (fCompTotal + 20) to nQ1_Press_Hrs
+            get_field_value iCompFile (fCompTotal + 21) to nQ2_Press_$
+            get_field_value iCompFile (fCompTotal + 22) to nQ2_Press_Sell
+            get_field_value iCompFile (fCompTotal + 23) to nQ2_Press_Hrs
+            get_field_value iCompFile (fCompTotal + 24) to nQ3_Press_$
+            get_field_value iCompFile (fCompTotal + 25) to nQ3_Press_Sell
+            get_field_value iCompFile (fCompTotal + 26) to nQ3_Press_Hrs
+            get_field_value iCompFile (fCompTotal + 27) to nQ1_Bind_$
+            get_field_value iCompFile (fCompTotal + 28) to nQ1_Bind_Sell
+            get_field_value iCompFile (fCompTotal + 29) to nQ1_Bind_Hrs
+            get_field_value iCompFile (fCompTotal + 30) to nQ2_Bind_$
+            get_field_value iCompFile (fCompTotal + 31) to nQ2_Bind_Sell
+            get_field_value iCompFile (fCompTotal + 32) to nQ2_Bind_Hrs
+            get_field_value iCompFile (fCompTotal + 33) to nQ3_Bind_$
+            get_field_value iCompFile (fCompTotal + 34) to nQ3_Bind_Sell
+            get_field_value iCompFile (fCompTotal + 35) to nQ3_Bind_Hrs
+            get_field_value iCompFile (fCompTotal + 36) to nQ1_Lbr_$
+            get_field_value iCompFile (fCompTotal + 37) to nQ1_Lbr_Sell
+            get_field_value iCompFile (fCompTotal + 38) to nQ1_Lbr_Hrs
+            get_field_value iCompFile (fCompTotal + 39) to nQ2_Lbr_$
+            get_field_value iCompFile (fCompTotal + 40) to nQ2_Lbr_Sell
+            get_field_value iCompFile (fCompTotal + 41) to nQ2_Lbr_Hrs
+            get_field_value iCompFile (fCompTotal + 42) to nQ3_Lbr_$
+            get_field_value iCompFile (fCompTotal + 43) to nQ3_Lbr_Sell
+            get_field_value iCompFile (fCompTotal + 44) to nQ3_Lbr_Hrs
+            get_field_value iCompFile (fCompTotal + 45) to nQ1_Mtl_$
+            get_field_value iCompFile (fCompTotal + 46) to nQ1_Mtl_Sell
+            get_field_value iCompFile (fCompTotal + 47) to nQ2_Mtl_$
+            get_field_value iCompFile (fCompTotal + 48) to nQ2_Mtl_Sell
+            get_field_value iCompFile (fCompTotal + 49) to nQ3_Mtl_$
+            get_field_value iCompFile (fCompTotal + 50) to nQ3_Mtl_Sell
+            get_field_value iCompFile (fCompTotal + 51) to nQ1_PP_$
+            get_field_value iCompFile (fCompTotal + 52) to nQ1_PP_Sell
+            get_field_value iCompFile (fCompTotal + 53) to nQ2_PP_$
+            get_field_value iCompFile (fCompTotal + 54) to nQ2_PP_Sell
+            get_field_value iCompFile (fCompTotal + 55) to nQ3_PP_$
+            get_field_value iCompFile (fCompTotal + 56) to nQ3_PP_Sell
+            get_field_value iCompFile (fCompTotal + 57) to nQ1_Pur_$
+            get_field_value iCompFile (fCompTotal + 58) to nQ1_Pur_Sell
+            get_field_value iCompFile (fCompTotal + 59) to nQ2_Pur_$
+            get_field_value iCompFile (fCompTotal + 60) to nQ2_Pur_Sell
+            get_field_value iCompFile (fCompTotal + 61) to nQ3_Pur_$
+            get_field_value iCompFile (fCompTotal + 62) to nQ3_Pur_Sell
+            get_field_value iCompFile (fCompTotal + 69) to nQ1_X_$
+            get_field_value iCompFile (fCompTotal + 70) to nQ1_X_Sell
+            get_field_value iCompFile (fCompTotal + 71) to nQ2_X_$
+            get_field_value iCompFile (fCompTotal + 72) to nQ2_X_Sell
+            get_field_value iCompFile (fCompTotal + 73) to nQ3_X_$
+            get_field_value iCompFile (fCompTotal + 74) to nQ3_X_Sell
+            get_field_value iCompFile (fCompTotal + 75) to nQ1_Frt_$
+            get_field_value iCompFile (fCompTotal + 76) to nQ1_Frt_Sell
+            get_field_value iCompFile (fCompTotal + 77) to nQ2_Frt_$
+            get_field_value iCompFile (fCompTotal + 78) to nQ2_Frt_Sell
+            get_field_value iCompFile (fCompTotal + 79) to nQ3_Frt_$
+            get_field_value iCompFile (fCompTotal + 80) to nQ3_Frt_Sell
+        end // if (NOT(bNoBackout)) begin
+        //for iKeyIndex from 0 to iItemCount
+        while (iKeyIndex <= iItemCount)
+            // do we have a break?
+            if ((bDone) OR Current_Record(hCompDD) <> iCompRecnum) begin
+                set Field_Changed_Value of hCompDD  fCompTotal       to nQ1_Art_$
+                set Field_Changed_Value of hCompDD (fCompTotal +  1) to nQ1_Art_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal +  2) to nQ1_Art_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal +  3) to nQ2_Art_$
+                set Field_Changed_Value of hCompDD (fCompTotal +  4) to nQ2_Art_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal +  5) to nQ2_Art_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal +  6) to nQ3_Art_$
+                set Field_Changed_Value of hCompDD (fCompTotal +  7) to nQ3_Art_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal +  8) to nQ3_Art_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal +  9) to nQ1_Prep_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 10) to nQ1_Prep_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 11) to nQ1_Prep_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 12) to nQ2_Prep_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 13) to nQ2_Prep_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 14) to nQ2_Prep_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 15) to nQ3_Prep_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 16) to nQ3_Prep_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 17) to nQ3_Prep_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 18) to nQ1_Press_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 19) to nQ1_Press_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 20) to nQ1_Press_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 21) to nQ2_Press_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 22) to nQ2_Press_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 23) to nQ2_Press_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 24) to nQ3_Press_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 25) to nQ3_Press_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 26) to nQ3_Press_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 27) to nQ1_Bind_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 28) to nQ1_Bind_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 29) to nQ1_Bind_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 30) to nQ2_Bind_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 31) to nQ2_Bind_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 32) to nQ2_Bind_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 33) to nQ3_Bind_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 34) to nQ3_Bind_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 35) to nQ3_Bind_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 36) to nQ1_Lbr_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 37) to nQ1_Lbr_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 38) to nQ1_Lbr_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 39) to nQ2_Lbr_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 40) to nQ2_Lbr_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 41) to nQ2_Lbr_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 42) to nQ3_Lbr_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 43) to nQ3_Lbr_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 44) to nQ3_Lbr_Hrs
+                set Field_Changed_Value of hCompDD (fCompTotal + 45) to nQ1_Mtl_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 46) to nQ1_Mtl_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 47) to nQ2_Mtl_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 48) to nQ2_Mtl_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 49) to nQ3_Mtl_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 50) to nQ3_Mtl_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 51) to nQ1_PP_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 52) to nQ1_PP_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 53) to nQ2_PP_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 54) to nQ2_PP_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 55) to nQ3_PP_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 56) to nQ3_PP_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 57) to nQ1_Pur_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 58) to nQ1_Pur_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 59) to nQ2_Pur_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 60) to nQ2_Pur_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 61) to nQ3_Pur_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 62) to nQ3_Pur_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 63) to (nQ1_Lbr_$    + nQ1_Mtl_$    + nQ1_PP_$    + nQ1_Pur_$)
+                set Field_Changed_Value of hCompDD (fCompTotal + 64) to (nQ1_Lbr_Sell + nQ1_Mtl_Sell + nQ1_PP_Sell + nQ1_Pur_Sell)
+                set Field_Changed_Value of hCompDD (fCompTotal + 65) to (nQ2_Lbr_$    + nQ2_Mtl_$    + nQ2_PP_$    + nQ2_Pur_$)
+                set Field_Changed_Value of hCompDD (fCompTotal + 66) to (nQ2_Lbr_Sell + nQ2_Mtl_Sell + nQ2_PP_Sell + nQ2_Pur_Sell)
+                set Field_Changed_Value of hCompDD (fCompTotal + 67) to (nQ3_Lbr_$    + nQ3_Mtl_$    + nQ3_PP_$    + nQ3_Pur_$)
+                set Field_Changed_Value of hCompDD (fCompTotal + 68) to (nQ3_Lbr_Sell + nQ3_Mtl_Sell + nQ3_PP_Sell + nQ3_Pur_Sell)
+                set Field_Changed_Value of hCompDD (fCompTotal + 69) to nQ1_X_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 70) to nQ1_X_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 71) to nQ2_X_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 72) to nQ2_X_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 73) to nQ3_X_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 74) to nQ3_X_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 75) to nQ1_Frt_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 76) to nQ1_Frt_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 77) to nQ2_Frt_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 78) to nQ2_Frt_Sell
+                set Field_Changed_Value of hCompDD (fCompTotal + 79) to nQ3_Frt_$
+                set Field_Changed_Value of hCompDD (fCompTotal + 80) to nQ3_Frt_Sell
+                //
+                send Request_Save of hCompDD
+                //
+                send Clear of hCompDD
+                //
+                if (bDone) break
+                // find the new Comp record
+                send Find_By_Recnum of hCompDD iCompFile iCompRecnum
+                // initialize variables
+                if (bNoBackout) begin
+                    // and zero out the vars used to accumulate totals
+                    move 0 to nQ1_Art_$
+                    move 0 to nQ1_Art_Sell
+                    move 0 to nQ1_Art_Hrs
+                    move 0 to nQ2_Art_$
+                    move 0 to nQ2_Art_Sell
+                    move 0 to nQ2_Art_Hrs
+                    move 0 to nQ3_Art_$
+                    move 0 to nQ3_Art_Sell
+                    move 0 to nQ3_Art_Hrs
+                    move 0 to nQ1_Prep_$
+                    move 0 to nQ1_Prep_Sell
+                    move 0 to nQ1_Prep_Hrs
+                    move 0 to nQ2_Prep_$
+                    move 0 to nQ2_Prep_Sell
+                    move 0 to nQ2_Prep_Hrs
+                    move 0 to nQ3_Prep_$
+                    move 0 to nQ3_Prep_Sell
+                    move 0 to nQ3_Prep_Hrs
+                    move 0 to nQ1_Press_$
+                    move 0 to nQ1_Press_Sell
+                    move 0 to nQ1_Press_Hrs
+                    move 0 to nQ2_Press_$
+                    move 0 to nQ2_Press_Sell
+                    move 0 to nQ2_Press_Hrs
+                    move 0 to nQ3_Press_$
+                    move 0 to nQ3_Press_Sell
+                    move 0 to nQ3_Press_Hrs
+                    move 0 to nQ1_Bind_$
+                    move 0 to nQ1_Bind_Sell
+                    move 0 to nQ1_Bind_Hrs
+                    move 0 to nQ2_Bind_$
+                    move 0 to nQ2_Bind_Sell
+                    move 0 to nQ2_Bind_Hrs
+                    move 0 to nQ3_Bind_$
+                    move 0 to nQ3_Bind_Sell
+                    move 0 to nQ3_Bind_Hrs
+                    move 0 to nQ1_Lbr_$
+                    move 0 to nQ1_Lbr_Sell
+                    move 0 to nQ1_Lbr_Hrs
+                    move 0 to nQ2_Lbr_$
+                    move 0 to nQ2_Lbr_Sell
+                    move 0 to nQ2_Lbr_Hrs
+                    move 0 to nQ3_Lbr_$
+                    move 0 to nQ3_Lbr_Sell
+                    move 0 to nQ3_Lbr_Hrs
+                    move 0 to nQ1_Mtl_$
+                    move 0 to nQ1_Mtl_Sell
+                    move 0 to nQ2_Mtl_$
+                    move 0 to nQ2_Mtl_Sell
+                    move 0 to nQ3_Mtl_$
+                    move 0 to nQ3_Mtl_Sell
+                    move 0 to nQ1_PP_$
+                    move 0 to nQ1_PP_Sell
+                    move 0 to nQ2_PP_$
+                    move 0 to nQ2_PP_Sell
+                    move 0 to nQ3_PP_$
+                    move 0 to nQ3_PP_Sell
+                    move 0 to nQ1_Pur_$
+                    move 0 to nQ1_Pur_Sell
+                    move 0 to nQ2_Pur_$
+                    move 0 to nQ2_Pur_Sell
+                    move 0 to nQ3_Pur_$
+                    move 0 to nQ3_Pur_Sell
+                    move 0 to nQ1_X_$
+                    move 0 to nQ1_X_Sell
+                    move 0 to nQ2_X_$
+                    move 0 to nQ2_X_Sell
+                    move 0 to nQ3_X_$
+                    move 0 to nQ3_X_Sell
+                    move 0 to nQ1_Frt_$
+                    move 0 to nQ1_Frt_Sell
+                    move 0 to nQ2_Frt_$
+                    move 0 to nQ2_Frt_Sell
+                    move 0 to nQ3_Frt_$
+                    move 0 to nQ3_Frt_Sell
+                end // if (bNoBackout) begin
+                else begin //if (Not(bNoBackout))
+                    get_field_value iCompFile  fCompTotal       to nQ1_Art_$
+                    get_field_value iCompFile (fCompTotal +  1) to nQ1_Art_Sell
+                    get_field_value iCompFile (fCompTotal +  2) to nQ1_Art_Hrs
+                    get_field_value iCompFile (fCompTotal +  3) to nQ2_Art_$
+                    get_field_value iCompFile (fCompTotal +  4) to nQ2_Art_Sell
+                    get_field_value iCompFile (fCompTotal +  5) to nQ2_Art_Hrs
+                    get_field_value iCompFile (fCompTotal +  6) to nQ3_Art_$
+                    get_field_value iCompFile (fCompTotal +  7) to nQ3_Art_Sell
+                    get_field_value iCompFile (fCompTotal +  8) to nQ3_Art_Hrs
+                    get_field_value iCompFile (fCompTotal +  9) to nQ1_Prep_$
+                    get_field_value iCompFile (fCompTotal + 10) to nQ1_Prep_Sell
+                    get_field_value iCompFile (fCompTotal + 11) to nQ1_Prep_Hrs
+                    get_field_value iCompFile (fCompTotal + 12) to nQ2_Prep_$
+                    get_field_value iCompFile (fCompTotal + 13) to nQ2_Prep_Sell
+                    get_field_value iCompFile (fCompTotal + 14) to nQ2_Prep_Hrs
+                    get_field_value iCompFile (fCompTotal + 15) to nQ3_Prep_$
+                    get_field_value iCompFile (fCompTotal + 16) to nQ3_Prep_Sell
+                    get_field_value iCompFile (fCompTotal + 17) to nQ3_Prep_Hrs
+                    get_field_value iCompFile (fCompTotal + 18) to nQ1_Press_$
+                    get_field_value iCompFile (fCompTotal + 19) to nQ1_Press_Sell
+                    get_field_value iCompFile (fCompTotal + 20) to nQ1_Press_Hrs
+                    get_field_value iCompFile (fCompTotal + 21) to nQ2_Press_$
+                    get_field_value iCompFile (fCompTotal + 22) to nQ2_Press_Sell
+                    get_field_value iCompFile (fCompTotal + 23) to nQ2_Press_Hrs
+                    get_field_value iCompFile (fCompTotal + 24) to nQ3_Press_$
+                    get_field_value iCompFile (fCompTotal + 25) to nQ3_Press_Sell
+                    get_field_value iCompFile (fCompTotal + 26) to nQ3_Press_Hrs
+                    get_field_value iCompFile (fCompTotal + 27) to nQ1_Bind_$
+                    get_field_value iCompFile (fCompTotal + 28) to nQ1_Bind_Sell
+                    get_field_value iCompFile (fCompTotal + 29) to nQ1_Bind_Hrs
+                    get_field_value iCompFile (fCompTotal + 30) to nQ2_Bind_$
+                    get_field_value iCompFile (fCompTotal + 31) to nQ2_Bind_Sell
+                    get_field_value iCompFile (fCompTotal + 32) to nQ2_Bind_Hrs
+                    get_field_value iCompFile (fCompTotal + 33) to nQ3_Bind_$
+                    get_field_value iCompFile (fCompTotal + 34) to nQ3_Bind_Sell
+                    get_field_value iCompFile (fCompTotal + 35) to nQ3_Bind_Hrs
+                    get_field_value iCompFile (fCompTotal + 36) to nQ1_Lbr_$
+                    get_field_value iCompFile (fCompTotal + 37) to nQ1_Lbr_Sell
+                    get_field_value iCompFile (fCompTotal + 38) to nQ1_Lbr_Hrs
+                    get_field_value iCompFile (fCompTotal + 39) to nQ2_Lbr_$
+                    get_field_value iCompFile (fCompTotal + 40) to nQ2_Lbr_Sell
+                    get_field_value iCompFile (fCompTotal + 41) to nQ2_Lbr_Hrs
+                    get_field_value iCompFile (fCompTotal + 42) to nQ3_Lbr_$
+                    get_field_value iCompFile (fCompTotal + 43) to nQ3_Lbr_Sell
+                    get_field_value iCompFile (fCompTotal + 44) to nQ3_Lbr_Hrs
+                    get_field_value iCompFile (fCompTotal + 45) to nQ1_Mtl_$
+                    get_field_value iCompFile (fCompTotal + 46) to nQ1_Mtl_Sell
+                    get_field_value iCompFile (fCompTotal + 47) to nQ2_Mtl_$
+                    get_field_value iCompFile (fCompTotal + 48) to nQ2_Mtl_Sell
+                    get_field_value iCompFile (fCompTotal + 49) to nQ3_Mtl_$
+                    get_field_value iCompFile (fCompTotal + 50) to nQ3_Mtl_Sell
+                    get_field_value iCompFile (fCompTotal + 51) to nQ1_PP_$
+                    get_field_value iCompFile (fCompTotal + 52) to nQ1_PP_Sell
+                    get_field_value iCompFile (fCompTotal + 53) to nQ2_PP_$
+                    get_field_value iCompFile (fCompTotal + 54) to nQ2_PP_Sell
+                    get_field_value iCompFile (fCompTotal + 55) to nQ3_PP_$
+                    get_field_value iCompFile (fCompTotal + 56) to nQ3_PP_Sell
+                    get_field_value iCompFile (fCompTotal + 57) to nQ1_Pur_$
+                    get_field_value iCompFile (fCompTotal + 58) to nQ1_Pur_Sell
+                    get_field_value iCompFile (fCompTotal + 59) to nQ2_Pur_$
+                    get_field_value iCompFile (fCompTotal + 60) to nQ2_Pur_Sell
+                    get_field_value iCompFile (fCompTotal + 61) to nQ3_Pur_$
+                    get_field_value iCompFile (fCompTotal + 62) to nQ3_Pur_Sell
+                    get_field_value iCompFile (fCompTotal + 69) to nQ1_X_$
+                    get_field_value iCompFile (fCompTotal + 70) to nQ1_X_Sell
+                    get_field_value iCompFile (fCompTotal + 71) to nQ2_X_$
+                    get_field_value iCompFile (fCompTotal + 72) to nQ2_X_Sell
+                    get_field_value iCompFile (fCompTotal + 73) to nQ3_X_$
+                    get_field_value iCompFile (fCompTotal + 74) to nQ3_X_Sell
+                    get_field_value iCompFile (fCompTotal + 75) to nQ1_Frt_$
+                    get_field_value iCompFile (fCompTotal + 76) to nQ1_Frt_Sell
+                    get_field_value iCompFile (fCompTotal + 77) to nQ2_Frt_$
+                    get_field_value iCompFile (fCompTotal + 78) to nQ2_Frt_Sell
+                    get_field_value iCompFile (fCompTotal + 79) to nQ3_Frt_$
+                    get_field_value iCompFile (fCompTotal + 80) to nQ3_Frt_Sell
+                end // if (Not(bNoBackout)) begin
+            end //
+            //
+            if (bDone) break
+            //
+            move DFFALSE                                                  to bProdDollars
+            move DFFALSE                                                  to bProdHours
+            move DFFALSE                                                  to bHelper
+            move DFFALSE                                                  to bGlobalHelperRate
+            move (Jcoper.Sell_formula = "")                               to bNoSellFormula
+            move (Jcoper.Est_formula_typ = "$")                           to bProdDollars
+            move (Jcoper.Est_formula_typ = ":")                           to bProdHours
+            move (Jcoper.Optype CONTAINS "H")                             to bHelper
+            move ((bHelper) AND Jcpars.Hfull_rate > 0)                    to bGlobalHelperRate
+            move (Jcoper.Calc_flags CONTAINS "V")                         to bMultiValue
+            // add'l flags used by component total update logic
+            move (Jcoper.Optype CONTAINS "1")                             to bArt
+            move (Jcoper.Optype CONTAINS "2")                             to bPrep
+            move (Jcoper.Optype CONTAINS "3")                             to bPress
+            move (Jcoper.Optype CONTAINS "4")                             to bBind
+            move ("L0|L1|L2|L3|L4|H0|H1|H2|H3|H4" CONTAINS Jcoper.Optype) to bLabor
+            move ("M0|M1|M2|M3|M4" CONTAINS Jcoper.Optype)                to bMatl
+            move (Jcoper.Optype = "PP")                                   to bPaper
+            move ("P0|P1|P2|P3|P4" CONTAINS Jcoper.Optype)                to bPurch
+            move (Jcoper.Optype CONTAINS "X")                             to bXuser
+            move (Jcoper.Optype CONTAINS "F")                             to bFreight
+            //
+            //BC 09/12/07 to support old & new stds coexisting added "or" condition to next line
+            move (Jcoper.Opcode = Jcpars.Quantities_Op ; 
+                  or Jcoper.Nickname = "QUANTITIES")                      to bQtyStd
+            move (Jcoper.Opcode = Jcpars.Pagespecs_Op)                    to bPgeStd
+            move (Jcoper.Opcode = Jcpars.Shtlayout_Op)                    to bShtStd
+            // save the starting "Was" values
+            move 0 to nWasProdUnits1
+            move 0 to nWasProdUnits2
+            move 0 to nWasProdUnits3
+            move 0 to nWasEst$1
+            move 0 to nWasEst$2
+            move 0 to nWasEst$3
+            move 0 to nWasSell1
+            move 0 to nWasSell2
+            move 0 to nWasSell3
+            //
+            if (NOT(bNoBackout)) begin
+                if (bProdDollars) begin
+                    get_field_value iItemFile  fProdUnits1           to nWasProdUnits1
+                    get_field_value iItemFile  fEst$1                to nWasEst$1
+                    get_field_value iItemFile  fSell1                to nWasSell1
+                    //
+                    //if (NOT(bMultiValue)) break
+                    //
+                    get_field_value iItemFile (fProdUnits1 + 1)      to nWasProdUnits2
+                    get_field_value iItemFile (fEst$1 + 1)           to nWasEst$2
+                    get_field_value iItemFile (fSell1 + 1)           to nWasSell2
+                    //
+                    get_field_value iItemFile (fProdUnits1 + 2)      to nWasProdUnits3
+                    get_field_value iItemFile (fEst$1 + 2)           to nWasEst$3
+                    get_field_value iItemFile (fSell1 + 2)           to nWasSell3
+                end
+                //
+                else if ((bProdHours) AND NOT(Jcoper.Calc_flags CONTAINS "$")) begin
+                    if ((bHelper) AND (bGlobalHelperRate)) begin
+                        get_field_value iItemFile  fProdUnits1           to nWasProdUnits1
+                        get_field_value iItemFile  fEst$1                to nWasEst$1
+                        get_field_value iItemFile  fSell1                to nWasSell1
+                        //
+                        //if (NOT(bMultiValue)) break
+                        //
+                        get_field_value iItemFile (fProdUnits1 + 1)      to nWasProdUnits2
+                        get_field_value iItemFile (fEst$1 + 1)           to nWasEst$2
+                        get_field_value iItemFile (fSell1 + 1)           to nWasSell2
+                        //
+                        get_field_value iItemFile (fProdUnits1 + 2)      to nWasProdUnits3
+                        get_field_value iItemFile (fEst$1 + 2)           to nWasEst$3
+                        get_field_value iItemFile (fSell1 + 2)           to nWasSell3
+                    end
+                    if ((bHelper) AND NOT(bGlobalHelperRate)) begin
+                        get_field_value iItemFile  fProdUnits1           to nWasProdUnits1
+                        get_field_value iItemFile  fEst$1                to nWasEst$1
+                        get_field_value iItemFile  fSell1                to nWasSell1
+                        //
+                        //if (NOT(bMultiValue)) break
+                        //
+                        get_field_value iItemFile (fProdUnits1 + 1)      to nWasProdUnits2
+                        get_field_value iItemFile (fEst$1 + 1)           to nWasEst$2
+                        get_field_value iItemFile (fSell1 + 1)           to nWasSell2
+                        //
+                        get_field_value iItemFile (fProdUnits1 + 2)      to nWasProdUnits3
+                        get_field_value iItemFile (fEst$1 + 2)           to nWasEst$3
+                        get_field_value iItemFile (fSell1 + 2)           to nWasSell3
+                    end
+                    if (NOT(bHelper)) begin
+                        get_field_value iItemFile  fProdUnits1           to nWasProdUnits1
+                        get_field_value iItemFile  fEst$1                to nWasEst$1
+                        get_field_value iItemFile  fSell1                to nWasSell1
+                        //
+                        //if (NOT(bMultiValue)) break
+                        //
+                        get_field_value iItemFile (fProdUnits1 + 1)      to nWasProdUnits2
+                        get_field_value iItemFile (fEst$1 + 1)           to nWasEst$2
+                        get_field_value iItemFile (fSell1 + 1)           to nWasSell2
+                        //
+                        get_field_value iItemFile (fProdUnits1 + 2)      to nWasProdUnits3
+                        get_field_value iItemFile (fEst$1 + 2)           to nWasEst$3
+                        get_field_value iItemFile (fSell1 + 2)           to nWasSell3
+                    end
+                end
+                //
+                else begin
+                    get_field_value iItemFile  fEst$1                    to nWasEst$1
+                    //
+                    get_field_value iItemFile (fEst$1 + 1)               to nWasEst$2
+                    //
+                    get_field_value iItemFile (fEst$1 + 2)               to nWasEst$3
+                    //
+                    get_field_value iItemFile  fSell1                    to nWasSell1
+                    //
+                    get_field_value iItemFile (fSell1 + 1)               to nWasSell2
+                    //
+                    get_field_value iItemFile (fSell1 + 2)               to nWasSell3
+                end
+            end // if (NOT(bNoBackout)) begin
+            // save variable values
+            get Number_Value of hData item (1 + (iKeyIndex * 38))  to nFileValue
+            set_field_value iItemFile  fVar1                       to nFileValue
+            //
+            if      (bQtyStd) set_field_value iCompFile fQty1      to nFileValue
+            #IFDEF CE_CALC_LIBRARY
+            #ELSE
+            else if (bPgeStd) set_field_value iCompFile fPages     to nFileValue
+            else if (bShtStd) set_field_value iCompFile fFormPages to nFileValue
+            #ENDIF
+            //
+            get Number_Value of hData item (2 + (iKeyIndex * 38))  to nFileValue
+            set_field_value iItemFile (fVar1 + 1)                  to nFileValue
+            //
+            if      (bQtyStd) set_field_value iCompFile fQty2      to nFileValue
+            #IFDEF CE_CALC_LIBRARY
+            #ELSE
+            else if (bPgeStd) set_field_value iCompFile fWidth     to nFileValue
+            else if (bShtStd) set_field_value iCompFile fNumberUp  to nFileValue
+            #ENDIF
+            //
+            get Number_Value of hData item (3 + (iKeyIndex * 38))  to nFileValue
+            set_field_value iItemFile (fVar1 + 2)                  to nFileValue
+            //
+            if      (bQtyStd) set_field_value iCompFile fQty3      to nFileValue
+            #IFDEF CE_CALC_LIBRARY
+            #ELSE
+            else if (bPgeStd) set_field_value iCompFile fLength    to nFileValue
+            #ENDIF
+            //
+            get Number_Value of hData item (4 + (iKeyIndex * 38))  to nFileValue
+            set_field_value iItemFile (fVar1 + 3)                  to nFileValue
+            //
+            #IFDEF CE_CALC_LIBRARY
+            #ELSE
+            if      (bPgeStd) set_field_value iCompFile fColors1   to nFileValue
+            #ENDIF
+            //
+            get Number_Value of hData item (5 + (iKeyIndex * 38))  to nFileValue
+            set_field_value iItemFile (fVar1 + 4)                  to nFileValue
+            //
+            #IFDEF CE_CALC_LIBRARY
+            #ELSE
+            if      (bPgeStd) set_field_value iCompFile fColors2   to nFileValue
+            #ENDIF
+            //
+            get Number_Value of hData item (6 + (iKeyIndex * 38))      to nFileValue
+            set_field_value iItemFile (fVar1 + 5)                      to nFileValue
+            get Number_Value of hData item (7 + (iKeyIndex * 38))      to nFileValue
+            set_field_value iItemFile (fVar1 + 6)                      to nFileValue
+            get Number_Value of hData item (8 + (iKeyIndex * 38))      to nFileValue
+            set_field_value iItemFile (fVar1 + 7)                      to nFileValue
+            get Number_Value of hData item (9 + (iKeyIndex * 38))      to nFileValue
+            set_field_value iItemFile (fVar1 + 8)                      to nFileValue
+            // save Calc Units formula
+            get Number_Value of hData item (10 + (iKeyIndex * 38))     to nFileValue
+            set_field_value iItemFile (fVar1 + 9)                      to nFileValue
+            If (bMultiValue) ;
+                get Number_Value of hData item (11 + (iKeyIndex * 38)) to nFileValue
+            set_field_value iItemFile (fVar1 + 10)                     to nFileValue
+            If (bMultiValue) ;
+                get Number_Value of hData item (12 + (iKeyIndex * 38)) to nFileValue
+            set_field_value iItemFile (fVar1 + 11)                     to nFileValue
+            // save Table standards
+            get Number_Value of hData item (13 + (iKeyIndex * 38))     to nFileValue
+            set_field_value iItemFile (fVar1 + 12)                     to nFileValue
+            If (bMultiValue) ;
+                get Number_Value of hData item (14 + (iKeyIndex * 38)) to nFileValue
+            set_field_value iItemFile (fVar1 + 13)                     to nFileValue
+            If (bMultiValue) ;
+                get Number_Value of hData item (15 + (iKeyIndex * 38)) to nFileValue
+            set_field_value iItemFile (fVar1 + 14)                     to nFileValue
+            // save Prod Units formula
+            get Number_Value of hData item (16 + (iKeyIndex * 38))     to nFileValue  //??????????????????????
+            If (bMultiValue) Begin
+                get Number_Value of hData item (16 + (iKeyIndex * 38)) to nProdUnits1 //nFileValue
+                set_field_value iItemFile (fVar1 + 15)                 to nProdUnits1 //nFileValue
+                get Number_Value of hData item (17 + (iKeyIndex * 38)) to nProdUnits2 //nFileValue
+                set_field_value iItemFile (fVar1 + 16)                 to nProdUnits2 //nFileValue
+                get Number_Value of hData item (18 + (iKeyIndex * 38)) to nProdUnits3 //nFileValue
+                set_field_value iItemFile (fVar1 + 17)                 to nProdUnits3 //nFileValue
+            End
+            Else Begin
+                get Number_Value of hData item (16 + (iKeyIndex * 38)) to nProdUnits1
+                get Number_Value of hData item (16 + (iKeyIndex * 38)) to nProdUnits2
+                get Number_Value of hData item (16 + (iKeyIndex * 38)) to nProdUnits3
+                set_field_value iItemFile (fVar1 + 15)                 to nProdUnits1
+                set_field_value iItemFile (fVar1 + 16)                 to nProdUnits2
+                set_field_value iItemFile (fVar1 + 17)                 to nProdUnits3
+
+            End
+            // save Est$ values
+            If (bMultiValue) Begin
+                get Number_Value of hData item (19 + (iKeyIndex * 38))      to nEst$1
+                set_field_value iItemFile  fEst$1                           to nEst$1
+                get Number_Value of hData item (20 + (iKeyIndex * 38))      to nEst$2
+                set_field_value iItemFile (fEst$1 + 1)                      to nEst$2
+                get Number_Value of hData item (21 + (iKeyIndex * 38))      to nEst$3
+                set_field_value iItemFile (fEst$1 + 2)                      to nEst$3
+            End
+            Else Begin
+                get Number_Value of hData item (19 + (iKeyIndex * 38))      to nEst$1
+                get Number_Value of hData item (19 + (iKeyIndex * 38))      to nEst$2
+                get Number_Value of hData item (19 + (iKeyIndex * 38))      to nEst$3
+                set_field_value iItemFile  fEst$1                           to nEst$1
+                set_field_value iItemFile (fEst$1 + 1)                      to nEst$2
+                set_field_value iItemFile (fEst$1 + 2)                      to nEst$3
+            End
+            If (bNOSellFormula) Begin
+                move nEst$1 to nSell1
+                move nEst$2 to nSell2
+                move nEst$3 to nSell3
+                set_field_value iItemFile  fSell1                          to nSell1
+                set_field_value iItemFile (fSell1 + 1)                     to nSell2
+                set_field_value iItemFile (fSell1 + 2)                     to nSell3
+            End
+            // save Sell values
+            If (NOT(bNoSellFormula)) Begin
+                If (bMultivalue) Begin
+                    get Number_Value of hData item (22 + (iKeyIndex * 38)) to nSell1
+                    set_field_value iItemFile  fSell1                      to nSell1
+                    get Number_Value of hData item (23 + (iKeyIndex * 38)) to nSell2
+                    set_field_value iItemFile (fSell1 + 1)                 to nSell2
+                    get Number_Value of hData item (24 + (iKeyIndex * 38)) to nSell3
+                    set_field_value iItemFile (fSell1 + 2)                 to nSell3
+                End
+                Else Begin
+                    get Number_Value of hData item (22 + (iKeyIndex * 38)) to nSell1
+                    get Number_Value of hData item (22 + (iKeyIndex * 38)) to nSell2
+                    get Number_Value of hData item (22 + (iKeyIndex * 38)) to nSell3
+                    set_field_value iItemFile  fSell1                      to nSell1
+                    set_field_value iItemFile (fSell1 + 1)                 to nSell2
+                    set_field_value iItemFile (fSell1 + 2)                 to nSell3
+                End
+            End
+            // save Variable flags
+            if (pbWizardMode(self)) begin
+                get String_Value of hData item (25 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile  fVar1Flag                   to sFlags
+                get String_Value of hData item (26 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 1)              to sFlags
+                get String_Value of hData item (27 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 2)              to sFlags
+                get String_Value of hData item (28 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 3)              to sFlags
+                get String_Value of hData item (29 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 4)              to sFlags
+                get String_Value of hData item (30 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 5)              to sFlags
+                get String_Value of hData item (31 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 6)              to sFlags
+                get String_Value of hData item (32 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 7)              to sFlags
+                get String_Value of hData item (33 + (iKeyIndex * 38)) to sFlags
+                set_field_value iItemFile (fVar1Flag + 8)              to sFlags
+            end
+            //
+//            move 0 to nEst$1
+//            move 0 to nEst$2
+//            move 0 to nEst$3
+//            //
+//            if (bProdDollars) begin
+//                get_field_value iItemFile  fProdUnits1             to nProdUnits1
+//                move (nProdUnits1 * ;
+//                    Jcoper.Markup * Jccntr.Markup * Jcdept.Markup) to nEst$1
+//                set_field_value iItemFile  fEst$1                  to nEst$1
+//                //
+//                if (NOT(bMultiValue)) break
+//                //
+//                get_field_value iItemFile (fProdUnits1 + 1)        to nProdUnits2
+//                move (nProdUnits2 * ;
+//                    Jcoper.Markup * Jccntr.Markup * Jcdept.Markup) to nEst$2
+//                set_field_value iItemFile (fEst$1 + 1)             to nEst$2
+//                //
+//                get_field_value iItemFile (fProdUnits1 + 2)        to nProdUnits3
+//                move (nProdUnits3 * ;
+//                    Jcoper.Markup * Jccntr.Markup * Jcdept.Markup) to nEst$3
+//                set_field_value iItemFile (fEst$1 + 2)             to nEst$3
+//            end
+//            //
+//            else if ((bProdHours) AND NOT(Jcoper.Calc_flags CONTAINS "$")) begin
+//                if ((bHelper) AND (bGlobalHelperRate)) begin
+//                    get_field_value iItemFile  fProdUnits1           to nProdUnits1
+//                    move (nProdUnits1 * Jcpars.HFull_Rate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$1
+//                    set_field_value iItemFile  fEst$1                to nEst$1
+//                    //
+//                    if (NOT(bMultiValue)) break
+//                    //
+//                    get_field_value iItemFile (fProdUnits1 + 1)      to nProdUnits2
+//                    move (nProdUnits2 * Jcpars.HFull_Rate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$2
+//                    set_field_value iItemFile (fEst$1 + 1)           to nEst$2
+//                    //
+//                    get_field_value iItemFile (fProdUnits1 + 2)      to nProdUnits3
+//                    move (nProdUnits3 * Jcpars.HFull_Rate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$3
+//                    set_field_value iItemFile (fEst$1 + 2)           to nEst$3
+//                end
+//                if ((bHelper) AND NOT(bGlobalHelperRate)) begin
+//                    get_field_value iItemFile  fProdUnits1           to nProdUnits1
+//                    move (nProdUnits1 * Jccntr.Fullrate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$1
+//                    set_field_value iItemFile  fEst$1                to nEst$1
+//                    //
+//                    if (NOT(bMultiValue)) break
+//                    //
+//                    get_field_value iItemFile (fProdUnits1 + 1)      to nProdUnits2
+//                    move (nProdUnits2 * Jccntr.Fullrate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$2
+//                    set_field_value iItemFile (fEst$1 + 1)           to nEst$2
+//                    //
+//                    get_field_value iItemFile (fProdUnits1 + 2)      to nProdUnits3
+//                    move (nProdUnits3 * Jccntr.Fullrate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$3
+//                    set_field_value iItemFile (fEst$1 + 2)           to nEst$3
+//                end
+//                if (NOT(bHelper)) begin
+//                    get_field_value iItemFile  fProdUnits1           to nProdUnits1
+//                    move (nProdUnits1 * Jccntr.Fullrate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$1
+//                    set_field_value iItemFile  fEst$1                to nEst$1
+//                    //
+//                    if (NOT(bMultiValue)) break
+//                    //
+//                    get_field_value iItemFile (fProdUnits1 + 1)      to nProdUnits2
+//                    move (nProdUnits2 * Jccntr.Fullrate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$2
+//                    set_field_value iItemFile (fEst$1 + 1)           to nEst$2
+//                    //
+//                    get_field_value iItemFile (fProdUnits1 + 2)      to nProdUnits3
+//                    move (nProdUnits3 * Jccntr.Fullrate * Jcoper.Markup ;
+//                        * Jccntr.Markup * Jcdept.Markup)             to nEst$3
+//                    set_field_value iItemFile (fEst$1 + 2)           to nEst$3
+//                end
+//            end
+//            //
+//            else begin
+//                set_field_value iItemFile  fEst$1                    to nEst$1
+//                //
+//                set_field_value iItemFile (fEst$1 + 1)               to nEst$2
+//                //
+//                set_field_value iItemFile (fEst$1 + 2)               to nEst$3
+//            end
+            //
+            set_field_value iItemFile fValQSymbol to ""
+            //
+            //get_field_value iItemFile 0 to iRecnum
+            saverecord iItemFile
+            if (bQtyStd OR bPgeStd OR bShtStd) saverecord iCompFile
+            // update component totals
+            if (NOT(Jcoper.Est_Formula_Typ = "#" OR Jcoper.Est_Formula_Typ = "")) begin
+                //
+                move (nProdUnits1 * 100)  to nProdUnits1
+                move (round(nProdUnits1)) to nProdUnits1
+                move (nProdUnits1 / 100)  to nProdUnits1
+                move (nProdUnits2 * 100)  to nProdUnits2
+                move (round(nProdUnits2)) to nProdUnits2
+                move (nProdUnits2 / 100)  to nProdUnits2
+                move (nProdUnits3 * 100)  to nProdUnits3
+                move (round(nProdUnits3)) to nProdUnits3
+                move (nProdUnits3 / 100)  to nProdUnits3
+                //move (nEst$1 * 100)       to nEst$1
+                //move (round(nEst$1))      to nEst$1
+                //move (nEst$2 * 100)       to nEst$2
+                //move (round(nEst$2))      to nEst$2
+                //move (nEst$3 * 100)       to nEst$3
+                //move (round(nEst$3))      to nEst$3
+                //
+                //if (bMultiValue) begin
+                    //
+                    if (bArt) begin
+                        move (nQ1_Art_$ + nEst$1 - nWasEst$1)              to nQ1_Art_$
+                        move (nQ1_Art_Sell + nSell1 - nWasSell1)           to nQ1_Art_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ1_Art_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ1_Art_Hrs
+                        move (nQ2_Art_$ + nEst$2 - nWasEst$2)              to nQ2_Art_$
+                        move (nQ2_Art_Sell + nSell2 - nWasSell2)           to nQ2_Art_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ2_Art_Hrs + nProdUnits2 - nWasProdUnits2)   to nQ2_Art_Hrs
+                        move (nQ3_Art_$ + nEst$3 - nWasEst$3)              to nQ3_Art_$
+                        move (nQ3_Art_Sell + nSell3 - nWasSell3)           to nQ3_Art_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ3_Art_Hrs + nProdUnits3 - nWasProdUnits3)   to nQ3_Art_Hrs
+                    end // if (bArt)
+                    //
+                    if (bPrep) begin
+                        move (nQ1_Prep_$ + nEst$1 - nWasEst$1)             to nQ1_Prep_$
+                        move (nQ1_Prep_Sell + nSell1 - nWasSell1)          to nQ1_Prep_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ1_Prep_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ1_Prep_Hrs
+                        move (nQ2_Prep_$ + nEst$2 - nWasEst$2)             to nQ2_Prep_$
+                        move (nQ2_Prep_Sell + nSell2 - nWasSell2)          to nQ2_Prep_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ2_Prep_Hrs + nProdUnits2 - nWasProdUnits2)  to nQ2_Prep_Hrs
+                        move (nQ3_Prep_$ + nEst$3 - nWasEst$3)             to nQ3_Prep_$
+                        move (nQ3_Prep_Sell + nSell3 - nWasSell3)          to nQ3_Prep_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ3_Prep_Hrs + nProdUnits3 - nWasProdUnits3)  to nQ3_Prep_Hrs
+                    end // if (bPrep)
+                    //
+                    if (bPress) begin
+                        move (nQ1_Press_$ + nEst$1 - nWasEst$1)            to nQ1_Press_$
+                        move (nQ1_Press_$ + nSell1 - nWasSell1)            to nQ1_Press_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ1_Press_Hrs + nProdUnits1 - nWasProdUnits1) to nQ1_Press_Hrs
+                        move (nQ2_Press_$ + nEst$2 - nWasEst$2)            to nQ2_Press_$
+                        move (nQ2_Press_Sell + nSell2 - nWasSell2)         to nQ2_Press_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ2_Press_Hrs + nProdUnits2 - nWasProdUnits2) to nQ2_Press_Hrs
+                        move (nQ3_Press_$ + nEst$3 - nWasEst$3)            to nQ3_Press_$
+                        move (nQ3_Press_Sell + nSell3 - nWasSell3)         to nQ3_Press_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ3_Press_Hrs + nProdUnits3 - nWasProdUnits3) to nQ3_Press_Hrs
+                    end // if (bPress)
+                    //
+                    if (bBind) begin
+                        move (nQ1_Bind_$ + nEst$1 - nWasEst$1)             to nQ1_Bind_$
+                        move (nQ1_Bind_Sell + nSell1 - nWasSell1)          to nQ1_Bind_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ1_Bind_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ1_Bind_Hrs
+                        move (nQ2_Bind_$ + nEst$2 - nWasEst$2)             to nQ2_Bind_$
+                        move (nQ2_Bind_Sell + nSell2 - nWasSell2)          to nQ2_Bind_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ2_Bind_Hrs + nProdUnits2 - nWasProdUnits2)  to nQ2_Bind_Hrs
+                        move (nQ3_Bind_$ + nEst$3 - nWasEst$3)             to nQ3_Bind_$
+                        move (nQ3_Bind_Sell + nSell3 - nWasSell3)          to nQ3_Bind_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ3_Bind_Hrs + nProdUnits3 - nWasProdUnits3)  to nQ3_Bind_Hrs
+                    end // if (bBind)
+                    //
+                    if (bLabor) begin
+                        move (nQ1_Lbr_$ + nEst$1 - nWasEst$1)              to nQ1_Lbr_$
+                        move (nQ1_Lbr_Sell + nSell1 - nWasSell1)           to nQ1_Lbr_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ1_Lbr_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ1_LBR_Hrs
+                        move (nQ2_Lbr_$ + nEst$2 - nWasEst$2)              to nQ2_Lbr_$
+                        move (nQ2_Lbr_Sell + nSell2 - nWasSell2)           to nQ2_Lbr_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ2_Lbr_Hrs + nProdUnits2 - nWasProdUnits2)   to nQ2_Lbr_Hrs
+                        move (nQ3_Lbr_$ + nEst$3 - nWasEst$3)              to nQ3_Lbr_$
+                        move (nQ3_Lbr_Sell + nSell3 - nWasSell3)           to nQ3_Lbr_Sell
+                        if ((bProdHours) AND NOT(bHelper)) move ;
+                            (nQ3_Lbr_Hrs + nProdUnits3 - nWasProdUnits3)   to nQ3_Lbr_Hrs
+                    end // if (bLabor)
+                    //
+                    if ((bMatl) AND (bProdDollars)) begin
+                        move (nQ1_Mtl_$ + nEst$1 - nWasEst$1)              to nQ1_Mtl_$
+                        move (nQ2_Mtl_$ + nEst$2 - nWasEst$2)              to nQ2_Mtl_$
+                        move (nQ3_Mtl_$ + nEst$3 - nWasEst$3)              to nQ3_Mtl_$
+                        move (nQ1_Mtl_Sell + nSell1 - nWasSell1)           to nQ1_Mtl_Sell
+                        move (nQ2_Mtl_Sell + nSell2 - nWasSell2)           to nQ2_Mtl_Sell
+                        move (nQ3_Mtl_Sell + nSell3 - nWasSell3)           to nQ3_Mtl_Sell
+                    end
+                    //
+                    if ((bPaper) AND (bProdDollars)) begin
+                        move (nQ1_PP_$ + nEst$1 - nWasEst$1)               to nQ1_PP_$
+                        move (nQ2_PP_$ + nEst$2 - nWasEst$2)               to nQ2_PP_$
+                        move (nQ3_PP_$ + nEst$3 - nWasEst$3)               to nQ3_PP_$
+                        move (nQ1_PP_Sell + nSell1 - nWasSell1)            to nQ1_PP_Sell
+                        move (nQ2_PP_Sell + nSell2 - nWasSell2)            to nQ2_PP_Sell
+                        move (nQ3_PP_Sell + nSell3 - nWasSell3)            to nQ3_PP_Sell
+                    end
+                    //
+                    if ((bPurch) AND (bProdDollars)) begin
+                        move (nQ1_Pur_$ + nEst$1 - nWasEst$1)              to nQ1_Pur_$
+                        move (nQ2_Pur_$ + nEst$2 - nWasEst$2)              to nQ2_Pur_$
+                        move (nQ3_Pur_$ + nEst$3 - nWasEst$3)              to nQ3_Pur_$
+                        move (nQ1_Pur_Sell + nSell1 - nWasSell1)           to nQ1_Pur_Sell
+                        move (nQ2_Pur_Sell + nSell2 - nWasSell2)           to nQ2_Pur_Sell
+                        move (nQ3_Pur_Sell + nSell3 - nWasSell3)           to nQ3_Pur_Sell
+                    end
+                    //
+                    if ((bXuser) AND (bProdDollars)) begin
+                        move (nQ1_X_$ + nEst$1 - nWasEst$1)                to nQ1_X_$
+                        move (nQ2_X_$ + nEst$2 - nWasEst$2)                to nQ2_X_$
+                        move (nQ3_X_$ + nEst$3 - nWasEst$3)                to nQ3_X_$
+                        move (nQ1_X_Sell + nSell1 - nWasSell1)             to nQ1_X_Sell
+                        move (nQ2_X_Sell + nSell2 - nWasSell2)             to nQ2_X_Sell
+                        move (nQ3_X_Sell + nSell3 - nWasSell3)             to nQ3_X_Sell
+                    end
+                    //
+                    if ((bFreight) AND (bProdDollars)) begin
+                        move (nQ1_Frt_$ + nEst$1 - nWasEst$1)              to nQ1_Frt_$
+                        move (nQ2_Frt_$ + nEst$2 - nWasEst$2)              to nQ2_Frt_$
+                        move (nQ3_Frt_$ + nEst$3 - nWasEst$3)              to nQ3_Frt_$
+                        move (nQ1_Frt_Sell + nSell1 - nWasSell1)           to nQ1_Frt_Sell
+                        move (nQ2_Frt_Sell + nSell2 - nWasSell2)           to nQ2_Frt_Sell
+                        move (nQ3_Frt_Sell + nSell3 - nWasSell3)           to nQ3_Frt_Sell
+                    end
+                    //
+                //end // if (bMultiValue)
+                //
+                //if (NOT(bMultiValue)) begin
+                //    // amounts for fixed costs must still be copied to qty2  3
+                //    // move q1 values to q1 values!
+                //    // this bother is to allow for unforseen setups by users
+                //    // in the areas normally that would be all fixed costs
+                //    if (bArt) begin
+                //        move (nQ1_Art_$ + nEst$1 - nWasEst$1)              to nQ1_Art_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ1_Art_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ1_Art_Hrs
+                //        move (nQ2_Art_$ + nEst$1 - nWasEst$1)              to nQ2_Art_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ2_Art_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ2_Art_Hrs
+                //        move (nQ3_Art_$ + nEst$1 - nWasEst$1)              to nQ3_Art_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ3_Art_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ3_Art_Hrs
+                //    end // if (bArt)
+                //    //
+                //    if (bPrep) begin
+                //        move (nQ1_Prep_$ + nEst$1 - nWasEst$1)             to nQ1_Prep_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ1_Prep_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ1_Prep_Hrs
+                //        move (nQ2_Prep_$ + nEst$1 - nWasEst$1)             to nQ2_Prep_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ2_Prep_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ2_Prep_Hrs
+                //        move (nQ3_Prep_$ + nEst$1 - nWasEst$1)             to nQ3_Prep_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ3_Prep_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ3_Prep_Hrs
+                //    end // if (bPrep)
+                //    //
+                //    if (bPress) begin
+                //        move (nQ1_Press_$ + nEst$1 - nWasEst$1)            to nQ1_Press_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ1_Press_Hrs + nProdUnits1 - nWasProdUnits1) to nQ1_Press_Hrs
+                //        move (nQ2_Press_$ + nEst$1 - nWasEst$1)            to nQ2_Press_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ2_Press_Hrs + nProdUnits1 - nWasProdUnits1) to nQ2_Press_Hrs
+                //        move (nQ3_Press_$ + nEst$1 - nWasEst$1)            to nQ3_Press_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ3_Press_Hrs + nProdUnits1 - nWasProdUnits1) to nQ3_Press_Hrs
+                //    end // if (bPress)
+                //    //
+                //    if (bBind) begin
+                //        move (nQ1_Bind_$ + nEst$1 - nWasEst$1)             to nQ1_Bind_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ1_Bind_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ1_Bind_Hrs
+                //        move (nQ2_Bind_$ + nEst$1 - nWasEst$1)             to nQ2_Bind_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ2_Bind_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ2_Bind_Hrs
+                //        move (nQ3_Bind_$ + nEst$1 - nWasEst$1)             to nQ3_Bind_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ3_Bind_Hrs + nProdUnits1 - nWasProdUnits1)  to nQ3_Bind_Hrs
+                //    end // if (bBind)
+                //    //
+                //    if (bLabor) begin
+                //        move (nQ1_Lbr_$ + nEst$1 - nWasEst$1)              to nQ1_Lbr_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ1_Lbr_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ1_LBR_Hrs
+                //        move (nQ2_Lbr_$ + nEst$1 - nWasEst$1)              to nQ2_Lbr_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ2_Lbr_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ2_Lbr_Hrs
+                //        move (nQ3_Lbr_$ + nEst$1 - nWasEst$1)              to nQ3_Lbr_$
+                //        if ((bProdHours) AND NOT(bHelper)) move ;
+                //            (nQ3_Lbr_Hrs + nProdUnits1 - nWasProdUnits1)   to nQ3_Lbr_Hrs
+                //    end // if (bLabor)
+                //    //
+                //    if ((bMatl) AND (bProdDollars)) begin
+                //        move (nQ1_Mtl_$ + nEst$1 - nWasEst$1)              to nQ1_Mtl_$
+                //        move (nQ2_Mtl_$ + nEst$1 - nWasEst$1)              to nQ2_Mtl_$
+                //        move (nQ3_Mtl_$ + nEst$1 - nWasEst$1)              to nQ3_Mtl_$
+                //    end
+                //    //
+                //    if ((bPaper) AND (bProdDollars)) begin
+                //        move (nQ1_PP_$ + nEst$1 - nWasEst$1)               to nQ1_PP_$
+                //        move (nQ2_PP_$ + nEst$1 - nWasEst$1)               to nQ2_PP_$
+                //        move (nQ3_PP_$ + nEst$1 - nWasEst$1)               to nQ3_PP_$
+                //    end
+                //    //
+                //    if ((bPurch) AND (bProdDollars)) begin
+                //        move (nQ1_Pur_$ + nEst$1 - nWasEst$1)              to nQ1_Pur_$
+                //        move (nQ2_Pur_$ + nEst$1 - nWasEst$1)              to nQ2_Pur_$
+                //        move (nQ3_Pur_$ + nEst$1 - nWasEst$1)              to nQ3_Pur_$
+                //    end
+                //    //
+                //    if ((bXuser) AND (bProdDollars)) begin
+                //        move (nQ1_X_$ + nEst$1 - nWasEst$1)                to nQ1_X_$
+                //        move (nQ2_X_$ + nEst$1 - nWasEst$1)                to nQ2_X_$
+                //        move (nQ3_X_$ + nEst$1 - nWasEst$1)                to nQ3_X_$
+                //    end
+                //    //
+                //    if ((bFreight) AND (bProdDollars)) begin
+                //        move (nQ1_Frt_$ + nEst$1 - nWasEst$1)              to nQ1_Frt_$
+                //        move (nQ2_Frt_$ + nEst$1 - nWasEst$1)              to nQ2_Frt_$
+                //        move (nQ3_Frt_$ + nEst$1 - nWasEst$1)              to nQ3_Frt_$
+                //    end
+                //    //
+                //end // if (NOT(bMultiValue))
+                //
+            end // update component totals
+            //
+            move (iKeyIndex = iItemCount) to bDone
+            if (bDone) break BEGIN
+            // get the next item record
+            increment iKeyIndex
+            get Integer_Value of hData item (0 + (iKeyIndex * 38)) to iRecnum
+            //
+            clear iItemFile
+            set_field_value iItemFile 0 to iRecnum
+            vfind iItemFile 0 EQ
+            relate iItemFile
+            get_field_value iCompFile 0 to iCompRecnum
+        loop
+        //
+        set_attribute DF_REREAD_REQUIRED        to DFTRUE
+        set_attribute DF_FILE_MODE of iItemFile to DF_FILEMODE_DEFAULT
+        //
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // WriteBatchItems
+
+procedure PushVariableValueToFile ;
+    integer iPushOpcode ;
+    integer iPushIndex  ;
+    number  nValue      ;
+    integer iMath
+    //
+    #IFDEF CE_CALC_TEST
+    #ELSE
+        integer iFile iIndex iWasRecord
+        integer fHeader fComponent fOpcode fVar1
+        string  sHeaderId sComponentId
+        number  nCurrent
+        //
+        get psHeaderId    to sHeaderId
+        get psComponentId to sComponentId
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm.File_number to iFile
+        move 1                  to iIndex
+        move 2                  to fHeader
+        move 3                  to fComponent
+        move 6                  to fOpcode
+        move 11                 to fVar1
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem.File_number to iFile
+        Move 2                  to iIndex
+        Move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm.File_number to iFile
+        move 1                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // hold the current record
+        get_field_value iFile 0 to iWasRecord
+        // find linked record
+        clear iFile
+        set_field_value iFile fHeader    to sHeaderId
+        set_field_value iFile fComponent to sComponentId
+        set_field_value iFile fOpcode    to iPushOpcode
+        vfind iFile iIndex EQ
+        //
+        if (NOT(FOUND)) send SaveNewItem iPushOpcode "L" //TRUE //FALSE
+        // store the value
+        reread
+        if (iMath) begin
+            get_field_value iFile (fVar1 + iPushIndex) to nCurrent
+            move (nCurrent + (nValue * iMath)) to nValue
+        end
+        set_field_value iFile (fVar1 + iPushIndex) to nValue
+        saverecord iFile
+        unlock
+        // find the original record
+        clear iFile
+        set_field_value iFile 0 to iWasRecord
+        vfind iFile 0 EQ
+        relate iFile
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // PushVariableValueToFile
+
+procedure PopVariableValueFromFile ;
+    integer iPopOpcode    ;
+    integer iProcessIndex ;
+    string  sLinkSymbol   ;
+    integer bCurrent
+    //
+    #IFDEF CE_CALC_TEST
+    #ELSE
+        integer iWasRecord iCounter hQty1 hQty2 hQty3 hoQtyArray bWasMultiValue bMultiValue
+        integer iFile iIndex iFieldIndex fHeader fComponent fOpcode fCalcUnits1 bFound
+        string  sHeaderId sComponentId
+        number  nValue
+        //
+        move oQty1Array to hQty1
+        move oQty2Array to hQty2
+        move oQty3Array to hQty3
+        get psHeaderId    to sHeaderId
+        get psComponentId to sComponentId
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Esjitm.File_number to iFile
+        move 1                  to iIndex
+        move 2                  to fHeader
+        move 3                  to fComponent
+        move 6                  to fOpcode
+        move 20                 to fCalcUnits1
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Esitem.File_number to iFile
+        Move 2                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        move 19                 to fCalcUnits1
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Eslitm.File_number to iFile
+        move 1                  to iIndex
+        move 1                  to fHeader
+        move 2                  to fComponent
+        move 5                  to fOpcode
+        move 19                 to fCalcUnits1
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        // hold the current record & MultiValue flag
+        get_field_value iFile 0 to iWasRecord
+        // store the current MultiValue flag
+        move (pbMultiValue(self)) to bWasMultiValue
+        // find linked record
+        clear iFile
+        set_field_value iFile fHeader    to sHeaderId
+        set_field_value iFile fComponent to sComponentId
+        set_field_value iFile fOpcode    to iPopOpcode
+        vfind iFile iIndex EQ
+        move (FOUND) to bFound
+        if (NOT(bFound)) begin
+            //if (bCurrent) procedure_return
+        end
+        if (bFound) begin
+            relate iFile
+            move (Jcoper.Calc_flags CONTAINS "V") to bMultiValue
+            //send CurrentStandardString to (oCalcWizard(self)) iLinkLevel sDebugSymbol
+            // store the value to be popped
+            move 6                        to iFieldIndex
+            if (sLinkSymbol = "T") move 3 to iFieldIndex
+            if (sLinkSymbol = "0") move 0 to iFieldIndex
+            //
+            for iCounter from 1 to 3
+                if      (iCounter = 1) move hQty1 to hoQtyArray
+                else if (iCounter = 2) move hQty2 to hoQtyArray
+                else if (iCounter = 3) move hQty3 to hoQtyArray
+                get_field_value iFile (fCalcUnits1 + iFieldIndex) to nValue
+                // store it
+                send StoreValue hoQtyArray iProcessIndex nValue FALSE
+                if (NOT(bWasMultiValue)) break
+                if (bMultiValue) increment iFieldIndex
+            loop
+        end // if (FOUND)
+        // find the original record
+        clear iFile
+        set_field_value iFile 0 to iWasRecord
+        vfind iFile 0 EQ
+        relate iFile
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // PopVariableValueFromFile
+
+// Purpose:  to display and accept input to any JOB esitmate line
+// item variables defined as default links where the linked value
+// was overridden
+register_object DefaultLinkDialog
+procedure PreviewDefaultLinks integer bAllLinks
+    #IFDEF CE_CALC_TEST
+    #ELSE
+        integer bEditedLinks bFullEst bSelect bOverride bCleared bNonzero iWasItem iFieldIndex
+        integer iHeadFile iCompFile iCompIndex iItemFile iItemIndex iOperFile
+        integer fHeadId fCompId fCompComp fCalc fItemId fItemComp fOpcode fVar1 fVar1Flag
+        integer fVar1Tag fVar1TagSymbl
+        string  sStandard sPrompt sVarTagSymbl sFlags sNeedsCalced
+        string  sHeadId sCompHeadId sCompCompId sItemHeadId sItemCompId
+        number  nDefault nValue
+        // Jcoper fields - even though the numbers could be used,
+        // the variables are used to "self-document" the code
+        move Jcoper.File_number to iOperFile
+        move 91                 to fVar1Tag
+        move 233                to fVar1TagSymbl
+        // order maintenance
+        #IFDEF CE_CALC_ORDER
+        move Jcjobs.File_number to iHeadFile
+        move 1                  to fHeadId
+        move Esjcmp.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 2                  to fCompId
+        move 3                  to fCompComp
+        move 10                 to fCalc
+        move Esjitm.File_number to iItemFile
+        move 1                  to iItemIndex
+        move 2                  to fItemId
+        move 3                  to fItemComp
+        move 6                  to fOpcode
+        move 11                 to fVar1
+        move 36                 to fVar1Flag
+        #ENDIF // #IFDEF CE_CALC_ORDER
+        // estimating
+        #IFDEF CE_CALC_ESTIMATE
+        move Eshead.File_number to iHeadFile
+        move 1                  to fHeadId
+        move Escomp.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 1                  to fCompId
+        move 2                  to fCompComp
+        move 10                 to fCalc
+        move Esitem.File_number to iItemFile
+        Move 2                  to iItemIndex
+        move 1                  to fItemId
+        move 2                  to fItemComp
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        move Esctyp.File_number to iHeadFile
+        move 1                  to fHeadId
+        move Esclib.File_number to iCompFile
+        move 1                  to iCompIndex
+        move 1                  to fCompId
+        move 2                  to fCompComp
+        move 7                  to fCalc
+        move Eslitm.File_number to iItemFile
+        move 1                  to iItemIndex
+        move 1                  to fItemId
+        move 2                  to fItemComp
+        move 5                  to fOpcode
+        move 10                 to fVar1
+        move 35                 to fVar1Flag
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        move (NOT(bAllLinks))           to bEditedLinks
+        move (NOT(pbComponentId(self))) to bFullEst
+        //
+        get_field_value iItemFile 0       to iWasItem
+        get_field_value iHeadFile fHeadId to sHeadId
+        //
+        if (bFullEst) begin
+            clear iCompFile
+            set_field_value iCompFile fCompId to sHeadId
+            vfind iCompFile iCompIndex GE
+            if (NOT(FOUND)) procedure_return
+        end
+        get_field_value iCompFile fCompId   to sCompHeadId
+        get_field_value iCompFile fCompComp to sCompCompId
+        clear iItemFile iOperFile
+        while (sCompHeadId = sHeadId)
+            clear iItemFile
+            set_field_value iItemFile fItemId   to sCompHeadId
+            set_field_value iItemFile fItemComp to sCompCompId
+            set_field_value iItemFile fOpcode   to -999999
+            vfind iItemFile iItemIndex GE
+            if (NOT(FOUND)) break
+            get_field_value iItemFile fItemId   to sItemHeadId
+            get_field_value iItemFile fItemComp to sItemCompId
+            while (sItemHeadId = sCompHeadId AND sItemCompId = sCompCompId)
+                //
+                relate iItemFile
+                //
+                for iFieldIndex from 0 to 8
+                    move DFFALSE to bSelect
+                    move DFFALSE to bOverride
+                    move DFFALSE to bNonzero
+                    //
+                    get_field_value iOperFile (fVar1TagSymbl + iFieldIndex) to sVarTagSymbl
+                    get_field_value iItemFile (fVar1Flag     + iFieldIndex) to sFlags
+                    //
+                    //move (sVarTagSymbl CONTAINS "D") to bSelect
+                    move (sVarTagSymbl CONTAINS "D" and not(sVarTagSymbl CONTAINS "?D") ) to bSelect
+                    if (bSelect AND bEditedLinks) move (sFlags CONTAINS "D") to bSelect
+
+
+                    if (bSelect) move (NOT(sFlags CONTAINS "OP")) to bSelect
+                    if (bSelect) move (NOT(sFlags CONTAINS "CC")) to bSelect
+                    if (bSelect) begin
+                        get_field_value iOperFile (fVar1Tag + iFieldIndex) to sPrompt
+                        get_field_value iItemFile (fVar1    + iFieldIndex) to nDefault
+                        move (sFlags       CONTAINS "D") to bOverride
+                        move (sVarTagSymbl CONTAINS "Z") to bNonzero
+                        //
+                        move (sItemCompId * string(Jcoper.Opcode) * Jcoper.Name) to sStandard
+                        // get it
+                        get RetrieveLink of DefaultLinkDialog ;
+                            sStandard ;
+                            sPrompt   ;
+                            nDefault  ;
+                            bOverride ;
+                            bNonzero  ;
+                            to nValue
+                        //
+                        if (nValue = -999999) Break //skip remaining 
+                        move (bNonzero AND nValue = 0) to bNonzero
+                        if (bNonzero) ;
+                            send Stop_Box "A non-zero value is required."
+                        if (bNonzero) break BEGIN
+                        //
+                        if (pbCanceled(self)) begin
+                            set pbCanceled to FALSE
+                            procedure_return
+                        end
+                        //
+                        move (nValue = -999998) to bCleared
+                        if (bCleared) begin
+                            move 0                        to nValue
+                            move (replace("D",sFlags,"")) to sFlags
+                        end
+                        if (bCleared OR nValue <> nDefault) begin
+                            get_field_value iCompFile fCalc to sNeedsCalced
+                            reread
+                            set_field_value iItemFile (fVar1 + iFieldIndex) to nValue
+                            if (NOT(bCleared)) begin
+                                if (nValue = 0 AND NOT(sFlags CONTAINS "X")) ;
+                                    move (trim(sFlags) + "X") to sFlags
+                                if (nValue <> nDefault AND NOT(sFlags CONTAINS "D")) ;
+                                    move (trim(sFlags) + "D") to sFlags
+                            end
+                            set_field_value iItemFile (fVar1Flag + iFieldIndex) to sFlags
+                            saverecord iItemFile
+                            if (NOT(sNeedsCalced = "Y")) begin
+                                set_field_value iCompFile fCalc to "Y"
+                                saverecord iCompFile
+                            end
+                            unlock
+                        end // if (bCleared OR nValue <> nDefault)
+                    end // if (bSelect)
+                    if (nValue = -999999) Break //skip remaining 
+                loop // for iFieldIndex From 0 to 8
+                vfind iItemFile iItemIndex GT
+                if (NOT(FOUND)) break
+                if (nValue = -999999) Break //skip remaining 
+            end // while (Esjitm.Job_no = Esjcmp.Job_no AND ...
+            if (NOT(bFullEst)) break
+            vfind iCompFile iCompIndex GT
+            if (NOT(FOUND)) break
+            if (nValue = -999999) Break //skip remaining 
+        end // while (ESJCMP.Job_No = JCJOBS.Idno)
+        if (iWasItem) begin
+            clear iItemFile
+            set_field_value iItemFile 0 to iWasItem
+            vfind iItemFile 0 EQ
+            if (FOUND) relate iItemFile
+        end
+    #ENDIF // #IFDEF CE_CALC_TEST
+end_procedure // PreviewDefaultLinks

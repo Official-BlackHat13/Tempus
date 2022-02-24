@@ -1,0 +1,10 @@
+#REPLACE FILE40 Locequip
+#REPLACE Locequip.Recnum |FN40,0
+#REPLACE Locequip.LocequipIdno |FN40,1
+#REPLACE Locequip.LocationIdno |FN40,2
+#REPLACE Locequip.Description |FS40,3
+#REPLACE Locequip.Quantity |FN40,4
+#REPLACE Locequip.EmployerIdno |FN40,5
+#REPLACE Locequip.RecordOwner |FN40,6
+#REPLACE Locequip.ChangedFlag |FN40,7
+#REPLACE Locequip.DeleteFlag |FN40,8

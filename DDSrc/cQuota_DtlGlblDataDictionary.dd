@@ -1,0 +1,60 @@
+Use cGlblDataDictionary.pkg
+
+//Open Quota_Dtl
+//Open Quota
+//Open System
+
+//Object Month is a ValidationTable
+//    Procedure Fill_List
+//        Forward Send Fill_List
+//        Send Add_Table_Value "January"
+//        Send Add_Table_Value "February"
+//        Send Add_Table_Value "March"
+//        Send Add_Table_Value "April"
+//        Send Add_Table_Value "May"
+//        Send Add_Table_Value "June"
+//        Send Add_Table_Value "July"
+//        Send Add_Table_Value "August"
+//        Send Add_Table_Value "September"
+//        Send Add_Table_Value "October"
+//        Send Add_Table_Value "November"
+//        Send Add_Table_Value "December"
+//    End_Procedure
+//End_Object
+
+Class cQuota_DtlGlblDataDictionary is a cGlblDataDictionary
+    
+//    Procedure Construct_Object
+//        Forward Send Construct_Object
+//        Set Main_File to Quota_Dtl.File_Number
+//
+//        Set Add_System_File to System.File_Number DD_Lock_On_All
+//
+//        Set Add_Server_File to Quota.File_Number
+//
+//        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+//        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+//        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+//        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+//
+//        Set Field_Auto_Increment Field Quota_Dtl.Quote_Dtl_Idno to File_Field System.LastQuota_Dtl
+//
+//        Set Field_Value_Table Field Quota_Dtl.Quota_Mo_Yr to Month
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Asphalt to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Concrete to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Excavation to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Snow to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Sweep to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Marking to Mask_Currency_Window
+//
+//        Set Field_Mask_Type Field Quota_Dtl.Other to Mask_Currency_Window
+//
+//    End_Procedure
+
+End_Class

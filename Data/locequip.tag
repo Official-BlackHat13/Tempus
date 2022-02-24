@@ -1,0 +1,4 @@
+LocequipIdno
+LocationIdno
+Description
+Quantity

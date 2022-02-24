@@ -1,0 +1,85 @@
+// EmployeeTranactions.wo
+// EmployeeTranactions
+Use cAjaxWebBusinessProcess.pkg
+
+Use Employer.DD
+Use Employee.DD
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use MastOps.DD
+Use Opers.DD
+Use Order.DD
+Use Trans.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Object oEmployeeTranactions Is A cAjaxWebBusinessProcess
+    Set psDescription To "EmployeeTranactions"
+    Set pbClearAfterSave To False
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+
+    Object oEmployer_DD Is A Employer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oEmployer_DD
+
+    Object oEmployee_DD Is A Employee_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oEmployer_DD
+    End_Object // oEmployee_DD
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+    End_Object // oLocation_DD
+
+    Object oMastops_DD Is A Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+        Send DefineAllExtendedFields
+    End_Object // oMastops_DD
+
+    Object oOpers_DD Is A Opers_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+        Set DDO_Server To oMastops_DD
+    End_Object // oOpers_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+    Object oTrans_DD Is A Trans_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oOrder_DD
+        Set DDO_Server To oEmployee_DD
+        Set DDO_Server To oOpers_DD
+        Set Constrain_File To Employee.File_Number
+    End_Object // oTrans_DD
+
+    Set Main_DD To oEmployee_DD
+
+
+    // Send RegisterStandardInterface
+    // Send RegisterDebugInterface
+    // Send RegisterFullErrorInterface
+    // Send RegisterAutoEntryInterface
+
+
+End_Object // oEmployeeTranactions

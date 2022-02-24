@@ -1,0 +1,203 @@
+// InvoiceHistoryReport.wo
+// InvoiceHistoryReport
+Use cWebBusinessProcess.pkg
+Use cWebReport.pkg
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use Invhdr.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+Object oInvoiceHistoryReport Is A cWebBusinessProcess
+
+    Set psDescription to "Invoice History Report"
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+        Send DefineAllExtendedFields
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Send DefineAllExtendedFields
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+
+        Property Integer piPropmgrIdno
+
+        Procedure OnConstrain
+            Constrain Location.PropmgrIdno eq (piPropmgrIdno(Self))
+        End_Procedure
+    End_Object // oLocation_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+    Object oInvhdr_DD Is A Invhdr_DataDictionary
+        Send DefineAllExtendedFields
+        Set DDO_Server To oOrder_DD
+
+        Property Number pnStartJobNumber
+        Property Number pnStopJobNumber
+        Property Date pdStartInvoiceDate
+        Property Date pdStopInvoiceDate
+
+        Procedure OnConstrain 
+            Number nStart nStop
+            Date   dStart dStop
+
+            Get pnStartJobNumber to nStart
+            Get pnStopJobNumber  to nStop
+
+            If (nStart <> 0 And nStop <> 0) Begin
+                Constrain Invhdr.JobNumber Between nStart And nStop
+            End
+            Else Begin
+                If (nStart <> 0) Begin
+                    Constrain Invhdr.JobNumber Ge nStart
+                End
+                Else Begin
+                    If (nStop <> 0) Begin
+                        Constrain Invhdr.JobNumber Le nStop
+                    End
+                End
+            End
+
+            Get pdStartInvoiceDate To dStart
+            Get pdStopInvoiceDate  to dStop
+
+            If (nStart = nStop and dStart = 0) Begin
+                Move System.SnowSeasonStart to dStart
+            End
+
+            If (dStart <> 0 And dStop <> 0) Begin
+                Constrain Invhdr.Invoicedate Between dStart And dStop
+            End
+            Else Begin
+                If (dStart <> 0) Begin
+                    Constrain Invhdr.Invoicedate Ge dStart
+                End
+                Else Begin
+                    If (dStop <> 0) Begin
+                        Constrain Invhdr.Invoicedate Le dStop
+                    End
+                End
+            End
+            Constrain Invhdr.VoidFlag eq 0
+        End_Procedure // OnConstrain
+    End_Object // oInvhdr_DD
+
+    Set Main_DD To oInvhdr_DD
+
+
+    Object oReport Is A cWebReport
+        Procedure OnPageTop 
+            Send WriteHtmlTableBegin 'border="0" width="99%" class="ReportTable"'
+
+            Send WriteHtmlRowBegin
+                Send WriteHtmlCellHeader 'Number' 'class="Header" align="right"'
+                Send WriteHtmlCellHeader 'Date' 'class="Header" align="left"'
+//                Send WriteHtmlCellHeader 'Terms' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Location' 'class="Header" align="left"'
+                Send WriteHtmlCellHeader 'Amount' 'class="Header" align="right"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnPageTop
+
+        Procedure OnBody 
+            String sText sNumber sInvhdrInvoicedate sLocation sInvhdrTotalamount
+
+            Get ddValueEncode "Invhdr.Invoiceidno" to sNumber
+            Get ddValueEncode "Invhdr.Invoicedate" To sInvhdrInvoicedate
+            Get ddValueEncode "Location.Name" to sLocation
+            Get ddValueEncode "Invhdr.Totalamount" to sInvhdrTotalamount
+
+            Send WriteHtmlRowBegin
+//                Get AddRowIdLink (FormatNumber (sInvhdrInvoiceidno,0)) To sText
+                Get AddRowIdLink sNumber to sText
+                Send WriteHtmlCell sText 'class="Data" align="left"'
+                Send WriteHtmlCell sInvhdrInvoicedate 'class="Data" align="left"'
+                Send WriteHtmlCell sLocation 'class="Data" align="left"'
+                Send WriteHtmlCell (FormatNumber (sInvhdrTotalamount,2)) 'class="Data" align="right"'
+            Send WriteHtmlRowEnd
+        End_Procedure // OnBody
+
+        Procedure OnPageBottom 
+            Send WriteHtmlTableEnd
+        End_Procedure // OnPageBottom
+
+        Function RunInvoiceHistoryReport Integer iIndex RowId riStartRowId Integer iMaxCount Returns RowId
+            RowId   riLastRowId
+            Integer eStatus
+
+            Set piOrdering To iIndex
+            Set piMaxCount To iMaxCount
+            Set piMaxCountBreakLevel To 0
+            Set priStartRowId To riStartRowId
+
+            Get DoRunReport To eStatus
+
+            Get priLastRowId To riLastRowId
+
+            Function_Return riLastRowId
+        End_Function // RunInvoiceHistoryReport
+    End_Object // oReport
+
+    { Published=True }
+    { Description="Name to link for drill down report" }
+    Procedure SetHRefName String sName
+        Set psHRefname of oReport To sName
+    End_Procedure // SetHRefName
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetInvhdr_Contactidno String sContactIdno
+        Set piPropmgrIdno        of oLocation_DD to sContactIdno
+        Send Rebuild_Constraints of oLocation_DD
+    End_Procedure
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetInvhdr_JobNumber String sStart String sStop
+        Set pnStartJobNumber of oInvhdr_DD to sStart
+        Set pnStopJobNumber  of oInvhdr_DD to sStop
+    End_Procedure // SetInvhdr_JobNumber
+
+    { Published=True }
+    { Description="Sets the reports selection criteria" }
+    Procedure SetInvhdr_Invoicedate String sStart String sStop
+        Set pdStartInvoiceDate of oInvhdr_DD To sStart
+        Set pdStopInvoiceDate  of oInvhdr_DD To sStop
+    End_Procedure // SetInvhdr_Invoicedate
+
+    { Published=True }
+    { Description="Run Report" }
+    Function RunInvoiceHistoryReport Integer iIndex String sStartRowId Integer iMaxCount Returns String
+        RowId  riStartRowId riEndRowId
+        String sEndRowId
+
+        If (piPropmgrIdno(oLocation_DD) = 0) Begin
+            Function_Return sEndRowId
+        End
+
+        Move (DeserializeRowId(sStartRowId)) to riStartRowId
+        Get RunInvoiceHistoryReport of oReport iIndex riStartRowId iMaxCount To riEndRowId
+        Move (SerializeRowId(riEndRowId)) to sEndRowId
+
+        Function_Return sEndRowId
+    End_Function // RunInvoiceHistoryReport
+
+    Set pbAllowSaveNew To False
+    Set pbAllowSaveEdit To False
+    Set pbAllowDelete To False
+
+End_Object // oInvoiceHistoryReport

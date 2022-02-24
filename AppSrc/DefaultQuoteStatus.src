@@ -1,0 +1,36 @@
+Use GlobalAllEnt.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Quotehdr
+
+Procedure DoDefaultQuoteStatus
+    Boolean bCancel
+    //
+    Get Confirm "Set default quote status?" to bCancel
+    If (bCancel) Procedure_Return
+    //
+    Find ge Quotehdr.Recnum
+    While (Found)
+        If (Quotehdr.Status = "") Begin
+            Reread
+            If (Quotehdr.JobNumber <> 0) Begin
+                Move "W" to Quotehdr.Status
+            End
+            Else Begin
+                Move "P" to Quotehdr.Status
+            End
+            SaveRecord Quotehdr
+            Unlock
+        End
+        Find gt Quotehdr.Recnum
+    Loop
+End_Procedure
+
+Send DoDefaultQuoteStatus

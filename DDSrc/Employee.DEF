@@ -1,0 +1,95 @@
+-----------------------------------------------------------------------------
+  DATE: 05/10/2018      TIME: 07:26                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Employee (# 1)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Employee
+  USER DISPLAY NAME         : Employee
+  DATAFLEX FILE NAME        : Employee
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 554       ( USED: 554 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 3420 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  EmployeeIdno     NUM    8.0     1  1   
+  2  LastName         ASC     30    12  2   
+  3  FirstName        ASC     30    42  5   
+  4  MiddleName       ASC     30    72  2   
+  5  Title            ASC     10   102      
+  6  Suffix           ASC     10   112      
+  7  Address1         ASC     50   122      
+  8  Address2         ASC     50   172      
+  9  City             ASC     35   222      
+ 10  State            ASC      2   257      
+ 11  Zip              ASC     10   259      
+ 12  Phone1           ASC     14   269      
+ 13  PhoneType1       ASC      1   283      
+ 14  Phone2           ASC     14   284      
+ 15  PhoneType2       ASC      1   298      
+ 16  EmailAddress     ASC     50   299      
+ 17  EmployerIdno     NUM    8.0   349  8   Employer.FIELD_1 (4,1)
+ 18  PIN              NUM    4.0   360      
+ 19  Status           ASC      1   366      
+ 20  ActiveTrans      NUM    8.0   367      
+ 21  ChangedFlag      NUM    2.0   378  3   
+ 22  ActiveEmpltime   NUM    8.0   384      
+ 23  CallCenterFlag   NUM    2.0   395  4   
+ 24  LoginName        ASC     20   401      
+ 25  Password         ASC     10   421      
+ 26  ManagedBy        NUM    4.0   431      
+ 27  ExcludePayroll   NUM    2.0   442      
+ 28  RecordOwner      NUM    8.0   448      
+ 29  OperatorRate     NUM    4.2   459      
+ 30  CEPM_EmployeeIdno  NUM    8.0   467  6   
+ 31  ClassCode        ASC      8   478      InsClass.FIELD_1 (73,1)
+ 32  ManagedByAlt     NUM    8.0   486      
+ 33  IsManager        NUM    2.0   497      
+ 34  StartDate        DAT     10   503      
+ 35  CallCenterNSIFlag  NUM    2.0   526  7   
+ 36  BillingAccessFlag  NUM    2.0   532      
+ 37  IsSeasonal       NUM    2.0   538  9   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    EmployeeIdno    NO  NO       0      0       1     ON-LINE
+
+  2    LastName        NO  NO       0      0       4     ON-LINE
+       FirstName       NO  NO 
+       MiddleName      NO  NO 
+       EmployeeIdno    NO  NO 
+
+  3    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       EmployeeIdno    NO  NO 
+
+  4    CallCenterFlag  NO  NO       0      0       2     ON-LINE
+       EmployeeIdno    NO  NO 
+
+  5    FirstName       NO  NO       0      0       3     ON-LINE
+       LastName        NO  NO 
+       EmployeeIdno    NO  NO 
+
+  6    CEPM_EmployeeIdno NO  NO       0      0       2     ON-LINE
+       EmployeeIdno    NO  NO 
+
+  7    CallCenterNSIFlag NO  NO       0      0       2     ON-LINE
+       EmployeeIdno    NO  NO 
+
+  8    EmployerIdno    NO  NO       0      0       2     ON-LINE
+       EmployeeIdno    NO  NO 
+
+  9    IsSeasonal      NO  NO       0      0       4     ON-LINE
+       FirstName       NO  NO 
+       LastName        NO  NO 
+       EmployeeIdno    NO  NO 
+

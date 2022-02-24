@@ -1,0 +1,37 @@
+Use GlobalAllEnt.pkg
+//Use Windows.pkg
+//Use cHtmlHelp.pkg
+//Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open Customer
+
+Procedure DoFixCustomer
+    Boolean bCancel
+    Integer iCount
+    //
+    Get Confirm "Fix Customer?" to bCancel
+    If bCancel Procedure_Return
+    //
+    Find ge Customer.Recnum
+    While (Found)
+        If (Customer.Status <> "A") Begin
+            Reread Customer
+            Move "A" to Customer.Status
+            SaveRecord Customer
+            Unlock
+            Increment iCount
+        End
+        Find gt Customer.Recnum
+    Loop
+    Send Info_Box iCount
+End_Procedure
+
+Send DoFixCustomer

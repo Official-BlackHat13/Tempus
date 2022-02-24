@@ -1,0 +1,11 @@
+UserId
+LoginName
+Password
+FirstName
+LastName
+State
+EditRights
+ChangedFlag
+CustContactId
+SalesIdno
+EditLevel

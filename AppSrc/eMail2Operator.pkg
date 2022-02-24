@@ -1,0 +1,866 @@
+//  -------------------------------------------------------------------------
+//  About this program: Email2Operator.pkg
+//  Author: Hendrik A. van Niekerk
+//	Revision 1.0
+//     Date Created:  3/08/2004 11:00AM
+//   Date Completed:  3/12/2004	 9:37AM
+//
+//	Revision: 1.1 Made it more generic and
+//			    removed all the references to Batch stuff.
+//			    HvN 3/31/2004 1:18PM
+//
+//  This pkg provides generic eMail notification to Recipients.
+//
+//  Note: This e-mail package takes as parameters:
+//	DoProcess string sSubject;			    // Subject text
+//		  string sAttPathAndFileName;		// File Attachment (Path and File Name)
+//		  string sAttFileName;			    // File Attachment (File Name only)
+//		 integer iNotFound;			        // If errors;
+//							                //  Not found counter indicates that either:
+//							                //	   i) Recipients initials not found
+//							                //	  ii) No e-Mail address
+//		 boolean bPopUpSendDialog		    // Pop Up a dialog;
+//							                //     (true) - lets the viewer first view
+//							                //		        the e-mail before sending it out.
+//							                //    (false) - will send the e-mail out with
+//							                //		        any intervention.
+//
+//	Three arrays of e-Mail address are catered for;
+//		    i) TO
+//	       ii) CC
+//	      iii) BCC
+//	These arrays need to be populated with e-Mail addresses before scheduling
+//		this process.
+//
+//	Example to add addresses to the TO array;
+//	    send DoAddTOeMailAddresses of oeMailNotify_BP sOperatoreMail iCountItems
+//
+//	Example to add addresses to the CC array;
+//	    send DoAddTOeMailAddresses of oeMailNotify_BP sOperatoreMail iCountItems
+//
+//	Example to add addresses to the BCC array;
+//	    send DoAddTOeMailAddresses of oeMailNotify_BP sOperatoreMail iCountItems
+//
+//	    where:
+//		sOperatorMail = eg. hendrik@LDM.com
+//		iCountItems   = the nth item in the array
+//
+//	ALL Arrays are zero (0) based. So set 'iCountItems' to start at zero (0).
+//
+//	Should there be errors in finding operator names or e-mail address are blank;
+//	 and an e-Mail must be sent to a responsible person, then do the following:
+//
+//	      set psNotifyName		 of oeMailNotify_BP to sDefaultOperatoreMail
+//	      if (iNotFound > 0) begin
+//		   move 0 to iCountItems
+//		   set psNotifyName	      of oeMailNotify_BP to sDefaultOperatoreMail
+//		   send DoAddTOeMailAddresses of oeMailNotify_BP sDefaultOperatoreMail iCountItems
+//		   send DoWriteErrorText    // Procedure DoWriteErrorText in BP_Proc.vw
+//	      end
+//
+//    // Send the queueing Mail message......
+//    send doProcess of oeMailNotify_BP sSubject sPathAndFileName sFileName iCountErrors
+//
+//	Two arrays are also here to cater for:
+//	       i) Body Text Messages - "oMessageBodyTextArray":
+//		        Should you wish to add body text to the e-mail the following needs to be done:
+//		        Note: The array "oMessageBodyTextArray " needs to be seeded as below:
+//           Code <snippet>
+//		     integer iCountItems
+//		     move 0				     to iCountItems
+//		     //first initialize the array - Clears all the arrays
+//		        send DoInitializeArrays of oeMailNotify_BP
+//		     // Repeat the folowing two lines for as many seperate line items you wish in the body message.
+//		        send DoAddMessageTextItems of oeMailNotify_BP ("Test e-Mail line one") iCountItems
+//		        incrrement iCountItems
+//		        send DoAddMessageTextItems of oeMailNotify_BP ("Test e-Mail line two") iCountItems
+//		        incrrement iCountItems
+//		     etc.
+//
+//	      ii) Body text for error message text - " oErrorMessageTextArray":
+//		  The same applies here (as above) for error message text.
+//		  If an operator is not found or an e-Mail address is blank;
+//		   it is the responsibility of the developer to fill the "oErrorMessageTextArray"
+//		   with the desired Error Message and the  "oTO_NotifyList" array with the responsible
+//		   person's e-Mail address for notification.
+//
+//		    e.g. of the output of this file could be:
+//			Operator or eMail address not found in OPERATOR file
+//			     03/12/2004 09:11:45 SYS 0
+//			     BatchJob.Notify_YN: Y...
+//			     BatchJob.Notify_List: HVN, XYZ, EDI, PER, _AS, _IS, AB1												   ...
+//			     Batch: 38076 HelloWorld
+//		         etc.....
+//
+//  Example, below, to set up the call.
+// The last parameter is/can be used for changing some logic flow
+// in this case the type "HUNG"
+//        Procedure DoSendTheMail String sType Boolean bFound
+// 
+//            Integer iCountErrors iCountItems iPosition
+//            Integer iRunningQueue
+//            Integer iBatPulse
+//            Number  nComplete_Time
+//            String  seMail  sNotifyList sSubject
+//            String  sDefaultOperator sDefaultOperatoreMail
+//            String  sOperatoreMail sOperatorInitials
+//            String  sSessionUser sSessionUsereMail
+//            String  sRunningGroup sRunningQName
+//            String  sPathAndFileName sFileName
+//            Handle  hoBatchQueDD
+// 
+//            Move 0                                          to iCountItems
+//            Move BatchQue_DD                                to hoBatchQueDD
+//            // Initialize the arrays of the eMail2Operator.pkg
+//            Send DoInitializeArrays of oeMailNotify_BP
+// 
+//            Get Session_user                                to sSessionUser
+//            Get psRunningGroup      of hoBatchQueDD         to sRunningGroup
+//            Get psRunningQueue      of hoBatchQueDD         to iRunningQueue
+//            Get psRunningQName      of hoBatchQueDD         to sRunningQName
+// 
+//            // Get the default Operator Initials
+//            Move (GetStdValue('BAT_CODES', 'BATOPR'))       to sDefaultOperator
+//            If (sDefaultOperator = "" ) ;
+//               Move BatchQue.Notify                         to sDefaultOperator
+//            If (sDefaultOperator = "" ) ;
+//               Get psNotifyName of BatchQue_DD              to sDefaultOperator
+//            If (sDefaultOperator = "" ) ; // We have serious problems here - No one to report to!
+//                Procedure_Return
+//            // Get the e-Mail address if no errors
+//            // get e-Mail address of the operator      (true)=e-Mail address (false)="FindErr"
+//            Move (fFindOperatorInitials_eMail(sDefaultOperator)) to sDefaultOperatoreMail
+//            // get e-Mail address of the session User  (true)=e-Mail address (false)="FindErr"
+//            Move (fFindOperatorInitials_eMail(sSessionUser))     to sSessionUsereMail
+// 
+//            pCase sType
+//                of "ORPHAN"
+//                    If (sDefaultOperatoreMail <> "FindErr") Begin
+//                        Move  ('Batch Number: ' * (String(BatchJob.Batch)) * ',' * BatchJob.Batch_Title - '... Is Orphaned.') to sSubject
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                              ("Orphaned Batch Number: "+ String(BatchJob.Batch)) iCountItems
+//                        Increment iCountItems
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                              ('From: Batch Queue ' * sRunningGroup * (String(iRunningQueue)) * ', ' * sRunningQName) iCountItems
+//                        Increment iCountItems
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                              ('Batch Number ' * (String(BatchJob.Batch)) * ',' * BatchJob.Batch_Title) iCountItems
+//                        Increment iCountItems
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                              (' cannot be run because the Trigger Batch Record, ' * (String(BatchJob.Wait_For_Batch)) * 'cannot be found...') iCountItems
+//                        Increment iCountItems
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                              ('.............End of Notification..........') iCountItems
+//                        Move 0 to iCountItems
+//                        Send DoAddTOeMailAddresses  of oeMailNotify_BP sDefaultOperatoreMail iCountItems
+//                    End
+//                    Else Begin
+//                            Move 0 to iCountItems
+//                            Increment iCountErrors
+//                            Set psNotifyName            of oeMailNotify_BP to sDefaultOperatoreMail
+//                            Send DoAddTOeMailAddresses  of oeMailNotify_BP sDefaultOperatoreMail iCountItems
+//                            Send DoWriteErrorText
+//                    End
+//                of "TEST"
+//                    If (sSessionUsereMail <> "FindErr") Begin
+//                       Move ("eMail Test from" * sRunningGroup * (String(iRunningQueue)) * sRunningQName) to sSubject
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                              ("Test e-Mail by " * BatchQue.Notify * "at" * (DtsCurTime())) iCountItems
+//                        Move 0 to iCountItems
+//                        Send DoAddTOeMailAddresses  of oeMailNotify_BP sSessionUsereMail iCountItems
+//                    End
+//                    Else Begin
+//                         Move 0 to iCountItems
+//                         Increment iCountErrors
+//                         Set psNotifyName           of oeMailNotify_BP to sSessionUsereMail
+//                         Send DoAddTOeMailAddresses of oeMailNotify_BP sSessionUsereMail iCountItems
+//                         Send DoWriteErrorText
+//                    End
+// 
+//                of "HUNG"
+//                    Move ("Batch Queue" * BatchQue.Queue_Group * ',' *;
+//                          String(BatchQue.Queue) * ',' * BatchQue.Q_Name * "is HUNG on Batch number:" * String(BatchJob.Batch)) to sSubject
+//                        Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                             ('Batch Queue ' * (String(iRunningQueue)) * ', ' * sRunningQName) iCountItems
+//                        Increment iCountItems
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ;
+//                             ('     is Hung on Batch Number ' * String(BatchJob.Batch)) iCountItems
+//                        Increment iCountItems
+// 
+//                    If (not(bFound)) Begin
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ;
+//                              ('The BatchJob Batch Record cannot be found') iCountItems
+//                        Increment iCountItems
+//                    End
+//                    If (bFound) Begin
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ;
+//                              (', ' * BatchJob.Batch_Title * ' was launched on: ' * (String(BatchJob.Job_Start_Date)) * ' @ ' * ;
+//                              (String(BatchJob.Job_Start_Time)) * 'by' * BatchJob.Owner)) iCountItems
+//                        Increment iCountItems
+//                        If (BatchQue.Notify GT '') Begin
+//                            Send DoAddMessageTextItems of oeMailNotify_BP ('Notification To:' * sOperatoreMail) iCountItems
+//                            Increment iCountItems
+//                        End
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ('  App_Name:'  * BatchJob.App_Name) iCountItems
+//                        Increment iCountItems
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ('  View_Label:' * BatchJob.View_Label) iCountItems
+//                        Increment iCountItems
+//                    End // [Found]
+//                    // Gets BatPulse from CodeMast...
+//                    Move (GetStdValue('BAT_CODES', 'BATPULSE'))     to iBatPulse    // Must be in Seconds
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                         ('The running(?) task has not updated the BatPulse for at least' * (String(iBatPulse)) * 'seconds!') iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                         ('This Message is courtesy of ' * sRunningGroup * ', ' * (String(iRunningQueue));
+//                               * ', ' * sRunningQName) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                         ('..........End of Notification..........') iCountItems
+//                    Move 0 to iCountItems
+//                    Increment iCountErrors
+//                    Set psNotifyName of oeMailNotify_BP to sDefaultOperatoreMail
+//                    Send DoAddTOeMailAddresses  of oeMailNotify_BP sDefaultOperatoreMail iCountItems
+// 
+//                of "LOCK"
+//                    Move ("Batch Queue: " * sRunningGroup * (String(iRunningQueue)) * "Lock Anomaly") to sSubject
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ('Lock Problem') iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ('Batch #: ' + String(BatchJob.Batch) * "grabbed by " * sRunningGroup * (String(iRunningQueue)) *;
+//                           "but run by " * BatchJob.Run_Group * (String(BatchJob.Run_Queue))) iCountItems
+//                    Move 0 to iCountItems
+//                    Set psNotifyName            of oeMailNotify_BP to sDefaultOperatoreMail
+//                    Send DoAddTOeMailAddresses  of oeMailNotify_BP sDefaultOperatoreMail iCountItems
+// 
+//                of "COMPLETE"
+//                    Get pnComplete_Time to nComplete_Time
+//                    Move ('Report for Batch' * (String(BatchJob.Batch)) * ', ' * BatchJob.Batch_Title)            to sSubject
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("----------------------Batch Run Completion Report----------------------") iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("     Batch Number:" * (String(BatchJob.Batch)) * BatchJob.Batch_Title) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("        Run Group:" * BatchJob.Run_Group + "," * sRunningQName + " Queue:" * (String(BatchJob.Run_Queue))) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("        Queued by:" * BatchJob.Owner) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("   Program Module:" * BatchJob.Module_Name) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          (" Application Name:" *BatchJob.App_Name) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("       View Label: " * BatchJob.View_Label) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("   Output Routing:" * BatchJob.Routing) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("      Output Path:" * BatchJob.Path) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("    Interval Type:" * (GetStdDesc('INTERVAL', BatchJob.Interval_Type)) * "Days:" * (String(BatchJob.Interval_Days)) * (String(BatchJob.Interval_Time))) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("       Waited For:" * (String(BatchJob.Wait_For_Batch)) * "," * PsuBatJ.Batch_Title) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("-------------------------------Notes-----------------------------------") iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          (BatchJob.Batch_Note) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("") iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          (" Program Runtimes:") iCountItems
+//                    Increment iCountItems
+//                    If BatchJob.Interval_Type IN 'MLI' Begin
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ;
+//                             ("        Scheduled: " * (String((pdBatchJob_Run_Date(Self)))) * (psBatchJob_Run_Time(Self)) * "Next Run:"  * ;
+//                             (String(BatchJob.Run_Date)) * (String(BatchJob.Run_Time))) iCountItems
+//                        Increment iCountItems
+//                    End
+//                    Else Begin
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ;
+//                             ("        Scheduled: " * (String((pdBatchJob_Run_Date(Self)))) * (psBatchJob_Run_Time(Self))) iCountItems
+//                        Increment iCountItems
+//                    End
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("          Started: " * (String((pdBatchJob_Job_Start_Date(Self)))) * (psBatchJob_Job_Start_Time(Self)) *  "Last Run:" * (String(BatchJob.Last_Date)) * (Tn2Ts(BatchJob.Last_Time))) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("        Completed: " * (String(DtnDate(nComplete_Time))) * (Dtn2Ts(nComplete_Time))) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("     Elapsed Time: " * (Dtn2Ets(BatchJob.Elapsed_Time)) * (psElapsedTime(Self))) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("  Completion Code: " * BatchJob.Completion_Code) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("       Error Code:" * BatchJob.Error_Code) iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("---------------------------End of Notification-------------------------") iCountItems
+//                    Increment iCountItems
+//                    Send DoAddMessageTextItems  of oeMailNotify_BP ;
+//                          ("") iCountItems
+//                    Increment iCountItems
+//                    If (BatchJob.Notify_YN = "Y");
+//                        Send DoAddMessageTextItems of oeMailNotify_BP ;
+//                              ("      Notify List:" * BatchJob.Notify_List) iCountItems
+// 
+//                    If BatchJob.Device EQ 'FILE:' Begin
+//                        Move (BatchJob.Routing)                     to sFileName
+//                        Move (BatchJob.Path-BatchJob.Routing)       to sPathAndFileName
+//                    End
+//                    If BatchJob.Device EQ 'SPOOL:' ;
+//                        Move (BatchJob.Path)                        to sFileName
+//                    // Parse the notify string into individual array elements.
+//                    Move BatchJob.Notify_List                       to sNotifyList
+//                    Move 0                                          to iCountItems
+//                    Repeat
+//                        If (pos(",", sNotifyList)) Begin
+//                            Move (pos(",", sNotifyList))            to iPosition
+//                            Move (left(sNotifyList, (iPosition-1))) to sOperatorInitials
+//                           // get e-Mail address of the operator      (true)=e-Mail address (false)="FindErr"
+//                           Move (fFindOperatorInitials_eMail(sOperatorInitials)) to sOperatoreMail
+//                           If (sOperatoreMail <> "FindErr") Begin
+//                               Send DoAddTOeMailAddresses of oeMailNotify_BP sOperatoreMail iCountItems
+//                               Increment iCountItems
+//                           End
+//                           Else ;
+//                                Increment iCountErrors
+//                           Move (lTrim(mid(sNotifyList,(length(sNotifyList)),(iPosition+1)))) to sNotifylist
+//                        End
+//                    Until ((pos(",", sNotifyList)) = 0)
+//                    // Now do the last one or if there is only one initial
+//                    // get e-Mail address of the operator      (true)=e-Mail address (false)="FindErr"
+//                    Move (fFindOperatorInitials_eMail(sNotifyList)) to sOperatoreMail
+//                    If (sOperatoreMail <> "FindErr") Begin
+//                       Send DoAddTOeMailAddresses of oeMailNotify_BP sOperatoreMail iCountItems
+//                       Increment iCountItems
+//                    End
+//                    Else ;
+//                        Increment iCountErrors
+//                    // Did we have find errors.
+//                    If (iCountErrors > 0) Begin
+//                         Move 0 to iCountItems
+//                         Set psNotifyName           of oeMailNotify_BP to sDefaultOperatoreMail
+//                         Send DoAddCCeMailAddresses of oeMailNotify_BP sDefaultOperatoreMail iCountItems
+//                         Send DoWriteErrorText
+//                    End
+//            endCase
+//            // Send the queueing operator a Mail message......and do not popup the view e-mail dialog (false).
+//            Send doProcess of oeMailNotify_BP sSubject sPathAndFileName sFileName iCountErrors (False)
+// 
+//        End_Procedure // DoSendTheMail
+//
+//        // We had some find errors so write this text to the Error Message array
+//        Procedure DoWriteErrorText
+//            Integer iCountItems
+//            String  sRunningGroup sRunningQName
+//            Integer iRunningQueue
+//            Handle  hoBatchQueDD
+// 
+//            Move 0                                       to iCountItems
+//            Move BatchQue_DD                             to hoBatchQueDD
+//            Get psRunningGroup      of hoBatchQueDD      to sRunningGroup
+//            Get psRunningQueue      of hoBatchQueDD      to iRunningQueue
+//            Get psRunningQName      of hoBatchQueDD      to sRunningQName
+// 
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                  ("-----------------------Start of Error Notification---------------------") iCountItems
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                  ((String(DtsCurTime())) * (String(sRunningGroup)) * (String(iRunningQueue))) iCountItems
+//            Increment iCountItems
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                  ("Either the recipient initials were not found in the 'Operator' file or;") iCountItems
+//            Increment iCountItems
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                 ("no eMail address for this operator...") iCountItems
+//            Increment iCountItems
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                  ("Notify List: " + BatchJob.Notify_List) iCountItems
+//            Increment iCountItems
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                  ("Batch: " + (String(BatchJob.Batch)) * BatchJob.Batch_Title) iCountItems
+//            Send DoAddMessageErrorTextItems of oeMailNotify_BP ;
+//                  ("-----------------------End of Error Notification-----------------------") iCountItems
+//        End_Procedure // DoWriteErrorText
+
+// It will then send an e-Mail to the e-Mail addresses in the respective Arrays..
+//
+// NB: At this point in time nothing is done with the System MAPI LogErrors
+//	they are however returned to the routine.
+//	The message are contained in:  sLogonErr sSendMailErr sLogOffErr sOSErr
+//	pbReportErrors default is False
+//  -------------------------------------------------------------------------
+Function fAdd2eMailArray Global;
+	    String s_Text;
+	    Integer i_ItemNumber;
+	    String s_Array;
+		Returns Integer
+
+    pCase s_Array
+	    of "To"
+	        Send DoAddTOeMailAddresses		of oeMailNotify_BP s_Text i_ItemNumber
+	    of "CC"
+	        Send DoAddCCeMailAddresses		of oeMailNotify_BP s_Text i_ItemNumber
+	    of "BCC"
+	        Send DoAddBCCeMailAddresses		of oeMailNotify_BP s_Text i_ItemNumber
+	    of "Msg"
+	        Send DoAddMessageTextItems		of oeMailNotify_BP s_Text i_ItemNumber
+	    of "Err"
+	        Send DoAddMessageErrorTextItems	of oeMailNotify_BP s_Text i_ItemNumber
+	Otherwise
+	    Send Stop_Box ("Attempt to add to an Unknown eMail array: " + s_Array)
+    EndCase    
+    // hoop snake code....
+    Increment i_ItemNumber		    // bite tail here
+    Function_Return i_ItemNumber	//  roll on....    
+End_Function // fAdd2eMailArray Global
+
+//  get e-Mail addresses from the operator file	- Use Initials
+//   this is the one in Email2Operator.pkg
+#IFDEF GET_FFINDOPERATORINITIALS_EMAIL
+#ELSE
+    Function fFindOperatorInitials_eMail Global;
+    	String sRecipient;
+    		Returns String
+    
+        String sValue
+    
+        Open Operator
+        Clear Operator
+        Move sRecipient			to Operator.Initials
+        Find eq Operator by Index.2	    // Initials
+        If (Found and sRecipient = (trim(Operator.Initials))) Begin
+    	Move (trim(Operator.e_Mail))	to sValue
+    	If (sValue = "");
+    	    Move "FindErr"		to sValue
+        End
+        Else;
+    	Move "FindErr"			to sValue
+        Function_Return sValue
+    End_Function
+#ENDIF
+
+//  get e-Mail addresses from the operator file	- Use Initials
+//   this is the one in Email2Operator.pkg
+#IFDEF GET_FFINDOPERATORRECORD_EMAIL
+#ELSE
+    Function fFindOperatorRecord_eMail Global;
+    	String sRecipient;
+    		Returns Integer
+    
+        Integer iOperatorRecord
+        RowID   riOperator
+    
+        Open Operator
+        Clear Operator
+        Move sRecipient			to Operator.Initials
+        Find EQ Operator by Index.2	    // Initials
+        If (Found and sRecipient = (trim(Operator.Initials))) Begin
+    	//move Operator.Recnum		to iOperatorRecord
+    	Move (GetRowID(Operator.File_Number))		to riOperator
+        End
+        Else Begin
+    	Move 0						to riOperator
+        End
+        Function_Return riOperator
+    End_Function
+#ENDIF
+
+Object oMapiSession2 is a cMapiHandler
+End_Object // oMapiSession
+
+Object oeMailNotify_BP is a cWsBusinessProcess
+
+    // Properties
+    Property String  psNotifyName		    Public ''
+    Property String  psSubject			    Public ''
+    Property string  psAttPathAndFileName	Public ''
+    Property String  psAttFileName		    Public ''
+    Property Integer piNotFound			    Public 0		
+    Property boolean pbPopupSendDialog		Public 0
+    Property boolean pbDoErrorReport		Public 0
+
+    // If there are operators to notify then Keep the Initials here
+    Object oTO_NotifyList is an Array
+    End_Object
+
+    // If there are operators to notify then Keep the Initials here
+    Object oCC_NotifyList is an Array
+    End_Object
+
+    // If there are operators to notify then Keep the Initials here
+    Object oBCC_NotifyList is an Array
+    End_Object
+
+    // This array contains the body message text; built up from write lines.
+    Object oMessageBodyTextArray is an Array
+    End_Object
+
+    // This array contains the body error message text; built up from write lines.
+    Object oErrorMessageTextArray is an Array
+    End_Object
+
+    // this array saves the oErrorMessageTextArray so we can send it as body text
+    //	in a followup pass, see variant Procedure fSendMail down at the bottom.
+    Object oArraySavedErrorMessageText is an Array
+    End_Object
+
+    Function fMapiLogonError Integer iErr returns string
+	pCase iErr
+	    Of 1
+		Function_Return "The user canceled the logon dialog box. No session handle was returned."
+	    Of 2
+		Function_Return "The flFlags parameter is invalid or one or more unspecified errors occurred."
+	    Of 3
+		Function_Return "There was no default logon, and the user failed to log on successfully when the logon dialog box was displayed. No session Handle was returned."
+	    Of 5
+		Function_Return "There was insufficient memory to proceed. The session was not terminated."
+	    Of 8
+		Function_Return "The user had too many sessions open simultaneously. No session handle was returned."
+	    Otherwise
+		Function_Return ("Unknown Mapi Logon Error.  " + '(' + string(iErr) + ')')
+	EndCase
+    End_Function
+
+    Function fMapiSendMailError Integer iErr Returns String
+	pCase iErr
+	    Of 1
+		Function_Return "The user canceled one of the dialog boxes. No message was sent."
+	    Of 2
+		Function_Return "One or more unspecified errors occurred. No message was sent."
+	    Of 3
+		Function_Return "There was no default logon, and the user failed to log on successfully when the logon dialog box was displayed. No message was sent."
+	    Of 5
+		Function_Return "There was insufficient memory to proceed. No message was sent."
+	    Of 9
+		Function_Return "There were too many file attachments. No message was sent."
+	    Of 10
+		Function_Return "There were too many recipients. No message was sent."
+	    Of 11
+		Function_Return "The specified attachment was not found. No message was sent."
+	    Of 12
+		Function_Return "The specified attachment could not be opened. No message was sent."
+	    Otherwise
+		Function_Return ("Unknown Mapi Logoff Error.  " + '(' + string(iErr) + ')')
+	EndCase
+    End_Function
+
+    Function fMapiLogOffError Integer iErr Returns String
+	pCase iErr
+	    Of 2
+		Function_Return "The flFlags parameter is invalid or one or more unspecified errors occurred."
+	    Of 5
+		Function_Return "There was insufficient memory to proceed. The session was not terminated."
+	    Of 19
+		Function_Return "An invalid session handle was used for the lhSession parameter. The session was not terminated."
+	    Otherwise
+		Function_Return ("Unknown Mapi Logoff Error.  " + '(' + string(iErr) + ')')
+	EndCase
+    End_Function
+
+    Procedure OnProcess
+	    String	sMailPath sMailTo
+	    String	sSubject sLineItemText sMessageText sCRLF
+	    String	sNotifyList sRecipient
+	    String	sAttFilePath sAttFileName
+	    String	sErrMessageText
+	    String	sRunningGroup
+	    Integer iNotFound iOldArgSize
+	    Integer iRunningQueue iCurrentChannel
+	    Integer iCountTOReceivers  iCountCCReceivers  iCountBCCReceivers
+	    Integer iTO_CountAddresses iCC_CountAddresses iBCC_CountAddresses
+	    Integer iRetVal iLoop iArrayItems iPosition
+	    String	sOSName sKey sProfile sDefaultProfile
+	    String	sLogonErr sSendMailErr sLogOffErr sOSErr
+	    Boolean bPopupSendDialog
+	    Handle	hoMAPI
+        
+	    Move (oMapiSession2(Self))					                                                to hoMAPI
+	    Get psSubject						                                                        to sSubject
+	    Get psAttPathAndFileName				                                                    to sAttFilePath
+	    Get psAttFileName					                                                        to sAttFileName
+	    Get piNotFound						                                                        to iNotFound
+	    Get pbPopupSendDialog					                                                    to bPopupSendDialog
+	    Move ((Character(13)) + (Character(10)))	                                                to sCRLF
+        
+	    // Send mail
+	    If (hoMAPI > 0) Begin
+	        // Find what O/S we are using and set the registry key To get the DefaultProfile.
+	        Move (SysConf(sysconf_os_short_name))		                                            to sOSName
+	        PCase sOSName
+	    	of 'WIN32'
+	    	    Move 'Microsoft\Windows NT\CurrentVersion\Windows Messaging Subsystem\'             to sKey
+	    	of 'WIN95'                                                                              
+	    	    Move 'Microsoft\Windows MessagingSubsystem\'   							            to sKey
+	    	Otherwise                                                                               
+	    	    Move "Unidentified Operating System. Can't log onto messaging."			            to sOSErr
+	    	    Procedure_Return
+	        EndCase
+	        Get_Argument_Size					                                                    to iOldArgSize
+	        Set_Argument_Size (iOldArgSize max 32000)
+	        //Get the DefaultProfile and set the registry root.
+	        Set_Registry_Root					                                                    to HKEY_CURRENT_USER 'Software'
+	        Get_Foreign_Profile_String sKey 'Profiles' 'DefaultProfile'   							to sDefaultProfile
+	        Send DoInit						                                                        to hoMapi
+	        Set psMessageSubject    of hoMapi	                                                    to sSubject
+        
+	        // Arrays now contain the eMail addresses.
+	        // We can now add all the recipients e-Mail addresses to the e-Mail
+	        Get Item_Count          of oTO_NotifyList				                                to iTO_CountAddresses
+	        If (iTO_CountAddresses > 0) Begin
+	    	// From the array just created get the Initials one by one...
+	    	For iLoop from 0 to (iTO_CountAddresses-1)
+	    	    Get Value           of (oTO_NotifyList(Self)) item iLoop	                        to sRecipient
+	    	    Move (trim(sRecipient))				                                                to sRecipient
+	    	    // Add the e-Mail address if no errors
+	    	    If (sRecipient <> '') Begin
+	    		Send DoAddReceiver	of hoMapi MAPI_TO sRecipient '' '' 0
+	    		Increment iCountTOReceivers
+	    	    End
+	    	Loop
+	        End        
+	        Get Item_Count          of oCC_NotifyList		                                        to iCC_CountAddresses
+	        If (iCC_CountAddresses > 0) Begin
+	    	    // From the array just created get the Initials one by one...
+	    	    For iLoop from 0 to (iCC_CountAddresses-1)
+	    	        Get Value           of (oCC_NotifyList(Self)) item iLoop	                    to sRecipient
+	    	        Move (trim(sRecipient))				                                            to sRecipient
+	    	        // Add the e-Mail address if no errors
+	    	        If (sRecipient <> '') Begin
+	    		        Send DoAddReceiver	of hoMapi MAPI_CC sRecipient '' '' 0
+	    		        Increment iCountCCReceivers
+	    	        End
+	    	    Loop
+	        End        
+	        Get Item_Count          of oTO_NotifyList				                                to iBCC_CountAddresses
+	        If (iBCC_CountAddresses > 0) Begin
+	    	    // From the array just created get the Initials one by one...
+	    	    For iLoop from 0 to (iBCC_CountAddresses-1)
+	    	        Get Value       of (oBCC_NotifyList(Self)) item iLoop	                        to sRecipient
+	    	        Move (trim(sRecipient))				                                            to sRecipient
+	    	        // Add the e-Mail address if no errors
+	    	        If (sRecipient <> '') Begin
+	    	    	    Send DoAddReceiver	of hoMapi MAPI_BCC sRecipient '' '' 0
+	    	    	    Increment iCountBCCReceivers
+	    	        End
+	    	    Loop
+	        End        
+	        // Is there Message body text?
+	        Get Item_Count      of oMessageBodyTextArray			                                to iArrayItems
+	        If (iArrayItems > 0) Begin                                                              
+	    	    Move ""							                                                    to sMessageText
+	    	    For iLoop from 0 to (iArrayItems-1)
+	    	        Get Value   of (oMessageBodyTextArray(Self)) item iLoop                         to sLineItemText
+	    	        Move (Append(sMessageText, (Append(sCRLF, sLineItemText))))                     to sMessageText
+	    	    Loop
+	    	    Set psMessageText of hoMapi				                                            to sMessageText
+	        End
+        
+	        If (iCountTOReceivers  > 0 or;
+	    	    iCountCCReceivers  > 0 or;
+	    	    iCountBCCReceivers > 0) Begin                
+	    	    // Are there attachments?
+	    	    // Reports output from a BatchJob run - Defined by user
+	    	    If (sAttFilePath <> "" and sAttFileName <> "");
+	    	        Send DoAddAttachment of hoMapi sAttFilePath sAttFileName                
+	    	    // Login with O/S Default Messaging Subsystem Profile
+	    	    Get Logon of hoMapi sDefaultProfile '' '' 0		                                    to iRetval
+	    	    If iRetVal Begin
+	    	        // Contains the error - its not shown at this point.
+	    	        Move (fMapiLogonError(Self, iRetVal))		                                    to sLogonErr                 
+	    	        Send info_box sLogonErr                
+	    	        Procedure_Return
+	    	    End                
+	    	    // Login with O/S default messaging subsystem profile...
+	    	    Get Logon of hoMapi '' '' 0				to iRetVal
+	    	    If (iRetVal <> SUCCESS_SUCCESS) Begin
+	    	        Get Logon of hoMapi '' '' (MAPI_NEW_SESSION ior MAPI_LOGON_UI)                  to iRetVal
+	    	        If (iRetVal <> SUCCESS_SUCCESS) Begin
+	    	    	    If (bPopupSendDialog);
+	    	    	        Get SendMail of hoMapi MAPI_DIALOG DfTrue	                            to iRetVal
+	    	    	    Else;                                                                       
+	    	    	        Get SendMail of hoMapi MAPI_LOGON_UI DfTrue	                            to iRetVal
+	    	    	    Move (fMAPISendMailError(Self, iRetVal))		                            to sSendMailErr
+	    	    	    Send info_box sSendMailErr
+	    	        End
+	    	    End	// MAPI_DIALOG - will popup a dialog before e-mail is sent
+	    	    Else;
+	    	        If (bPopupSendDialog);
+	    	    	    Get SendMail of hoMapi MAPI_DIALOG DfTrue	                                to iRetVal
+	    	        Else;                                                                           
+	    	    	    Get SendMail of hoMapi MAPI_LOGON_UI DfTrue	                                to iRetVal                
+	    	        If (phSessionId(hoMapi) <> 0);                                                  
+	    	            Get Logoff of hoMapi					                                    to iRetVal
+	        End // Send to receivers        
+	        // Do we have errors
+	        If (iNotFound > 0) Begin
+	    	    // Initialize the MAPI arrays again; we only want to send to one person here.
+	    	    Send DoInit	of hoMapi
+	    	    Set psMessageSubject of hoMapi				                                        to "Error report"
+	    	    // Copy of Reports output from a BatchJob run - Defined by user
+	    	    If (sAttFilePath <> "" and sAttFileName <> "");
+	    	        Send DoAddAttachment of hoMapi sAttFilePath sAttFileName
+	    	    // Go find the responsible person
+	    	    Get psNotifyName						                                            to sRecipient
+	    	    // Send to the responsible person for correction.
+	    	    Send DoAddReceiver	of hoMapi MAPI_TO sRecipient '' '' 0                
+	    	    // Build the Error text
+	    	    Get Item_Count of oErrorMessageTextArray		                                    to iArrayItems
+	    	    If (iArrayItems > 0) Begin
+	    	        Move ""						                                                    to sErrMessageText
+	    	        For iLoop from 0 to (iArrayItems-1)
+	    	    	    Get Value of (oErrorMessageTextArray(Self)) item iLoop                      to sLineItemText
+	    	    	    Move (Append(sErrMessageText, (Append(sCRLF, sLineItemText))))              to sErrMessageText
+	    	        Loop
+	    	        // Add the message sent out to notify list
+	    	        Move (Append(sErrMessageText, (Append(sCRLF, sMessageText))))                   to sErrMessageText
+	    	        Set psMessageText of hoMapi			                                            to sErrMessageText
+	    	    End
+	    	    // Login with O/S default messaging subsystem profile...
+	    	    Get Logon of hoMapi '' '' 0				                                            to iRetVal
+	    	    If (iRetVal <> SUCCESS_SUCCESS) Begin
+	    	        Get Logon of hoMapi '' '' (MAPI_NEW_SESSION ior MAPI_LOGON_UI)                  to iRetVal
+	    	        If (iRetVal <> SUCCESS_SUCCESS) Begin
+	    	    	    If (bPopupSendDialog);
+	    	    	        Get SendMail of hoMapi MAPI_DIALOG DfTrue	                            to iRetVal
+	    	    	    Else;                                                                       
+	    	    	        Get SendMail of hoMapi MAPI_LOGON_UI DfTrue	                            to iRetVal
+	    	    	    Move (fMAPISendMailError(Self, iRetVal))		                            to sSendMailErr
+	    	        End
+	    	    End
+	    	    Else;
+	    	        If (bPopupSendDialog);
+	    	    	    Get SendMail of hoMapi MAPI_DIALOG DfTrue	                                to iRetVal
+	    	        Else;                                                                           
+	    	    	    Get SendMail of hoMapi MAPI_LOGON_UI DfTrue	                                to iRetVal                
+	    	    If (phSessionId(hoMapi) <> 0);
+	    	        Get Logoff of hoMapi					                                        to iRetVal
+	        End	 // Error Process
+	    End // if (hoMAPI > 0)
+    End_Procedure  // OnProcess
+
+    // Add user e-mail addresses to the TO Array
+    Procedure DoAddTOeMailAddresses string seMailAddress integer iItemNumber
+	Set Value of oTO_NotifyList item iItemNumber to seMailAddress
+    end_Procedure
+
+    // Add user e-mail addresses to the CC Array
+    Procedure DoAddCCeMailAddresses string seMailAddress integer iItemNumber
+	    Set Value of oCC_NotifyList item iItemNumber                                                to seMailAddress
+    end_Procedure
+
+    // Add user e-mail addresses to the BCC Array
+    Procedure DoAddBCCeMailAddresses string seMailAddress integer iItemNumber
+	    Set Value of oBCC_NotifyList item iItemNumber                                               to seMailAddress
+    end_Procedure
+
+    // Add items to the body text Array
+    Procedure DoAddMessageTextItems string sMessageText integer iItemNumber
+	    Set Value of oMessageBodyTextArray item iItemNumber                                         to sMessageText
+    end_Procedure
+
+    // Add items to the body error text Array
+    Procedure DoAddMessageErrorTextItems string sMessageText integer iItemNumber
+	    Set Value of oErrorMessageTextArray item iItemNumber                                        to sMessageText
+    end_Procedure
+
+    // Zero out the arry
+    Procedure DoInitializeArrays
+	    Send Delete_Data of oTO_NotifyList
+	    Send Delete_Data of oCC_NotifyList
+	    Send Delete_Data of oBCC_NotifyList
+	    Send Delete_Data of oMessageBodyTextArray
+	    Send Delete_Data of oErrorMessageTextArray
+    End_Procedure
+
+    // Start the process
+    Procedure DoProcess string sSubject;
+	    String sAttPathAndFileName;
+		String sAttFileName;
+		Integer iNotFound;
+		Boolean bPopUpSendDialog
+
+	    Set psSubject		                                                                        to sSubject
+	    Set psAttPathAndFileName                                                                    to (trim(sAttPathAndFileName))
+	    Set psAttFileName	                                                                        to (trim(sAttFileName))
+	    Set piNotFound		                                                                        to iNotFound
+	    Set pbPopupSendDialog	                                                                    to bPopUpSendDialog
+        
+	    Forward Send DoProcess
+	    IfNot (pbDoErrorReport(Self)) Begin
+	        // Clean Up
+	        Send DoInitializeArrays
+	    End
+    End_Procedure
+        
+    Procedure fSendMail Global;
+	    String	sSubject;
+	    String	sAttPathAndFileName;
+	    String	sAttFileName;
+	    Integer iNotFound;
+	    Boolean bPopUpSendDialog;
+	    Variant vsErrorCount;
+	    Variant vsErrorText
+	    
+        // Local Variables
+	    Integer iErrorCount
+	    String	sErrorText
+	    Integer iArrayItems
+	    String	sErrMessageText
+	    Integer iLoop
+	    String	sLineItemText
+	    String	sCRLF
+        
+	    Set pbDoErrorReport					                                                        to True
+	    Move ((Character(13)) + (Character(10)))		                                            to sCRLF
+        
+	    Send DoProcess sSubject sAttPAthAndFileName sAttFileName iNotFound bPopUpSendDialog        
+	    // Build the Error text
+	    Get Item_Count of oErrorMessageTextArray		to iArrayItems
+	    If (iArrayItems > 0) Begin
+	        For iLoop from 0 to (iArrayItems-1)
+	    	    Get Value of (oErrorMessageTextArray(Self)) item iLoop 	    						to sLineItemText
+	    	    Move (Append(vsErrorText, (Append(sCRLF, sLineItemText))))    						to vsErrorText
+	    	    Set Value of (oArraySavedErrorMessageText(Self)) item iLoop    						to sLineItemText
+	        Loop
+	    End
+	    Move iArrayItems					                                                        to vsErrorCount        
+	    // Clean Up
+	    Send DoInitializeArrays
+	    Set pbDoErrorReport	                                                                        to False
+    End_Procedure // fSendMail Global
+End_Object    // oEMailNotifyList_BP
+//  ============================== ABSTRACT =================================
+//
+//  About this program: Email2Operator.pkg
+//  Author: Hendrik A. van Niekerk
+//	Revision 1.0
+//     Date Created:  3/08/2004 11:00AM
+//   Date Completed:  3/12/2004	 9:37AM
+//
+//	Revision: 1.1 Made it more generic and
+//			      removed all the references to Batch stuff.
+//			      HvN 3/31/2004 1:18PM
+//
+//  This pkg provides generic eMail notification to Recipients.
+//  ========================== PVCS INFORMATION =============================
+//
+//  Written/Revised By:   $Author:   hendrik  $
+//
+//  $Log:   W:/VDFDev/archives/MC Apps/APPSRC/eMail2Operator.pkg-arc  $
+//  =========================================================================
+
+

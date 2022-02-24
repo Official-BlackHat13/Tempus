@@ -1,0 +1,41 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: EstDtl (# 13)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Estimate_detail
+  USER DISPLAY NAME         : Estimate_Detail
+  DATAFLEX FILE NAME        : EstDtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16449     ( USED: 16449 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  EstDtlIdno       NUM   10.0     1  1   
+  2  EstHeadIdno      NUM   10.0    12  2   EstHead.FIELD_1 (12,1)
+  3  MastOpsIdno      NUM   10.0    23  3   MastOps.FIELD_1 (11,1)
+  4  SellRate         NUM    6.2    34      
+  5  BasisQty         NUM    8.2    44      
+  6  Description      TEX    512    56      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    EstDtlIdno      NO  NO       0      0       1     ON-LINE
+
+  2    EstHeadIdno     NO  NO       0      0       2     ON-LINE
+       EstDtlIdno      NO  NO 
+
+  3    MastOpsIdno     NO  NO       0      0       2     ON-LINE
+       EstDtlIdno      NO  NO 
+

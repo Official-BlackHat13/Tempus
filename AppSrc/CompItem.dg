@@ -1,0 +1,3445 @@
+// CompItem.dg
+
+//AB-StoreTopStart
+// 09-09-02 - added onkey Key_Up_Arrow functionality to class dbVariableForm
+// BC: 07/26/04 cloned logic from Esitemed.sl to allow filtering items per optype
+
+Register_Object oCalculateButton
+
+use ItemDialogClasses.pkg
+use ItemDialog.dg
+//Use cTempusDropDownButton.pkg
+Use cGlblDbForm.pkg
+Use cGlblDbEdit.pkg
+Use cTempusButton.pkg
+Use cGlblDbGroup.pkg
+//Use cGlblDbList.pkg
+Use cGlblDbList.pkg
+Use cGlblDbContainer3d.pkg
+Use cGlblTextBox.pkg
+Use LineEdit.dg
+
+Use DeleteStandards.bp
+
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+use EsitemEd.sl
+#ENDIF // #IFDEF CE_CALC_ESTIMATE
+
+Use DFAllEnt.pkg
+use OpcodeHp.dg
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use Jcoper.dd
+// Order Maintenence
+#IFDEF CE_PRODUCTION
+Use Jcreps.dd
+Use Jccust.dd
+Use Jccrep.dd
+Use Jcorep.dd
+Use Jccntc.dd
+Use Jcprod.dd
+Use Jcjobs.dd
+Use Esjcmp.dd
+Use Esjitm.dd
+#ENDIF // #IFDEF CE_PRODUCTION
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+Use Eshead.dd
+Use Escomp.dd
+Use Esitem.dd
+Use Location.DD
+Use Customer.DD
+Use Contact.DD
+Use SalesRep.DD
+Use cQuotedtlDataDictionary.dd
+#ENDIF // #IFDEF CE_CALC_ESTIMATE
+// component library
+#IFDEF CE_CALC_LIBRARY
+Use Esctyp.dd
+Use Esclib.dd
+Use Eslitm.dd
+#ENDIF // #IFDEF CE_CALC_LIBRARY
+
+Object oComponentItemDialog is a dbModalPanel
+
+    Property Boolean pbActivatingDialog
+    Property Boolean pbCalcFlagMode
+    Property Boolean pbNewComponent
+    Property Boolean pbRefreshLabel
+    Property Integer pbTrigger
+    Property Integer pbCalcLoad
+    //
+    Property Integer pbNeedsCalced
+    Property Integer pbSaving
+    Property Integer pbEditing
+    Property Integer pbClearing
+    //
+    Property Integer pbLocked
+    //
+    Property Integer pbDupeValue
+    Property Number  pnDupeValue
+    //
+    Property Integer phItemDD
+    Property Integer phCompDD
+    Property Integer piShadowColor
+    //
+    Property Integer piFilterSetting   // BC: 07/26/04
+    //
+
+    if      (Jcpars.NoInput_Color = 3) set piShadowColor to clGreen
+    else if (Jcpars.NoInput_Color = 2) set piShadowColor to clActiveCaption
+    else if (Jcpars.NoInput_Color = 1) set piShadowColor to clLtGray
+    else                               set piShadowColor to clGray
+
+    register_function CheckForChanges returns integer
+    //register_function phItemDD        returns integer
+
+    set Locate_Mode     to CENTER_ON_PANEL
+    set Location        to 25 10
+    set Verify_Exit_Msg to GET_CheckForChanges
+
+    Procedure DoSetListDebugMode
+        boolean bCalcFlagMode
+        integer hDD
+        //
+        get phItemDD             to hDD
+        Get pbCalcFlagMode       of hDD to bCalcFlagMode
+        Set pbCalcFlagMode       of hDD to (not(bCalcFlagMode))
+        send Rebuild_Constraints of hDD
+        send Beginning_Of_Data   of oItemList //(oItemList(ComponentContainer(self)))
+    End_Procedure
+    //
+    #IFDEF CE_CALC_NONE
+    // this view used by Scheduling in a read-only mode
+    // this procedure not needed
+    #ELSE
+    On_Key Key_Alt+Key_F2 Send DoToggleDebugMode
+    #ENDIF // #IFDEF CE_CALC_NONE
+
+    On_Key Key_Alt+Key_F3 Send DoSetListDebugMode
+
+    Set Minimize_Icon to False
+    Set Label to "Component Items"
+    Set Size to 308 518
+    Set Location to 2 3
+
+    // common
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    end_object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(self))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to (Jccntr_DD(self))
+        // BC: 07/26/04 to allow filtering items as in Esitemed.sl
+        Procedure OnConstrain
+            integer iFilterSetting
+            //
+            get piFilterSetting to iFilterSetting
+            //
+            if      (iFilterSetting = 1) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "L" or Jcoper.Optype CONTAINS "H")
+            else if (iFilterSetting = 2) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "M")
+            else if (iFilterSetting = 3) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "P" AND Jcoper.Optype <> "PP")
+            else if (iFilterSetting = 4) ;
+                constrain Jcoper AS (Jcoper.Optype = "PP")
+            else if (iFilterSetting = 5) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "1")
+            else if (iFilterSetting = 6) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "2")
+            else if (iFilterSetting = 7) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "3")
+            else if (iFilterSetting = 8) ;
+                constrain Jcoper AS (Jcoper.Optype CONTAINS "4")
+            //
+        end_procedure
+    End_Object    // Jcoper_DD
+
+    // Order Maintenance
+    #IFDEF CE_PRODUCTION
+
+    Object Jcreps_DD is a Jcreps_DataDictionary
+    End_Object    // Jcreps_DD
+
+    Object Jccust_DD is a Jccust_DataDictionary
+        Set DDO_Server to (Jcreps_DD(self))
+    End_Object    // Jccust_DD
+
+    Object Jccrep_DD is a Jccrep_DataDictionary
+    End_Object    // Jccrep_DD
+
+    Object Jcorep_DD is a Jcorep_DataDictionary
+    End_Object    // Jcorep_DD
+
+    Object Jccntc_DD is a Jccntc_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jccrep_DD(self))
+    End_Object    // Jccntc_DD
+
+    Object Jcprod_DD is a Jcprod_DataDictionary
+    End_Object    // Jcprod_DD
+
+    Object Jcjobs_DD is a Jcjobs_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jcprod_DD(self))
+        Set DDO_Server to (Jcorep_DD(self))
+        Set DDO_Server to (Jccntc_DD(self))
+    End_Object    // Jcjobs_DD
+
+    Object Esjcmp_DD is a Esjcmp_DataDictionary
+        set DDO_Server to (Jcjobs_DD(self))
+        set Validate_Foreign_File_State to FALSE
+
+        procedure End_Construct_Object
+            forward send End_Construct_Object
+            //
+            set phCompDD to self
+        end_procedure
+    End_Object    // Esjcmp_DD
+
+    Object Esjitm_DD is a Esjitm_DataDictionary
+
+        //AB-StoreTopStart
+        Set pbCalcFlagMode to True
+        //AB-StoreTopEnd
+
+        Set DDO_Server to (Esjcmp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+        Set Constrain_File to Esjcmp.File_Number
+
+        //AB-StoreStart
+        set pbEditMode to TRUE
+
+        Procedure Attach_Main_File
+        End_Procedure
+
+        procedure OnConstrain
+            if (pbCalcFlagMode(self)) constrain Esjitm as (pos("Z",Jcoper.Calc_flags)=0)
+        end_procedure
+
+        procedure End_Construct_Object
+            forward send End_Construct_Object
+            //
+            set phItemDD to self
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Esjitm_DD
+
+    Set Main_DD to (Esjcmp_DD(self))
+    Set Server to (Esjcmp_DD(self))
+
+    #ENDIF // #IFDEF CE_PRODUCTION
+    // Estimating
+    #IFDEF CE_CALC_ESTIMATE
+    
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object // oSalesTaxGroup_DD
+
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+    End_Object
+
+    Object oMastOps_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oCustomer_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oSalesTaxGroup_DD
+    End_Object // oLocation_DD
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object // oSalesRep_DD
+
+    Object oSnowrep_DD is a cSnowrepDataDictionary
+    End_Object // oSnowrep_DD
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oSnowrep_DD
+        Set DDO_Server to oSalesrep_DD
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oCustomer_DD
+    End_Object
+    
+    Object oQuotehdr_DD is a cQuotehdrDataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+    
+    Object oQuotedtl_DD is a cQuotedtlDataDictionary
+        Set DDO_Server to oMastOps_DD
+        Set Constrain_file to Quotehdr.File_number
+        Set DDO_Server to oQuotehdr_DD
+    End_Object 
+    
+    Object Eshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oLocation_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oSalesRep_DD
+        // this lets you save a new parent DD from within child DD
+        //Set Allow_Foreign_New_Save_State to True
+    End_Object // oEshead_DD
+
+    Object Escomp_DD is a Escomp_DataDictionary
+        Set DDO_Server to Eshead_DD
+
+        //AB-StoreStart
+        procedure End_Construct_Object
+            forward send End_Construct_Object
+            //
+            set phCompDD to self
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Escomp_DD
+
+    Object Esitem_DD is a Esitem_DataDictionary
+
+        Set pbCalcFlagMode to True
+
+        Set DDO_Server to Escomp_DD
+        Set DDO_Server to Jcoper_DD
+        Set Constrain_File to Escomp.File_Number
+
+        Set pbEditMode to True
+
+        Procedure Attach_Main_File
+        End_Procedure
+
+        procedure OnConstrain
+            if (pbCalcFlagMode(self)) constrain Esitem as (pos('Z',Jcoper.Calc_Flags)=0)
+        end_procedure
+
+        procedure End_Construct_Object
+            forward send End_Construct_Object
+            //
+            set phItemDD to self
+        end_procedure
+
+        //AB-StoreEnd
+
+    End_Object    // Esitem_DD
+
+    Set Main_DD to Escomp_DD
+    Set Server to Escomp_DD
+
+    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+    // component library
+    #IFDEF CE_CALC_LIBRARY
+
+    Object Esctyp_DD is a Esctyp_DataDictionary
+    End_Object    // Esctyp_DD
+
+    Object Esclib_DD is a Esclib_DataDictionary
+        Set DDO_Server to (Esctyp_DD(self))
+
+        //AB-StoreStart
+        procedure End_Construct_Object
+            forward send End_Construct_Object
+            //
+            set phCompDD to self
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Esclib_DD
+
+    Object Eslitm_DD is a Eslitm_DataDictionary
+
+        //AB-StoreTopStart
+        Set pbCalcFlagMode to True
+        //AB-StoreTopEnd
+
+        Set DDO_Server to (Esclib_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+        Set Constrain_File to Esclib.File_Number
+
+        //AB-StoreStart
+        set pbEditMode to TRUE
+
+        Procedure Attach_Main_File
+        End_Procedure
+
+        procedure OnConstrain
+            if (pbCalcFlagMode(self)) constrain Eslitm as (pos("Z",Jcoper.Calc_flags)=0)
+        end_procedure
+
+        procedure End_Construct_Object
+            forward send End_Construct_Object
+            //
+            set phItemDD to self
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Eslitm_DD
+
+    Set Main_DD to (Esclib_DD(self))
+    Set Server to (Esclib_DD(self))
+
+    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+    //AB-DDOEnd
+
+    Object ComponentContainer is a cGlblDbContainer3d
+
+        Set Size to 295 509 //258 509 //489 //BC: 07/26/04
+        Set Location to 5 5
+
+        Object Escomp_Component_Id is a cGlblDbForm
+
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjcmp.Component_id
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Escomp.Component_id
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Esclib.Idno
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 33
+            Set Location to 5 5
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+
+            procedure Refresh integer iMode
+                forward send Refresh iMode
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                send EnableCalculate (Esjcmp.Needs_calced = "Y")
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                send EnableCalculate (Escomp.Needs_calced = "Y")
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                send EnableCalculate (Esclib.Needs_calced = "Y")
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+            end_procedure
+            //AB-StoreEnd
+
+        End_Object    // Escomp_Component_Id
+
+        Object Escomp_Description is a cGlblDbForm
+
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjcmp.Description
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Escomp.Description
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Esclib.Description
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 222
+            Set Location to 5 41
+
+            //AB-StoreStart
+            set Enabled_State to FALSE
+            //AB-StoreEnd
+
+        End_Object    // Escomp_Description
+
+        Object oCalcTimeTextBox is a cGlblTextbox
+            //Set TextColor to clRed
+            Set Location to 7 268
+            Set Size to 2 1
+            //Set FontWeight to 1000
+        End_Object    // oCalcTimeTextBox
+
+        Object oItemList is a DbList
+
+            on_key kInsert           send AddStandard
+            on_key kDelete_character send DeleteStandard
+            #IFDEF CE_CALC_ESTIMATE
+            on_key kUser             send DoEditLineNumber
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+
+            Set peDisabledTextColor to clGreen
+
+            Set Move_Value_Out_State to False
+            Set Server to (phItemDD(Self)) //(Esitem_DD(self))
+            #IFDEF CE_CALC_ESTIMATE
+            #ELSE
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            Set Size     to 170 254
+            Set Location to 22 5
+
+            function EditStatus returns string
+                string sStatus sCalcFlags
+                //
+                move "*"                                 to sStatus
+                move Jcoper.Calc_flags                   to sCalcFlags
+                if "@" in sCalcFlags move ""             to sStatus
+                else if "D" in sCalcFlags ;
+                        if not "O" in sCalcFlags move "" to sStatus
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                if (trim(Esjitm.Instruction) <> "") append sStatus "T"
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                if (trim(Esitem.Instruction) <> "") append sStatus "T"
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                if (trim(Eslitm.Instruction) <> "") append sStatus "T"
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                send DisplayTags of VariableGroup
+                function_return sStatus
+            end_function
+
+            procedure Ok
+                if (pbEditing(self)) procedure_return
+                send KeyAction of oEditButton
+            end_procedure
+
+            Begin_Row
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Opcode
+                Entry_Item Esjitm.Line_number
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Opcode
+                Entry_Item Esitem.Line_number
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Opcode
+                Entry_Item Eslitm.Line_number
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Entry_Item Jccntr.Nickname
+                Entry_Item Jcoper.Name
+                Entry_Item (EditStatus(self))
+            End_Row
+
+            Set Form_Width    item 0 to 35 //39
+            Set Header_Label  item 0 to "Std. # "
+
+            Set Form_Width    item 1 to 22 //28
+            Set Header_Label  item 1 to "Line"
+
+            Set Form_Width    item 2 to 55
+            Set Header_Label  item 2 to "Cost Center"
+
+            Set Form_Width    item 3 to 122 //109
+            Set Header_Label  item 3 to "Name"
+
+            Set Form_Width    item 4 to 14
+            Set Header_Label  item 4 to "E"
+
+            //AB-StoreStart
+            Set Header_Justification_Mode item 0 to jMode_right
+            Set Header_Justification_Mode item 1 to jMode_right
+            Set Read_Only_State to True
+            Set pbUseServerOrdering to True
+            Set Auto_Index_State to False
+
+            //Procedure Activate
+            //    integer iRet
+            //    if (Active_State(self)) ;
+            //        send ShadowVariables of VariableGroup
+            //    forward get MSG_Activate to iRet
+            //    procedure_return iRet
+            //End_Procedure
+            Procedure OnSetFocus
+                Send ShadowVariables of VariableGroup
+//BC:12/19/06 tried next line to fix "nit" where var colors don't set blue/yellow for default links
+// on end of edit mode, like they do when up/down navigation occurs
+// this worked, except it had the unwanted side-effect of clearing combo-form values
+//send DisplayTags of VariableGroup
+                //
+                If (not(pbRefreshLabel(Self))) Begin
+                    //BC 9/8 to fix labels on radio buttons not refreshing when switching workspaces
+//                    Send DoSubttlLabels of FilterRadioGroup
+                    Set pbRefreshLabel to True
+                End
+                //
+                If (pbNewComponent(Self) and pbTrigger(Self)) Begin
+                    Set pbNewComponent to False
+//                    Showln "Start"
+                    Send AddStandard
+//                    Showln "Stop"
+                End
+                //
+                If (pbActivatingDialog(Self)) Begin
+//                    Set Auto_Index_State   to True
+                    Set pbActivatingDialog to False
+                End
+            End_Procedure
+
+            procedure Request_Search integer iKeyvalue
+                forward send Request_Search iKeyvalue
+                send DisplayTags of VariableGroup
+            end_procedure
+
+            procedure DoCalculateFromList
+                integer hButton
+                //
+                move oCalculateButton    to hButton
+                set pbLocal   of hButton to FALSE
+                send Activate of hButton
+            end_procedure
+
+            on_key Key_Alt+Key_C send DoCalculateFromList
+
+            procedure DoCalculate
+                #IFDEF CE_CALC_NONE
+                // this view used by Scheduling in a read-only mode
+                // this procedure not needed
+                #ELSE
+                boolean bCanceled bDebug bReadOnly
+                integer hCompDD hItemDD hCompFile iCompRec //hFocus hList
+                string  sCalcTime
+                //
+                if (pbEditing(self)) procedure_return
+                //BC: 01/29/07 impplement readonly security
+                get pbReadOnly of ghoApplication to bReadOnly
+                if bReadOnly Procedure_Return
+                //
+                get phCompDD        to hCompDD
+                get phItemDD        to hItemDD
+                Send Refind_Records of hItemDD
+                if (NOT(Current_Record(hItemDD))) begin
+                    send Stop_Box "No record to calculate."
+                    procedure_return
+                end
+                //
+                //get Focus      to hFocus
+                //showln iWasFocus
+                //move oItemList to hList
+                //showln hList
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                boolean bShipped
+                number  nOldPrice nNewPrice
+                //
+                move (if(Jcpars.Ship_locks_job,(Jcjobs.Shipped <> 0),DFFALSE)) to bShipped
+                if ((Jcjobs.Schedule_flag = 3) OR bShipped OR ;
+                    (Jcjobs.Invoiced<>0) OR pbLocked(self)) procedure_return
+                move Esjcmp.File_number to hCompFile
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                move Escomp.File_number to hCompFile
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                move Esclib.File_number to hCompFile
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+                //
+                move (Current_Record(hCompDD))     to iCompRec
+                set ProcessTitle                   to "Calculation in progress, please wait..."
+                get pbDebug      of ghoApplication to bDebug
+                //BPO-Start
+                get DoCalcEngine of oCalcEngine CE_BATCH DFTRUE bDebug to bCanceled
+                //BPO-Stop
+                get psCalcTime of oCalcEngine      to sCalcTime
+                set Label      of oCalcTimeTextBox to sCalcTime
+                //
+                send EnableCalculate bCanceled
+                // turn off debug mode if on
+                if (bDebug) send DoToggleDebugMode
+                set ProcessTitle to "Component Items"
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                move Jcjobs.Price to nNewPrice
+                if (NOT(bCanceled)) begin
+                    set pbCalcLoad to FALSE
+                    // removed 9/11/2 DW
+                    //send DoMakeJobSchedule of EditScheduleProcess Jcjobs.Idno
+                end
+                get CheckCreditLimit of Jcjobs_DD nOldPrice nNewPrice to bCanceled
+                #ENDIF // #IFDEF CE_PRODUCTION
+                send Refind_Records of hItemDD
+                send Refresh_Page 0
+                send Activate
+                #ENDIF // #IFDEF CE_CALC_NONE
+            end_procedure // DoCalculate
+
+            on_key kCancel         send doRequest_Cancel
+            // used by on_key kcancel because augmenting procedure Request_Cancel doens't execute
+            // when the escape key is pressed and is told to send Request_Cancel !
+            Procedure doRequest_Cancel
+                set pbCalcFlagMode of (phItemDD(self)) to True //hides "Z" flagged items in list
+//                set Current_Radio of FilterRadioGroup to 0
+                forward send Request_Cancel
+            End_Procedure
+            //AB-StoreEnd
+
+        End_Object    // oItemList
+
+        Object oInstructionEdit is a cGlblDbEdit//cComDbSpellText//
+//            Property Boolean pbText
+//            Property Boolean pbChangedText
+//            Property Integer piRecId
+//            Property String  psText
+            
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            Entry_Item Esjitm.Instruction
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Entry_Item Esitem.Instruction
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Entry_Item Eslitm.Instruction
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+            on_key kHelp        send DisplayHelpFile
+            on_key kSave_record send ReturnToItemList
+            on_key kCancel      send Request_Clear
+
+            Set Size to 65 254
+            Set Location             to 195 5
+            set Auto_Clear_Deo_State to FALSE
+            set Server               to (phItemDD(self))
+            Set Enabled_State to False
+
+//            Procedure OnCreate
+//                Forward Send OnCreate
+//                //Set the ActiveX properties here...
+//                Set ComDebugOption to OLEDebug_Actions
+//                Set ComMaxLength   to 2048
+//            End_Procedure
+//        
+//            Procedure Request_Save
+//                Send Next
+//            End_Procedure
+//
+//            Procedure Next
+//                Set pbText to False
+//                Send Activate of oEditButton
+//            End_Procedure
+//    
+//            Procedure OnComChange
+//                String sText
+//                //
+//                If (pbText(Self)) Begin
+//                    Set pbChangedText                                                  to True
+//                    Get ComText                                                        to sText
+//                    Set psText                                                         to sText
+//                End
+//            End_Procedure
+//
+//            Procedure OnComGainedFocus
+//                Set pbText  to True
+//                Set piRecId to (Current_Record(Esitem_DD))
+//            End_Procedure
+//
+//            Procedure OnComDebugEvent String llDebugInfo
+//                Showln llDebugInfo
+//            End_Procedure
+//            
+//            Procedure Exiting Integer iObj Returns Integer
+//                Boolean bChanged
+//                Integer iRetval iRecId
+//                String  sText
+//                //
+//                Forward Get msg_Exiting iObj to iRetval
+//                If (iRetval) Begin
+//                    Procedure_Return iRetval
+//                End
+//                //
+//                Get pbChangedText to bChanged
+//                If (bChanged) Begin
+//                    Send ChangeAllFileModes DF_FILEMODE_READONLY
+//                    Set_Attribute DF_FILE_MODE of Esitem.File_Number to DF_FILEMODE_DEFAULT
+//                    Get piRecId                                        to iRecId
+//                    If (Esitem.Recnum <> iRecId) Begin
+//                        Clear Esitem
+//                        Move iRecId to Esitem.Recnum
+//                        Find eq Esitem.Recnum
+//                    End
+//                    Get psText                                         to sText
+//                    Reread
+//                    Move sText                                         to Esitem.INSTRUCTION
+//                    SaveRecord Esitem
+//                    Unlock
+//                    Send ChangeAllFileModes DF_FILEMODE_DEFAULT
+//                    Set pbChangedText                                  to False
+//                End
+//                //
+//                Procedure_Return iRetval
+//            End_Procedure
+
+            Procedure ShadowText integer bState
+                set Object_Shadow_State to bState
+            End_Procedure
+            
+            Procedure ReturnToItemList
+                set pbSaving  to TRUE
+                send Activate of oItemList
+            End_Procedure
+            Procedure RestorePreviousValue
+                send Display
+                set Changed_State to FALSE
+            End_Procedure
+            Procedure Request_Clear
+                integer hCompDD
+                //
+                get phCompDD to hCompDD
+                set pbSaving to TRUE
+                //
+                send RestorePreviousValue
+                send RestorePreviousValues of VariableGroup
+                //
+                if (NOT(pbNeedsCalced(self))) begin
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    set Field_Changed_Value of hCompDD field Esjcmp.Needs_calced to "N"
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    set Field_Changed_Value of hCompDD field Escomp.Needs_calced to "N"
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    set Field_Changed_Value of hCompDD field Esclib.Needs_calced to "N"
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+                end
+                //
+                send Activate of oItemList
+            End_Procedure
+
+        End_Object // oInstructionEdit
+
+        Object VariableGroup is a cGlblDbGroup
+
+            Set Auto_Clear_Deo_State to False
+            Set Server               to (phItemDD(Self))
+            Set Size     to 150 238 //218
+            Set Location to 19 263
+            
+
+            Object Jcoper_Var1_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var1_tag
+                Set Location to 10 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var1_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var1_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var1_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var1_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var1      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var1_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var1      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var1_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var1      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var1_Tag
+
+
+            procedure DoConfigureValue1 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var1_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var1_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var1_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var1_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var1_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var1_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var1_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue1
+
+            Object VarComboForm1 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 10 166 //146 //156
+                set piVarnum to 1
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue1 self
+                    //
+                    set phComboFormObj of Jcoper_Var1_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm1
+
+            Object VarCheckbox1 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 11 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue1 self
+                    //
+                    set phCheckboxObj of Jcoper_Var1_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox1
+
+            Object VarForm1 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 10 176 // 156
+                set piVarnum to 1
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue1 self
+                    //
+                    set phFormObj of Jcoper_Var1_Tag to self
+                end_procedure
+
+            End_Object    // VarForm1
+
+            Object Jcoper_Var2_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var2_tag
+                Set Location to 25 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var2_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var2_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var2_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var2_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var2      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var2_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var2      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var2_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var2      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var2_Tag
+
+            procedure DoConfigureValue2 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var2_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var2_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var2_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var2_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var2_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var2_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var2_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue2
+
+            Object VarComboForm2 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var2
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var2
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var2
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 25 166 //146 //156
+                set piVarnum to 2
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue2 self
+                    //
+                    set phComboFormObj of Jcoper_Var2_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm2
+
+            Object VarCheckbox2 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var2
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var2
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var2
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 26 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue2 self
+                    //
+                    set phCheckboxObj of Jcoper_Var2_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox2
+
+            Object VarForm2 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var2
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var2
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var2
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 25 176 // 156
+                set piVarnum to 2
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue2 self
+                    //
+                    set phFormObj of Jcoper_Var2_Tag to self
+                end_procedure
+
+            End_Object    // VarForm2
+
+            Object Jcoper_Var3_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var3_tag
+                Set Location to 40 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var3_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var3_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var3_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var3_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var3      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var3_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var3      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var3_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var3      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var3_Tag
+
+            procedure DoConfigureValue3 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var3_tag       to fVarTag
+                Get_FieldNumber Jcoper.Var3_link_code to fLinkCode
+                Get_FieldNumber Jcoper.Var3_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var3_tag_symbl to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var3_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var3_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var3_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag   of hValueObj  to fVarTag
+                set pfLinkCode of hValueObj  to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl of hValueObj  to fTagSymbl
+                set pfVarFlag  of hValueObj  to fVarFlag
+            end_procedure // DoConfigureValue3
+
+            Object VarComboForm3 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var3
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var3
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var3
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 40 166 //146 //156
+                set piVarnum to 3
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue3 self
+                    //
+                    set phComboFormObj of Jcoper_Var3_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm3
+
+            Object VarCheckbox3 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var3
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var3
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var3
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 41 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue3 self
+                    //
+                    set phCheckboxObj of Jcoper_Var3_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox3
+
+            Object VarForm3 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var3
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var3
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var3
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 40 176 // 156
+                set piVarnum to 3
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue3 self
+                    //
+                    set phFormObj of Jcoper_Var3_Tag to self
+                end_procedure
+
+            End_Object    // VarForm3
+
+            Object Jcoper_Var4_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var4_tag
+                Set Location to 55 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var4_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var4_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var4_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var4_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var4      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var4_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var4      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var4_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var4      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode   to fLinkCode
+                    set pfLinkSymbl  to fLinkSymbl
+                    set pfTagSymbl   to fTagSymbl
+                    set pfVarFlag    to fVarFlag
+                    set pfItemField  to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var4_Tag
+
+            procedure DoConfigureValue4 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var4_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var4_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var4_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var4_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var4_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var4_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var4_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue4
+
+            Object VarComboForm4 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var4
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var4
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var4
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 55 166 //146 //156
+                set piVarnum to 4
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue4 self
+                    //
+                    set phComboFormObj of Jcoper_Var4_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm4
+
+            Object VarCheckbox4 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var4
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var4
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var4
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 56 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue4 self
+                    //
+                    set phCheckboxObj of Jcoper_Var4_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox4
+
+            Object VarForm4 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var4
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var4
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var4
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 55 176 // 156
+                set piVarnum to 4
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue4 self
+                    //
+                    set phFormObj of Jcoper_Var4_Tag to self
+                end_procedure
+
+            End_Object    // VarForm4
+
+            Object Jcoper_Var5_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var5_tag
+                Set Location to 70 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var5_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var5_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var5_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var5_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var5      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var5_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var5      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var5_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var5      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode   to fLinkCode
+                    set pfLinkSymbl  to fLinkSymbl
+                    set pfTagSymbl   to fTagSymbl
+                    set pfVarFlag    to fVarFlag
+                    set pfItemField  to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var5_Tag
+
+            procedure DoConfigureValue5 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var5_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var5_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var5_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var5_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var5_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var5_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var5_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue5
+
+            Object VarComboForm5 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var5
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var5
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var5
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 70 166 //146 //156
+                set piVarnum to 5
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue5 self
+                    //
+                    set phComboFormObj of Jcoper_Var5_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm5
+
+            Object VarCheckbox5 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var5
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var5
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var5
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 71 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue5 self
+                    //
+                    set phCheckboxObj of Jcoper_Var5_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox5
+
+            Object VarForm5 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var5
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var5
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var5
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 70 176 // 156
+                set piVarnum to 5
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue5 self
+                    //
+                    set phFormObj of Jcoper_Var5_Tag to self
+                end_procedure
+
+            End_Object    // VarForm5
+
+            Object Jcoper_Var6_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var6_tag
+                Set Location to 85 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var6_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var6_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var6_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var6_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var6      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var6_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var6      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var6_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var6      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var6_Tag
+
+            procedure DoConfigureValue6 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var6_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var6_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var6_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var6_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var6_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var6_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var6_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue6
+
+            Object VarComboForm6 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var6
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var6
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var6
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 85 166 //146 //156
+                set piVarnum to 6
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue6 self
+                    //
+                    set phComboFormObj of Jcoper_Var6_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm6
+
+            Object VarCheckbox6 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var6
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var6
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var6
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 86 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue6 self
+                    //
+                    set phCheckboxObj of Jcoper_Var6_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox6
+
+            Object VarForm6 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var6
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var6
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var6
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 85 176 // 156
+                set piVarnum to 6
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue6 self
+                    //
+                    set phFormObj of Jcoper_Var6_Tag to self
+                end_procedure
+
+            End_Object    // VarForm6
+
+            Object Jcoper_Var7_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var7_tag
+                Set Location to 100 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var7_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var7_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var7_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var7_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var7      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var7_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var7      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var7_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var7      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var7_Tag
+
+            procedure DoConfigureValue7 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var7_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var7_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var7_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var7_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var7_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var7_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var7_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue7
+
+            Object VarComboForm7 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var7
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var7
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var7
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 100 166 //146 //156
+                set piVarnum to 7
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue7 self
+                    //
+                    set phComboFormObj of Jcoper_Var7_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm7
+
+            Object VarCheckbox7 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var7
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var7
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var7
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 101 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue7 self
+                    //
+                    set phCheckboxObj of Jcoper_Var7_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox7
+
+            Object VarForm7 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var7
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var7
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var7
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 100 176 // 156
+                set piVarnum to 7
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue7 self
+                    //
+                    set phFormObj of Jcoper_Var7_Tag to self
+                end_procedure
+
+            End_Object    // VarForm7
+
+            Object Jcoper_Var8_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var8_tag
+                Set Location to 115 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var8_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var8_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var8_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var8_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var8      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var8_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var8      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var8_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var8      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var8_Tag
+
+            procedure DoConfigureValue8 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var8_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var8_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var8_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var8_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var8_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var8_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var8_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue8
+
+            Object VarComboForm8 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var8
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var8
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var8
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 115 166 //146 //156
+                set piVarnum to 8
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue8 self
+                    //
+                    set phComboFormObj of Jcoper_Var8_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm8
+
+            Object VarCheckbox8 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var8
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var8
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var8
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 116 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue8 self
+                    //
+                    set phCheckboxObj of Jcoper_Var8_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox8
+
+            Object VarForm8 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var8
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var8
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var8
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 115 176 // 156
+                set piVarnum to 8
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue8 self
+                    //
+                    set phFormObj of Jcoper_Var8_Tag to self
+                end_procedure
+
+            End_Object    // VarForm8
+
+            Object Jcoper_Var9_Tag is a dbVariableTagForm
+
+                Entry_Item Jcoper.Var9_tag
+                Set Location to 130 5
+
+                procedure End_Construct_Object
+                    integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                    //
+                    forward send End_Construct_Object
+                    //
+                    Get_FieldNumber Jcoper.Var9_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var9_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var9_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var9_flag to fVarFlag
+                    Get_FieldNumber Esjitm.Var9      to fVar
+                    set pfItemFile                   to Esjitm.File_number
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var9_flag to fVarFlag
+                    Get_FieldNumber Esitem.Var9      to fVar
+                    set pfItemFile                   to Esitem.File_number
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var9_flag to fVarFlag
+                    Get_FieldNumber Eslitm.Var9      to fVar
+                    set pfItemFile                   to Eslitm.File_number
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfLinkCode  to fLinkCode
+                    set pfLinkSymbl to fLinkSymbl
+                    set pfTagSymbl  to fTagSymbl
+                    set pfVarFlag   to fVarFlag
+                    set pfItemField to fVar
+                end_procedure
+
+            End_Object    // Jcoper_Var9_Tag
+
+            procedure DoConfigureValue9 integer hValueObj
+                integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                //
+                Get_FieldNumber Jcoper.Var9_tag        to fVarTag
+                Get_FieldNumber Jcoper.Var9_link_code  to fLinkCode
+                Get_FieldNumber Jcoper.Var9_link_symbl to fLinkSymbl
+                Get_FieldNumber Jcoper.Var9_tag_symbl  to fTagSymbl
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Get_FieldNumber Esjitm.Var9_flag to fVarFlag
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Get_FieldNumber Esitem.Var9_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Get_FieldNumber Eslitm.Var9_flag to fVarFlag
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set pfVarTag    of hValueObj to fVarTag
+                set pfLinkCode  of hValueObj to fLinkCode
+                set pfLinkSymbl of hValueObj to fLinkSymbl
+                set pfTagSymbl  of hValueObj to fTagSymbl
+                set pfVarFlag   of hValueObj to fVarFlag
+            end_procedure // DoConfigureValue9
+
+            Object VarComboForm9 is a dbVariableValueComboForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var9
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var9
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var9
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 130 166 //146 //156
+                set piVarnum to 9
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue9 self
+                    //
+                    set phComboFormObj of Jcoper_Var9_Tag to self
+                end_procedure
+
+            End_Object    // VarComboForm9
+
+            Object VarCheckbox9 is a dbVariableValueCheckbox
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var9
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var9
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var9
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Location to 131 176 // 156
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue9 self
+                    //
+                    set phCheckboxObj of Jcoper_Var9_Tag to self
+                end_procedure
+
+            End_Object    // VarCheckbox9
+
+            Object VarForm9 is a dbVariableValueForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Var9
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Var9
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Var9
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                set Location to 130 176 // 156
+                set piVarnum to 9
+
+                procedure End_Construct_Object
+                    forward send End_Construct_Object
+                    //
+                    send DoConfigureValue9 self
+                    //
+                    set phFormObj of Jcoper_Var9_Tag to self
+                end_procedure
+
+            End_Object // VarForm9
+
+            //AB-StoreStart
+            object oVariableTagBroadcaster is a Broadcaster
+                send Add_Element (Jcoper_Var1_Tag(self))
+                send Add_Element (Jcoper_Var2_Tag(self))
+                send Add_Element (Jcoper_Var3_Tag(self))
+                send Add_Element (Jcoper_Var4_Tag(self))
+                send Add_Element (Jcoper_Var5_Tag(self))
+                send Add_Element (Jcoper_Var6_Tag(self))
+                send Add_Element (Jcoper_Var7_Tag(self))
+                send Add_Element (Jcoper_Var8_Tag(self))
+                send Add_Element (Jcoper_Var9_Tag(self))
+            end_object // oVariableTagBroadcaster
+            set Broadcast_State of oVariableTagBroadcaster to TRUE
+
+            object oVariableValueBroadcaster is a Broadcaster
+                send Add_Element (VarForm1(self))
+                send Add_Element (VarForm2(self))
+                send Add_Element (VarForm3(self))
+                send Add_Element (VarForm4(self))
+                send Add_Element (VarForm5(self))
+                send Add_Element (VarForm6(self))
+                send Add_Element (VarForm7(self))
+                send Add_Element (VarForm8(self))
+                send Add_Element (VarForm9(self))
+                send Add_Element (VarCheckbox1(self))
+                send Add_Element (VarCheckbox2(self))
+                send Add_Element (VarCheckbox3(self))
+                send Add_Element (VarCheckbox4(self))
+                send Add_Element (VarCheckbox5(self))
+                send Add_Element (VarCheckbox6(self))
+                send Add_Element (VarCheckbox7(self))
+                send Add_Element (VarCheckbox8(self))
+                send Add_Element (VarCheckbox9(self))
+                send Add_Element (VarComboForm1(self))
+                send Add_Element (VarComboForm2(self))
+                send Add_Element (VarComboForm3(self))
+                send Add_Element (VarComboForm4(self))
+                send Add_Element (VarComboForm5(self))
+                send Add_Element (VarComboForm6(self))
+                send Add_Element (VarComboForm7(self))
+                send Add_Element (VarComboForm8(self))
+                send Add_Element (VarComboForm9(self))
+            end_object // oVariableValueBroadcaster
+            set Broadcast_State of oVariableValueBroadcaster to TRUE
+
+            procedure Request_Clear_All
+                send Exit_Function
+            end_procedure
+
+            Procedure ReturnToItemList
+                set pbSaving  to TRUE
+                send Activate of oItemList
+            End_Procedure
+
+            Procedure Request_Clear
+                set pbSaving   to TRUE
+                set pbClearing to TRUE
+                //send RestorePreviousValue to (oInstructionEdit(self))
+                //send RestorePreviousValues
+                send Activate of oItemList
+            End_Procedure
+
+            Procedure RestorePreviousValues
+                send RestorePreviousValue of oInstructionEdit
+                send RestorePreviousValue of oVariableValueBroadcaster
+            End_Procedure
+
+            Procedure ShadowVariables
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                boolean bShipped
+                #ENDIF // #IFDEF CE_PRODUCTION
+                boolean bState bReadOnly
+                integer hItemDD hCompDD
+                //
+                get phItemDD to hItemDD
+                get phCompDD to hCompDD
+                //BC: 01/29/07 impplement readonly security
+                get pbReadOnly of ghoApplication to bReadOnly
+                //
+                set pbExisting of hItemDD to TRUE
+                //
+                if (NOT(pbSaving(self)) AND NOT(pbClearing(self)) AND Should_Save(self)) begin
+                    set pbSaving   to TRUE
+                    set pbClearing to TRUE
+                end
+                //
+                if (pbClearing(self))                     send RestorePreviousValues
+                if (pbSaving(self) AND Should_Save(self)) send Request_Save
+                //
+                if (pbNeedsCalced(self)=0 AND pbClearing(self)) begin
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    set Field_Changed_Value of hCompDD field Esjcmp.Needs_calced to "N"
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    set Field_Changed_Value of hCompDD field Escomp.Needs_calced to "N"
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    set Field_Changed_Value of hCompDD field Esclib.Needs_calced to "N"
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+                    send Request_Save of hCompDD
+                end
+                //
+                send ShadowVariable of oVariableValueBroadcaster
+                send ShadowText     of oInstructionEdit TRUE
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                move (NOT(if(Jcpars.Ship_locks_job,(Jcjobs.Shipped = 0 AND ;
+                    Jcjobs.Part_ship_date = 0),DFTRUE))) to bShipped
+                move (bShipped OR pbLocked(self)) to bState
+                send EnableButtons (NOT(bState) and not(bReadOnly))
+                #ENDIF // #IFDEF CE_PRODUCTION
+                #IFDEF CE_CALC_ESTIMATE
+                get pbLocked to bState
+                send EnableButtons (NOT(bState) and not(bReadOnly))
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                #IFDEF CE_CALC_LIBRARY
+                send EnableButtons (not(bReadOnly)) //TRUE
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+                send EnableSaveButton of oEditButton FALSE
+                //
+                set pbEditing to FALSE
+            End_Procedure // ShadowVariables
+
+            procedure EditVariables
+                integer hItemDD
+                //
+                get phItemDD        to hItemDD
+                send Refind_Records of hItemDD
+                set pbExisting      of hItemDD to TRUE
+                send EditVariable   of oVariableValueBroadcaster
+                send ShadowText     of oInstructionEdit FALSE
+                send EnableAdd     FALSE
+                send EnableDelete  FALSE
+                set pbDupeValue to FALSE
+                set pnDupeValue to 0
+                send Activate of oInstructionEdit
+            end_procedure
+
+            procedure DisplayTags
+                integer iShadowColor
+                //
+                get piShadowColor                       to iShadowColor
+                send DisplayTag of oVariableTagBroadcaster iShadowColor
+            end_procedure
+
+        End_Object // VariableGroup
+
+        Object FormulaGroup is a cGlblDbGroup
+
+            //AB-StoreTopStart
+            property boolean pbEstimateDollarState TRUE
+
+            set Auto_Clear_Deo_State to FALSE
+            //AB-StoreTopEnd
+
+            Set Server   to (phItemDD(self))
+            Set Size     to 90 238
+            Set Location to 172 263
+
+            Object Jcoper_Calc_Units_Desc is a cGlblDbForm
+                Entry_Item Jcoper.Calc_units_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 120
+                Set Location to 10 5
+            End_Object    // Jcoper_Calc_Units_Desc
+
+            Object Jcoper_Table_Std_Desc is a cGlblDbForm
+                Entry_Item Jcoper.Table_std_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 120
+                Set Location to 25 5
+            End_Object    // Jcoper_Table_Std_Desc
+
+            Object Jcoper_Calc_Std_Desc is a cGlblDbForm
+                Entry_Item Jcoper.Calc_std_desc
+                Set Form_Border Item 0 to Border_None
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 120
+                Set Location to 40 5
+            End_Object    // Jcoper_Calc_Std_Desc
+
+            Object Item_Calc_Units is a cGlblDbForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Calc_units1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Calc_units1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Calc_units1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Label_Col_Offset         to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size                     to 13 58
+                Set Location                 to 10 176 // 156
+
+                //AB-StoreStart
+
+                //AB-StoreEnd
+
+            End_Object    // Item_Calc_Units
+
+            Object Item_Table_Std is a cGlblDbForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Table_std1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Table_std1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Table_std1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Label_Col_Offset         to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size                     to 13 58
+                Set Location                 to 25 176 // 156
+
+                //AB-StoreStart
+
+                //AB-StoreEnd
+
+            End_Object    // Item_Table_Std
+
+            Object Item_Prod_Units is a cGlblDbForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Prod_units1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Prod_units1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Prod_units1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Label_Col_Offset         to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size                     to 13 58
+                Set Location                 to 40 176 // 156
+            End_Object    // Item_Prod_Units
+
+            Object Item_Est_Dollars is a cGlblDbForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Est_$1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Est_$1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Est_$1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Set Label                    to "TOTAL SELL:"
+                Set Label_Col_Offset         to 4
+                Set Label_Justification_Mode to jMode_Right
+                Set Size                     to 13 58
+                Set Location                 to 55 176 // 156
+            End_Object    // Item_Est_Dollars
+
+            Object Jcoper_Sell_Std_Desc is a cGlblDbForm
+                Entry_Item Jcoper.UNIT_PROMPT
+                Set Form_Border item 0 to Border_None
+                Set Label_Col_Offset to 2
+                Set Label_Justification_Mode to jMode_Right
+                Set Size to 13 120
+                Set Location to 70 5
+            End_Object    // Jcoper_Calc_Std_Desc
+
+            Object Item_Sell_Dollars is a cGlblDbForm
+
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Entry_Item Esjitm.Sell_1
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Entry_Item Esitem.Sell_1
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Entry_Item Eslitm.Sell_1
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                //Set Label                    to "BASE SELL DOLLARS:"
+                Set Label_Col_Offset         to 69
+                Set Label_Justification_Mode to jMode_Right
+                Set Size                     to 13 58
+                Set Location                 to 70 176
+                set Enabled_State            to FALSE
+                //set Visible_State            to FALSE
+            End_Object    // Item_Sell_Dollars
+
+            //procedure DoToggleDollarState
+            //    boolean bEstimateDollarState
+            //    //
+            //    get pbEstimateDollarState        to bEstimateDollarState
+            //    move (NOT(bEstimateDollarState)) to bEstimateDollarState
+            //    set pbEstimateDollarState        to bEstimateDollarState
+            //    //
+            //    if (bEstimateDollarState) begin
+            //        set Visible_State of Item_Est_Dollars  to TRUE
+            //        set Label         of Item_Est_Dollars  to "BASE COST DOLLARS:"
+            //        set Visible_State of Item_Sell_Dollars to FALSE
+            //        set Label         of Item_Sell_Dollars to ""
+            //    end
+            //    else begin
+            //        set Visible_State of Item_Est_Dollars  to FALSE
+            //        set Label         of Item_Est_Dollars  to ""
+            //        set Visible_State of Item_Sell_Dollars to TRUE
+            //        set Label         of Item_Sell_Dollars to "SELL DOLLARS:"
+            //    end
+            //end_procedure
+
+        End_Object    // FormulaGroup
+
+        Object oAddButton is a cGlblButton
+            Set Label to "&Add"
+            Set Size to 14 48
+            Set Location to 267 4
+            //AB-StoreStart
+            Procedure OnClick
+                send AddStandard
+            End_Procedure
+            //AB-StoreEnd
+        End_Object    // oAddButton
+
+        Object oEditButton is a Button //cGlblButton 
+
+            property boolean pbSaveButton FALSE
+
+            Set Label to "&Edit"
+            Set Size to 14 48
+            Set Location to 267 56
+
+            Procedure OnClick
+                integer hDD
+                string  sNeedsCalced
+                //
+                if (pbSaveButton(self)) begin
+                    set pbSaving to TRUE
+                    send EnableSaveButton FALSE
+                    send Activate of oItemList
+                end
+                else begin
+                    set pbEditing     to TRUE
+                    set pbNeedsCalced to FALSE
+                    get Server        to hDD
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    get Field_Current_Value of hDD field Esjcmp.Needs_calced to sNeedsCalced
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    get Field_Current_Value of hDD field Escomp.Needs_calced to sNeedsCalced
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    get Field_Current_Value of hDD field Esclib.Needs_calced to sNeedsCalced
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+                    set pbNeedsCalced to (sNeedsCalced = "Y")
+                    set pbSaving      to FALSE
+                    set pbClearing    to FALSE
+                    send EnableSaveButton TRUE
+                    send EditVariables of VariableGroup
+                end
+            End_Procedure
+            Procedure EnableSaveButton integer bState
+                if (bState) set Label to "Sa&ve"
+                else        set Label to "&Edit"
+                set pbSaveButton to bState
+            End_Procedure
+            //AB-StoreEnd
+
+        End_Object    // oEditButton
+
+        Object oDeleteButton is a cGlblButton
+            Set Label to "&Delete"
+            Set Size to 14 48
+            Set Location to 267 109
+            //AB-StoreStart
+            Procedure OnClick
+                Integer iEsitemItemID iQuoteDtlIdno
+                Move 0 to iQuoteDtlIdno
+                Move 0 to iEsitemItemID
+                Move Esitem.ITEM_ID to iEsitemItemID           
+                Move Esitem.QuoteDtlReference to iQuoteDtlIdno
+                //Old
+                Send DeleteStandard
+                If (iQuoteDtlIdno<>0) Begin
+                    Send DeleteQuoteDetail of oDeleteStandards iQuoteDtlIdno
+                End
+                //Send DeleteStandardAndRelated
+//                Send DoProcess of oDeleteStandards
+//                Send Refresh_Page of oItemList FILL_FROM_CENTER
+//                Send EnableButtons True
+//                Send Activate of oItemList
+//                Send Mouse_Down of (oComponentItemDialog(Self))  //trick focus back to obj
+            End_Procedure
+            //AB-StoreEnd
+        End_Object    // oDeleteButton
+
+        Object oCalculateButton is a Button //cGlblDropDownButton
+            Set Label to "&Calculate"
+            Set Size to 14 48
+            Set Location to 267 160
+            //
+            //AB-StoreStart
+            property boolean pbLocal     TRUE
+            property boolean pbCalcState FALSE
+            //
+            //Set pbDropDownButton to False
+            //
+            procedure OnClick
+                Integer hFocus
+                //
+                get Focus to hFocus
+                if (hFocus <> self) send Activate
+                send DoCalculate of oItemList
+            end_procedure
+
+            Procedure OnSetFocus
+                If (not(pbLocal(Self))) Begin
+                    Set pbLocal to True
+                    Send OnClick
+                End
+            End_Procedure
+
+            //AB-StoreEnd
+
+        End_Object    // oCalculateButton
+
+        Object oCloseButton is a cGlblButton
+            Set Label to "Close"
+            Set Size to 14 48
+            Set Location to 267 212
+            //AB-StoreStart
+            procedure OnClick
+                set pbCalcFlagMode of (phItemDD(self)) to True //hides "Z" flagged items in list
+//                set Current_Radio of FilterRadioGroup to 0
+                send Request_Cancel
+                //send Exit_Function
+            end_procedure
+            //AB-StoreEnd
+        End_Object // oCloseButton
+
+        Object oDetailsButton is a cGlblButton
+            Set Label to "De&tails"
+            Set Size to 14 58 //48
+            Set Location to 5 440 // 420
+            //AB-StoreStart
+            Procedure OnClick
+                send DoDetails
+            End_Procedure
+            //AB-StoreEnd
+        End_Object    // oDetailsButton
+
+        //BC: 07/26/04 inserted FilterRadioGroup
+        //
+
+        Procedure EnableAdd Integer bState
+            set Enabled_State of oAddButton to bState
+        End_Procedure
+        Procedure EnableEdit Integer bState
+            set Enabled_State of oEditButton to bState
+        End_Procedure
+        Procedure EnableDelete Integer bState
+            set Enabled_State of oDeleteButton to bState
+        End_Procedure
+        Procedure EnableCalculate Integer bState
+            set pbCalcState       of oCalculateButton to bState
+//            if (bState) set Color of oCalculateButton to clYellow
+//            else        set Color of oCalculateButton to clBtnFace
+        End_Procedure
+        Procedure EnableClose Integer bState
+            set Enabled_State of oCloseButton to bState
+        End_Procedure
+        Procedure EnableButtons integer bState
+            boolean bReadOnly bShipped
+            get pbReadOnly of ghoApplication to bReadOnly
+            #IFDEF CE_PRODUCTION
+            move (if(Jcpars.Ship_locks_job,(Jcjobs.Shipped <> 0),DFFALSE)) to bShipped
+            move ((Jcjobs.Schedule_flag = 3) OR bShipped OR ;
+                (Jcjobs.Invoiced<>0) OR pbLocked(self)) to bShipped
+            #ENDIF // #IFDEF CE_PRODUCTION
+            #IFDEF CE_CALC_ESTIMATE
+                move (pbLocked(self)) to bShipped
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            set Enabled_State of oCalculateButton to (not(bReadOnly) and not(bShipped))
+            set Enabled_State of oAddButton    to bState
+            set Enabled_State of oEditButton   to bState
+            set Enabled_State of oDeleteButton to bState
+        End_Procedure
+
+        procedure DoDetails
+            integer hDD iItemRec
+            //
+            get phItemDD        to hDD
+            send Refind_Records of hDD
+            get Current_Record  of hDD to iItemRec
+            //
+            send DoItemDetails of oItemDialog iItemRec (pbLocked(self))
+            //
+            send Refind_Records of hDD
+        end_procedure
+
+        #IFDEF CE_CALC_ESTIMATE
+        Procedure DoEditLineNumber
+            integer hEsitemDD iNewline
+            string  sEstimateId sComponentId
+            //
+            //BC: 01/29/07 impplement readonly security
+            boolean bReadOnly
+            get pbReadOnly of ghoApplication to bReadOnly
+            if bReadOnly Procedure_Return
+            //
+            if (NOT(Jcpars.Line_edit_flag)) procedure_return
+            //
+            move Esitem_DD      to hEsitemDD
+            send Refind_Records of hEsitemDD
+            //
+            get NewLineNumber of LineNumberDialog Esitem.Line_number to iNewline
+            if (iNewline = Esitem.Line_number) procedure_return
+            //
+            set Field_Changed_Value of hEsitemDD field Esitem.Line_number to iNewline
+            send Request_Save       of hEsitemDD
+            //
+            send Refresh_Page of oItemList FILL_FROM_CENTER
+            send Activate     of oItemList
+        End_Procedure // DoEditLineNumber
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+
+        procedure AddStandard
+            #IFDEF CE_CALC_NONE
+            // this view used by Scheduling in a read-only mode
+            // this procedure not needed
+            #ELSE
+            boolean bDebug bTrigger bShipped bReadOnly
+            integer hItemDD iNewOpcode iCalcMode iItemCount
+            string  sHeaderId sComponentId
+            //BC: 01/29/07 impplement readonly security
+//            get pbReadOnly of ghoApplication to bReadOnly
+//            if bReadOnly Procedure_Return
+            //
+            get phItemDD        to hItemDD
+            send Refind_Records of hItemDD
+            //
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            move (if(Jcpars.Ship_locks_job,(Jcjobs.Shipped <> 0),DFFALSE)) to bShipped
+            if ((Jcjobs.Schedule_flag = 3) OR bShipped OR ;
+                (Jcjobs.Invoiced <> 0) OR pbLocked(self)) procedure_return
+            //
+            move Esjcmp.Job_no       to sHeaderId
+            move Esjcmp.Component_id to sComponentId
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            move Escomp.Estimate_id  to sHeaderId
+            move Escomp.Component_id to sComponentId
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            move Esclib.Ctyp_code to sHeaderId
+            move Esclib.Idno      to sComponentId
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            //
+            Send EnableEdit   False
+            Send EnableDelete False
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            move (Esjcmp.Item_count = 0 AND pbTrigger(self)) to bTrigger
+            move  Esjcmp.Item_count                          to iItemCount
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Move (Escomp.Item_count = 0 and pbTrigger(Self)) to bTrigger
+            Move  Escomp.Item_count                          to iItemCount
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            move (Esclib.Item_Count = 0 AND pbTrigger(self)) to bTrigger
+            move  Esclib.Item_count                          to iItemCount
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            // if no master trigger we check for an alternate
+//*dw*
+//            If (not(bTrigger)) Move (piAltTrigger(ghoApplication) <> 0) to bTrigger
+            //
+            //if (bTrigger) move CE_ADD_MASTER to iCalcMode
+            If (bTrigger and iItemCount = 0) Move CE_ADD_MASTER to iCalcMode
+            Else                             Move CE_ADD        to iCalcMode
+            //
+            get pbDebug of ghoApplication to bDebug
+            //BPO-Start
+            begin
+                get DoCalcEngine of oCalcEngine ;
+                    iCalcMode ;
+                    False     ;
+                    bDebug    ;
+                    to iNewOpcode
+                //
+                if (pbMaintMode(self)) procedure_return
+                send Refind_Records of hItemDD
+                //
+                if (iNewOpcode) begin
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    set pbCalcLoad to TRUE
+                    clear Esjitm
+                    move sHeaderId    to Esjitm.Job_no
+                    move sComponentId to Esjitm.Component_id
+                    move iNewOpcode   to Esjitm.Opcode
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    clear Esitem
+                    move sHeaderId    to Esitem.Estimate_id
+                    move sComponentId to Esitem.Component_id
+                    move iNewOpcode   to Esitem.Opcode
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    set pbNewComponent to FALSE
+                    clear Eslitm
+                    move sHeaderId    to Eslitm.Ctyp_code
+                    move sComponentId to Eslitm.Clib_id
+                    move iNewOpcode   to Eslitm.Opcode
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+                    Send Find of hItemDD EQ 2 // this needs to change for other than est dw
+                end
+                // if master trigger quit
+                if (bTrigger) break
+                // if not a trigger and item was created
+                move CE_ADD_AGAIN to iCalcMode
+                if (iNewOpcode) break BEGIN
+            end
+            //BPO-Stop
+            if (bDebug) send DoToggleDebugMode
+            //
+            send EnableButtons TRUE
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            if (Esjcmp.Needs_calced = "Y") send EnableCalculate TRUE
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            if (Escomp.Needs_calced = "Y") send EnableCalculate TRUE
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            if (Esclib.Needs_calced = "Y") send EnableCalculate TRUE
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            send Refresh_Page of oItemList FILL_FROM_CENTER
+            send Activate of oItemList
+            #ENDIF // #IFDEF CE_CALC_NONE
+        end_procedure // AddStandard
+
+//        Procedure DeleteStandardAndRelated
+//            Integer hItemDD
+//            Integer iEstimateID iCompIdno iEsitemId iOpcode iCostCenter iItemCount iRet
+//            String  sHeaderId sComponentId sOperation
+//            //BC: 01/29/07 impplement readonly security
+//            Boolean bReadOnly
+//            Get pbReadOnly of ghoApplication to bReadOnly
+//            If bReadOnly Procedure_Return
+//            // get the ID of the server
+//            Move Esitem_DD to hItemDD
+//            Send Refind_Records of hItemDD
+//            // Estimating
+//            Move Esitem.Estimate_id  to iEstimateID
+//            Move Esitem.Component_id to iCompIdno
+//            Move Esitem.ITEM_ID      to iEsitemId
+//            Move Esitem.Opcode       to iOpcode
+//            Move Jcoper.CON9_VALUE   to iCostCenter
+//            //
+//            Get YesNo_Box ("Delete Cost Center" * Jcoper.NAME * "from this component?") "Confirm" to iRet
+//            If (iRet = MBR_No) Procedure_Return
+//            //
+//            If (pbMaintMode(Self)) Procedure_Return
+//            // Get Con9_Value to determine cost center to be deleted
+//            Send Clear of hItemDD
+//            
+//            Move iEstimateID to Esitem.ESTIMATE_ID
+//            Move iCompIdno to Esitem.COMPONENT_ID
+//            Send Request_Find of hItemDD GE Esitem.File_Number 2
+//            While ((Found) and iEstimateID = Esitem.ESTIMATE_ID and iCompIdno = Esitem.COMPONENT_ID)
+//                If (Jcoper.CON9_VALUE = iCostCenter) Begin
+//                    Showln (Escomp.DESCRIPTION * " - " * String(Esitem.OPCODE) * " - " * Jcoper.NAME * " - " * String(Esitem.LINE_NUMBER) * " - " * Esitem.INSTRUCTION)
+//                End
+//                Send Request_Find of hItemDD GT Esitem.File_Number 2
+//            Loop
+//            
+////            Constraint_Set 1
+////            Constrain Jcoper.CON9_VALUE eq iCostCenter
+////            Constrain Escomp.COMPONENT_ID eq iCompIdno
+////            Constrain Esitem.ESTIMATE_ID eq iEstimateID
+////            Constrained_Find First Esitem by 2
+////            While (Found)
+////                Showln (Escomp.DESCRIPTION * " - " * String(Esitem.OPCODE) * " - " * Jcoper.NAME * " - " * String(Esitem.LINE_NUMBER) * " - " * Esitem.INSTRUCTION)
+////                // Find and Delete
+////                Move Esitem.ITEM_ID to iEsitemId
+////                Send Request_Find EQ hItemDD
+////                Send Request_Delete to hItemDD
+////                Constrained_Find Next                
+////            Loop
+////            Constraint_Set 1 Delete
+//
+//            //Send Request_Delete to hItemDD
+//            //
+//            //Send EnableCalculate True
+//            Move Escomp.Item_count to iItemCount
+//            If (iItemCount > 0) Begin
+//                // Order Maintenance
+//                #IFDEF CE_PRODUCTION
+//                Move sHeaderId    to Esjitm.Job_no
+//                Move sComponentId to Esjitm.Component_id
+//                Move iOpcode      to Esjitm.Opcode
+//                #ENDIF // #IFDEF CE_PRODUCTION
+//                // Estimating
+//                #IFDEF CE_CALC_ESTIMATE
+//                Move sHeaderId    to Esitem.Estimate_id
+//                Move sComponentId to Esitem.Component_id
+//                Move iOpcode      to Esitem.Opcode
+//                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//                // component library
+//                #IFDEF CE_CALC_LIBRARY
+//                Move sHeaderId    to Eslitm.Ctyp_code
+//                Move sComponentId to Eslitm.Clib_id
+//                Move iOpcode      to Eslitm.Opcode
+//                #ENDIF // #IFDEF CE_CALC_LIBRARY
+//                Send Find of hItemDD GE Index.1
+//                If (not(Found)) Begin
+//                    // Order Maintenance
+//                    #IFDEF CE_PRODUCTION
+//                    Move sHeaderId    to Esjitm.Job_No
+//                    Move sComponentId to Esjitm.Component_id
+//                    Move iOpcode      to Esjitm.Opcode
+//                    #ENDIF // #IFDEF CE_PRODUCTION
+//                    // Estimating
+//                    #IFDEF CE_CALC_ESTIMATE
+//                    Move sHeaderId    to Esitem.Estimate_id
+//                    Move sComponentId to Esitem.Component_id
+//                    Move iOpcode      to Esitem.Opcode
+//                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//                    // component library
+//                    #IFDEF CE_CALC_LIBRARY
+//                    Move sHeaderId    to Eslitm.Ctyp_code
+//                    Move sComponentId to Eslitm.Clib_id
+//                    Move iOpcode      to Eslitm.Opcode
+//                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+//                    Send Find of hItemDD LE Index.1
+//                End
+//                //
+//                Send Refresh_Page of oItemList FILL_FROM_CENTER
+//            End
+//            Else Begin
+//                Send Delete_Data of oItemList
+//                Send Delete_Data of oInstructionEdit
+//                Send EnableCalculate False
+//            End
+//            Send EnableButtons True
+//            Send Activate of oItemList
+//            Send Mouse_Down of (oComponentItemDialog(Self))  //trick focus back to obj
+//        End_Procedure // DeleteStandard
+
+        procedure DeleteStandard
+            integer hItemDD iRet iOpcode iItemCount
+            string  sHeaderId sComponentId sOperation
+            //BC: 01/29/07 impplement readonly security
+            boolean bReadOnly
+            get pbReadOnly of ghoApplication to bReadOnly
+            if bReadOnly Procedure_Return
+            // get the ID of the server
+            get phItemDD        to hItemDD
+            send Refind_Records of hItemDD
+            //
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            boolean bShipped
+            move (if(Jcpars.Ship_locks_job,(Jcjobs.Shipped <> 0),DFFALSE)) to bShipped
+            if ((Jcjobs.Schedule_flag = 3) OR bShipped OR ;
+                (Jcjobs.Invoiced<>0) OR pbLocked(self)) procedure_return
+            //
+            move Esjitm.Job_no       to sHeaderId
+            move Esjitm.Component_id to sComponentId
+            move Esjitm.Opcode       to iOpcode
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            move Esitem.Estimate_id  to sHeaderId
+            move Esitem.Component_id to sComponentId
+            move Esitem.Opcode       to iOpcode
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            move Eslitm.Ctyp_code to sHeaderId
+            move Eslitm.Clib_id   to sComponentId
+            move Eslitm.Opcode    to iOpcode
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            //
+            move ("Delete Operation" * string(iOpcode) * "from this component?") to sOperation
+            get YesNo_Box sOperation "Confirm" to iRet
+            if (iRet = MBR_No) procedure_return
+            //
+            if (pbMaintMode(self)) procedure_return
+            send Request_Delete to hItemDD
+            send EnableCalculate TRUE
+            if (pbMaintMode(self)) procedure_return
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            move Esjcmp.Item_count to iItemCount
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            move Escomp.Item_count to iItemCount
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            move Esclib.Item_count to iItemCount
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            // find the next item only if items exist
+            if (iItemCount > 0) begin
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                move sHeaderId    to Esjitm.Job_no
+                move sComponentId to Esjitm.Component_id
+                move iOpcode      to Esjitm.Opcode
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                move sHeaderId    to Esitem.Estimate_id
+                move sComponentId to Esitem.Component_id
+                move iOpcode      to Esitem.Opcode
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                move sHeaderId    to Eslitm.Ctyp_code
+                move sComponentId to Eslitm.Clib_id
+                move iOpcode      to Eslitm.Opcode
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+                send Find of hItemDD GE Index.1
+                if (NOT(FOUND)) begin
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    move sHeaderId    to Esjitm.Job_No
+                    move sComponentId to Esjitm.Component_id
+                    move iOpcode      to Esjitm.Opcode
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    move sHeaderId    to Esitem.Estimate_id
+                    move sComponentId to Esitem.Component_id
+                    move iOpcode      to Esitem.Opcode
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    move sHeaderId    to Eslitm.Ctyp_code
+                    move sComponentId to Eslitm.Clib_id
+                    move iOpcode      to Eslitm.Opcode
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+                    send Find of hItemDD LE Index.1
+                end
+                //
+                send Refresh_Page of oItemList FILL_FROM_CENTER
+            end
+            else begin
+                send Delete_Data of oItemList
+                send Delete_Data of oInstructionEdit
+                send EnableCalculate FALSE
+            end
+            send EnableButtons TRUE
+            send Activate of oItemList
+            Send Mouse_Down of (oComponentItemDialog(Self))  //trick focus back to obj
+        end_procedure // DeleteStandard
+
+        Procedure DeleteAllRelatedStandards
+            Integer hItemDD iRet iOpcode iItemCount
+            String  sHeaderId sComponentId sOperation
+            //BC: 01/29/07 impplement readonly security
+            Boolean bReadOnly
+            Get pbReadOnly of ghoApplication to bReadOnly
+            If bReadOnly Procedure_Return
+            // get the ID of the server
+            Get phItemDD        to hItemDD
+            Send Refind_Records of hItemDD
+            //
+            // Order Maintenance
+            #IFDEF CE_PRODUCTION
+            Boolean bShipped
+            Move (If(Jcpars.Ship_locks_job,(Jcjobs.Shipped <> 0),DFFALSE)) to bShipped
+            If ((Jcjobs.Schedule_flag = 3) or bShipped or ;
+                (Jcjobs.Invoiced<>0) or pbLocked(Self)) Procedure_Return
+            //
+            Move Esjitm.Job_no       to sHeaderId
+            Move Esjitm.Component_id to sComponentId
+            Move Esjitm.Opcode       to iOpcode
+            #ENDIF // #IFDEF CE_PRODUCTION
+            // Estimating
+            #IFDEF CE_CALC_ESTIMATE
+            Move Esitem.Estimate_id  to sHeaderId
+            Move Esitem.Component_id to sComponentId
+            Move Esitem.Opcode       to iOpcode
+            #ENDIF // #IFDEF CE_CALC_ESTIMATE
+            // component library
+            #IFDEF CE_CALC_LIBRARY
+            Move Eslitm.Ctyp_code to sHeaderId
+            Move Eslitm.Clib_id   to sComponentId
+            Move Eslitm.Opcode    to iOpcode
+            #ENDIF // #IFDEF CE_CALC_LIBRARY
+            //
+            Move ("Delete all Operations" * String(iOpcode) * "related to this component?") to sOperation
+            Get YesNo_Box sOperation "Confirm" to iRet
+            If (iRet = MBR_No) Procedure_Return
+            //
+            Send Refind_Records of hItemDD
+            While ((Found) and iItemCount > 0)  
+                      
+                If (pbMaintMode(Self)) Procedure_Return
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Move Esjcmp.Item_count to iItemCount
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Move Escomp.Item_count to iItemCount
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Move Esclib.Item_count to iItemCount
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                Send Request_Delete to hItemDD
+                Decrement iItemCount
+                Send EnableCalculate True
+                // Order Maintenance
+                #IFDEF CE_PRODUCTION
+                Move sHeaderId    to Esjitm.Job_no
+                Move sComponentId to Esjitm.Component_id
+                Move iOpcode      to Esjitm.Opcode
+                #ENDIF // #IFDEF CE_PRODUCTION
+                // Estimating
+                #IFDEF CE_CALC_ESTIMATE
+                Move sHeaderId    to Esitem.Estimate_id
+                Move sComponentId to Esitem.Component_id
+                Move iOpcode      to Esitem.Opcode
+                #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                // component library
+                #IFDEF CE_CALC_LIBRARY
+                Move sHeaderId    to Eslitm.Ctyp_code
+                Move sComponentId to Eslitm.Clib_id
+                Move iOpcode      to Eslitm.Opcode
+                #ENDIF // #IFDEF CE_CALC_LIBRARY
+                Send Find of hItemDD GE Index.1
+//                If (not(Found)) Begin
+//                    // Order Maintenance
+//                    #IFDEF CE_PRODUCTION
+//                    Move sHeaderId    to Esjitm.Job_No
+//                    Move sComponentId to Esjitm.Component_id
+//                    Move iOpcode      to Esjitm.Opcode
+//                    #ENDIF // #IFDEF CE_PRODUCTION
+//                    // Estimating
+//                    #IFDEF CE_CALC_ESTIMATE
+//                    Move sHeaderId    to Esitem.Estimate_id
+//                    Move sComponentId to Esitem.Component_id
+//                    Move iOpcode      to Esitem.Opcode
+//                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+//                    // component library
+//                    #IFDEF CE_CALC_LIBRARY
+//                    Move sHeaderId    to Eslitm.Ctyp_code
+//                    Move sComponentId to Eslitm.Clib_id
+//                    Move iOpcode      to Eslitm.Opcode
+//                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+//                    Send Find of hItemDD LE Index.1
+//                End
+                //
+            ////
+            Loop
+            //
+            Send Refresh_Page of oItemList FILL_FROM_CENTER
+            If (pbMaintMode(Self)) Procedure_Return
+            ///
+            Else Begin
+                Send Delete_Data of oItemList
+                Send Delete_Data of oInstructionEdit
+                Send EnableCalculate False
+            End
+            Send EnableButtons True
+            Send Activate of oItemList
+            Send Mouse_Down of (oComponentItemDialog(Self))  //trick focus back to obj
+        End_Procedure // DeleteAllRelatedStandards
+
+        procedure DisplayHelpFile
+            integer hDD
+            string  sStandard
+            //
+            get phItemDD        to hDD
+            send Refind_Records of hDD
+            move (string(Jcoper.Opcode) * Jcoper.Name) to sStandard
+            // show it
+            send RetrieveHelp ;
+                of OpcodeHelpDialog Jcoper.Cstctr_idno Jcoper.Opcode sStandard
+            send Refind_Records of hDD
+        end_procedure
+
+        procedure DoAllCompItems string sEstimateId
+            //set psEstimateId to sEstimateId
+            set piFilterSetting      to 0
+            send Rebuild_Constraints of (Server(self))
+            //set current_radio of FilterRadioGroup to 0 // this causes notify_select_state to fire
+        end_procedure
+
+        procedure DoFilterItems integer iFilterSetting
+            integer hDD hList
+            //
+            move (oItemList(self))  to hList
+            //get Server     to hDD
+            get phItemDD             to hDD
+            //send Clear_All of hDD
+            send Clear of hdd
+            //
+            set piFilterSetting      to iFilterSetting
+            send Rebuild_Constraints of hDD
+            send Rebuild_Constraints of Jcoper_DD
+            send Beginning_Of_Data   of hList
+            send Refresh_Page        of hList FILL_FROM_TOP
+            send Activate            of hList
+        end_procedure
+
+//        Procedure DoSetCurrent_Radio0
+//            set Current_Radio of FilterRadioGroup to 0
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio1
+//            set Current_Radio of FilterRadioGroup to 1
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio2
+//            set Current_Radio of FilterRadioGroup to 2
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio3
+//            set Current_Radio of FilterRadioGroup to 3
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio4
+//            set Current_Radio of FilterRadioGroup to 4
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio5
+//            set Current_Radio of FilterRadioGroup to 5
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio6
+//            set Current_Radio of FilterRadioGroup to 6
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio7
+//            set Current_Radio of FilterRadioGroup to 7
+//        End_Procedure
+//        Procedure DoSetCurrent_Radio8
+//            set Current_Radio of FilterRadioGroup to 8
+//        End_Procedure
+//
+//        on_key Key_Alt+Key_S   send DoSetCurrent_Radio0
+//        on_key Key_Alt+Key_L   send DoSetCurrent_Radio1
+//        on_key Key_Alt+Key_M   send DoSetCurrent_Radio2
+//        on_key Key_Alt+Key_P   send DoSetCurrent_Radio3
+//        on_key Key_Alt+Key_R   send DoSetCurrent_Radio4
+//        on_key Key_Alt+Key_1   send DoSetCurrent_Radio5
+//        on_key Key_Alt+Key_2   send DoSetCurrent_Radio6
+//        on_key Key_Alt+Key_3   send DoSetCurrent_Radio7
+//        on_key Key_Alt+Key_4   send DoSetCurrent_Radio8
+
+        on_key Key_Alt+Key_A   send KeyAction   of oAddButton
+        on_key Key_Alt+Key_E   send KeyAction   of oEditButton
+        on_key Key_Alt+Key_V   send KeyAction   of oEditButton
+        on_key Key_Alt+Key_D   send KeyAction   of oDeleteButton
+        on_key Key_Alt+Key_T   send KeyAction   of oDetailsButton
+        on_key Key_Alt+Key_C   send DoCalculate of oItemList
+//on_key kCancel         send doRequest_Cancel
+        //on_key Key_Alt+Key_F12 send DoToggleDollarState of FormulaGroup
+    End_Object // ComponentContainer
+
+    function CheckForChanges returns integer
+        boolean bState
+        integer hItemDD
+        //
+        get phItemDD to hItemDD
+        if (Should_Save(hItemDD)) begin
+            send Stop_Box "Please save your changes and calculate."
+            function_return 1
+        end
+        get pbCalcState of oCalculateButton to bState
+        if (bState) send DoCalculate of oItemList
+        #IFDEF CE_PRODUCTION
+        if (pbCalcLoad(self)) begin
+            //BPO-Start
+            send DoMakeJobSchedule of EditScheduleProcess Jcjobs.Idno FALSE ""
+            send Refind_Records    of (Server(self))
+            //BPO-Stop
+        end
+        #ENDIF // #IFDEF CE_PRODUCTION
+    end_function // CheckForChanges
+
+    // Order Maintenance
+    #IFDEF CE_PRODUCTION
+    procedure DoSpecifications integer iComponentRec integer bLocked integer bTrigger
+        integer hServer
+        //
+        get Server to hServer
+        //
+        set pbNewComponent to FALSE
+        set pbRefreshLabel to FALSE
+        set pbCalcLoad     to FALSE
+        set pbEditing      to FALSE
+        set pbNeedsCalced  to FALSE
+        set pbSaving       to FALSE
+        set pbClearing     to FALSE
+        set pbLocked       to bLocked
+        set pbTrigger      to bTrigger
+        //
+        set Label of oCalcTimeTextBox to ""
+        //
+        send Clear_All of hServer
+        send Find_By_Recnum of hServer Esjcmp.File_number iComponentRec
+        set pbNewComponent to (Esjcmp.Item_count = 0)
+        send EnableCalculate of ComponentContainer (Esjcmp.Needs_calced = "Y")
+        Send Popup
+    end_procedure // DoSpecifications
+    #ENDIF // #IFDEF CE_PRODUCTION
+    // Estimating
+    #IFDEF CE_CALC_ESTIMATE
+    procedure DoSpecifications integer iComponentRec integer bLocked integer bTrigger
+        integer hServer
+        //
+        Get Server to hServer
+        //
+        Set pbActivatingDialog to True
+        Set pbRefreshLabel     to False
+        Set pbEditing          to False
+        Set pbNeedsCalced      to False
+        Set pbSaving           to False
+        Set pbClearing         to False
+        Set pbLocked           to bLocked
+        Set pbTrigger          to bTrigger
+        //
+        set Label of oCalcTimeTextBox to ""
+        //
+//        Set Auto_Index_State of oItemList to False
+        //
+        Send Clear_All      of hServer
+        send Find_By_Recnum of hServer Escomp.File_number iComponentRec
+        set pbNewComponent to (Escomp.Item_count = 0)
+        //
+        send EnableCalculate of ComponentContainer (Escomp.Needs_calced = "Y")
+        Send Popup
+    end_procedure // DoSpecifications
+    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+
+    // component library
+    #IFDEF CE_CALC_LIBRARY
+    Procedure EditSpecifications Integer iComponent
+        integer hServer iFocus
+        //
+        get Focus          to iFocus
+        get Server         to hServer
+        set pbNewComponent to FALSE
+        set pbRefreshLabel to FALSE
+        set pbTrigger      to FALSE
+        //
+        set pbEditing      to FALSE
+        set pbNeedsCalced  to FALSE
+        set pbSaving       to FALSE
+        set pbClearing     to FALSE
+        //
+        set Label of oCalcTimeTextBox to ""
+        //
+        send Clear_All of hServer
+        send Find_By_Recnum of hServer Esclib.File_number iComponent
+        if (Esclib.Item_count = 0) set pbNewComponent to TRUE
+        if (pbTrigger(iFocus))     set pbTrigger      to TRUE
+        send EnableCalculate of ComponentContainer (Esclib.Needs_calced = "Y")
+        Send Popup
+    end_procedure // EditSpecifications
+    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+    procedure set ProcessTitle string sTitle
+        set Label to sTitle
+    end_procedure
+
+    //this procedure gets fired by close button or close panel "x" button but not kcancel !?
+    Procedure Request_Cancel
+        set pbCalcFlagMode of (phItemDD(self)) to True //hides "Z" flagged items in list
+ //       set Current_Radio of FilterRadioGroup to 0
+        forward send Request_Cancel
+    End_Procedure
+
+End_Object    // oComponentItemDialog

@@ -1,0 +1,46 @@
+-----------------------------------------------------------------------------
+  DATE: 12/14/2016      TIME: 04:07                                  PAGE:  1
+  FILE DEFINITION FOR FILE: WebAppSession (# 263)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:WebAppSession
+  USER DISPLAY NAME         : WebAppSession
+  DATAFLEX FILE NAME        : WebAppSession
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 198       ( USED: 198 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 236 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  SessionKey       ASC     36     1  1   
+  2  CreateDate       DAT     10    37  2   
+  3  CreateTime       ASC      8    60  2   
+  4  LastAccessDate   DAT     10    68  3   
+  5  LastAccessTime   ASC      8    91  3   
+  6  UseCount         NUM   10.0    99      
+  7  RemoteAddress    ASC     57   110      
+  8  LoginName        ASC     20   167      WebAppUser.FIELD_1 (264,1)
+  9  Active           ASC      1   187      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    SessionKey      NO  NO       0      0       1     ON-LINE
+
+  2    CreateDate      NO  NO       0      0       3     ON-LINE
+       CreateTime      NO  NO 
+       SessionKey      NO  NO 
+
+  3    LastAccessDate  NO  NO       0      0       3     ON-LINE
+       LastAccessTime  NO  NO 
+       SessionKey      NO  NO 
+

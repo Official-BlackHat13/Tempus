@@ -1,0 +1,516 @@
+Use Batchdd.pkg
+Use cComChilkatMailMan.pkg
+//
+Use Customer.DD
+Use Areas.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+Use Location.DD
+Use SalesRep.DD
+Use Order.DD
+Use cReqtypesDataDictionary.dd
+Use cLocnotesDataDictionary.dd
+Use Contact.DD
+Use Employer.DD
+Use Employee.DD
+Use cLocequipDataDictionary.dd
+
+Object oEmailNotification is a BusinessProcess
+            
+    Object oChilkatMailMan is a cComChilkatMailMan
+        
+        Function InitMail Handle ByRef hoMailman Handle ByRef hoEmail Returns Integer
+            Integer iSuccess
+            //  Create a MailMan for the purpose
+            //  of unlocking the component.
+            Get Create (RefClass(cComChilkatMailMan)) to hoMailman
+            If (not(IsComObjectCreated(hoMailman))) Begin
+                Send CreateComObject of hoMailman
+            End
+            Get ComUnlockComponent of hoMailman "INTERSMAILQ_EtgQk9ew6R0M" to iSuccess
+            
+            Get Create (RefClass(cComChilkatEmail)) to hoEmail
+            If (not(IsComObjectCreated(hoEmail))) Begin
+                Send CreateComObject of hoEmail
+            End
+      
+            Function_Return iSuccess
+        End_Function
+    
+    End_Object
+    
+    Object oChilkatEmail is a cComChilkatEmail
+    End_Object
+
+    Object oEmployer_DD is a Employer_DataDictionary
+    End_Object
+
+    Object oEmployee_DD is a Employee_DataDictionary
+        Set DDO_Server to oEmployer_DD
+    End_Object
+
+    
+    
+    Object oReqtypes_DD is a cReqtypesDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object
+
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oLocequip_DD is a cLocequipDataDictionary
+        Set Constrain_file to Location.File_number
+        Set DDO_Server to oEmployer_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+    
+    Object oOrder_DD is a Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server to oLocation_DD
+    End_Object
+
+    Object oLocnotes_DD is a cLocnotesDataDictionary
+        Set DDO_Server to oReqtypes_DD
+        Set DDO_Server to oOrder_DD
+    End_Object
+
+    Set Main_DD to oLocnotes_DD
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+
+    Function DoSendImmediateEmail String sFrom String sTo String sCC String sBCC String sSubject String sMessage Returns Boolean
+        Boolean bSuccess
+        String sProgramPath sErrorLog 
+        Handle  hoDD hoMailman hoEmail
+        Integer iIsOk iRetval
+        //
+        If (Length(Trim(sFrom))=0) Begin
+            Move (Trim(System.SMTP_MailFrom)) to sFrom //If nothing is set, it goes out as dispatch@interstatepm.com
+        End
+        //
+        Get psProgramPath of (phoWorkspace(ghoApplication)) to sProgramPath
+        Move (sProgramPath + "\ChilkatErrorLog.txt")        to sErrorLog
+        //
+        Get InitMail of oChilkatMailMan (&hoMailman) (&hoEmail) to iIsOk
+        If (iIsOk) Begin
+            //SMTP Server Settings
+            Set ComSmtpHost     of hoMailman to "smtp.office365.com"            // "smtp.office365.com" // "mail.interstatepm.com" //"64.122.223.194"
+            Set ComSmtpPort     of hoMailman to 587                             // "25"
+            Set ComStartTls     of hoMailman to True
+            //Login Info
+            Set ComSmtpUsername of hoMailman to "interstate@interstatepm.com"   // ""
+            Set ComSmtpPassword of hoMailman to "IC_Adm#2016!"                  // ""
+            //Prepare email to recipients
+            Set ComFrom of hoEmail to sFrom
+            Get ComAddTo of hoEmail "" sTo to iRetval
+            Get ComAddCC of hoEmail "" sCC to iRetval
+            Get ComAddBcc of hoEmail "" sBCC to iRetval
+            Set ComSubject of hoEmail to sSubject
+            
+            
+            
+        End
+    End_Function
+
+    Function DoSendInternalEmail Integer iNoteId Returns Boolean
+        Boolean bSuccess
+        Integer iSuccess iVoid iIsOk iRetval iCurrentId iPos
+        Integer iLocnotesId iAreaEmployee
+        Variant vNewMail
+        Handle  hoDD hoMailman hoEmail
+        String sStatus sStatusShort sMessage sCreatedDateTime sAssigned sAssignedDateTime
+        String sResolved sResolvedDateTime sClosedDateTime sErrorText sProgramPath sErrorLog sHomeURL
+        String sServer sSubject sFriendlyName sCC sHTML_Message sTo sFrom sCreatedBy sAssignedBy sAssignedTo sResolvedBy
+        //
+//        Get Main_DD to hoDD
+//        Send Refind_Records of hoDD
+        //sHomeURL: https://ipm-149/TempusField/Index.html
+        //Get ServerVariable of ghoWebServiceDispatcher "HTTP_REFERER" to sHomeURL
+        //
+        Clear Locnotes
+        Move iNoteId to Locnotes.LocnotesId
+        Find GE Locnotes by 1
+        If (not(Found)) Begin
+            Function_Return (False)          
+        End
+        //
+        Relate Locnotes
+        
+        // create reference
+        Clear Contact
+        Move Location.PropmgrIdno to Contact.ContactIdno
+        Find eq Contact.ContactIdno
+        Move Locnotes.LocnotesId                                                    to iLocnotesId
+        Move (Trim(Locnotes.Status))                                                to sStatus
+        Move (Right((Trim(Locnotes.Status)),((Length(Trim(Locnotes.Status)))-2)))   to sStatusShort
+        Move ((If(sStatus="1-OPEN","NEW","Update on"))*"Call Center")               to sSubject
+        Move (sSubject*"Note#"*String(iLocnotesId)*Trim(Location.Name))             to sSubject
+        Move (sSubject*" - Status: "*sStatus)                                       to sSubject
+        Move (trim(Locnotes.Note))                                                  to sMessage
+        Move (Trim(Locnotes.CreatedBy))                                             to sCreatedBy
+        Move (String(Locnotes.CreatedDate)*"-"*String(Locnotes.CreatedTime))        to sCreatedDateTime
+        Move (Trim(Locnotes.AssignmentNote))                                        to sAssigned
+        Move (Trim(Locnotes.AssignedTo))                                            to sAssignedTo
+        Move (String(Locnotes.AssignedDate)*"-"*String(Locnotes.AssignedTime))      to sAssignedDateTime
+        Move (Trim(Locnotes.AssignedBy))                                            to sAssignedBy
+        Move (Trim(Locnotes.Resolution))                                            to sResolved
+        Move (String(Locnotes.ResolvedDate)*"-"*String(Locnotes.ResolvedTime))      to sResolvedDateTime
+        Move (Trim(Locnotes.ResolvedBy))                                            to sResolvedBy
+        
+        //
+        Move Areas.EmployeeIdno                                 to iAreaEmployee
+        Clear Employee
+        Move iAreaEmployee                                      to Employee.EmployeeIdno
+        Find eq Employee.EmployeeIdno
+        Move (Trim(Employee.EmailAddress))                      to sTo
+        Move (Trim(Employee.FirstName)*Trim(Employee.LastName)) to sFriendlyName
+        Move (Trim(System.SMTP_MailFrom))                       to sFrom            
+        //
+        Get psProgramPath of (phoWorkspace(ghoApplication)) to sProgramPath
+        Move (sProgramPath + "\ChilkatErrorLog.txt")        to sErrorLog
+        //
+        Get InitMail of oChilkatMailMan (&hoMailman) (&hoEmail) to iIsOk
+        If (iIsOk) Begin
+            
+            //SMTP Server Settings
+            Set ComSmtpHost     of hoMailman to "smtp.office365.com"            // "smtp.office365.com" // "mail.interstatepm.com" //"64.122.223.194"
+            Set ComSmtpPort     of hoMailman to 587                             // "25"
+            Set ComStartTls     of hoMailman to True
+            //Login Info
+            Set ComSmtpUsername of hoMailman to "interstate@interstatepm.com"   // ""
+            Set ComSmtpPassword of hoMailman to "IC_Adm#2016!"                  // ""
+            //Prepare email to staff
+            Set ComSubject of hoEmail to sSubject
+            Get ComAddTo of hoEmail sFriendlyName sTo to iRetval
+            
+            Set ComFrom of hoEmail to "Interstate Dispatch <dispatch@interstatepm.com>"
+            //
+            If (Areas.AreaNumber = 12) Begin
+                //Salt Routes Area
+                Clear Employee
+                Move 1 to Employee.CallCenterNSIFlag
+                Find ge Employee.CallCenterNSIFlag
+                While ((Found) and Employee.CallCenterNSIFlag = 1)
+                    If (Employee.EmployeeIdno <> iAreaEmployee and Employee.Status = "A") Begin
+                        Move (Trim(Employee.FirstName)*Trim(Employee.LastName)) to sFriendlyName
+                        Move (Trim(Employee.EmailAddress)) to sCC
+                        Get ComAddCC of hoEmail sFriendlyName sCC to iRetval
+                    End
+                    Find gt Employee.CallCenterNSIFlag
+                Loop   
+            End
+            Else Begin
+                //All other Areas
+                Clear Employee
+                Move 1 to Employee.CallCenterFlag
+                Find ge Employee.CallCenterFlag
+                While ((Found) and Employee.CallCenterFlag = 1)
+                    If (Employee.EmployeeIdno <> iAreaEmployee and Employee.Status = "A") Begin
+                        // If External Employee, is his Employer ASSIGNED to this site?
+                        If (Employee.EmployerIdno <> 101) Begin
+                            Clear Locequip
+                            Move Location.LocationIdno to Locequip.LocationIdno
+                            Move Employee.EmployerIdno to Locequip.EmployerIdno
+                            Find GE Locequip by 3
+                            If ((Found) and Locequip.EmployerIdno = Employee.EmployerIdno and Location.LocationIdno = Locequip.LocationIdno) Begin
+                                //Has at least one record - lets add his address
+                                Move (Trim(Employee.FirstName)*Trim(Employee.LastName)) to sFriendlyName
+                                Move (Trim(Employee.EmailAddress)) to sCC
+                                Get ComAddCC of hoEmail sFriendlyName sCC to iRetval
+                            End
+                        End
+                        Else Begin
+                            Move (Trim(Employee.FirstName)*Trim(Employee.LastName)) to sFriendlyName
+                            Move (Trim(Employee.EmailAddress)) to sCC
+                            Get ComAddCC of hoEmail sFriendlyName sCC to iRetval
+                        End
+                        
+                    End
+                    Find gt Employee.CallCenterFlag
+                Loop
+            End
+            
+            // BEN - Transfering the message into an HTML form
+            Move "<html><body>" to sHTML_Message
+            If (sStatus="1-OPEN") Begin
+                 Append sHTML_Message ("New Call Center Note for" * Trim(Location.Name)*"<br><br>")
+            End
+            Else Begin
+                Append sHTML_Message ("There was an update on Call Center Note for" * Trim(Location.Name)*"<br><br>" )
+            End
+            Append sHTML_Message ("<table border='1' cellpadding='1' cellspacing='1' style='font-family:Arial Unicode MS; font-size:14px'>")
+            Append sHTML_Message ("<tbody>")
+            Append sHTML_Message ("<tr>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:400px'><strong><b>Note#</b><a href='"+sHomeURL+"#CallCenter/Note-"+String(iLocnotesId)+"'>"*String(iLocnotesId)*"</a> - <b>Current Status:</b>"*sStatusShort*"</strong></td>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:50px'><strong>Update</strong></td>")
+            Append sHTML_Message ("</tr>")
+            // Add when RESOLVED
+            If (sStatus="4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td>This note has been closed.</td>")
+                Append sHTML_Message ("<td align='center' valign='center'>CLOSED<br>"*sClosedDateTime*"</td>")
+                Append sHTML_Message ("</tr>")
+            End                
+            // Add when RESOLVED
+            If (sStatus="3-RESOLVED" or sStatus="4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td><b>"*sResolved*"</b></td>")
+                Append sHTML_Message ("<td align='center' valign='center'>RESOLVED<br>"*sResolvedDateTime*"<br>"*sResolvedBy*"</td>")
+                Append sHTML_Message ("</tr>")
+            End
+            // Add when ASSIGNED
+            If (sStatus = "2-ASSIGNED" or sStatus="3-RESOLVED" or sStatus="4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td><b>"*sAssigned*"</b></td>")
+                Append sHTML_Message ("<td align='center' valign='center'>ASSIGNED<br>"*sAssignedDateTime*"<br>"*sAssignedBy*"</td>")
+                Append sHTML_Message ("</tr>")
+            End
+            // Section for OPEN status notification
+            If (sStatus = "1-OPEN" or sStatus = "2-ASSIGNED" or sStatus = "3-RESOLVED" or sStatus = "4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td><b>"*sMessage*"</b></td>")
+                Append sHTML_Message ("<td align='center' valign='center'>OPEN<br>"*sCreatedDateTime*"<br>"*sCreatedBy*"</td>")
+                Append sHTML_Message ("</tr>")
+            End
+            //
+            Append sHTML_Message ("</tbody>")
+            Append sHTML_Message ("</table>")
+            Append sHTML_Message ("<br>")
+            //----------------------------------------------------------------------------------------------------------------------
+            Append sHTML_Message ("<table border='1' cellpadding='1' cellspacing='1' style='font-family:Arial Unicode; font-size:14px'>")
+            Append sHTML_Message ("<tbody>")
+            Append sHTML_Message ("<tr>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:150px'><b>Service Location</b></td>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:150px'><b>Property Manager</b></td>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:150px'><b>Requested By</b></td>")
+            Append sHTML_Message ("</tr>")
+            
+            
+            Append sHTML_Message ("<tr>")
+            Append sHTML_Message ("<td><b>"*(Trim(Location.Name))*"</b><br>"*(Trim(Location.Address1))*"<br>"*(Trim(Location.City))+","*(Trim(Location.State))*(Trim(Location.Zip))*"<br><br></td>")
+            Append sHTML_Message ("<td><b>Name:</b>"*(trim(Contact.FirstName)*trim(Contact.LastName))* "<br><b>Email:</b><a href='mailto:" * (Trim(Contact.EmailAddress)) * "'>" * (Trim(Contact.EmailAddress)) * "</a><br><b>Phone:</b>" * (Trim(Contact.Phone1))* "<br></td>")
+            Append sHTML_Message ("<td><b>Name:</b>"*(Trim(Locnotes.CallerName))*"<br><b>Email:</b> <a href='mailto:"*(Trim(Locnotes.CallerEmail))*"'>"*(Trim(Locnotes.CallerEmail))*"</a><br><b>Phone:</b>" * (Trim(Locnotes.CallerPhone)) *"<br></td>")
+            Append sHTML_Message ("</tr>")
+                        
+            Append sHTML_Message ("</tbody>")
+            Append sHTML_Message ("</table>")
+            Append sHTML_Message ("<br>")
+            Append sHTML_Message "</body></html>"
+            
+            Send ComSetHtmlBody   of hoEmail sHTML_Message
+
+            Get pvComObject of hoEmail to vNewMail
+            Get ComSendEmail of hoMailman vNewMail to iSuccess           //Send it (finally)
+            If (iSuccess <> True) Begin
+                Get ComLastErrorText of hoMailman to sErrorText
+                Append_Output sErrorLog
+                Writeln ("Locnotes ID" * String(iLocnotesId))
+                Writeln sErrorText
+                Close_Output
+            End
+            
+            Get ComCloseSmtpConnection of hoMailman to iSuccess
+            If (iSuccess <> True) Begin
+                Append_Output sErrorLog
+                Writeln "Connection to SMTP server not closed cleanly."
+                Close_Output
+            End
+            Append_Output sErrorLog
+            Writeln ("Mail Sent LocNoteId:"*String(Locnotes.LocnotesId))
+        End
+        //
+        Function_Return iSuccess
+    End_Function
+
+    Function DoSendCustomerEmail Integer iNoteId Returns Integer
+        Integer iSuccess iVoid iIsOk iRetval iCurrentId iPos
+        Integer iLocnotesId iAreaEmployee
+        Variant vNewMail
+        Handle  hoDD hoMailman hoEmail
+        String sStatus sStatusShort sMessage sCreatedDateTime sAssigned sAssignedDateTime sContactName
+        String sResolved sResolvedDateTime sClosedDateTime sErrorText sProgramPath sErrorLog 
+        String sServer sSubject sFriendlyName sCC sHTML_Message sTo sFrom sCreatedBy sAssignedBy sAssignedTo sResolvedBy
+        //
+//        Get Main_DD to hoDD
+//        Send Refind_Records of hoDD
+        Clear Locnotes
+        Move iNoteId to Locnotes.LocnotesId
+        Find GE Locnotes by 1
+        If (not(Found)) Begin
+            Function_Return (False)          
+        End
+        //
+        Relate Locnotes
+        // create reference
+        Clear Contact
+        Move Location.PropmgrIdno to Contact.ContactIdno
+        Find eq Contact.ContactIdno
+        Move Locnotes.LocnotesId                                                    to iLocnotesId
+        Move (Trim(Locnotes.Status))                                                to sStatus
+        Move (Right((Trim(Locnotes.Status)),((Length(Trim(Locnotes.Status)))-2)))   to sStatusShort
+        Move ((If(sStatus="1-OPEN","NEW","Update on"))*"Call Center")               to sSubject
+        Move (sSubject*"Note#"*String(iLocnotesId)*Trim(Location.Name))             to sSubject
+        Move (sSubject*" - Status: "*sStatus)                                       to sSubject
+        Move (trim(Locnotes.Note))                                                  to sMessage
+        Move (Trim(Locnotes.CreatedBy))                                             to sCreatedBy
+        Move (String(Locnotes.CreatedDate)*"-"*String(Locnotes.CreatedTime))        to sCreatedDateTime
+        Move (Trim(Locnotes.AssignmentNote))                                        to sAssigned
+        Move (Trim(Locnotes.AssignedTo))                                            to sAssignedTo
+        Move (String(Locnotes.AssignedDate)*"-"*String(Locnotes.AssignedTime))      to sAssignedDateTime
+        Move (Trim(Locnotes.AssignedBy))                                            to sAssignedBy
+        Move (Trim(Locnotes.Resolution))                                            to sResolved
+        Move (String(Locnotes.ResolvedDate)*"-"*String(Locnotes.ResolvedTime))      to sResolvedDateTime
+        Move (Trim(Locnotes.ResolvedBy))                                            to sResolvedBy
+        //
+        Move Contact.EmailAddress                               to sTo
+        Move (Trim(Contact.FirstName)* Trim(Contact.LastName))  to sContactName
+        Move (Trim(System.SMTP_MailFrom))                       to sFrom            
+        //
+        Get psProgramPath of (phoWorkspace(ghoApplication)) to sProgramPath
+        Move (sProgramPath + "\ChilkatErrorLog.txt")        to sErrorLog
+        //
+        Get InitMail of oChilkatMailMan (&hoMailman) (&hoEmail) to iIsOk
+        If (iIsOk) Begin
+            
+            //SMTP Server Settings
+            Set ComSmtpHost     of hoMailman to "smtp.office365.com"           // "smtp.office365.com" // "mail.interstatepm.com" //"64.122.223.194"
+            Set ComSmtpPort     of hoMailman to 587                             // "25"
+            Set ComStartTls     of hoMailman to True
+            //Login Info
+            Set ComSmtpUsername of hoMailman to "interstate@interstatepm.com"   // ""
+            Set ComSmtpPassword of hoMailman to "IC_Adm#2016!"                  // ""
+            //Prepare email to staff
+            Set ComSubject of hoEmail to sSubject
+            Set ComFrom of hoEmail to "Interstate Dispatch <dispatch@interstatepm.com>"
+            Set ComReplyTo of hoEmail to "Insterstate Sales <sales@interstatepm.com>"
+            
+            Get ComAddTo of hoEmail sContactName sTo to iSuccess
+            If (Length((Trim(Locnotes.CallerEmail)))>0) Begin 
+                Get ComAddCC of hoEmail (Trim(Locnotes.CallerName)) (Trim(Locnotes.CallerEmail)) to iSuccess
+            End
+            //
+            
+            // BEN - Transfering the message into an HTML form
+            Move "<html><body>" to sHTML_Message
+            If (sStatus="1-OPEN") Begin
+                 Append sHTML_Message ("New Call Center Note for" * Trim(Location.Name)*"<br><br>")
+            End
+            Else Begin
+                Append sHTML_Message ("There was an update on Call Center Note for" * Trim(Location.Name)*"<br><br>" )
+            End
+            Append sHTML_Message ("<table border='1' cellpadding='1' cellspacing='1' style='font-family:Arial Unicode MS; font-size:14px'>")
+            Append sHTML_Message ("<tbody>")
+            Append sHTML_Message ("<tr>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:400px'><strong><b>Note#</b><a href='https://tempus.interstatepm.com/myproperties'>"*String(iLocnotesId)*"</a> - <b>Current Status:</b>"*sStatusShort*"</strong></td>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:50px'><strong>Update</strong></td>")
+            Append sHTML_Message ("</tr>")
+            // Add when RESOLVED
+            If (sStatus="4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td>This note has been closed.</td>")
+                Append sHTML_Message ("<td align='center' valign='center'>CLOSED<br>"*sClosedDateTime*"</td>")
+                Append sHTML_Message ("</tr>")
+            End                
+            // Add when RESOLVED
+            If (sStatus="3-RESOLVED" or sStatus="4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td><b>"*sResolved*"</b></td>")
+                Append sHTML_Message ("<td align='center' valign='center'>RESOLVED<br>"*sResolvedDateTime*"<br></td>")
+                Append sHTML_Message ("</tr>")
+            End
+            // Add when ASSIGNED
+            If (sStatus = "2-ASSIGNED" or sStatus="3-RESOLVED" or sStatus="4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td><b>Your request was received and has been assigned to"*sAssignedTo*"</b></td>")
+                Append sHTML_Message ("<td align='center' valign='center'>ASSIGNED<br>"*sAssignedDateTime*"<br></td>")
+                Append sHTML_Message ("</tr>")
+            End
+            // Section for OPEN status notification
+            If (sStatus = "1-OPEN" or sStatus = "2-ASSIGNED" or sStatus = "3-RESOLVED" or sStatus = "4-CLOSED") Begin
+                Append sHTML_Message ("<tr>")
+                Append sHTML_Message ("<td><b>"*sMessage*"</b></td>")
+                Append sHTML_Message ("<td align='center' valign='center'>OPEN<br>"*sCreatedDateTime*"<br></td>")
+                Append sHTML_Message ("</tr>")
+            End
+            //
+            Append sHTML_Message ("</tbody>")
+            Append sHTML_Message ("</table>")
+            Append sHTML_Message ("<br>")
+            //----------------------------------------------------------------------------------------------------------------------
+            Append sHTML_Message ("<table border='1' cellpadding='1' cellspacing='1' style='font-family:Arial Unicode; font-size:14px'>")
+            Append sHTML_Message ("<tbody>")
+            Append sHTML_Message ("<tr>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:150px'><b>Service Location</b></td>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:150px'><b>Property Manager</b></td>")
+            Append sHTML_Message ("<td style='background-color:#D3D3D3; width:150px'><b>Requested By</b></td>")
+            Append sHTML_Message ("</tr>")
+            
+            
+            Append sHTML_Message ("<tr>")
+            Append sHTML_Message ("<td><b>"*(Trim(Location.Name))*"</b><br>"*(Trim(Location.Address1))*"<br>"*(Trim(Location.City))+","*(Trim(Location.State))*(Trim(Location.Zip))*"<br><br></td>")
+            Append sHTML_Message ("<td><b>Name:</b>"*(trim(Contact.FirstName)*trim(Contact.LastName))* "<br><b>Email:</b><a href='mailto:" * (Trim(Contact.EmailAddress)) * "'>" * (Trim(Contact.EmailAddress)) * "</a><br><b>Phone:</b>" * (Trim(Contact.Phone1))* "<br></td>")
+            Append sHTML_Message ("<td><b>Name:</b>"*(Trim(Locnotes.CallerName))*"<br><b>Email:</b> <a href='mailto:"*(Trim(Locnotes.CallerEmail))*"'>"*(Trim(Locnotes.CallerEmail))*"</a><br><b>Phone:</b>" * (Trim(Locnotes.CallerPhone)) *"<br></td>")
+            Append sHTML_Message ("</tr>")
+                        
+            Append sHTML_Message ("</tbody>")
+            Append sHTML_Message ("</table>")
+            Append sHTML_Message ("<br>")
+            Append sHTML_Message "</body></html>"
+            
+            Send ComSetHtmlBody   of hoEmail sHTML_Message
+
+            Get pvComObject of hoEmail to vNewMail
+            Get ComSendEmail of hoMailman vNewMail to iSuccess           //Send it (finally)
+            If (iSuccess <> True) Begin
+                Get ComLastErrorText of hoMailman to sErrorText
+                Append_Output sErrorLog
+                Writeln ("Locnotes ID" * String(iLocnotesId))
+                Writeln sErrorText
+                Close_Output
+            End
+            
+            Get ComCloseSmtpConnection of hoMailman to iSuccess
+            If (iSuccess <> True) Begin
+                Append_Output sErrorLog
+                Writeln "Connection to SMTP server not closed cleanly."
+                Close_Output
+            End
+            Append_Output sErrorLog
+            Writeln ("Mail Sent LocNoteId:"*String(Locnotes.LocnotesId))
+        End
+        //
+        Function_Return iSuccess
+    End_Function
+
+
+End_Object
+
+
+

@@ -1,0 +1,10 @@
+#REPLACE FILE122 Referenc1
+#REPLACE Referenc1.Recnum |FN122,0
+#REPLACE Referenc1.ReferenceIdno |FN122,1
+#REPLACE Referenc1.Company |FS122,2
+#REPLACE Referenc1.Name |FS122,3
+#REPLACE Referenc1.Title |FS122,4
+#REPLACE Referenc1.Phone |FS122,5
+#REPLACE Referenc1.Email |FS122,6
+#REPLACE Referenc1.Print |FS122,7
+#REPLACE Referenc1.HighLight |FS122,8

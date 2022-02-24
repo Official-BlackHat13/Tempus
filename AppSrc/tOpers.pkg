@@ -1,0 +1,19 @@
+// tOpers.pkg
+
+Struct tOpers
+    Integer iRecId
+    Integer iOpersIdno
+    Integer iCustIdno
+    Integer iLocIdno
+    Integer iMastOpsIdno
+    String  sName
+    Number  nSellRate
+    Number  nCostRate
+    String  sCostType
+    String  sCalcBasis
+    String  sActType
+    Integer iDisplay
+    String  sStatus
+    Number  nSeq
+    Integer iChangedFlag
+End_Struct

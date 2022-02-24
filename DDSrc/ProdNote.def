@@ -1,0 +1,42 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: ProdNote (# 62)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:ProdNote
+  USER DISPLAY NAME         : ProdNote
+  DATAFLEX FILE NAME        : ProdNote
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16641     ( USED: 16641 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 75 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ProdNoteIdno     NUM   10.0     1  1   
+  2  JobNumber        NUM   10.0    12  2   Order.FIELD_3 (8,3)
+  3  Note             TEX    512    23      
+  4  CreatedDate      DAT     10 16406      
+  5  CreatedBy        ASC     50 16429      
+  6  AcknowledgedDate  DAT     10 16479      
+  7  AcknowledgedBy   ASC     50 16502      
+  8  DeletedFlag      NUM    5.0 16552      
+  9  DeletedDate      DAT     10 16558      
+ 10  DeletedBy        ASC     50 16581      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ProdNoteIdno    NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       2     ON-LINE
+       ProdNoteIdno    NO  NO 
+

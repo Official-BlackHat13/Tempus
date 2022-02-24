@@ -1,0 +1,77 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Locnotes (# 24)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:LOCNOTES
+  USER DISPLAY NAME         : Locnotes
+  DATAFLEX FILE NAME        : Locnotes
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 49756     ( USED: 49756 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 2561 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  LocnotesId       NUM   10.0     1  1   
+  2  JobNumber        NUM   10.0    12  2   Order.FIELD_3 (8,3)
+  3  LocationIdno     NUM   10.0    23      
+  4  CreatedDate      DAT     10    34      
+  5  CreatedTime      ASC     10    57      
+  6  CreatedBy        NUM   10.0    67      
+  7  NoteDate         DAT     10    78  2   
+  8  LocnotesRef      NUM   10.0   101  3   
+  9  Note             TEX    512   112      
+ 10  IsEmail          NUM    5.0 16495      
+ 11  ReqtypesCode     ASC     10 16501      Reqtypes.FIELD_1 (37,1)
+ 12  Status           ASC     10 16511  4   
+ 13  AssignedTo       ASC     10 16521      
+ 14  AssignedDate     DAT     10 16531      
+ 15  AssignedTime     ASC     10 16554      
+ 16  AssignedBy       NUM   10.0 16564      
+ 17  ResolvedDate     DAT     10 16575      
+ 18  ResolvedTime     ASC     10 16598      
+ 19  ResolvedBy       NUM   10.0 16608      
+ 20  ClosedDate       DAT     10 16619  4   
+ 21  ClosedTime       ASC     10 16642      
+ 22  ClosedBy         NUM   10.0 16652      
+ 23  Resolution       TEX    512 16663      
+ 24  ChangedFlag      NUM    5.0 33046  5   
+ 25  CallerName       ASC     25 33052      
+ 26  CallerPhone      ASC     14 33077      
+ 27  RecordOwner      NUM   10.0 33091      
+ 28  CallerEmail      ASC     50 33102      
+ 29  EmailReply       TEX    512 33152      
+ 30  EmailSubject     ASC     50 49535      
+ 31  EmailReplyBy     NUM   10.0 49585      
+ 32  MgrFirstName     ASC     50 49596      
+ 33  MgrLastName      ASC     50 49646      
+ 34  MgrEmailAddress  ASC     50 49696      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    LocnotesId      NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       3     ON-LINE
+       NoteDate        NO  NO 
+       LocnotesId      NO  NO 
+
+  3    LocnotesRef     NO  NO       0      0       2     ON-LINE
+       LocnotesId      NO  NO 
+
+  4    ClosedDate      NO  NO       0      0       3     ON-LINE
+       Status          NO  NO 
+       LocnotesId      NO  NO 
+
+  5    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       LocnotesId      NO  NO 
+

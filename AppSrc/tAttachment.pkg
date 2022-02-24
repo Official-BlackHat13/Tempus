@@ -1,0 +1,28 @@
+// tAttachment.pkg
+// used for transfering attachment information
+
+Struct tAttachment
+    Integer iAttachmentIdno
+    Integer iSequence
+    String  sName
+    String  sDescription
+    String  sCreatedBy
+    Date    dCreatedDate
+    String  sCreatedTime
+    String  sUpdatedBy
+    Date    dUpdatedDate
+    String  sUpdatedTime
+    Integer iEstimateIdno
+    Integer iQuoteIdno
+    Integer iJobNumber
+    Integer iInvoiceIdno
+    String  sFileName
+    String  sFileType
+    Integer iEstimateFlag
+    Integer iQuoteFlag
+    Integer iOrderFlag
+    Integer iInvoiceFlag
+    Integer iChangedFlag
+    Integer iEncodeSize
+    Variant sBase64
+End_Struct

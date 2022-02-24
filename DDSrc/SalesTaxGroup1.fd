@@ -1,0 +1,6 @@
+#REPLACE FILE125 SalesTaxGroup1
+#REPLACE SalesTaxGroup1.Recnum |FN125,0
+#REPLACE SalesTaxGroup1.SalesTaxIdno |FN125,1
+#REPLACE SalesTaxGroup1.Name |FS125,2
+#REPLACE SalesTaxGroup1.Rate |FN125,3
+#REPLACE SalesTaxGroup1.QBItemSalesTaxID |FS125,4

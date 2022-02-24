@@ -1,0 +1,58 @@
+Use cGlblDataDictionary.pkg
+
+Open Assigned
+
+Object oStatusVT is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "A" "Active"
+        Send Add_Table_Value "I" "Inactive"
+    End_Procedure
+End_Object
+
+Register_Object Assigned_sl
+
+Class cAssignedDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_file to Assigned.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Option Field Assigned.AssignedCode DD_CAPSLOCK to True
+        Set Field_Option Field Assigned.AssignedCode DD_AUTOFIND to True
+        Set Key_Field_State Field Assigned.AssignedCode to True
+        Set Field_Prompt_Object Field Assigned.AssignedCode to Assigned_sl
+
+        Set Field_Prompt_Object Field Assigned.Description to Assigned_sl
+
+        Set Field_Value_Table Field Assigned.Status to oStatusVT
+        Set Field_Option Field Assigned.Status DD_CAPSLOCK to True
+        Set Field_Class_Name Field Assigned.Status to "cGlblDbComboForm"
+
+    End_Procedure
+
+    Procedure Update
+        Forward Send Update
+        // Insert Code Here
+        If (OPERATION_ORIGIN = Self) Begin
+            Move 1 to Assigned.Changedflag
+        End
+    End_Procedure   // Update
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field Assigned.Status to "A"
+    End_Procedure
+
+End_Class
+
+
+#IFDEF Is$WebApp
+#ELSE
+Use Assigned.sl
+#ENDIF

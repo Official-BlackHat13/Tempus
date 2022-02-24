@@ -1,0 +1,6 @@
+MemberIdno
+ContactIdno
+MktGroupIdno
+GroupName
+CreatedBy
+Created

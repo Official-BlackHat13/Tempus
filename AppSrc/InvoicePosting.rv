@@ -1,0 +1,396 @@
+// InvoicePosting.rv
+// Invoice Posting
+Register_Object oReport
+
+Use cGlblReportView.pkg
+Use cWinReport2.pkg
+Use cGlblForm.pkg
+Use cGlblButton.pkg
+Use cGlblRadio.pkg
+Use cGlblRadioGroup.pkg
+Use cGlblGroup.pkg
+Use InvoicePostingProcess.bp
+
+Use Customer.DD
+Use Areas.DD
+Use Location.DD
+Use Order.DD
+Use Invhdr.DD
+Use SalesRep.DD
+Use cSalesTaxGroupGlblDataDictionary.dd
+
+ACTIVATE_VIEW Activate_oInvoicePosting FOR oInvoicePosting
+Object oInvoicePosting Is A cGlblReportView
+    Set Location to 6 6
+    Set Size to 60 202
+    Set Label To "Invoice Posting"
+
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object
+
+
+    Object oCustomer_DD Is A Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD Is A Areas_DataDictionary
+    End_Object // oAreas_DD
+
+    Object oLocation_DD Is A Location_DataDictionary
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server To oCustomer_DD
+        Set DDO_Server To oAreas_DD
+    End_Object // oLocation_DD
+
+    Object oOrder_DD Is A Order_DataDictionary
+        Set DDO_Server to oSalesRep_DD
+        Set DDO_Server To oLocation_DD
+    End_Object // oOrder_DD
+
+    Object oInvhdr_DD Is A Invhdr_DataDictionary
+        Set DDO_Server To oOrder_DD
+
+        Procedure OnConstrain
+            Constrain Invhdr.PostFlag  eq 0
+            Constrain Invhdr.PostReady eq 1
+        End_Procedure
+    End_Object // oInvhdr_DD
+
+    Set Main_DD To oInvhdr_DD
+
+
+    Object oPrintTo Is A cGlblRadioGroup
+        Set Size to 38 118
+        Set Location to 10 12
+        Set Label to "Send Report to"
+
+        Object oRadio1 Is A cGlblRadio
+            Set Label to "Report Viewer"
+            Set Size to 10 61
+            Set Location to 12 6
+            Set Status_Help to "Prints the report to screen"
+        End_Object // oRadio1
+
+        Object oRadio2 Is A cGlblRadio
+            Set Label to "Printer"
+            Set Size to 10 42
+            Set Location to 24 6
+            Set Status_Help to "Prints the report to printer"
+        End_Object // oRadio2
+
+
+        Function IsToPrinter Returns boolean
+            integer iRadio
+            Get Current_radio to iRadio
+            Function_return (iRadio=1)
+        End_Function // IsToPrinter
+
+    End_Object // oPrintTo
+
+    Object oBtnPrint Is A cGlblButton
+        Set Label to "Print"
+        Set Location to 5 140
+        Set Status_Help to "Print the Selected report"
+        Set Default_State to TRUE
+
+        Procedure OnClick
+            Send StartReport
+        End_Procedure
+    End_Object // oBtnPrint
+
+    Object oBtnPrinterSetup Is A cGlblButton
+        Set Label to "Printer Setup"
+        Set Location to 22 140
+        Set Status_Help to "Set up printer for report"
+        Procedure OnClick
+            Send DFPrintSetup of oReport
+        End_Procedure
+    End_Object // oBtnPrinterSetup
+
+    Object oBtnCancel Is A cGlblButton
+        Set Label to "Cancel"
+        Set Location to 39 140
+        Set Status_Help to "Close this Panel"
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object // oBtnCancel
+
+
+
+    Object oReport Is A cWinReport2
+
+        Set Report_Title to "Invoice Posting"
+
+        // Set DDO, Index and breaks for the report
+        Set Server to oInvhdr_DD
+        Set Ordering to 3
+        // Report_Breaks file.field // no breaks in this report
+
+        Function Starting_Main_Report Returns Integer
+            Boolean bErr
+            Send DFSetMetrics wpm_cm
+            Send DFSetmargins 1 1 1 1
+            Send DFSetLandscape True // This can be used to force a page orientation
+            Forward Get Starting_Main_Report to bErr
+            Function_return bErr
+        End_Function // Starting_Main_Report
+
+        // Page_Top is printed first at the top margin of each page
+        Procedure Page_Top 
+            string  sFont
+            integer iFontSize
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageTop
+                DFHeaderFrame Hdr_NoFrame
+                DFHeaderPos   Hdr_Left
+                DFWriteLn ("Page:" * "#pagecount#") (Font_Right)
+            DFEndHeader
+
+        End_Procedure // Page_Top
+
+        // Report_Header is printed once in a report after Page_Top
+        //Procedure Report_Header
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader  DFReportHeader
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "Report_Header" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+        Procedure Page_Header 
+            integer iFill iBorder iStyle
+            string  sFont sReportTitle
+            integer iFontSize
+
+            Move "arial" to sFont
+            Move 16 to iFontSize
+            Move (Font_bold + rgb_White) to iStyle
+            Move (rgb_dGrey) to iFill
+            Move (rgb_dGrey) to iBorder
+            Get Report_Title to sReportTitle
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageHeader
+                DFHeaderPos   Hdr_Left
+                DFHeaderFrame Hdr_Margins 0.01 iBorder iFill
+                DFWritelnPos sReportTitle 0.1 iStyle
+                DFHeaderMargin HM_BottomOuter 0.08
+            DFEndHeader
+
+        End_Procedure // Page_Header
+
+        Procedure Page_Title 
+            string  sFont 
+            integer iFontSize iHeaderStyle iFill iBorder
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (Font_Bold + rgb_dBlue) to iHeaderStyle
+            Move (rgb_Grey) to iFill
+            Move (rgb_Grey) to iBorder
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageTitle
+                DFHeaderPos   Hdr_Left
+                DFHeaderFrame Hdr_Margins 0.01 iBorder iFill
+                DFHeaderMargin HM_TopInner    0.04
+                DFHeaderMargin HM_BottomInner 0.04
+                DFHeaderMargin HM_BottomOuter 0.08
+
+                DFWritePos "Invoice ID"           2.2 (iHeaderStyle + Font_Right) -1
+                DFWritePos "Organization"         3.0  iHeaderStyle               -1
+                DFWritePos "ID"                  10.0  iHeaderStyle               -1
+                DFWritePos "Location"            12.0  iHeaderStyle               -1
+                DFWritePos "Job Number"          18.6  iHeaderStyle               -1
+                DFWritePos "Date"                21.0  iHeaderStyle               -1
+                DFWritePos "Amount"              25.3 (iHeaderStyle + Font_Right) -1
+                DFWriteLn
+            DFEndHeader
+
+        End_Procedure // Page_Title
+
+        Procedure Body 
+            string  sFont 
+            integer iFontSize iStyle
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_default) to iStyle
+
+            DFFont sFont
+            DFFontSize iFontSize
+
+            DFWritePos Invhdr.Invoiceidno           2.2 (iStyle + Font_Right) -1
+            DFWritePos Customer.Name                3.0  iStyle               -1
+            DFWritePos Location.LocationIdno        10.0  iStyle               -1
+            DFWritePos Location.Name               12.0  iStyle               -1
+            DFWritePos Invhdr.JobNumber            18.6  iStyle               -1
+            DFWritePos Invhdr.Invoicedate          21.0  iStyle               -1
+            DFWritePos Invhdr.Totalamount          25.3 (iStyle + Font_Right)  2
+            DFWriteLn
+            Send Add_SubTotal 3 Invhdr.Totalamount            
+
+        End_Procedure // Body
+
+        Procedure Total 
+            string  sFont 
+            integer iFontSize iStyle iFill iBorder
+            number  nAmount
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_bold) to iStyle
+            Move (rgb_Grey) to iFill
+            Move (rgb_dGrey) to iBorder
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFTotal
+                DFHeaderPos   Hdr_Left
+                DFHeaderFrame Hdr_Margins 0.01 iBorder iFill
+
+                Get SubTotal ( 3 + 0) to nAmount
+                DFWritePos nAmount  17.3 (iStyle + Font_Right) 2
+                DFWriteLn
+            DFEndHeader
+
+        End_Procedure // Total
+
+        // Report_Footer is printed once on the last page before Page_Footer
+        //Procedure Report_Footer
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader DFReportFooter
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "Report_Footer" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+        // // Page_Footer is printed on each page before Page_Bottom
+        //Procedure Page_Footer
+        //    string  sFont
+        //    integer iFontSize
+        //    Move "arial" to sFont
+        //    Move 10 to iFontSize
+        //    DFFont sFont
+        //    DFFontSize iFontSize
+        //    DFBeginHeader DFPageFooter
+        //        DFHeaderFrame  Hdr_Margins 0.01
+        //        DFHeaderPos    Hdr_Left
+        //        DFHeaderMargin Hm_BottomOuter 0.08
+        //        DFWrite     "Page_Footer" (Font_Bold+Font_Center)
+        //    DFEndHeader
+        //End_Procedure
+
+
+        // Page_Bottom is printed last at the bottom margin of each page
+        Procedure Page_Bottom 
+            string sFont
+            integer iFontSize iBorder iStyle
+            DateTime dtDT
+
+            Move (CurrentDateTime()) to dtDT
+
+            Move "arial" to sFont
+            Move 10 to iFontSize
+            Move (font_default) to iStyle
+            Move (rgb_dGrey) to iBorder
+
+            DFFont sFont
+            DFFontSize iFontSize
+            DFBeginHeader DFPageBottom
+                DFHeaderFrame Hdr_Margins 0.01 iBorder
+                DFHeaderPos Hdr_Left
+                DFWriteln ("Report Printed on" * string(dtDT)) (iStyle+Font_Center)
+            DFEndHeader
+
+        End_Procedure // Page_Bottom
+
+        // Returns string with description of selection ranges
+        // Pass: Selection title, start value and end value. Return: description
+        Function SelectionCriteraDescription string sTitle string sStart string sStop returns String
+            string sText
+            If (sStart=""  AND sStop="")  function_return ""
+            If (sStart="0" AND sStop="0") function_return ""
+            If (sStart<>"" AND sStop<>"") begin
+                Move ("between" * sStart * "and" * sStop) to sText
+            end
+            Else if (sStart > "") begin
+                Move ("starting at" * sStart) to sText
+            end
+            Else if (sStop > "") begin
+                Move ("up to" * sStop) to sText
+            End
+            function_return (sTitle * sText)
+        End_Function
+
+    End_Object // oReport
+
+    Procedure StartReport 
+        Integer[] iPosted
+        Boolean   bToPrinter bError
+        Integer   iItems iItem iInvhdrId
+        //
+        // determine if direct print
+        Get IsToPrinter of oPrintTo to bToPrinter
+        Set OutPut_Device_Mode of oReport to (If(bToPrinter, PRINT_TO_PRINTER, PRINT_TO_WINDOW))
+
+        // run the report
+        Send Run_Report of oReport
+
+        Get Confirm "Post invoices printed on report?" to bError
+        If (bError) Procedure_Return
+
+        Get DoPostInvoices of oInvoicePostingProcess (&iPosted) to bError
+        //
+        If (bError) Begin
+            Send Info_Box "An error occurred while posting"
+        End
+        //
+        Move (SizeOfArray(iPosted)) to iItems
+        If (iItems) Begin
+            Decrement iItems
+            For iItem from 0 to iItems
+                Move iPosted[iItem] to iInvhdrId
+                Clear Invhdr
+                Move iInvhdrId to Invhdr.InvoiceIdno
+                Find eq Invhdr.InvoiceIdno
+                If (Found) Begin
+                    Send ChangeAllFileModes DF_FILEMODE_READONLY
+                    Set_Attribute DF_FILE_MODE of Invhdr.File_Number to DF_FILEMODE_DEFAULT
+                    Reread Invhdr
+                    Move 1 to Invhdr.PostFlag
+                    SaveRecord Invhdr
+                    Unlock
+                    Send ChangeAllFileModes DF_FILEMODE_DEFAULT
+                End
+            Loop
+            Increment iItems
+        End
+        Send Info_Box (String(iItems) * "invoices posted")
+    End_Procedure // StartReport
+
+End_Object // oInvoicePosting

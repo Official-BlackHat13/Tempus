@@ -1,0 +1,4 @@
+#REPLACE FILE221 UserRights
+#REPLACE UserRights.Recnum |FN221,0
+#REPLACE UserRights.EditLevel |FN221,1
+#REPLACE UserRights.Discription |FS221,2

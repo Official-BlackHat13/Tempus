@@ -1,0 +1,300 @@
+Use Batchdd.pkg
+Use sql.pkg
+Use Strings.nui
+Use gFormatNumbers.pkg
+
+Open SalesTaxGroup
+Open Terms
+
+Struct tTaxGroup
+    String sName
+    String sRate
+    String sID
+End_Struct
+
+Struct tTerms
+    String  sTerms
+    Integer iDueDays
+    Integer iDiscountDays
+    Number  nDiscountPercent
+    Integer iDayOfMonthDue
+    Integer iDueNextMonthDays
+    Integer iDiscountDayOfMonth
+    Number  nDiscountPercentOfMonth
+    String  sStatus
+    String  sQBTermsRefListId
+End_Struct
+
+Object oQBDataUpdateProcess is a BusinessProcess
+
+    // Send DoProcess to this BPO to start the business process
+    // DoProcess is a predefined method in the BusinessProcess class
+    // Send DoProcess of oNewBusinessProcess
+
+    // OnProcess
+    // ---------
+    // Place your processing code into Procedure OnProcess
+    // OnProcess is a predefined method in the BusinessProcess class
+
+    Procedure OnProcess
+    End_Procedure
+    
+    #Replace CS_QUERY ""
+    #Replace CS_CONNECT "DSN=QuickBooksData"
+    #Replace ODBC_DRV_ID  "ODBC_DRV"
+      
+    Procedure DoUpdateSalesTax
+        Boolean bSuccess
+        Integer iFail
+        Handle hoODBCMngr
+        Handle hdbc hStmt
+        Integer iResult1 iResultCount
+        tTaxGroup[] TaxGroup //dynamic array of tTaxGroup
+        String sQuery
+        
+        Object oODBCHandler is a cSQLHandleManager
+            Move Self to hoODBCMngr
+        End_Object                 
+        //
+        Send Start_Process   // does all process init
+        Send Update_Status "Connecting to QuickBooks"
+        
+        // make the connections to the ODBC driver and the DSN that is setup on the client computer
+        Get SQLConnect of hoODBCMngr ODBC_DRV_ID CS_CONNECT to hdbc
+        If (not(hdbc)) Begin
+            Send Stop_Box "Unable to connect to data source."
+            Send End_Process     // does all close down
+            Procedure_Return
+        End
+        //
+        Set phDbc to hdbc
+        
+        //
+        If (hdbc) Begin
+            Showln "Connection to QuickBooks established"
+            Get SQLOpen of hdbc to hStmt
+            Showln ("hStmt:"*hStmt)
+            If (hStmt<>0) Begin
+//                // BUILD FOR VB DEMO
+//                    SELECT ItemSalesTaxGroup.ListID, ItemSalesTaxGroup.Name, SUM(ItemSalesTax.TaxRate)
+//                    from (ItemSalesTaxGroup INNER JOIN ItemSalesTaxGroupLine ON ItemSalesTaxGroup.ListID = ItemSalesTaxGroupLine.ListID)
+//                    INNER JOIN ItemSalesTax ON ItemSalesTaxGroupLine.ItemSalesTaxRefListID = ItemSalesTax.ListID
+//                    WHERE ItemSalesTaxGroup.IsActive = 1
+//                    GROUP by ItemSalesTaxGroup.ListID, ItemSalesTaxGroup.Name
+//                //
+//////////////////////////////////////////////////////
+//
+//                    SELECT 
+//                    [Name],(
+//                    STUFF (
+//                    (SELECT ', ' + ItemSalesTaxGroupLine.ItemSalesTaxRefFullName
+//                    from (ItemSalesTaxGroupLine)
+//                    WHERE [NAME] = a.Name
+//                    for XML PATH (''))
+//                    , 1, 1, '')) as TaxCategories, SUM(Rate)
+//                    from ItemSalesTaxGroupLine as a
+//                    GROUP by Name
+//
+                Move (  "SELECT ItemSalesTaxGroup.Name, ItemSalesTaxGroup.ListID, SUM(ItemSalesTax.TaxRate)AS TaxRate"*;
+                        "FROM (ItemSalesTaxGroup INNER JOIN ItemSalesTaxGroupLine ON ItemSalesTaxGroup.ListID = ItemSalesTaxGroupLine.ListID)"*;
+                        "INNER JOIN ItemSalesTax ON ItemSalesTaxGroupLine.ItemSalesTaxRefListID = ItemSalesTax.ListID"*;
+                        "WHERE ItemSalesTaxGroup.IsActive = 1"*;
+                        "GROUP BY ItemSalesTaxGroup.Name, ItemSalesTaxGroup.ListID"*;
+                        "ORDER BY ItemSalesTaxGroup.Name")  to sQuery    
+                //
+                Showln ("sQuery:"*sQuery)
+                Send SQLExecDirect of hStmt sQuery
+                 // Fetch Results
+                Repeat    
+                    Get SQLFetch of hStmt to iResult1
+                    Showln ("iResult1:"*String(iResult1))
+                    If (iResult1 <> 0) Begin
+                        Increment iResultCount
+                        Get SQLColumnValue of hStmt 1 to TaxGroup[iResultCount].sName
+                        Get SQLColumnValue of hStmt 2 to TaxGroup[iResultCount].sID
+                        Get SQLColumnValue of hStmt 3 to TaxGroup[iResultCount].sRate
+                        Showln ("No."+String(iResultCount)*"-"*TaxGroup[iResultCount].sName+",  "+TaxGroup[iResultCount].sRate+",  "+TaxGroup[iResultCount].sID)
+                    End
+                Until (iResult1 = 0) 
+                //                                  
+            End
+            Send SQLClose of hStmt
+            Send SQLDisconnect hdbc 
+            Showln "Connection Disconnected"            
+            //
+            //*** Destory the SQL handle manager object
+            Send Destroy_Object of hoODBCMngr
+            Send End_Process
+            Integer i iUpdated iNew
+            // Print Array
+            Showln "Info In Array"
+            
+            For i from 1 to (SizeOfArray(TaxGroup)-1)
+                Showln ("No."+String(i)*"-"*TaxGroup[i].sName+",  "+TaxGroup[i].sRate+",  "+TaxGroup[i].sID)
+                Clear SalesTaxGroup
+                Move TaxGroup[i].sID to SalesTaxGroup.QBItemSalesTaxID
+                Find GE SalesTaxGroup by 4
+                If ((Found) and TaxGroup[i].sID = SalesTaxGroup.QBItemSalesTaxID) Begin
+                    // Exsisting Item
+                    Reread SalesTaxGroup
+                        Move TaxGroup[i].sName to SalesTaxGroup.Name
+                        Move (Left(TaxGroup[i].sRate,(Length(TaxGroup[i].sRate)-1))) to SalesTaxGroup.Rate
+                        Move 1                                                          to SalesTaxGroup.ChangedFlag
+                        Save SalesTaxGroup
+                        Increment iUpdated
+                        Showln "Updated"
+                    Unlock
+                End
+                Else Begin
+                    // New Item
+                    Reread System
+                        Increment System.LastSalesTaxId
+                        SaveRecord System
+                    Unlock
+                    Clear SalesTaxGroup
+                    Lock
+                        Move System.LastSalesTaxId      to SalesTaxGroup.SalesTaxIdno
+                        Move TaxGroup[i].sID            to SalesTaxGroup.QBItemSalesTaxID
+                        Move TaxGroup[i].sName          to SalesTaxGroup.Name
+                        Move TaxGroup[i].sRate          to SalesTaxGroup.Rate
+                        Move 1                          to SalesTaxGroup.ChangedFlag
+                        Save SalesTaxGroup   
+                        Increment iNew
+                        Showln "Created New"                
+                    Unlock
+                    
+                End
+            Loop
+            Showln ("Updated:"*String(iUpdated)*"- Created:"*String(iNew))
+            
+            Procedure_Return            
+        End
+    End_Procedure
+
+//      SELECT ListID, Name, IsActive, DayOfMonthDue, DueNextMonthDays, DiscountDayOfMonth DiscountPct, StdDueDays, StdDiscountDays, StdDiscountPct FROM Terms WHERE IsActive = 1
+
+    Procedure DoUpdateTerms
+        Boolean bSuccess
+        Integer iFail
+        Handle hoODBCMngr
+        Handle hdbc hStmt
+        Integer iResult1 iResultCount
+        tTerms[] InvTerms
+        String sQuery
+        
+        Object oODBCHandler is a cSQLHandleManager
+            Move Self to hoODBCMngr
+        End_Object                 
+        //
+        Send Start_Process   // does all process init
+        Send Update_Status "Connecting to QuickBooks"
+        
+        // make the connections to the ODBC driver and the DSN that is setup on the client computer
+        Get SQLConnect of hoODBCMngr ODBC_DRV_ID CS_CONNECT to hdbc
+        If (not(hdbc)) Begin
+            Send Stop_Box "Unable to connect to data source."
+            Send End_Process     // does all close down
+            Procedure_Return
+        End
+        //
+        Set phDbc to hdbc
+        
+        //
+        If (hdbc) Begin
+            Showln "Connection to QuickBooks established"
+            Get SQLOpen of hdbc to hStmt
+            Showln ("hStmt:"*hStmt)
+            If (hStmt<>0) Begin
+                
+                Move (  "SELECT ListID, Name, IsActive, DayOfMonthDue, DueNextMonthDays, DiscountDayOfMonth, DiscountPct, StdDueDays, StdDiscountDays, StdDiscountPct FROM Terms")  to sQuery    
+                //
+                Showln ("sQuery:"*sQuery)
+                Send SQLExecDirect of hStmt sQuery
+                 // Fetch Results
+                Repeat    
+                    Get SQLFetch of hStmt to iResult1
+                    Showln ("iResult1:"*String(iResult1))
+                    If (iResult1 <> 0) Begin
+                        Increment iResultCount
+                        Get SQLColumnValue of hStmt 1 to InvTerms[iResultCount].sQBTermsRefListId
+                        Get SQLColumnValue of hStmt 2 to InvTerms[iResultCount].sTerms
+                        Get SQLColumnValue of hStmt 3 to InvTerms[iResultCount].sStatus
+                        Get SQLColumnValue of hStmt 4 to InvTerms[iResultCount].iDayOfMonthDue
+                        Get SQLColumnValue of hStmt 5 to InvTerms[iResultCount].iDueNextMonthDays
+                        Get SQLColumnValue of hStmt 6 to InvTerms[iResultCount].iDiscountDayOfMonth
+                        Get SQLColumnValue of hStmt 7 to InvTerms[iResultCount].nDiscountPercentOfMonth
+                        Get SQLColumnValue of hStmt 8 to InvTerms[iResultCount].iDueDays
+                        Get SQLColumnValue of hStmt 9 to InvTerms[iResultCount].iDiscountDays
+                        Get SQLColumnValue of hStmt 10 to InvTerms[iResultCount].nDiscountPercent
+                        Showln ("No."+String(iResultCount)*"-"*InvTerms[iResultCount].sTerms+",  "+InvTerms[iResultCount].sQBTermsRefListId)
+                        Showln ('---> '*String(InvTerms[iResultCount].iDayOfMonthDue)*'|'*String(InvTerms[iResultCount].iDueNextMonthDays)*'|'*String(InvTerms[iResultCount].iDiscountDayOfMonth)*'|'*String(InvTerms[iResultCount].nDiscountPercentOfMonth)*'|'*String(InvTerms[iResultCount].iDueDays)*'|'*String(InvTerms[iResultCount].iDiscountDays)*'|'*String(InvTerms[iResultCount].nDiscountPercent))
+                    End
+                Until (iResult1 = 0) 
+                //                                  
+            End
+            Send SQLClose of hStmt
+            Send SQLDisconnect hdbc 
+            Showln "Connection Disconnected"            
+            //
+            //*** Destory the SQL handle manager object
+            Send Destroy_Object of hoODBCMngr
+            Send End_Process
+            Integer i iUpdated iNew
+            // Print Array
+            Showln "Info In Array"
+            
+            For i from 1 to (SizeOfArray(InvTerms)-1)
+//                Showln ( "No."+ String(i) * "-" * Terms[iResultCount].sTerms+",  "+ Terms[iResultCount].sQBTermsRefListId)
+                Clear Terms
+                Move InvTerms[i].sQBTermsRefListId to Terms.QBTermsRefListId
+                Find GE Terms by 3
+                If ((Found) and InvTerms[i].sQBTermsRefListId = Terms.QBTermsRefListId) Begin
+                    // Exsisting Item
+                    Reread Terms
+                        Move InvTerms[i].sTerms                         to Terms.Terms
+                        Move (If(InvTerms[i].sStatus=1,"A","I"))        to Terms.Status
+                        Move InvTerms[i].iDayOfMonthDue                 to Terms.DayOfMonthDue
+                        Move InvTerms[i].iDueNextMonthDays              to Terms.DueNextMonthDays
+                        Move InvTerms[i].iDiscountDayOfMonth            to Terms.DiscountDayOfMonth
+                        Move InvTerms[i].nDiscountPercentOfMonth        to Terms.DiscountPercentOfMonth
+                        Move InvTerms[i].iDueDays                       to Terms.DueDays
+                        Move InvTerms[i].iDiscountDays                  to Terms.DiscountDay
+                        Move InvTerms[i].nDiscountPercent               to Terms.DiscountPercent
+                        Move 1                                          to Terms.ChangedFlag     
+                        //
+                        Save Terms
+                        Increment iUpdated
+                        Showln "Updated"
+                    Unlock
+                End
+                Else Begin
+                    // New Item
+                    Clear Terms
+                    Lock
+                        Move InvTerms[i].sQBTermsRefListId              to Terms.QBTermsRefListId
+                        Move InvTerms[i].sTerms                         to Terms.Terms
+                        Move (If(InvTerms[i].sStatus=1,"A","I"))        to Terms.Status
+                        Move InvTerms[i].iDayOfMonthDue                 to Terms.DayOfMonthDue
+                        Move InvTerms[i].iDueNextMonthDays              to Terms.DueNextMonthDays
+                        Move InvTerms[i].nDiscountPercentOfMonth        to Terms.DiscountPercentOfMonth
+                        Move InvTerms[i].nDiscountPercent               to Terms.DiscountPercent
+                        Move InvTerms[i].iDueDays                       to Terms.DueDays
+                        Move InvTerms[i].iDiscountDays                  to Terms.DiscountDay
+                        Move InvTerms[i].nDiscountPercent               to Terms.DiscountPercent
+                        Move 1                                          to Terms.ChangedFlag
+                        //
+                        Save Terms   
+                        Increment iNew
+                        Showln "Created New"                
+                    Unlock
+                    
+                End
+            Loop
+            Showln ("Updated:"*String(iUpdated)*"- Created:"*String(iNew))
+            
+            Procedure_Return            
+        End
+    End_Procedure
+
+End_Object
+

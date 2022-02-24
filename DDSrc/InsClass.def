@@ -1,0 +1,34 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: InsClass (# 73)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:InsClass
+  USER DISPLAY NAME         : InsClass
+  DATAFLEX FILE NAME        : InsClass
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 69        ( USED: 69 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 7 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ClassCode        ASC      8     1  1   
+  2  ClassDescription  ASC     50     9  2   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ClassCode       NO  NO       0      0       1     ON-LINE
+
+  2    ClassDescription NO  NO       0      0       2     ON-LINE
+       ClassCode       NO  NO 
+

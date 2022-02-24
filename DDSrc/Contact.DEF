@@ -1,0 +1,90 @@
+-----------------------------------------------------------------------------
+  DATE: 11/06/2018      TIME: 10:34                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Contact (# 6)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Contact
+  USER DISPLAY NAME         : Contact
+  DATAFLEX FILE NAME        : Contact
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 33279     ( USED: 33279 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 5970 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CustomerIdno     NUM    8.0     1  1   Customer.FIELD_1 (2,1)
+  2  ContactIdno      NUM    8.0    12  2   
+  3  LastName         ASC     30    23  5   
+  4  FirstName        ASC     30    53  7   
+  5  Address1         ASC     50    83      
+  6  Address2         ASC     50   133      
+  7  City             ASC     35   183      
+  8  State            ASC      2   218      
+  9  Zip              ASC     10   220      
+ 10  Phone1           ASC     14   230      
+ 11  PhoneType1       ASC      1   244      
+ 12  Phone2           ASC     14   245      
+ 13  PhoneType2       ASC      1   259      
+ 14  Phone3           ASC     14   260      
+ 15  PhoneType3       ASC      1   274      
+ 16  EmailAddress     ASC     50   275      
+ 17  Title            ASC     30   325      
+ 18  PhoneExt1        ASC      6   355      
+ 19  PhoneExt2        ASC      6   361      
+ 20  PhoneExt3        ASC      6   367      
+ 21  Status           ASC      1   373      
+ 22  RepIdno          NUM    8.0   374  3   
+ 23  SnowRepIdno      NUM    8.0   385  4   
+ 24  MiddleInitial    ASC      1   396      
+ 25  TermOfAddress    ASC     10   397      
+ 26  NameSuffix       ASC     10   407      
+ 27  WebUserID        NUM    8.0   417      
+ 28  WebLoginID       ASC     20   428      
+ 29  WebLoginPW       ASC     20   448      
+ 30  ChangedFlag      NUM    2.0   468  6   
+ 31  Hobbies          TEX    512   474      
+ 32  MiscNotes        TEX    512 16857      
+ 33  BirthMonth       NUM    2.0 33240      
+ 34  BirthDate        NUM    2.0 33246      
+ 35  RecordOwner      NUM    8.0 33252      
+ 36  FollowUpFlag     NUM    2.0 33263  8   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CustomerIdno    NO  NO       0      0       4     ON-LINE
+       LastName        NO  NO 
+       FirstName       NO  NO 
+       ContactIdno     NO  NO 
+
+  2    ContactIdno     NO  NO       0      0       1     ON-LINE
+
+  3    RepIdno         NO  NO       0      0       2     ON-LINE
+       ContactIdno     NO  NO 
+
+  4    SnowRepIdno     NO  NO       0      0       2     ON-LINE
+       ContactIdno     NO  NO 
+
+  5    LastName        NO  NO       0      0       3     ON-LINE
+       FirstName       NO  NO 
+       ContactIdno     NO  NO 
+
+  6    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       ContactIdno     NO  NO 
+
+  7    FirstName       NO  NO       0      0       3     ON-LINE
+       LastName        NO  NO 
+       ContactIdno     NO  NO 
+
+  8    FollowUpFlag    NO  NO       0      0       2     ON-LINE
+       ContactIdno     NO  NO 
+

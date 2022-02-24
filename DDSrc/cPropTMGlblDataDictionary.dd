@@ -1,0 +1,42 @@
+Use cGlblDataDictionary.pkg
+
+Open PropTM
+Open System
+Open TMList_Hdr
+
+Object Catagories is a ValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value "Equipment"
+        Send Add_Table_Value "De-icing Service"
+        Send Add_Table_Value "Sidewalk Service"
+        Send Add_Table_Value "Misc."
+    End_Procedure
+End_Object
+
+Class cPropTMGlblDataDictionary is a cGlblDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to PropTM.File_Number
+
+        Set Add_Server_File to TMList_Hdr.File_Number
+
+        Set Add_System_File to System.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field PropTM.PropT_M_Idno to File_Field System.LastTMRates
+
+        Set Field_Value_Table Field PropTM.Catagory to Catagories
+
+    End_Procedure
+    
+    Procedure Update
+        Move TMList_Hdr.TMList_Idno to PropTM.TMList_Idno
+    End_Procedure
+
+End_Class

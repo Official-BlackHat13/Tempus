@@ -1,0 +1,6 @@
+#REPLACE FILE82 WebAppUserRights
+#REPLACE WebAppUserRights.Recnum |FN82,0
+#REPLACE WebAppUserRights.RightLevel |FN82,1
+#REPLACE WebAppUserRights.Description |FS82,2
+#REPLACE WebAppUserRights.ChangedFlag |FN82,3
+#REPLACE WebAppUserRights.Explanation |FS82,4

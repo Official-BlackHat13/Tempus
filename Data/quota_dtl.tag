@@ -1,0 +1,10 @@
+Quote_Dtl_Idno
+Quota_Idno
+Quota_Mo_Yr
+Asphalt
+Concrete
+Excavation
+Snow
+Sweep
+Marking
+Other

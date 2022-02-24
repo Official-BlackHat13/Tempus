@@ -1,0 +1,12 @@
+Prospect_Idno
+CompanyName
+ProspectName
+Address1
+Address2
+City
+State
+Zip
+OfficePhone
+MobilePhone
+Email
+Rep_Idno

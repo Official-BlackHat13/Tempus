@@ -1,0 +1,92 @@
+function vdfSetToolbarRights(oForm){
+    var oVdfCall = new vdf.ajax.VdfCall("oSessionManager", "get_HasRights", null);
+    oVdfCall.addParameter(vdf.sys.cookie.get("vdfSessionKey")); 
+    oVdfCall.addParameter('find'); 
+    oVdfCall.addParameter(oForm.sWebObject); 
+    oVdfCall.addParameter(''); 
+    oVdfCall.bSuppressError = true;
+    oVdfCall.onFinished.addListener(handleToolbarFind);
+    oVdfCall.send(true);
+
+    var oVdfCall = new vdf.ajax.VdfCall("oSessionManager", "get_HasRights", null);
+    oVdfCall.addParameter(vdf.sys.cookie.get("vdfSessionKey")); 
+    oVdfCall.addParameter('save'); 
+    oVdfCall.addParameter(oForm.sWebObject); 
+    oVdfCall.addParameter(''); 
+    oVdfCall.bSuppressError = true;
+    oVdfCall.onFinished.addListener(handleToolbarSave);
+    oVdfCall.send(true);
+
+    var oVdfCall = new vdf.ajax.VdfCall("oSessionManager", "get_HasRights", null);
+    oVdfCall.addParameter(vdf.sys.cookie.get("vdfSessionKey")); 
+    oVdfCall.addParameter('delete'); 
+    oVdfCall.addParameter(oForm.sWebObject); 
+    oVdfCall.addParameter(''); 
+    oVdfCall.bSuppressError = true;
+    oVdfCall.onFinished.addListener(handleToolbarDelete);
+    oVdfCall.send(true);
+
+    var oVdfCall = new vdf.ajax.VdfCall("oSessionManager", "get_HasRights", null);
+    oVdfCall.addParameter(vdf.sys.cookie.get("vdfSessionKey")); 
+    oVdfCall.addParameter('clear'); 
+    oVdfCall.addParameter(oForm.sWebObject); 
+    oVdfCall.addParameter(''); 
+    oVdfCall.bSuppressError = true;
+    oVdfCall.onFinished.addListener(handleToolbarClear);
+    oVdfCall.send(true);
+}
+
+function handleToolbarFind(oEvent){            
+    var oVdfCall = oEvent.oSource, sError = null, bRet="";
+    
+    if(oVdfCall.aErrors !== null && oVdfCall.aErrors.length > 0){
+        sError = "" + oVdfCall.aErrors[0].iNumber + " : " + oVdfCall.aErrors[0].sErrorText;
+    }else{
+        bRet=oVdfCall.getReturnValue();
+        if (bRet==0){
+            document.getElementById("oVdfFirstBtn").innerHTML='';
+            document.getElementById("oVdfPreviousBtn").innerHTML='';
+            document.getElementById("oVdfEqualBtn").innerHTML='';
+            document.getElementById("oVdfLastBtn").innerHTML='';
+        }
+    }
+}
+
+function handleToolbarSave(oEvent){            
+    var oVdfCall = oEvent.oSource, sError = null, bRet="";
+    
+    if(oVdfCall.aErrors !== null && oVdfCall.aErrors.length > 0){
+        sError = "" + oVdfCall.aErrors[0].iNumber + " : " + oVdfCall.aErrors[0].sErrorText;
+    }else{
+        bRet=oVdfCall.getReturnValue();
+        if (bRet==0){
+            document.getElementById("oVdfSaveBtn").innerHTML='';
+        }
+    }
+}
+
+function handleToolbarDelete(oEvent){            
+    var oVdfCall = oEvent.oSource, sError = null, bRet="";
+    
+    if(oVdfCall.aErrors !== null && oVdfCall.aErrors.length > 0){
+        sError = "" + oVdfCall.aErrors[0].iNumber + " : " + oVdfCall.aErrors[0].sErrorText;
+    }else{
+        bRet=oVdfCall.getReturnValue();
+        if (bRet==0){
+            document.getElementById("oVdfDeleteBtn").innerHTML='';
+        }
+    }
+}
+
+function handleToolbarClear(oEvent){            
+    var oVdfCall = oEvent.oSource, sError = null, bRet="";
+    
+    if(oVdfCall.aErrors !== null && oVdfCall.aErrors.length > 0){
+        sError = "" + oVdfCall.aErrors[0].iNumber + " : " + oVdfCall.aErrors[0].sErrorText;
+    }else{
+        bRet=oVdfCall.getReturnValue();
+        if (bRet==0){
+            document.getElementById("oVdfClearBtn").innerHTML='';
+        }
+    }
+}

@@ -1,0 +1,35 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Reqtypes (# 37)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Reqtypes
+  USER DISPLAY NAME         : Reqtypes
+  DATAFLEX FILE NAME        : Reqtypes
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 87        ( USED: 87 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 4 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  ReqtypesCode     ASC     10     1  1   
+  2  Description      ASC     60    11      
+  3  ChangedFlag      NUM    5.0    71  2   
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    ReqtypesCode    NO  NO       0      0       1     ON-LINE
+
+  2    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       ReqtypesCode    NO  NO 
+

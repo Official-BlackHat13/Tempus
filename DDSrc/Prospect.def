@@ -1,0 +1,44 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Prospect (# 65)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Prospect
+  USER DISPLAY NAME         : Prospect
+  DATAFLEX FILE NAME        : Prospect
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 289       ( USED: 289 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  Prospect_Idno    NUM   10.0     1  1   
+  2  CompanyName      ASC     50    12      
+  3  ProspectName     ASC     30    62  2   
+  4  Address1         ASC     30    92      
+  5  Address2         ASC     30   122      
+  6  City             ASC     30   152      
+  7  State            ASC      2   182      
+  8  Zip              ASC     10   184      
+  9  OfficePhone      ASC     12   194      
+ 10  MobilePhone      ASC     12   206      
+ 11  Email            ASC     50   218      
+ 12  Rep_Idno         NUM   10.0   268      SalesRep.FIELD_1 (5,1)
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    Prospect_Idno   NO  NO       0      0       1     ON-LINE
+
+  2    ProspectName    NO  NO       0      0       2     ON-LINE
+       Prospect_Idno   NO  NO 
+

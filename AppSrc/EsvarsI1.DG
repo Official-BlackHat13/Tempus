@@ -1,0 +1,137 @@
+// EsvarsI1.DG
+
+Use DFAllEnt.pkg
+Use cGlblDbContainer3d.pkg
+Use cGlblDbSpinForm.pkg
+Use cGlblDbForm.pkg
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use JCOPER.DD
+Use ESVARS.DD
+
+Object odgEsvarsI1 is a dbModalPanel
+
+    property integer piVarnum 0
+    
+    Set Label to "Var. Input Type 1 Settings"
+    Set Size to 52 364
+    Set Location to 6 11
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to Jcdept_DD
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to Jccntr_DD
+    End_Object    // Jcoper_DD
+
+    Object Esvars_DD is a Esvars_DataDictionary
+        Set DDO_Server to Jcoper_DD
+        Set Constrain_File to Jcoper.File_Number
+
+        Procedure Update
+            integer iVarnum
+            //
+            Get piVarnum to iVarnum
+            //
+            Forward Send Update
+            //
+            Move iVarnum to Esvars.Varnum
+            Move 1 to Esvars.Input_Type
+        End_Procedure
+    End_Object    // Esvars_DD
+
+    Set Main_DD to (Esvars_DD(self))
+    Set Server to (Esvars_DD(self))
+
+    Object oDbContainer1 is a cGlblDbContainer3d
+        Set Size to 25 355
+        Set Location to 5 5
+        Set Border_Style to Border_StaticEdge
+        Object Esvars_Decimals is a cGlblDbSpinForm
+            Entry_Item Esvars.Decimals
+            Set Label to "Decimal Places:"
+            Set Size to 13 25
+            Set Location to 5 66
+        End_Object    // Esvars_Decimals
+
+        Object Esvars_Range_Low is a cGlblDbForm
+            Entry_Item Esvars.Range_low
+            Set Label to "Input must be between"
+            Set Size to 13 75
+            Set Location to 5 176
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+        End_Object    // Esvars_Range_Low
+
+        Object Esvars_Range_High is a cGlblDbForm
+            Entry_Item Esvars.Range_high
+            Set Label to "and "
+            Set Size to 13 75
+            Set Location to 5 273
+            Set Status_Help to "Enter a value between 0 and 99,999,999.9999"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+        End_Object    // Esvars_Range_High
+
+    End_Object    // oDbContainer1
+
+    Object oSaveButton is a Button
+        Set Label to "&Save"
+        Set Location to 35 251
+
+        on_key kCancel send Close_Panel
+        
+        procedure OnClick
+            integer hDD iRet
+            //
+            get Server to hDD
+            // validate first
+            get Request_Validate of hDD to iRet
+            if (iRet) procedure_return
+            //
+            send Request_Save of hDD
+            if (Should_Save(self)) procedure_return
+            send Close_Panel
+        end_procedure
+    End_Object    // oSaveButton
+
+    Object oCancelButton is a Button
+        Set Label to "&Cancel"
+        Set Location to 35 310
+
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+    End_Object    // oCancelButton
+
+    procedure DoEditEsvars integer iVarnum
+        integer hDD
+        set piVarnum to iVarnum
+        //
+        get Server          to hDD
+        send Clear      of hDD
+        move Jcoper.Opcode to Esvars.Opcode
+        move iVarnum to Esvars.Varnum
+        send Find of hDD EQ 1
+        send Popup_Modal
+    end_procedure
+
+    procedure Request_Clear
+        forward send Request_Clear
+        send Close_Panel
+    end_procedure
+    
+    procedure Request_Clear_All
+        send Request_Clear
+    end_procedure
+    
+    on_key kSave_record  send KeyAction of oSaveButton
+    on_key Key_Alt+Key_S send KeyAction of oSaveButton
+    on_key Key_Alt+Key_C send KeyAction of oCancelButton
+
+End_Object    // odgEsvarsI1

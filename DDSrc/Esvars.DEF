@@ -1,0 +1,45 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Esvars (# 54)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Esvars
+  USER DISPLAY NAME         : Esvars
+  DATAFLEX FILE NAME        : Esvars
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 114       ( USED: 114 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 167 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  OPCODE           NUM   10.0     1  1   Jcoper.FIELD_4 (53,4)
+  2  VARNUM           ASC      1    12  1   
+  3  ITEMNUM          NUM    5.0    13  1   
+  4  INPUT_TYPE       ASC      1    19  2   
+  5  DECIMALS         NUM    5.0    20      
+  6  RANGE_LOW        NUM    8.4    26      
+  7  RANGE_HIGH       NUM    8.4    40      
+  8  SPIN_INCREMENT   NUM    4.4    54      
+  9  DESCRIPTION      ASC     40    64      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    OPCODE          NO  NO       0      0       3     ON-LINE
+       VARNUM          NO  NO 
+       ITEMNUM         NO  NO 
+
+  2    INPUT_TYPE      NO  NO       0      0       4     ON-LINE
+       OPCODE          NO  NO 
+       VARNUM          NO  NO 
+       ITEMNUM         NO  NO 
+

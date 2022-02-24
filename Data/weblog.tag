@@ -1,0 +1,15 @@
+WeblogIdno
+HitDate
+HitHr
+HitMin
+HitSec
+Success
+EmployeeIdno
+PIN
+TransType
+JobNumber1
+EquipmentIdno
+JobNumber2
+MaterialIdno
+MaterialQty
+CallerId

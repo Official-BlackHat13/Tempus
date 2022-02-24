@@ -1,0 +1,42 @@
+Use GlobalAllEnt.pkg
+//Use Windows.pkg
+//Use cHtmlHelp.pkg
+//Use cApplication.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set pbPreserveEnvironment to False
+    Set peHelpType to htHtmlHelp
+End_Object
+
+Open MastOps
+Open Opers
+
+Procedure DoUpdateOpers
+    Boolean bCancel
+    //
+    Get Confirm "Update Opers records?" to bCancel
+    If bCancel Procedure_Return
+    //
+    Clear MastOps
+    Move 310 to MastOps.MastOpsIdno
+    Find eq MastOps.MastOpsIdno
+    Send Info_Box MastOps.CostType
+    If (Found) Begin
+        Clear Opers
+        Move 310 to Opers.MastOpsIdno
+        Find ge Opers.MastOpsIdno
+        While ((Found) and Opers.MastOpsIdno = 310)
+            Reread Opers
+            Move MastOps.CostType to Opers.CostType
+            Move 1                to Opers.ChangedFlag
+            SaveRecord Opers
+            Unlock
+            Find gt Opers.MastOpsIdno
+        Loop
+    End
+End_Procedure
+
+Send DoUpdateOpers

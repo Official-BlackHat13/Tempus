@@ -1,0 +1,24 @@
+// tEmployee.pkg
+
+Struct tEmployee
+    Integer iRecId
+    Integer iEmployeeIdno
+    Integer iEmployerIdno
+    String  sLast
+    String  sFirst
+    String  sMiddle
+    String  sTitle
+    String  sSuffix
+    String  sAddress1
+    String  sAddress2
+    String  sCity
+    String  sState
+    String  sZip
+    Integer iPIN
+    String  sStatus
+    Integer iChangedFlag
+    Integer iCallCenterFlag
+    String  sEmailAddress
+    Integer iCEPM_EmployeeIdno
+    Integer iCallCenterNSIFlag
+End_Struct

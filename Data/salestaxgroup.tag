@@ -1,0 +1,4 @@
+SalesTaxIdno
+Name
+Rate
+QBItemSalesTaxID

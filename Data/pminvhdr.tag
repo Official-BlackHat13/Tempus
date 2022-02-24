@@ -1,0 +1,15 @@
+InvoiceNumber
+JobNumber
+QuoteHdrID
+CustomerIdno
+ContactIdno
+LocationIdno
+SlsRepIdno
+QuoteDate
+OrderDate
+QuoteMemo
+Amount
+InvoiceDate
+NextLineNo
+LineCount
+PO

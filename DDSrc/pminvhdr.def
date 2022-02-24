@@ -1,0 +1,50 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: pminvhdr (# 42)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:pminvhdr
+  USER DISPLAY NAME         : PM Invoice Header
+  DATAFLEX FILE NAME        : pminvhdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 250       ( USED: 250 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 270 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 1 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  InvoiceNumber    NUM   10.0     1  1   
+  2  JobNumber        NUM   10.0    12  2   Order.FIELD_3 (8,3)
+  3  QuoteHdrID       NUM   10.0    23  3   
+  4  CustomerIdno     NUM   10.0    34      
+  5  ContactIdno      NUM   10.0    45      Contact.FIELD_2 (6,2)
+  6  LocationIdno     NUM   10.0    56      
+  7  SlsRepIdno       NUM   10.0    67      
+  8  QuoteDate        DAT     10    78      
+  9  OrderDate        DAT     10   101      
+ 10  QuoteMemo        ASC     50   124      
+ 11  Amount           NUM    8.2   174      
+ 12  InvoiceDate      DAT     10   186      
+ 13  NextLineNo       NUM    5.0   209      
+ 14  LineCount        NUM    5.0   215      
+ 15  PO               ASC     30   221      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    InvoiceNumber   NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       2     ON-LINE
+       InvoiceNumber   NO  NO 
+
+  3    QuoteHdrID      NO  NO       0      0       2     ON-LINE
+       InvoiceNumber   NO  NO 
+

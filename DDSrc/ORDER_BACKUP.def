@@ -1,0 +1,104 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: ORDER_BACKUP (# 79)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:ORDER_BACKUP
+  USER DISPLAY NAME         : dbo.ORDER_BACKUP
+  DATAFLEX FILE NAME        : ORDER_BACKUP
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 33518     ( USED: 33518 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 4764 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 3 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CustomerIdno     NUM   10.0     1  3   
+  2  LocationIdno     NUM   10.0    12  2   
+  3  JobNumber        NUM   10.0    23  1   
+  4  Title            ASC     60    34      
+  5  WorkType         ASC      1    94  7   
+  6  Planner          ASC      3    95      
+  7  EstimatedHours   NUM    4.2    98      
+  8  JobOpenDate      DTM     26   106      
+  9  JobCloseDate     DTM     26   129  7   
+ 10  EventOpenDate    DTM     26   152      
+ 11  EventCloseDate   DTM     26   175      
+ 12  EventIdno        NUM   10.0   198      
+ 13  BilledDollars    NUM    6.2   209      
+ 14  Description      TEX  16383   219      
+ 15  Specification    TEX  16383 16602      
+ 16  ChangedFlag      NUM    5.0 32985  4   
+ 17  QuoteReference   NUM   10.0 32991      
+ 18  QuoteAmount      NUM    8.2 33002      
+ 19  Organization     ASC     60 33014  5   
+ 20  ProjectId        NUM   10.0 33074  6   
+ 21  PO_Number        ASC     25 33085      
+ 22  LocationName     ASC     40 33110  8   
+ 23  PropertyManager  ASC     40 33150      
+ 24  RoundingExempt   NUM    5.0 33190      
+ 25  MonthlyBilling   NUM    5.0 33196      
+ 26  MilesToWorksite  NUM    5.0 33202      
+ 27  WorkScheduled    DTM     26 33208      
+ 28  WorkStarted      DTM     26 33231      
+ 29  WorkStopped      DTM     26 33254      
+ 30  LaborMinutes     NUM   10.0 33277      
+ 31  TravelMinutes    NUM   10.0 33288      
+ 32  MaterialCost     NUM    8.2 33299      
+ 33  SuppliesCost     NUM    8.2 33311      
+ 34  OutsideSvcsCost  NUM    8.2 33323      
+ 35  EquipmentCost    NUM    8.2 33335      
+ 36  JobCostTotal     NUM    8.2 33347      
+ 37  PromiseDate      DTM     26 33359      
+ 38  RepIdno          NUM   10.0 33382      
+ 39  CostStatus       NUM    5.0 33393      
+ 40  InvoiceAmt       NUM    8.2 33399      
+ 41  BillingType      ASC      1 33411      
+ 42  BillStatus       ASC     10 33412      
+ 43  Division         ASC     20 33422      
+ 44  InvoiceOnly      ASC      1 33442      
+ 45  LaborCost        NUM    6.2 33443      
+ 46  TravelCost       NUM    6.2 33453      
+ 47  SalesComm        NUM    6.2 33463      
+ 48  NetProfit        NUM    2.2 33473      
+ 49  InvoiceReference  NUM   10.0 33479      
+ 50  ReturnFlag       NUM    5.0 33490      
+ 51  LastReturnDate   DTM     26 33496      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    JobNumber       NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  3    CustomerIdno    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  4    ChangedFlag     NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  5    Organization    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  6    ProjectId       NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  7    WorkType        NO  NO       0      0       3     ON-LINE
+       JobCloseDate    NO  NO 
+       JobNumber       NO  NO 
+
+  8    LocationName    NO  NO       0      0       2     ON-LINE
+       JobNumber       NO  NO 
+
+  9    JobNumber       YES NO       0      0       1     ON-LINE
+

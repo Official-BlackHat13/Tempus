@@ -1,0 +1,37 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Crystal (# 22)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:CRYSTAL
+  USER DISPLAY NAME         : Crystal Reports
+  DATAFLEX FILE NAME        : Crystal
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 170       ( USED: 170 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 32 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  CrystalId        NUM   10.0     1  1   
+  2  Description      ASC     50    12  2   
+  3  FileName         ASC     80    62      
+  4  Flag01           NUM    5.0   142      
+  5  Flag02           NUM    5.0   148      
+  6  Flag03           NUM    5.0   154      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    CrystalId       NO  NO       0      0       1     ON-LINE
+
+  2    Description     NO  NO       0      0       1     ON-LINE
+

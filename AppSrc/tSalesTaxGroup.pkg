@@ -1,0 +1,11 @@
+// tSalesTaxGroup.pkg
+// used to update remote server data
+
+Struct tSalesTaxGroup
+    Integer    iRecId
+    Integer    iSalesTaxIdno
+    String     sName
+    String     sRate
+    Integer    iChangedFlag
+End_Struct
+    

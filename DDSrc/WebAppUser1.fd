@@ -1,0 +1,7 @@
+#REPLACE FILE133 WebAppUser1
+#REPLACE WebAppUser1.Recnum |FN133,0
+#REPLACE WebAppUser1.LoginName |FS133,1
+#REPLACE WebAppUser1.Password |FS133,2
+#REPLACE WebAppUser1.Rights |FN133,3
+#REPLACE WebAppUser1.FullName |FS133,4
+#REPLACE WebAppUser1.LastLogin |FM133,5

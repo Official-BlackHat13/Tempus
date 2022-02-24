@@ -1,0 +1,2510 @@
+// VariablesDialog.dg
+
+Use ItemDialogClasses.pkg
+
+Use DFAllEnt.pkg
+
+Use cJcdeptDataDictionary.dd
+Use cJccntrDataDictionary.dd
+Use Jcoper.dd
+Use OPCODEHP.DG
+Use cGlblButton.pkg
+
+// Order Maintenence
+#IFDEF CE_PRODUCTION
+Use Jcreps.dd
+Use Jccust.dd
+Use Jccrep.dd
+Use Jcorep.dd
+Use Jccntc.dd
+Use Jcprod.dd
+Use Jcjobs.dd
+Use Esjcmp.dd
+Use Esjitm.dd
+#ENDIF // #IFDEF CE_PRODUCTION
+// Estimating
+#IFDEF CE_CALC_ESTIMATE
+Use Eshead.dd
+Use Escomp.dd
+Use Esitem.dd
+#ENDIF // #IFDEF CE_CALC_ESTIMATE
+// component library
+#IFDEF CE_CALC_LIBRARY
+Use Esctyp.dd
+Use Esclib.dd
+Use Eslitm.dd
+#ENDIF // #IFDEF CE_CALC_LIBRARY
+
+Object oVariablesDialog is a dbModalPanel
+
+    Property Integer phItemDD
+    Property Integer pbEditing
+    Property Integer pbSaving
+    Property Integer pbClearing
+    Property Integer pbDupeValue
+    Property Number  pnDupeValue
+    //
+    Property Integer pbNeedsCalced
+    //
+    Property Boolean pbEditDirect
+    //
+    Property Integer piItemFile
+    Property Integer piOpcodeField
+    //BC added next 5 lines
+    Property Integer piShadowColor
+    //
+    if      (Jcpars.NoInput_Color = 3) set piShadowColor to clGreen
+    else if (Jcpars.NoInput_Color = 2) set piShadowColor to clActiveCaption
+    else if (Jcpars.NoInput_Color = 1) set piShadowColor to clLtGray
+    else                               set piShadowColor to clGray
+
+    set Locate_Mode          to CENTER_ON_PANEL
+    set Auto_Clear_Deo_State to FALSE
+
+    Set Label to "Estimate Item Details"
+    Set Size to 259 399
+    Set Location to 5 5
+
+    Object Jcdept_DD is a cJcdeptDataDictionary
+    End_Object    // Jcdept_DD
+
+    Object Jccntr_DD is a cJccntrDataDictionary
+        Set DDO_Server to (Jcdept_DD(self))
+    End_Object    // Jccntr_DD
+
+    Object Jcoper_DD is a Jcoper_DataDictionary
+        Set DDO_Server to (Jccntr_DD(self))
+    End_Object    // Jcoper_DD
+
+    // Order Maintenance
+    #IFDEF CE_PRODUCTION
+
+    Object Jcreps_DD is a Jcreps_DataDictionary
+    End_Object    // Jcreps_DD
+
+    Object Jccust_DD is a Jccust_DataDictionary
+        Set DDO_Server to (Jcreps_DD(self))
+    End_Object    // Jccust_DD
+
+    Object Jccrep_DD is a Jccrep_DataDictionary
+    End_Object    // Jccrep_DD
+
+    Object Jcorep_DD is a Jcorep_DataDictionary
+    End_Object    // Jcorep_DD
+
+    Object Jccntc_DD is a Jccntc_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jccrep_DD(self))
+    End_Object    // Jccntc_DD
+
+    Object Jcprod_DD is a Jcprod_DataDictionary
+    End_Object    // Jcprod_DD
+
+    Object Jcjobs_DD is a Jcjobs_DataDictionary
+        Set DDO_Server to (Jccust_DD(self))
+        Set DDO_Server to (Jcprod_DD(self))
+        Set DDO_Server to (Jcorep_DD(self))
+        Set DDO_Server to (Jccntc_DD(self))
+    End_Object    // Jcjobs_DD
+
+    Object Esjcmp_DD is a Esjcmp_DataDictionary
+        set DDO_Server to (Jcjobs_DD(self))
+    End_Object    // Esjcmp_DD
+
+    Object Esjitm_DD is a Esjitm_DataDictionary
+
+        Property Boolean pbCalcFlagMode True
+
+        Set DDO_Server to (Esjcmp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+        Set Constrain_File to Esjcmp.File_Number
+
+        Set pbEditMode to True
+
+        procedure End_Construct_Object
+            integer iField
+            //
+            forward send End_Construct_Object
+            //
+            Get_FieldNumber Esjitm.Opcode to iField
+            //
+            set piItemFile    to Esjitm.File_number
+            set piOpcodeField to iField
+        end_procedure
+
+    End_Object    // Esjitm_DD
+
+    Set Main_DD to (Esjitm_DD(self))
+    Set Server to (Esjitm_DD(self))
+
+    #ENDIF // #IFDEF CE_PRODUCTION
+    // Estimating
+    #IFDEF CE_CALC_ESTIMATE
+        
+    Object oCustomer_DD is a Customer_DataDictionary
+    End_Object // oCustomer_DD
+
+    Object oAreas_DD is a Areas_DataDictionary
+    End_Object // oAreas_DD
+    
+    Object oSalesTaxGroup_DD is a cSalesTaxGroupGlblDataDictionary
+    End_Object
+
+    Object oLocation_DD is a Location_DataDictionary
+        Set Constrain_file to Customer.File_number
+        Set DDO_Server to oSalesTaxGroup_DD
+        Set DDO_Server to oAreas_DD
+        Set DDO_Server to oCustomer_DD
+    End_Object
+
+    Object oSalesRep_DD is a Salesrep_DataDictionary
+    End_Object // oSalesRep_DD
+
+    Object oContact_DD is a Contact_DataDictionary
+        Set DDO_Server to oCustomer_DD
+    End_Object // oContact_DD
+    
+    Object Eshead_DD is a Eshead_DataDictionary
+        Set DDO_Server to oLocation_DD
+        Set DDO_Server to oContact_DD
+        Set DDO_Server to oSalesRep_DD
+        // this lets you save a new parent DD from within child DD
+        //Set Allow_Foreign_New_Save_State to True
+    End_Object    // Eshead_DD
+
+    Object Escomp_DD is a Escomp_DataDictionary
+        Set DDO_Server to (Eshead_DD(self))
+    End_Object    // Escomp_DD
+
+    Object Esitem_DD is a Esitem_DataDictionary
+        Set DDO_Server to (Escomp_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+
+        Set pbEditMode to True
+
+        procedure End_Construct_Object
+            integer iField
+            //
+            forward send End_Construct_Object
+            //
+            Get_FieldNumber Esitem.Opcode to iField
+            //
+            set piItemFile    to Esitem.File_number
+            set piOpcodeField to iField
+        End_Procedure
+    End_Object    // Esitem_DD
+
+    Set Main_DD to (Esitem_DD(self))
+    Set Server to (Esitem_DD(self))
+
+    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+    // component library
+    #IFDEF CE_CALC_LIBRARY
+
+    Object Esctyp_DD is a Esctyp_DataDictionary
+    End_Object    // Esctyp_DD
+
+    Object Esclib_DD is a Esclib_DataDictionary
+        Set DDO_Server to (Esctyp_DD(self))
+    End_Object    // Esclib_DD
+
+    Object Eslitm_DD is a Eslitm_DataDictionary
+
+        Set DDO_Server to (Esclib_DD(self))
+        Set DDO_Server to (Jcoper_DD(self))
+        Set Constrain_File to Esclib.File_Number
+
+        //AB-StoreStart
+        set pbEditMode to TRUE
+
+        procedure End_Construct_Object
+            integer iField
+            //
+            forward send End_Construct_Object
+            //
+            Get_FieldNumber Eslitm.Opcode to iField
+            //
+            set piItemFile    to Eslitm.File_number
+            set piOpcodeField to iField
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // Eslitm_DD
+
+    Set Main_DD to (Eslitm_DD(self))
+    Set Server to (Eslitm_DD(self))
+
+    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+    //AB-DDOEnd
+
+    Object FormulaGroup is a dbGroup
+
+        Set Size to 60 390 //370
+        Set Location to 0 5
+
+        Object Jcoper_Formula is a dbForm
+            Entry_Item Jcoper.Formula
+            Set Label to "Calc Units"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 210
+            Set Location to 10 62
+        End_Object    // Jcoper_Formula
+
+        Object Jcoper_Calc_Units_Desc is a dbForm
+            Entry_Item Jcoper.Calc_units_desc
+            Set Label to "="
+            Set Label_Col_Offset to 18
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 60
+            Set Location to 10 300
+        End_Object    // Jcoper_Calc_Units_Desc
+
+        Object Jcoper_Est_Formula is a dbForm
+            Entry_Item Jcoper.Est_formula
+            Set Label to "Production Units"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 210
+            Set Location to 25 62
+
+            //AB-StoreStart
+
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Est_Formula
+
+        Object Jcoper_Est_Formula_Typ is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Est_formula_typ
+            Set Label to "="
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 13
+            Set Location to 25 284
+
+            //AB-StoreStart
+
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Est_Formula_Typ
+
+        Object Jcoper_Calc_Std_Desc is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Calc_std_desc
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 60
+            Set Location to 25 300
+
+            //AB-StoreStart
+
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Calc_Std_Desc
+
+        Object Jcoper_Sell_Formula is a dbForm
+
+            //AB-StoreTopStart
+
+            //AB-StoreTopEnd
+
+            Entry_Item Jcoper.Sell_formula
+            Set Label to "Base Sell Formula"
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Size to 13 210
+            Set Location to 40 62
+
+            //AB-StoreStart
+
+            //AB-StoreEnd
+
+        End_Object    // Jcoper_Est_Formula
+
+    End_Object    // FormulaGroup
+
+    Object ItemTabDialog is a dbTabDialog
+
+        //AB-StoreTopStart
+        property integer pbLinker TRUE
+        //AB-StoreTopEnd
+
+        Set Size to 176 390 //370
+        Set Location to 80 5
+        Set Rotate_Mode to RM_Rotate
+
+        Object TP_Formula_Variables is a dbTabPage
+
+            Set Label to "Formula Variables"
+
+            Object VariableGroup is a dbGroup
+
+                Set Label to "     Prompt                                                                                                         Value                                Link     "
+                Set Size to 150 376 //356
+                Set Location to 5 5
+
+                Object Jcoper_Var1_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var1_tag
+                    Set Label    to "1)"
+                    Set Location to 10 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var1_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var1_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var1_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var1_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var1      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var1_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var1      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var1_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var1      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var1_Tag
+
+                procedure DoConfigureValue1 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var1_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var1_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var1_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var1_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var1_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var1_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var1_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue1
+
+                Object ItemComboForm1 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var1
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var1
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var1
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 10 185 //205
+                    set piVarnum to 1
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue1 self
+                        //
+                        set phComboFormObj of Jcoper_Var1_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm1
+
+                Object ItemCheckbox1 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var1
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var1
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var1
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 11 225 //205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue1 self
+                        //
+                        set phCheckboxObj of Jcoper_Var1_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox1
+
+                Object Item_Var1 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var1
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var1
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var1
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 10 225  //205
+                    set piVarnum to 1
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue1 self
+                        //
+                        set phFormObj of Jcoper_Var1_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var1
+
+                Object Jcoper_Var1_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var1_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 10 297 //277
+                End_Object    // Jcoper_Var1_Link_Code
+
+                Object Jcoper_Var1_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var1_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 10 356 //336
+                End_Object    // Jcoper_Var1_Link_Symbl
+
+                Object Jcoper_Var2_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var2_tag
+                    Set Label    to "2)"
+                    Set Location to 25 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var2_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var2_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var2_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var2_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var2      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var2_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var2      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var2_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var2      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var2_Tag
+
+                procedure DoConfigureValue2 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var2_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var2_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var2_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var2_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var2_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var2_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var2_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue2
+
+                Object ItemComboForm2 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var2
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var2
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var2
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 25 185 // 205
+                    set piVarnum to 2
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue2 self
+                        //
+                        set phComboFormObj of Jcoper_Var2_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm2
+
+                Object ItemCheckbox2 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var2
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var2
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var2
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 26 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue2 self
+                        //
+                        set phCheckboxObj of Jcoper_Var2_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox2
+
+                Object Item_Var2 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var2
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var2
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var2
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 25 225 // 205
+                    set piVarnum to 2
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue2 self
+                        //
+                        set phFormObj of Jcoper_Var2_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var2
+
+                Object Jcoper_Var2_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var2_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 25 297 // 277
+                End_Object    // Jcoper_Var2_Link_Code
+
+                Object Jcoper_Var2_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var2_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 25 356 // 336
+                End_Object    // Jcoper_Var2_Link_Symbl
+
+                Object Jcoper_Var3_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var3_tag
+                    Set Label    to "3)"
+                    Set Location to 40 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var3_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var3_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var3_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var3_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var3      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var3_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var3      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var3_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var3      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var3_Tag
+
+                procedure DoConfigureValue3 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var3_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var3_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var3_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var3_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var3_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var3_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var3_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue3
+
+                Object ItemComboForm3 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var3
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var3
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var3
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 40 185 // 205
+                    set piVarnum to 3
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue3 self
+                        //
+                        set phComboFormObj of Jcoper_Var3_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm3
+
+                Object ItemCheckbox3 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var3
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var3
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var3
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 41 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue3 self
+                        //
+                        set phCheckboxObj of Jcoper_Var3_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox3
+
+                Object Item_Var3 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var3
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var3
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var3
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 40 225 // 205
+                    set piVarnum to 3
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue3 self
+                        //
+                        set phFormObj of Jcoper_Var3_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var3
+
+                Object Jcoper_Var3_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var3_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 40 297 // 277
+                End_Object    // Jcoper_Var3_Link_Code
+
+                Object Jcoper_Var3_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var3_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 40 356 // 336
+                End_Object    // Jcoper_Var3_Link_Symbl
+
+                Object Jcoper_Var4_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var4_tag
+                    Set Label    to "4)"
+                    Set Location to 55 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var4_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var4_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var4_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var4_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var4      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var4_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var4      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var4_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var4      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var4_Tag
+
+                procedure DoConfigureValue4 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var4_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var4_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var4_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var4_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var4_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var4_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var4_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue4
+
+                Object ItemComboForm4 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var4
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var4
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var4
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 55 185 // 205
+                    set piVarnum to 4
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue4 self
+                        //
+                        set phComboFormObj of Jcoper_Var4_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm4
+
+                Object ItemCheckbox4 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var4
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var4
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var4
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 56 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue4 self
+                        //
+                        set phCheckboxObj of Jcoper_Var4_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox4
+
+                Object Item_Var4 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var4
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var4
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var4
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 55 225 // 205
+                    set piVarnum to 4
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue4 self
+                        //
+                        set phFormObj of Jcoper_Var4_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var4
+
+                Object Jcoper_Var4_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var4_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 55 297 // 277
+                End_Object    // Jcoper_Var4_Link_Code
+
+                Object Jcoper_Var4_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var4_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 55 356 // 336
+                End_Object    // Jcoper_Var4_Link_Symbl
+
+                Object Jcoper_Var5_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var5_tag
+                    Set Label    to "5)"
+                    Set Location to 70 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var5_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var5_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var5_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var5_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var5      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var5_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var5      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var5_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var5      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var5_Tag
+
+                procedure DoConfigureValue5 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var5_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var5_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var5_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var5_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var5_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var5_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var5_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue5
+
+                Object ItemComboForm5 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var5
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var5
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var5
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 70 185 // 205
+                    set piVarnum to 5
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue5 self
+                        //
+                        set phComboFormObj of Jcoper_Var5_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm5
+
+                Object ItemCheckbox5 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var5
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var5
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var5
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 71 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue5 self
+                        //
+                        set phCheckboxObj of Jcoper_Var5_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox5
+
+                Object Item_Var5 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var5
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var5
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var5
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 70 225 // 205
+                    set piVarnum to 5
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue5 self
+                        //
+                        set phFormObj of Jcoper_Var5_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var5
+
+                Object Jcoper_Var5_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var5_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 70 297 // 277
+                End_Object    // Jcoper_Var5_Link_Code
+
+                Object Jcoper_Var5_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var5_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 70 356 // 336
+                End_Object    // Jcoper_Var5_Link_Symbl
+
+                Object Jcoper_Var6_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var6_tag
+                    Set Label    to "6)"
+                    Set Location to 85 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var6_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var6_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var6_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var6_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var6      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var6_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var6      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var6_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var6      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var6_Tag
+
+                procedure DoConfigureValue6 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var6_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var6_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var6_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var6_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var6_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var6_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var6_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue6
+
+                Object ItemComboForm6 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var6
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var6
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var6
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 85 185 // 205
+                    set piVarnum to 6
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue6 self
+                        //
+                        set phComboFormObj of Jcoper_Var6_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm6
+
+                Object ItemCheckbox6 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var6
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var6
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var6
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 86 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue6 self
+                        //
+                        set phCheckboxObj of Jcoper_Var6_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox6
+
+                Object Item_Var6 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var6
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var6
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var6
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 85 225 // 205
+                    set piVarnum to 6
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue6 self
+                        //
+                        set phFormObj of Jcoper_Var6_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var6
+
+                Object Jcoper_Var6_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var6_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 85 297 // 277
+                End_Object    // Jcoper_Var6_Link_Code
+
+                Object Jcoper_Var6_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var6_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 85 356 // 336
+                End_Object    // Jcoper_Var6_Link_Symbl
+
+                Object Jcoper_Var7_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var7_tag
+                    Set Label    to "7)"
+                    Set Location to 100 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var7_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var7_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var7_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var7_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var7      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var7_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var7      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var7_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var7      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var7_Tag
+
+                procedure DoConfigureValue7 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var7_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var7_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var7_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var7_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var7_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var7_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var7_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue7
+
+                Object ItemComboForm7 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var7
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var7
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var7
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 100 185 // 205
+                    set piVarnum to 7
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue7 self
+                        //
+                        set phComboFormObj of Jcoper_Var7_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm7
+
+                Object ItemCheckbox7 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var7
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var7
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var7
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 101 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue7 self
+                        //
+                        set phCheckboxObj of Jcoper_Var7_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox7
+
+                Object Item_Var7 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var7
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var7
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var7
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 100 225 // 205
+                    set piVarnum to 7
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue7 self
+                        //
+                        set phFormObj of Jcoper_Var7_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var7
+
+                Object Jcoper_Var7_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var7_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 100 297 // 277
+                End_Object    // Jcoper_Var7_Link_Code
+
+                Object Jcoper_Var7_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var7_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 100 356 // 336
+                End_Object    // Jcoper_Var7_Link_Symbl
+
+                Object Jcoper_Var8_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var8_tag
+                    Set Label    to "8)"
+                    Set Location to 115 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var8_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var8_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var8_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var8_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var8      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var8_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var8      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var8_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var8      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var8_Tag
+
+                procedure DoConfigureValue8 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var8_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var8_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var8_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var8_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var8_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var8_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var8_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue8
+
+                Object ItemComboForm8 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var8
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var8
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var8
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 115 185 // 205
+                    set piVarnum to 8
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue8 self
+                        //
+                        set phComboFormObj of Jcoper_Var8_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm8
+
+                Object ItemCheckbox8 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var8
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var8
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var8
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 116 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue8 self
+                        //
+                        set phCheckboxObj of Jcoper_Var8_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox8
+
+                Object Item_Var8 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var8
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var8
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var8
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 115 225 // 205
+                    set piVarnum to 8
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue8 self
+                        //
+                        set phFormObj of Jcoper_Var8_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var8
+
+                Object Jcoper_Var8_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var8_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 115 297 // 277
+                End_Object    // Jcoper_Var8_Link_Code
+
+                Object Jcoper_Var8_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var8_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 115 356 // 336
+                End_Object    // Jcoper_Var8_Link_Symbl
+
+                Object Jcoper_Var9_Tag is a dbItemTagForm
+
+                    Entry_Item Jcoper.Var9_tag
+                    Set Label    to "9)"
+                    Set Location to 130 15
+
+                    procedure End_Construct_Object
+                        integer fLinkCode fLinkSymbl fTagSymbl fVarFlag fVar
+                        //
+                        forward send End_Construct_Object
+                        //
+                        Get_FieldNumber Jcoper.Var9_link_code  to fLinkCode
+                        Get_FieldNumber Jcoper.Var9_link_symbl to fLinkSymbl
+                        Get_FieldNumber Jcoper.Var9_tag_symbl  to fTagSymbl
+
+                        // Order Maintenance
+                        #IFDEF CE_PRODUCTION
+                        Get_FieldNumber Esjitm.Var9_flag to fVarFlag
+                        Get_FieldNumber Esjitm.Var9      to fVar
+                        set pfItemFile                   to Esjitm.File_number
+                        #ENDIF // #IFDEF CE_PRODUCTION
+                        // Estimating
+                        #IFDEF CE_CALC_ESTIMATE
+                        Get_FieldNumber Esitem.Var9_flag to fVarFlag
+                        Get_FieldNumber Esitem.Var9      to fVar
+                        set pfItemFile                   to Esitem.File_number
+                        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                        // component library
+                        #IFDEF CE_CALC_LIBRARY
+                        Get_FieldNumber Eslitm.Var9_flag to fVarFlag
+                        Get_FieldNumber Eslitm.Var9      to fVar
+                        set pfItemFile                   to Eslitm.File_number
+                        #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                        set pfLinkCode  to fLinkCode
+                        set pfLinkSymbl to fLinkSymbl
+                        set pfTagSymbl  to fTagSymbl
+                        set pfVarFlag   to fVarFlag
+                        set pfItemField to fVar
+                    end_procedure
+
+                End_Object    // Jcoper_Var9_Tag
+
+                procedure DoConfigureValue9 integer hValueObj
+                    integer fVarTag fLinkCode fLinkSymbl fTagSymbl fVarFlag
+                    //
+                    Get_FieldNumber Jcoper.Var9_tag        to fVarTag
+                    Get_FieldNumber Jcoper.Var9_link_code  to fLinkCode
+                    Get_FieldNumber Jcoper.Var9_link_symbl to fLinkSymbl
+                    Get_FieldNumber Jcoper.Var9_tag_symbl  to fTagSymbl
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Get_FieldNumber Esjitm.Var9_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Get_FieldNumber Esitem.Var9_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Get_FieldNumber Eslitm.Var9_flag to fVarFlag
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set pfVarTag    of hValueObj to fVarTag
+                    set pfLinkCode  of hValueObj to fLinkCode
+                    set pfLinkSymbl of hValueObj to fLinkSymbl
+                    set pfTagSymbl  of hValueObj to fTagSymbl
+                    set pfVarFlag   of hValueObj to fVarFlag
+                end_procedure // DoConfigureValue9
+
+                Object ItemComboForm9 is a dbItemComboForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var9
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var9
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var9
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 130 185 // 205
+                    set piVarnum to 9
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue9 self
+                        //
+                        set phComboFormObj of Jcoper_Var9_Tag to self
+                    end_procedure
+
+                End_Object    // ItemComboForm9
+
+                Object ItemCheckbox9 is a dbItemCheckbox
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var9
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var9
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var9
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Location to 131 225 // 205
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue9 self
+                        //
+                        set phCheckboxObj of Jcoper_Var9_Tag to self
+                    end_procedure
+
+                End_Object    // ItemCheckbox9
+
+                Object Item_Var9 is a dbItemForm
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Var9
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Var9
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Var9
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    set Location to 130 225 // 205
+                    set piVarnum to 9
+
+                    procedure End_Construct_Object
+                        forward send End_Construct_Object
+                        //
+                        send DoConfigureValue9 self
+                        //
+                        set phFormObj of Jcoper_Var9_Tag to self
+                    end_procedure
+
+                End_Object    // Item_Var9
+
+                Object Jcoper_Var9_Link_Code is a dbForm
+                    Entry_Item Jcoper.Var9_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 130 297 // 277
+                End_Object    // Jcoper_Var9_Link_Code
+
+                Object Jcoper_Var9_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Var9_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 130 356 // 336
+                End_Object    // Jcoper_Var9_Link_Symbl
+
+                object oVariableValueBroadcaster is a Broadcaster
+                    send Add_Element (Item_Var1(self))
+                    send Add_Element (Item_Var2(self))
+                    send Add_Element (Item_Var3(self))
+                    send Add_Element (Item_Var4(self))
+                    send Add_Element (Item_Var5(self))
+                    send Add_Element (Item_Var6(self))
+                    send Add_Element (Item_Var7(self))
+                    send Add_Element (Item_Var8(self))
+                    send Add_Element (Item_Var9(self))
+                    send Add_Element (ItemCheckbox1(self))
+                    send Add_Element (ItemCheckbox2(self))
+                    send Add_Element (ItemCheckbox3(self))
+                    send Add_Element (ItemCheckbox4(self))
+                    send Add_Element (ItemCheckbox5(self))
+                    send Add_Element (ItemCheckbox6(self))
+                    send Add_Element (ItemCheckbox7(self))
+                    send Add_Element (ItemCheckbox8(self))
+                    send Add_Element (ItemCheckbox9(self))
+                    send Add_Element (ItemComboForm1(self))
+                    send Add_Element (ItemComboForm2(self))
+                    send Add_Element (ItemComboForm3(self))
+                    send Add_Element (ItemComboForm4(self))
+                    send Add_Element (ItemComboForm5(self))
+                    send Add_Element (ItemComboForm6(self))
+                    send Add_Element (ItemComboForm7(self))
+                    send Add_Element (ItemComboForm8(self))
+                    send Add_Element (ItemComboForm9(self))
+                end_object // oVariableValueBroadcaster
+                set Broadcast_State of oVariableValueBroadcaster to TRUE
+
+                procedure EditVariables
+                    send EditVariable of oVariableValueBroadcaster
+                end_procedure
+
+                procedure ShadowVariables
+                    broadcast send ShadowVariable
+                end_procedure
+
+                procedure DoSetVariableControls
+                    integer iColor
+                    //BC: added next line
+                    get piShadowColor to iColor
+                    //
+                    send DisplayTag of Jcoper_Var1_Tag iColor
+                    send DisplayTag of Jcoper_Var2_Tag iColor
+                    send DisplayTag of Jcoper_Var3_Tag iColor
+                    send DisplayTag of Jcoper_Var4_Tag iColor
+                    send DisplayTag of Jcoper_Var5_Tag iColor
+                    send DisplayTag of Jcoper_Var6_Tag iColor
+                    send DisplayTag of Jcoper_Var7_Tag iColor
+                    send DisplayTag of Jcoper_Var8_Tag iColor
+                    send DisplayTag of Jcoper_Var9_Tag iColor
+                end_procedure
+
+            End_Object    // VariableGroup
+
+        End_Object    // TP_Formula_Variables
+
+        Object TP_Formula_Constants is a dbTabPage
+            Set Label to "Formula Constants"
+            Object ConstantsGroup is a dbGroup
+
+                Set Label to "     Description                                                                               Value                         Link    "
+                Set Size to 150 356
+                Set Location to 5 5
+
+                Object Jcoper_Con1_Desc is a dbForm
+                    Entry_Item Jcoper.Con1_desc
+                    Set Label to "A)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 10 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con1_Desc
+
+                Object Jcoper_Con1_Value is a dbForm
+                    Entry_Item Jcoper.Con1_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 10 205
+                End_Object    // Jcoper_Con1_Value
+
+                Object Jcoper_Con1_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con1_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 10 277
+                End_Object    // Jcoper_Con1_Link_Code
+
+                Object Jcoper_Con1_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con1_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 10 336
+                End_Object    // Jcoper_Con1_Link_Symbl
+
+                Object Jcoper_Con2_Desc is a dbForm
+                    Entry_Item Jcoper.Con2_desc
+                    Set Label to "B)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 25 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con2_Desc
+
+                Object Jcoper_Con2_Value is a dbForm
+                    Entry_Item Jcoper.Con2_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 25 205
+                End_Object    // Jcoper_Con2_Value
+
+                Object Jcoper_Con2_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con2_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 25 277
+                End_Object    // Jcoper_Con2_Link_Code
+
+                Object Jcoper_Con2_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con2_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 25 336
+                End_Object    // Jcoper_Con2_Link_Symbl
+
+                Object Jcoper_Con3_Desc is a dbForm
+                    Entry_Item Jcoper.Con3_desc
+                    Set Label to "C)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 40 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con3_Desc
+
+                Object Jcoper_Con3_Value is a dbForm
+                    Entry_Item Jcoper.Con3_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 40 205
+                End_Object    // Jcoper_Con3_Value
+
+                Object Jcoper_Con3_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con3_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 40 277
+                End_Object    // Jcoper_Con3_Link_Code
+
+                Object Jcoper_Con3_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con3_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 40 336
+                End_Object    // Jcoper_Con3_Link_Symbl
+
+                Object Jcoper_Con4_Desc is a dbForm
+                    Entry_Item Jcoper.Con4_desc
+                    Set Label to "D)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 55 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con4_Desc
+
+                Object Jcoper_Con4_Value is a dbForm
+                    Entry_Item Jcoper.Con4_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 55 205
+                End_Object    // Jcoper_Con4_Value
+
+                Object Jcoper_Con4_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con4_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 55 277
+                End_Object    // Jcoper_Con4_Link_Code
+
+                Object Jcoper_Con4_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con4_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 55 336
+                End_Object    // Jcoper_Con4_Link_Symbl
+
+                Object Jcoper_Con5_Desc is a dbForm
+                    Entry_Item Jcoper.Con5_desc
+                    Set Label to "E)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 70 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con5_Desc
+
+                Object Jcoper_Con5_Value is a dbForm
+                    Entry_Item Jcoper.Con5_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 70 205
+                End_Object    // Jcoper_Con5_Value
+
+                Object Jcoper_Con5_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con5_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 70 277
+                End_Object    // Jcoper_Con5_Link_Code
+
+                Object Jcoper_Con5_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con5_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 70 336
+                End_Object    // Jcoper_Con5_Link_Symbl
+
+                Object Jcoper_Con6_Desc is a dbForm
+                    Entry_Item Jcoper.Con6_desc
+                    Set Label to "F)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 85 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con6_Desc
+
+                Object Jcoper_Con6_Value is a dbForm
+                    Entry_Item Jcoper.Con6_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 85 205
+                End_Object    // Jcoper_Con6_Value
+
+                Object Jcoper_Con6_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con6_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 85 277
+                End_Object    // Jcoper_Con6_Link_Code
+
+                Object Jcoper_Con6_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con6_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 85 336
+                End_Object    // Jcoper_Con6_Link_Symbl
+
+                Object Jcoper_Con7_Desc is a dbForm
+                    Entry_Item Jcoper.Con7_desc
+                    Set Label to "G)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 100 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con7_Desc
+
+                Object Jcoper_Con7_Value is a dbForm
+                    Entry_Item Jcoper.Con7_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 100 205
+                End_Object    // Jcoper_Con7_Value
+
+                Object Jcoper_Con7_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con7_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 100 277
+                End_Object    // Jcoper_Con7_Link_Code
+
+                Object Jcoper_Con7_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con7_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 100 336
+                End_Object    // Jcoper_Con7_Link_Symbl
+
+                Object Jcoper_Con8_Desc is a dbForm
+                    Entry_Item Jcoper.Con8_desc
+                    Set Label to "H)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 114 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con8_Desc
+
+                Object Jcoper_Con8_Value is a dbForm
+                    Entry_Item Jcoper.Con8_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 115 205
+                End_Object    // Jcoper_Con8_Value
+
+                Object Jcoper_Con8_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con8_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 115 277
+                End_Object    // Jcoper_Con8_Link_Code
+
+                Object Jcoper_Con8_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con8_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 115 336
+                End_Object    // Jcoper_Con8_Link_Symbl
+
+                Object Jcoper_Con9_Desc is a dbForm
+                    Entry_Item Jcoper.Con9_desc
+                    Set Label to "I)"
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 186
+                    Set Location to 130 15
+                    set Form_Border item 0 to Border_None
+                End_Object    // Jcoper_Con9_Desc
+
+                Object Jcoper_Con9_Value is a dbForm
+                    Entry_Item Jcoper.Con9_value
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 68
+                    Set Location to 130 205
+                End_Object    // Jcoper_Con9_Value
+
+                Object Jcoper_Con9_Link_Code is a dbForm
+                    Entry_Item Jcoper.Con9_link_code
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Prompt_Button_Mode to pb_PromptOff
+                    Set Size to 13 54
+                    Set Location to 130 277
+                End_Object    // Jcoper_Con9_Link_Code
+
+                Object Jcoper_Con9_Link_Symbl is a dbForm
+                    Entry_Item Jcoper.Con9_link_symbl
+                    Set Label_Col_Offset to 2
+                    Set Label_Justification_Mode to jMode_Right
+                    Set Size to 13 13
+                    Set Location to 130 336
+                End_Object    // Jcoper_Con9_Link_Symbl
+
+            End_Object    // ConstantsGroup
+
+        End_Object    // TP_Formula_Constants
+
+        Object TP_Instruction is a dbTabPage
+            Set Label to "Instruction"
+            Object InstructionGroup is a dbGroup
+                Set Size to 52 355
+                Set Location to 5 5
+                Object Item_Instruction is a dbEdit
+
+                    //AB-StoreTopStart
+                    on_key kHelp send DisplayHelpFile
+                    //AB-StoreTopEnd
+
+                    // Order Maintenance
+                    #IFDEF CE_PRODUCTION
+                    Entry_Item Esjitm.Instruction
+                    #ENDIF // #IFDEF CE_PRODUCTION
+                    // Estimating
+                    #IFDEF CE_CALC_ESTIMATE
+                    Entry_Item Esitem.Instruction
+                    #ENDIF // #IFDEF CE_CALC_ESTIMATE
+                    // component library
+                    #IFDEF CE_CALC_LIBRARY
+                    Entry_Item Eslitm.Instruction
+                    #ENDIF // #IFDEF CE_CALC_LIBRARY
+
+                    Set Size to 34 344
+                    Set Location to 10 5
+
+                    //AB-StoreStart
+                    set Shadow_State to true
+                    //AB-StoreEnd
+
+                End_Object    // Esitem_Instruction
+                procedure EnableInstruction integer bState
+                    set Enabled_State of Item_Instruction to bState
+                end_procedure
+
+            End_Object    // InstructionGroup
+
+        End_Object    // TP_Instruction
+
+        Procedure Request_Switch_To_Tab integer iPage integer iMode
+            if (pbEditing(self) AND iPage >= 1) send Activate of EditButton
+            forward send Request_Switch_To_Tab iPage iMode
+        End_Procedure
+
+    End_Object    // ItemTabDialog
+
+    Object EditButton is a cGlblButton
+
+        //AB-StoreTopStart
+        property boolean bSaveButton FALSE
+        //AB-StoreTopEnd
+
+        Set Label to "&Edit"
+        Set Location to 65 235 //215
+
+        //AB-StoreStart
+        procedure OnClick
+            if (bSaveButton(self)) begin
+                set pbSaving to TRUE
+                send Request_Save
+            end
+            else begin
+                send DoEdit
+                send Activate of ItemTabDialog
+            end
+        end_procedure
+        procedure EnableSaveButton boolean bState
+            if (bState) set Label to "&Save"
+            else        set Label to "&Edit"
+            set bSaveButton to bState
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // EditButton
+
+    Object HelpButton is a cGlblButton
+
+        //AB-StoreTopStart
+
+        //AB-StoreTopEnd
+
+        Set Label to "&Help"
+        Set Location to 65 290 //270
+
+        //AB-StoreStart
+        procedure OnClick
+            send DisplayHelpFile
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // HelpButton
+
+    Object CloseButton is a cGlblButton
+        Set Label to "&Close"
+        Set Location to 65 345 //325
+
+        //AB-StoreStart
+        procedure OnClick
+            send Close_Panel
+        end_procedure
+        //AB-StoreEnd
+
+    End_Object    // CloseButton
+
+
+    //AB-StoreStart
+    procedure DoEdit
+        integer hDD
+        string  sNeedsCalced
+        //
+        get Server to hDD
+        // Order Maintenance
+        #IFDEF CE_PRODUCTION
+        get Field_Current_Value of hDD field Esjcmp.Needs_calced to sNeedsCalced
+        #ENDIF // #IFDEF CE_PRODUCTION
+        // Estimating
+        #IFDEF CE_CALC_ESTIMATE
+        get Field_Current_Value of hDD field Escomp.Needs_calced to sNeedsCalced
+        #ENDIF // #IFDEF CE_CALC_ESTIMATE
+        // component library
+        #IFDEF CE_CALC_LIBRARY
+        get Field_Current_Value of hDD field Esclib.Needs_calced to sNeedsCalced
+        #ENDIF // #IFDEF CE_CALC_LIBRARY
+        //
+        set pbNeedsCalced to (sNeedsCalced = "Y")
+        set pbEditing     to TRUE
+        set pbSaving      to FALSE
+        set pbClearing    to FALSE
+        set pbDupeValue   to FALSE
+        set pnDupeValue   to 0
+        //
+        send EnableSaveButton  of EditButton TRUE
+        send EditVariables     of (VariableGroup(TP_Formula_Variables(ItemTabDialog(self))))
+        send EnableInstruction of (InstructionGroup(TP_Instruction(ItemTabDialog(self)))) TRUE
+    end_procedure
+
+    procedure DisplayHelpFile
+        string sStandard
+        //
+        send Refind_Records of (Server(self))
+        move Jcoper.Opcode to sStandard
+        //
+        append sStandard " " Jcoper.Name
+        // show it
+        send RetrieveHelp of (OpcodeHelpDialog(self)) Jcoper.Cstctr_idno Jcoper.Opcode sStandard
+    end_procedure
+
+    Procedure Close_Panel
+        Send ShadowVariables  of (VariableGroup(TP_Formula_Variables(ItemTabDialog(Self))))
+        Send EnableSaveButton of  EditButton False
+        Forward Send Close_Panel
+    End_Procedure
+
+    procedure Request_Clear
+        send Close_Panel
+    end_procedure
+
+    procedure Request_Clear_All
+        Send Close_Panel
+    end_procedure
+
+    //procedure ExitDetailPanel
+    //    send Request_Cancel
+    //end_procedure
+
+    procedure Request_Save
+        forward send Request_Save
+        if (Should_Save(self)) procedure_return
+        //
+        set pbEditing to FALSE
+        //
+        send ShadowVariables       of (VariableGroup(TP_Formula_Variables(ItemTabDialog(self))))
+        send EnableInstruction     of (InstructionGroup(TP_Instruction(ItemTabDialog(self)))) FALSE
+        send EnableSaveButton      of EditButton FALSE
+        send Request_Switch_To_Tab of ItemTabDialog 0 3
+        //send Activate to (ItemTabDialog(self))
+        send Close_Panel
+    end_procedure
+
+    procedure EditItemDirect integer iItemRec
+        set pbEditDirect to TRUE
+        send DoDisplayVariables iItemRec FALSE
+    end_procedure
+
+    procedure DoDisplayVariables integer iItemRec boolean bLocked
+        integer hDD iOpcode bState iFile iField
+        string  sLabel sCenter sDescription sCalcflags
+        //
+        set pbEditing     to FALSE
+        set pbNeedsCalced to FALSE
+        set pbSaving      to FALSE
+        set pbClearing    to FALSE
+        //
+        set Enabled_State of EditButton to (NOT(bLocked))
+        //
+        get piItemFile    to iFile
+        get piOpcodeField to iField
+        //
+        get Server          to hDD
+        send Clear          of hDD
+        send Find_By_Recnum of hDD iFile iItemRec
+        //
+        get Field_Current_Value of hDD iField to iOpcode
+        //
+        get File_Field_Current_Value of hDD file_field Jccntr.Nickname to sCenter
+        get File_Field_Current_Value of hDD file_field Jcoper.Name     to sDescription
+        move (string(iOpcode) * "-" * sCenter * "-" * sDescription)    to sLabel
+        set Label                                                      to sLabel
+        //
+        send DoSetVariableControls of (VariableGroup(TP_Formula_Variables(ItemTabDialog(self))))
+        //
+        if (pbEditDirect(self)) begin
+            send DoEdit
+            set pbEditDirect to FALSE
+        end
+        //
+        send Popup_Modal
+    end_procedure // DoDisplayVariables
+
+    on_key Key_Alt+Key_E send KeyAction of EditButton
+    on_key Key_Alt+Key_S send KeyAction of EditButton
+    on_key Key_Alt+Key_H send KeyAction of HelpButton
+    on_key Key_Alt+Key_C send KeyAction of CloseButton
+    //AB-StoreEnd
+
+End_Object    // oVariablesDialog
+
+//AB/ End_Object    // prj
+

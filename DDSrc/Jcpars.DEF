@@ -1,0 +1,175 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:22                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Jcpars (# 55)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:Jcpars
+  USER DISPLAY NAME         : Jcpars
+  DATAFLEX FILE NAME        : Jcpars
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 1527      ( USED: 1527 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 0 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : YES
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  L_SUBTTL_NAME    ASC     10     1      
+  2  M_SUBTTL_NAME    ASC     10    11      
+  3  P_SUBTTL_NAME    ASC     10    21      
+  4  PP_SUBTTL_NAME   ASC     10    31      
+  5  F_SUBTTL_NAME    ASC     10    41      
+  6  X_SUBTTL_NAME    ASC     10    51      
+  7  SUBTTL1_NAME     ASC     10    61      
+  8  SUBTTL2_NAME     ASC     10    71      
+  9  SUBTTL3_NAME     ASC     10    81      
+ 10  SUBTTL4_NAME     ASC     10    91      
+ 11  HANDLING_MU      NUM    2.2   101      
+ 12  HFULL_RATE       NUM    2.2   107      
+ 13  HDIRECT_RATE     NUM    2.2   113      
+ 14  AUTO_JOBNO       ASC      1   119      
+ 15  LAST_JOBNO       NUM    6.0   120      
+ 16  USER1            ASC      3   131      
+ 17  PW1              ASC      8   134      
+ 18  USER2            ASC      3   142      
+ 19  PW2              ASC      8   145      
+ 20  USER3            ASC      3   153      
+ 21  PW3              ASC      8   156      
+ 22  USER4            ASC      3   164      
+ 23  PW4              ASC      8   167      
+ 24  LAST_USED_DATE   DAT     10   175      
+ 25  LAST_HR          NUM    2.0   198      
+ 26  LAST_MIN         NUM    2.0   204      
+ 27  LAST_USED_BY     ASC      3   210      
+ 28  LAST_CUST_OK     ASC      5   213      
+ 29  CUST_OK          ASC      5   218      
+ 30  LAST_JOB         NUM    6.0   223      
+ 31  LAST_ESTID       NUM    6.0   234      
+ 32  L_SUBTTL_MU      NUM    4.2   245      
+ 33  M_SUBTTL_MU      NUM    4.2   253      
+ 34  PP_SUBTTL_MU     NUM    4.2   261      
+ 35  P_SUBTTL_MU      NUM    4.2   269      
+ 36  QUOTE_MU         NUM    4.2   277      
+ 37  OT_MARKUP        NUM    2.2   285      
+ 38  CC_SKIP_LOAD     ASC     40   291      
+ 39  AUTO_PO_NO       ASC      1   331      
+ 40  LAST_PO_NO       NUM   10.0   332      
+ 41  JCOPCODE_PP      NUM    8.0   343      
+ 42  JCOPCODE_PMISC   NUM    8.0   354      
+ 43  LAST_CONTACT_ID  NUM    6.0   365      
+ 44  LAST_COMP_ID     NUM    8.0   376      
+ 45  DEFAULT_COMP     ASC      2   387      
+ 46  LAST_COST_ID     NUM    8.0   389      
+ 47  LAST_INST_ID     NUM    8.0   400      
+ 48  LAST_TEXT_ID     NUM    8.0   411      
+ 49  LOGO_FILE        ASC     20   422      
+ 50  USE_PAGE_SPECS   NUM    2.0   442      
+ 51  JJ_RUNPROGRAM    NUM    2.0   448      
+ 52  QL_RUNPROGRAM    NUM    2.0   454      
+ 53  LINE_EDIT_FLAG   NUM    2.0   460      
+ 54  SHIP_LOCKS_JOB   NUM    2.0   466      
+ 55  DEFAULT_USER     NUM    2.0   472      
+ 56  NOINPUT_COLOR    NUM    2.0   478      
+ 57  USE_DEFAULT_CMP  NUM    2.0   484      
+ 58  NO_JOBENT_CHECK  NUM    2.0   490      
+ 59  PROMISE_EDIT_OE  NUM    2.0   496      
+ 60  PROMISE_EDIT_SC  NUM    2.0   502      
+ 61  REFRESH_RATE_SC  NUM    2.0   508      
+ 62  RECALC_ON_ADDS   NUM    2.0   514      
+ 63  DECIMALS         NUM    2.0   520      
+ 64  BMASMULTIDIV     NUM    2.0   526      
+ 65  B65              NUM    2.0   532      
+ 66  B66              NUM    2.0   538      
+ 67  B67              NUM    2.0   544      
+ 68  B68              NUM    2.0   550      
+ 69  B69              NUM    2.0   556      
+ 70  B70              NUM    2.0   562      
+ 71  B71              NUM    2.0   568      
+ 72  B72              NUM    2.0   574      
+ 73  B73              NUM    2.0   580      
+ 74  B74              NUM    2.0   586      
+ 75  B75              NUM    2.0   592      
+ 76  B76              NUM    2.0   598      
+ 77  B77              NUM    2.0   604      
+ 78  B78              NUM    2.0   610      
+ 79  B79              NUM    2.0   616      
+ 80  B80              NUM    2.0   622      
+ 81  B81              NUM    2.0   628      
+ 82  B82              NUM    2.0   634      
+ 83  B83              NUM    2.0   640      
+ 84  B84              NUM    2.0   646      
+ 85  B85              NUM    2.0   652      
+ 86  B86              NUM    2.0   658      
+ 87  B87              NUM    2.0   664      
+ 88  B88              NUM    2.0   670      
+ 89  B89              NUM    2.0   676      
+ 90  B90              NUM    2.0   682      
+ 91  B91              NUM    2.0   688      
+ 92  B92              NUM    2.0   694      
+ 93  B93              NUM    2.0   700      
+ 94  B94              NUM    2.0   706      
+ 95  B95              NUM    2.0   712      
+ 96  B96              NUM    2.0   718      
+ 97  B97              NUM    2.0   724      
+ 98  B98              NUM    2.0   730      
+ 99  B99              NUM    2.0   736      
+100  B100             NUM    2.0   742      
+101  QUOTE_LETTER     ASC     20   748      
+102  JOB_JACKET       ASC     20   768      
+103  DSN_AR           ASC     20   788      
+104  DSN_AP           ASC     20   808      
+105  PACKING_LIST     ASC     20   828      
+106  MASAREXPFILE     ASC     20   848      
+107  MASAPEXPFILE     ASC     20   868      
+108  MASPORCPTFILE    ASC     20   888      
+109  S109             ASC     20   908      
+110  S110             ASC     20   928      
+111  S111             ASC     20   948      
+112  S112             ASC     20   968      
+113  S113             ASC     20   988      
+114  S114             ASC     20  1008      
+115  S115             ASC     20  1028      
+116  S116             ASC     20  1048      
+117  S117             ASC     20  1068      
+118  S118             ASC     20  1088      
+119  S119             ASC     20  1108      
+120  SQL_SERVER_NAME  ASC     20  1128      
+121  SQL_DATABASE     ASC     20  1148      
+122  SQL_USER_NAME    ASC     20  1168      
+123  SQL_PASSWORD     ASC     20  1188      
+124  S124             ASC     20  1208      
+125  S125             ASC     20  1228      
+126  SHIP_CC_NO       NUM    6.2  1248      
+127  LAST_JCPROJ_ID   NUM    8.0  1258      
+128  LAST_JCTXNO_ID   NUM    8.0  1269      
+129  LAST_PACKSLIPID  NUM    8.0  1280      
+130  MASTER_TRIGGER   NUM    8.0  1291      
+131  QUANTITIES_OP    NUM    8.0  1302      
+132  PAGESPECS_OP     NUM    8.0  1313      
+133  SHTLAYOUT_OP     NUM    8.0  1324      
+134  N134             NUM    8.0  1335      
+135  N135             NUM    8.0  1346      
+136  N136             NUM    8.0  1357      
+137  N137             NUM    8.0  1368      
+138  N138             NUM    8.0  1379      
+139  N139             NUM    8.0  1390      
+140  N140             NUM    8.0  1401      
+141  N141             NUM    8.0  1412      
+142  N142             NUM    8.0  1423      
+143  N143             NUM    8.0  1434      
+144  N144             NUM    8.0  1445      
+145  N145             NUM    8.0  1456      
+146  N146             NUM    8.0  1467      
+147  N147             NUM    8.0  1478      
+148  N148             NUM    8.0  1489      
+149  N149             NUM    8.0  1500      
+150  NO_RECID_CHK     NUM    8.0  1511      
+151  HSELL_RATE       NUM    2.2  1522      
+

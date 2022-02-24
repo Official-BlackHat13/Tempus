@@ -1,0 +1,45 @@
+ERROR: 4328 Undefined symbol in argument CUSTOMER.NAME ON LINE: 270 (13314) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DdSrc\Order.DD
+ERROR: 4328 Undefined symbol in argument CONTACT.RECNUM ON LINE: 302 (13340) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DdSrc\Order.DD
+ERROR: 4345 Type check error CUSTOMER.STATUS, MUST BE DEFINED ON LINE: 324 (13358) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DdSrc\Order.DD
+ERROR: 4328 Undefined symbol in argument CUSTOMER.STATUS ON LINE: 324 (13358) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DdSrc\Order.DD
+ERROR: 4345 Type check error  GHOSTATUSPANEL, SHOULD NOT BE DEFINED ON LINE: 76 (28841) OF FILE: C:\Program Files (x86)\DataFlex 18.2\Pkg\Statpnl.pkg
+ERROR: 4332 Symbol already defined  GHOSTATUSPANEL ON LINE: 76 (28841) OF FILE: C:\Program Files (x86)\DataFlex 18.2\Pkg\Statpnl.pkg
+ERROR: 4345 Type check error  U_ORDER_DATADICTIONARY, SHOULD NOT BE DEFINED ON LINE: 81 (77563) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\Order.DD
+ERROR: 4297 Can't replace to self  ON LINE: 81 (77563) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\Order.DD
+ERROR: 4297 Can't replace to self  ON LINE: 81 (77563) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\Order.DD
+ERROR: 4332 Symbol already defined |CI9 ON LINE: 340 (77753) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\Order.DD
+ERROR: 4297 Can't replace to self  ON LINE: 6 (77754) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 6 (77754) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 6 (77754) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 52 (77803) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 52 (77803) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 52 (77803) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 52 (77803) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\SalesRep.DD
+ERROR: 4297 Can't replace to self  ON LINE: 28 (77899) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Salesrep.sl
+ERROR: 4297 Can't replace to self  ON LINE: 28 (77899) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Salesrep.sl
+ERROR: 4297 Can't replace to self  ON LINE: 36 (77913) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Salesrep.sl
+ERROR: 4297 Can't replace to self  ON LINE: 36 (77913) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Salesrep.sl
+ERROR: 4297 Can't replace to self  ON LINE: 6 (78048) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\User.DD
+ERROR: 4297 Can't replace to self  ON LINE: 6 (78048) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\User.DD
+ERROR: 4297 Can't replace to self  ON LINE: 6 (78048) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DDSrc\User.DD
+ERROR: 4297 Can't replace to self  ON LINE: 33 (78254) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 33 (78254) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 34 (78255) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 34 (78255) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 36 (78257) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 36 (78257) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 37 (78258) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 37 (78258) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 40 (78260) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 40 (78260) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 41 (78261) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 41 (78261) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 43 (78263) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 43 (78263) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 46 (78266) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 46 (78266) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 48 (78268) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 48 (78268) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 111 (78341) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4297 Can't replace to self  ON LINE: 111 (78341) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\AppSrc\Order.sl
+ERROR: 4328 Undefined symbol in argument CUSTOMER.CUSTOMERIDNO ON LINE: 200 (13251) OF FILE: C:\Development Projects\VDF18.2 Workspaces\Tempus\DdSrc\Order.DD

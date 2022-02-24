@@ -1,0 +1,13 @@
+#REPLACE FILE130 User2
+#REPLACE User2.Recnum |FN130,0
+#REPLACE User2.UserId |FN130,1
+#REPLACE User2.LoginName |FS130,2
+#REPLACE User2.Password |FS130,3
+#REPLACE User2.FirstName |FS130,4
+#REPLACE User2.LastName |FS130,5
+#REPLACE User2.State |FS130,6
+#REPLACE User2.EditRights |FS130,7
+#REPLACE User2.ChangedFlag |FN130,8
+#REPLACE User2.CustContactId |FN130,9
+#REPLACE User2.SalesIdno |FN130,10
+#REPLACE User2.EditLevel |FN130,11

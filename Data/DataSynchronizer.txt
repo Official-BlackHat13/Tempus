@@ -1,0 +1,90 @@
+---------------------------------------------------------------------------------------------------
+Restructure Workspace ISC Started on 9/26/2009 9:38:01.808 AM
+
+Current Build No.---> 1.38 ------------ Previous Build No.---> 1.35
+----------------------------------------------------------------------------------------
+Transactions Restructure Database Driver= DATAFLEX Started On: 9/26/2009 9:38:02.417 AM
+
+Index.2  No. of Segments changed from: 3 to: 5
+<<<<<<<<<< Index.2  Modified Segments List>>>>>>>>>>
+
+                ----- Segment 3 -----
+ Target Column #  1          Source Column #  10         
+ Target Name TransIdno       Source Name StartHr        
+ Target Length   8           Source Length   2          
+
+<<<<<<<<<<Segment 4 Created>>>>>>>>>>
+ Source Column #  11
+ Source Name StartMin       
+ Source Type DF_BCD    
+ Source Length   2
+ Source Precision 0         
+ Source Ignore Case N/A
+ Source Descending  No       
+
+<<<<<<<<<<Segment 5 Created>>>>>>>>>>
+ Source Column #   1
+ Source Name TransIdno      
+ Source Type DF_BCD    
+ Source Length   8
+ Source Precision 0         
+ Source Ignore Case N/A
+ Source Descending  No       
+
+--------------------Column Attribute Changes--------------------
+Target Column # 10  Target field index changed from: 0 To: 2
+
+Target Column # 11  Target field index changed from: 0 To: 2
+
+Transactions Restructure completed OK Reindex only needed
+
+Transactions Restructure option DF_STRUCTEND_OPT_NONE
+
+Transactions Restructure completed on: 9/26/2009 9:38:03.823 AM
+----------------------------------------------------------------------------------------
+System Restructure Database Driver= DATAFLEX Started On: 9/26/2009 9:38:04.12 AM
+
+----------------------------New Created Columns----------------------------
+Column  47 Name SnowSeasonStart Type DF_DATE    Length 6    Field Index None
+System Restructure completed OK Restructure only needed
+
+System Restructure option DF_STRUCTEND_OPT_NONE
+
+System Restructure completed on: 9/26/2009 9:38:04.167 AM
+----------------------------------------------------------------------------------------
+Quotehdr Restructure Database Driver= DATAFLEX Started On: 9/26/2009 9:38:04.323 AM
+
+----------------------------New Created Columns----------------------------
+Column  17 Name OrderHr         Type DF_BCD     Length 2.0  Field Index None
+Column  18 Name OrderMin        Type DF_BCD     Length 2.0  Field Index None
+Column  19 Name OrderSec        Type DF_BCD     Length 2.0  Field Index None
+Column  20 Name ChangeDate      Type DF_DATE    Length 6    Field Index None
+Column  21 Name ChangeHr        Type DF_BCD     Length 2.0  Field Index None
+Column  22 Name ChangeMin       Type DF_BCD     Length 2.0  Field Index None
+Column  23 Name ChangeSec       Type DF_BCD     Length 2.0  Field Index None
+Quotehdr Restructure completed OK Restructure only needed
+
+Quotehdr Restructure option DF_STRUCTEND_OPT_NONE
+
+Quotehdr Restructure completed on: 9/26/2009 9:38:04.558 AM
+----------------------------------------------------------------------------------------
+Quotedtl Restructure Database Driver= DATAFLEX Started On: 9/26/2009 9:38:04.589 AM
+
+----------------------------New Created Columns----------------------------
+Column   9 Name CreateDate      Type DF_DATE    Length 6    Field Index None
+Column  10 Name CreateHr        Type DF_BCD     Length 2.0  Field Index None
+Column  11 Name CreateMin       Type DF_BCD     Length 2.0  Field Index None
+Column  12 Name CreateSec       Type DF_BCD     Length 2.0  Field Index None
+Column  13 Name EditDate        Type DF_DATE    Length 6    Field Index None
+Column  14 Name EditHr          Type DF_BCD     Length 2.0  Field Index None
+Column  15 Name EditMin         Type DF_BCD     Length 2.0  Field Index None
+Column  16 Name EditSec         Type DF_BCD     Length 2.0  Field Index None
+Quotedtl Restructure completed OK Restructure only needed
+
+Quotedtl Restructure option DF_STRUCTEND_OPT_NONE
+
+Quotedtl Restructure completed on: 9/26/2009 9:38:06.402 AM
+
+Restructure Workspace ISC Completed on 9/26/2009 9:38:06.808 AM
+---------------------------------------------------------------------------------------------------
+

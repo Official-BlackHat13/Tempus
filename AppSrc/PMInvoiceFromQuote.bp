@@ -1,0 +1,289 @@
+//Use Batchdd.pkg
+//Use Customer.DD
+//Use Areas.DD
+//Use Location.DD
+//Use cProjectDataDictionary.dd
+//Use SalesRep.DD
+//Use Order.DD
+//Use pminvhdr.dd
+//Use cJcdeptDataDictionary.dd
+//Use cJccntrDataDictionary.dd
+//Use JCOPER.DD
+//Use pminvdtl.dd
+//Use cSnowrepDataDictionary.dd
+//Use Contact.DD
+//Open Esitem
+//Open Quotedtl
+//Open MastOps
+//
+//Object oPMInvoiceFromQuote is a BusinessProcess
+//    Object oSnowrep_DD is a cSnowrepDataDictionary
+//    End_Object
+//
+//    Object oJcdept_DD is a cJcdeptDataDictionary
+//    End_Object
+//
+//    Object oJccntr_DD is a cJccntrDataDictionary
+//        Set DDO_Server to oJcdept_DD
+//    End_Object
+//
+//    Object oJcoper_DD is a Jcoper_DataDictionary
+//        Set DDO_Server to oJccntr_DD
+//    End_Object
+//
+//    Object oSalesRep_DD is a Salesrep_DataDictionary
+//    End_Object
+//
+//    Object oAreas_DD is a Areas_DataDictionary
+//    End_Object
+//
+//    Object oCustomer_DD is a Customer_DataDictionary
+//    End_Object
+//
+//    Object oContact_DD is a Contact_DataDictionary
+//        Set DDO_Server to oSnowrep_DD
+//        Set DDO_Server to oSalesRep_DD
+//        Set DDO_Server to oCustomer_DD
+//    End_Object
+//
+//    Object oLocation_DD is a Location_DataDictionary
+//        Set DDO_Server to oAreas_DD
+//        Set DDO_Server to oCustomer_DD
+//    End_Object
+//
+//    Object oProject_DD is a cProjectDataDictionary
+//        Set DDO_Server to oLocation_DD
+//    End_Object
+//
+//    Object oOrder_DD is a Order_DataDictionary
+//        Set DDO_Server to oSalesRep_DD
+//        Set DDO_Server to oProject_DD
+//        Set DDO_Server to oLocation_DD
+//    End_Object
+//
+//    Object opminvhdr_DD is a pminvhdr_DataDictionary
+//        Set DDO_Server to oContact_DD
+//        Set DDO_Server to oOrder_DD
+//    End_Object
+//
+//    Object opminvdtl_DD is a pminvdtl_DataDictionary
+//        Set DDO_Server to oJcoper_DD
+//        Set Constrain_file to pminvhdr.File_number
+//        Set DDO_Server to opminvhdr_DD
+//        Send DefineAllExtendedFields
+//    End_Object
+//
+//    Set Main_DD to opminvhdr_DD
+//
+//    Property Integer piQuotehdrRecId
+//    Property Integer piPmInvHdrRecId
+//    Property Boolean pbLegacy False
+//
+//    Set Status_Panel_State to False
+//    Set Display_Error_State to True
+//
+//
+//    // Send DoProcess to this BPO to start the business process
+//    // DoProcess is a predefined method in the BusinessProcess class
+//    // Send DoProcess of oNewBusinessProcess
+//
+//    // OnProcess
+//    // ---------
+//    // Place your processing code into Procedure OnProcess
+//    // OnProcess is a predefined method in the BusinessProcess class
+//
+//    Procedure OnProcess
+//        Boolean bFail bLegacy bNewStdsInstalled
+//        Integer hoDD iQuotehdrRecId iRecId
+//        Date    dToday
+//        //
+//        Get piQuotehdrRecId to iQuotehdrRecId
+//        Get pbLegacy to bLegacy
+//        Get Main_DD         to hoDD
+//        //
+//        If (Quotehdr.Recnum <> iQuotehdrRecId) Begin
+//            Clear Quotehdr
+//            Move iQuotehdrRecId to Quotehdr.Recnum
+//            Find eq Quotehdr.Recnum
+//        End
+//        //
+//        Sysdate dToday
+//        Send Clear_Main_File of hoDD
+//        Move Quotehdr.LocationIdno to Location.LocationIdno
+//        Send Request_Find of hoDD EQ Location.File_Number 1
+//        Relate Quotehdr // probably redundant, but be sure, need contact buffer filled for pminvhdr // 
+//        Send Request_Assign of oContact_DD
+//        //NOTE: this BP is currently called from inside the logic that calls the OrderProcess.bp, only if that successfully created the order record
+//        //      if how this is called changes, then a Clear_All may be required and finding of the correct order record
+////// 7/27/2012 BC
+//Send Request_Assign of oOrder_DD // fixes the request_validate below chaning the order record buffer!!!!
+//////
+//        If (Quotehdr.JobNumber = Order.JobNumber) Begin //then the order record was just created and is in the buffer, create the PMINVHDR record
+//            Set Field_Changed_Value of hoDD Field pminvhdr.QuoteHdrID to Quotehdr.QuotehdrID
+//            Set Field_Changed_Value of hoDD Field pminvhdr.CustomerIdno to Quotehdr.CustomerIdno
+//            Set Field_Changed_Value of hoDD Field pminvhdr.ContactIdno to Quotehdr.ContactIdno
+//            Set Field_Changed_Value of hoDD Field pminvhdr.LocationIdno to Quotehdr.LocationIdno
+//            Set Field_Changed_Value of hoDD Field pminvhdr.SlsRepIdno to Quotehdr.RepIdno
+//            Set Field_Changed_Value of hoDD Field pminvhdr.QuoteDate to Quotehdr.QuoteDate
+//            Set Field_Changed_Value of hoDD Field pminvhdr.OrderDate to Order.JobOpenDate
+//            Set Field_Changed_Value of hoDD Field pminvhdr.QuoteMemo to Order.Title
+//            Set Field_Changed_Value of hoDD Field pminvhdr.InvoiceDate to dToday
+//            //
+//// 7/27/2012 BC: This request_validate is CHANGING the order record buffer from the one we've just created and will tie to the invoice, to the first one created since opening the appliation!
+//// I traced it all the way into Datadict.pkg and the line 3591 Forward Get Request_Validate To iRetval, and tracing into it to line 3289: Function Validate_Data_Sets integer DoAllFg integer bNoStop Returns Integer
+//// and the first line in that function tests for a set of conditions, two of which is are function expressions: Allow_Foreign_New_Save_State(self) OR ;Validate_Foreign_File_State(Self))
+//// and it is one of those two functions that changes the buffer. This is one helluva complicated environment (Tempus + VDF) = !@#$
+//            Get Request_Validate    of hoDD                            to bFail
+//            If (not(bFail)) Begin
+//                Send Request_Save   of hoDD
+//            End
+//        End
+//        //
+//        Get Current_Record of hoDD to iRecId
+//        Set piPmInvHdrRecId to iRecId
+//        // now create detail items as appropriate
+//        If iRecId Begin 
+//            Move opminvdtl_DD to hoDD
+//            If bLegacy Begin // use Quotedtl table to create lines in PmInvDtl
+//                Clear Quotedtl Jcoper
+//                // to deal with the WAFFLING ... !!!
+//                    Move 199010 to Jcoper.OPCODE
+//                    Find eq Jcoper.OPCODE
+//                    Move Found to bNewStdsInstalled
+//                //
+//                Move Quotehdr.QuotehdrID to Quotedtl.QuotehdrID
+//                Find ge Quotedtl.QuotehdrID
+//                While (Found and Quotedtl.QuotehdrID = Quotehdr.QuotehdrID)
+//                    Send Clear of hoDD
+//                    Relate Quotedtl
+//                    //determine value of Jcoper.Opcode to find based on MastOps.CostType
+//                    If bNewStdsInstalled Begin
+//                        Case Begin
+//                            Case (MastOps.CostType = 'Equipment')
+//                                Move 199010 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Labor')
+//                                Move 199020 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Material')
+//                                Move 199030 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'PM Material')
+//                                Move 199040 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Subcontractor')
+//                                Move 199050 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Supplies')
+//                                Move 199060 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Travel')
+//                                Move 199070 to Jcoper.OPCODE
+//                                Case Break
+//                            Case Else
+//                                Clear Jcoper
+//                        Case End
+//                    End
+//                    Else Begin 
+//                        Case Begin
+//                            Case (MastOps.CostType = 'Equipment')
+//                                Move 99010 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Labor')
+//                                Move 99020 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Material')
+//                                Move 99030 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'PM Material')
+//                                Move 99040 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Subcontractor')
+//                                Move 99050 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Supplies')
+//                                Move 99060 to Jcoper.OPCODE
+//                                Case Break
+//                            Case (MastOps.CostType = 'Travel')
+//                                Move 99070 to Jcoper.OPCODE
+//                                Case Break
+//                            Case Else
+//                                Clear Jcoper
+//                        Case End
+//                    End
+//                    //
+//                    Send Request_Find of hoDD EQ Jcoper.File_Number 2//because I've not included a DDO structure for Esitem, but pminvdtl relates to jcoper .... sheesh ....
+//                    //If (Esitem.EST_$1 <> 0 or Jcoper.PRINT_FLAGS contains 'S') Begin 
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var1 to Quotedtl.QuotedtlID //Esitem.VAR1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var2 to Quotedtl.MastOpsIdno //Esitem.VAR2
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var3 to Quotedtl.Quantity //Esitem.VAR3
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var4 to Quotedtl.Price //Esitem.VAR4
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var5 to Quotedtl.Amount //Esitem.VAR5
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var6 to 0 //Esitem.VAR6
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var7 to 0 //Esitem.VAR7
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var8 to 0 //Esitem.VAR8
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var9 to 0 //Esitem.VAR9
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.CalcUnits1 to 0 //Esitem.CALC_UNITS1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.ProdUnits1 to 0 //Esitem.PROD_UNITS1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.EstAmt1 to Quotedtl.Amount //Esitem.EST_$1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.SellUnits1 to Quotedtl.Price  //Esitem.SELL_1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Instruction to Quotedtl.Description  //Esitem.INSTRUCTION
+//                        Get Request_Validate of hoDD to bFail
+//                        If (not(bFail)) Begin
+//                            Send Request_Save   of hoDD
+//                        End
+//                    //End
+//                    Find gt Quotedtl.QuotehdrID
+//                Loop
+//            End // of bLegacy true, use quotedtl for pmvindtl
+//            Else Begin //use Esitem 
+//                Clear Esitem
+//                Move Quotehdr.QuotehdrID to Esitem.ESTIMATE_ID
+//                Find ge Esitem.ESTIMATE_ID
+//                While (Found and Esitem.ESTIMATE_ID = Quotehdr.QuotehdrID)
+//                    Send Clear of hoDD
+//                    Relate Esitem
+//                    Send Request_Find of hoDD EQ Jcoper.File_Number 2//because I've not included a DDO structure for Esitem, but pminvdtl relates to jcoper .... sheesh ....
+//                    If (Esitem.EST_$1 <> 0 or Jcoper.PRINT_FLAGS contains 'S') Begin 
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var1 to Esitem.VAR1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var2 to Esitem.VAR2
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var3 to Esitem.VAR3
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var4 to Esitem.VAR4
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var5 to Esitem.VAR5
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var6 to Esitem.VAR6
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var7 to Esitem.VAR7
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var8 to Esitem.VAR8
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Var9 to Esitem.VAR9
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.CalcUnits1 to Esitem.CALC_UNITS1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.ProdUnits1 to Esitem.PROD_UNITS1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.EstAmt1 to Esitem.EST_$1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.SellUnits1 to Esitem.SELL_1
+//                        Set Field_Changed_Value of hoDD Field pminvdtl.Instruction to Esitem.INSTRUCTION
+//                        Get Request_Validate of hoDD to bFail
+//                        If (not(bFail)) Begin
+//                            Send Request_Save   of hoDD
+//                        End
+//                    End
+//                    Find gt Esitem.ESTIMATE_ID
+//                Loop
+//            End // of not bLegacy, use esitem for pminvdtl
+//        End
+//        //
+//    End_Procedure
+//
+//    Function DoCreatePMInvoiceFromQuote Integer iQuotehdrRecId Boolean bLegacy Returns Integer
+//        Integer iRecId
+//        // bLegacy: source of data for pminvdtl: true = QuoteDtl, false = esitem
+//        //
+//        Set piQuotehdrRecId to iQuotehdrRecId
+//        Set piPmInvHdrRecId to 0
+//        Set pbLegacy to bLegacy
+//        //
+//        Send DoProcess
+//        //
+//        Get piPmInvHdrRecId to iRecId
+//        Function_Return iRecId
+//    End_Function
+//
+//End_Object
+//

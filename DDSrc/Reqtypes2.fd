@@ -1,0 +1,5 @@
+#REPLACE FILE123 Reqtypes2
+#REPLACE Reqtypes2.Recnum |FN123,0
+#REPLACE Reqtypes2.ReqtypesCode |FS123,1
+#REPLACE Reqtypes2.Description |FS123,2
+#REPLACE Reqtypes2.ChangedFlag |FN123,3

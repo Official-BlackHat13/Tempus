@@ -1,0 +1,88 @@
+-----------------------------------------------------------------------------
+  DATE: 11/09/2016      TIME: 16:21                                  PAGE:  1
+  FILE DEFINITION FOR FILE: Quotehdr (# 25)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:QUOTEHDR
+  USER DISPLAY NAME         : Quotehdr
+  DATAFLEX FILE NAME        : Quotehdr
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 520       ( USED: 520 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 15256 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLEXPRESS;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  QuotehdrID       NUM   10.0     1  1   
+  2  LocationIdno     NUM   10.0    12  2   Location.FIELD_2 (3,2)
+  3  ContactIdno      NUM   10.0    23  3   Contact.FIELD_2 (6,2)
+  4  RepIdno          NUM   10.0    34  4   SalesRep.FIELD_1 (5,1)
+  5  QuoteDate        DAT     10    45  9   
+  6  ExpirationDate   DAT     10    68      
+  7  Amount           NUM    8.4    91      
+  8  Organization     ASC     60   105  5   
+  9  JobNumber        NUM   10.0   165  8   
+ 10  OrderDate        DAT     10   176      
+ 11  Status           ASC      1   199  6   
+ 12  QuoteLostMemo    ASC     50   200      
+ 13  CloneReference   NUM   10.0   250      
+ 14  CustomerIdno     NUM   10.0   261  7   
+ 15  LocationName     ASC     40   272 10   
+ 16  WorkType         ASC      2   312      
+ 17  OrderHr          NUM   10.0   314      
+ 18  OrderMin         NUM   10.0   325      
+ 19  OrderSec         NUM   10.0   336      
+ 20  ChangeDate       DAT     10   347      
+ 21  ChangeHr         NUM   10.0   370      
+ 22  ChangeMin        NUM   10.0   381      
+ 23  ChangeSec        NUM   10.0   392      
+ 24  Probability      NUM   10.0   403      
+ 25  CloseDate        DAT     10   414      
+ 26  EstHours         NUM    6.2   437      
+ 27  RecordOwner      NUM   10.0   447      
+ 28  TaxTotal         NUM    8.4   458      
+ 29  SubTotal         NUM    8.4   472      
+ 30  EstimateReference  NUM   10.0   486      
+ 31  LockedFlag       NUM   10.0   497      
+ 32  BillingType      ASC      2   508      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    QuotehdrID      NO  NO       0      0       1     ON-LINE
+
+  2    LocationIdno    NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  3    ContactIdno     NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  4    RepIdno         NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  5    Organization    NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  6    Status          NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  7    CustomerIdno    NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  8    JobNumber       NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  9    QuoteDate       NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+
+  10   LocationName    NO  NO       0      0       2     ON-LINE
+       QuotehdrID      NO  NO 
+

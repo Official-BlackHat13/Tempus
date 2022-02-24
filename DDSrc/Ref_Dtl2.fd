@@ -1,0 +1,12 @@
+#REPLACE FILE120 Ref_Dtl2
+#REPLACE Ref_Dtl2.Recnum |FN120,0
+#REPLACE Ref_Dtl2.Ref_Hdr_Idno |FN120,1
+#REPLACE Ref_Dtl2.ReferenceIdno |FN120,2
+#REPLACE Ref_Dtl2.Company |FS120,3
+#REPLACE Ref_Dtl2.Name |FS120,4
+#REPLACE Ref_Dtl2.Title |FS120,5
+#REPLACE Ref_Dtl2.Phone |FS120,6
+#REPLACE Ref_Dtl2.Email |FS120,7
+#REPLACE Ref_Dtl2.Print |FS120,8
+#REPLACE Ref_Dtl2.HighLight |FS120,9
+#REPLACE Ref_Dtl2.Ref_Dtl_idno |FN120,10

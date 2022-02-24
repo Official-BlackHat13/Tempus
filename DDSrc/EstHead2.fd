@@ -1,0 +1,6 @@
+#REPLACE FILE89 EstHead2
+#REPLACE EstHead2.Recnum |FN89,0
+#REPLACE EstHead2.EstHeadIdno |FN89,1
+#REPLACE EstHead2.Entered |FM89,2
+#REPLACE EstHead2.Planner |FS89,3
+#REPLACE EstHead2.Title |FS89,4

@@ -1,0 +1,30 @@
+/*------------------------------
+    SUGGESTION LIST STYLE
+-------------------------------*/
+
+.vdfSuggest{
+    position: absolute;
+    border: 1px solid #000000;
+    background-color: #ffffff;
+    z-index: 400;
+    margin-top: -1px;
+}
+
+.vdfSuggest .vdfSuggestion{
+    padding: 2px;
+    background-color: #ffffff;
+}
+
+.vdfSuggest .selected{
+    padding: 2px;   
+    background-color: #466381;
+    color: #ffffff;
+}
+
+.vdfSuggest tr{
+    cursor: pointer;
+}
+
+.vdfSuggest td{
+    padding: 2px;
+}

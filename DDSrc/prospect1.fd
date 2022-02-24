@@ -1,0 +1,14 @@
+#REPLACE FILE117 prospect1
+#REPLACE prospect1.Recnum |FN117,0
+#REPLACE prospect1.Prospect_Idno |FN117,1
+#REPLACE prospect1.CompanyName |FS117,2
+#REPLACE prospect1.ProspectName |FS117,3
+#REPLACE prospect1.Address1 |FS117,4
+#REPLACE prospect1.Address2 |FS117,5
+#REPLACE prospect1.City |FS117,6
+#REPLACE prospect1.State |FS117,7
+#REPLACE prospect1.Zip |FS117,8
+#REPLACE prospect1.OfficePhone |FS117,9
+#REPLACE prospect1.MobilePhone |FS117,10
+#REPLACE prospect1.Email |FS117,11
+#REPLACE prospect1.Rep_Idno |FN117,12

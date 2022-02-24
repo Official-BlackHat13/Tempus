@@ -1,0 +1,303 @@
+//AB/ Project VP Message Box
+//AB/ Object prj is a Dialog_Project
+//AB/     Set ProjectName to "VP Message Box"
+//AB/     Set ProjectFileName to "vpMsgBox.DG"
+//AB/     Set GenerateFileName to "NONAME"
+
+// Project Object Structure
+//   oMsgBox is a dbModalPanel
+//     oBitmapContainer is a cvBitmapContainer
+//     oTextbox1 is a Textbox
+//     oTextbox2 is a Textbox
+//     oTextbox3 is a Textbox
+//     oButtonOne is a Button
+//     oButtonTwo is a Button
+//     oButtonThree is a Button
+//     oCancelButton is a cGlblButton
+
+// Register all objects
+Register_Object oBitmapContainer
+Register_Object oButtonOne
+Register_Object oButtonTwo
+Register_Object oButtonThree
+Register_Object oButtonFour
+Register_Object oCancelButton
+Register_Object oMsgBox
+Register_Object oTextbox1
+Register_Object oTextbox2
+Register_Object oTextbox3
+Register_Object oTextbox4
+
+
+
+//AB-StoreTopStart
+external_function MessageBeep "MessageBeep" User32.dll integer uType returns integer
+//The constants that are available are:
+//define MB_ICONHAND for |CI$010
+//define MB_ICONQUESTION for |CI$020
+//define MB_ICONEXCLAMATION for |CI$030
+//define MB_ICONASTERISK for |CI$040
+//define MB_OK for |CI$0
+//also |CI$FFFFFFFF
+
+//use cvBitmapContainer.pkg
+
+enumeration_list
+    define mbReplyCancel
+    define mbReplyOne
+    define mbReplyTwo
+    define mbReplyThree
+    define mbReplyFour
+end_enumeration_list
+
+//AB-StoreTopEnd
+
+//AB-IgnoreStart
+
+Use DFAllEnt.pkg
+//Use cvBitmapContainer.Pkg
+Use cGlblButton.pkg
+
+
+//AB-IgnoreEnd
+
+Object oMsgBox is a dbModalPanel
+
+    property integer piReply 0
+
+    Set Sysmenu_Icon to FALSE
+    Set Minimize_Icon to FALSE
+    Set Label to "Preview links"
+    Set Size to 110 210
+    Set Location to 26 79
+    Set Locate_Mode to CENTER_ON_PANEL
+    Set Extended_Window_Style to WS_EX_TOOLWINDOW False
+
+
+//    Object oBitmapContainer is a cvBitmapContainer
+//        Set piTransparentColor to clFuchsia
+//        Set piImageListType to ILC_Color24
+//        Set Size to 25 25
+//        Set Location to 4 4
+//        Set Bitmap to "vpQuest.bmp"
+//        Set Border_Style to Border_None
+//    End_Object    // oBitmapContainer
+
+    Object oTextbox1 is a Textbox
+        Set Label to "Proceed directly to calculation,"
+        Set Location to 15 50
+        Set Size to 9 100
+        Set TypeFace to "MS Sans Serif"
+    End_Object    // oTextbox1
+
+    Object oTextbox2 is a Textbox
+        Set Label to "preview overridable links"
+        Set Location to 30 50
+        Set Size to 9 100
+        Set TypeFace to "MS Sans Serif"
+    End_Object    // oTextbox2
+
+    Object oTextbox3 is a Textbox
+        Set Label to "or overridden links."
+        Set Location to 45 50
+        Set Size to 9 100
+        Set TypeFace to "MS Sans Serif"
+    End_Object    // oTextbox3
+
+    Object oTextbox4 is a Textbox
+        Set Label to "Maintain Difference."
+        Set Location to 60 50
+        Set Size to 9 100
+        Set TypeFace to "MS Sans Serif"
+        Set Visible_State to False
+    End_Object    // oTextbox3
+
+    Object oButtonOne is a Button
+        Set Label to "Calculate"
+        Set Size to 14 60
+        Set Location to 70 10
+
+        procedure OnClick
+            set piReply to mbReplyOne
+            send Close_Panel
+        end_procedure
+    End_Object    // oButtonOne
+
+    Object oButtonTwo is a Button
+        Set Label to "Overridable"
+        Set Size to 14 60
+        Set Location to 70 75
+
+        procedure OnClick
+            set piReply to mbReplyTwo
+            send Close_Panel
+        end_procedure
+    End_Object    // oButtonTwo
+
+    Object oButtonThree is a Button
+        Set Label to "Overridden"
+        Set Default_State to TRUE
+        Set Size to 14 60
+        Set Location to 70 140
+
+        procedure OnClick
+            set piReply to mbReplyThree
+            send Close_Panel
+        end_procedure
+    End_Object    // oButtonThree
+
+    Object oButtonFour is a Button
+        Set Label to "Need Label"
+        Set Default_State to TRUE
+        Set Size to 14 60
+        Set Location to 90 75 
+        Set Visible_State to False
+        Set Enabled_State to False
+
+        procedure OnClick
+            set piReply to mbReplyFour
+            send Close_Panel
+        end_procedure
+    End_Object    // oButtonThree
+
+    Object oCancelButton is a cGlblButton
+        Set Label to "Cancel"
+        Set Size to 14 60
+        Set Location to 90 75
+
+        Procedure OnClick
+            send Close_Panel
+        End_Procedure // OnClick
+    End_Object    // oCancelButton
+
+
+    procedure DoResize integer iOption //boolean bFour
+        // use location of cancel button for maint difference button, i.e. button 4
+        if (iOption=1) begin // origninal calculate options dialog 4 buttons, 4th button on 2nd row
+            set Size to 126 215
+            set Visible_State of oCancelButton to TRUE
+            set Enabled_State of oCancelButton to TRUE
+        end
+        if (iOption=3) begin // shared 3 button options logic - all on one row
+            set Size to 103 215
+            set Visible_State of oCancelButton to FALSE
+            set Enabled_State of oCancelButton to FALSE
+        end
+        if (iOption=2) begin // for quantity variance option with 4 buttons, 4th one on 2nd row
+            set Size to 126 215
+            set Visible_State of oCancelButton to FALSE
+            set Enabled_State of oCancelButton to FALSE
+            set Visible_State of oButtonFour      to TRUE
+            set Enabled_State of oButtonFour      to TRUE
+        end
+        // use location of cancel button for maint difference button, i.e. button 4
+    end_procedure
+
+    
+    function IsPreviewLinksOption returns integer
+        send DoResize 1 //TRUE
+        set piReply to mbReplyCancel
+        move (MessageBeep(MB_ICONEXCLAMATION)) to WINDOWINDEX
+        set Label to "Preview links"
+        set Label of oTextbox1    to "Proceed directly to calculation,"
+        set Label of oTextbox2    to "preview overridable links"
+        set Label of oTextbox3    to "or overridden links."
+        set Label of oButtonOne   to "Calculate"
+        set Label of oButtonTwo   to "Overridable"
+        Set Label of oButtonThree to "Overridden"
+        // ToDo: Disable Popup, Return "Calculate (1)"
+        //send Popup
+        Set piReply to mbReplyOne
+        Function_Return (piReply(Self))
+    end_function
+
+    function IsQuoteQuantityVarianceOption ;
+        string sComponentId ;
+        integer iEstQty      ;
+        integer iJobQty      ;
+        string sFactor      ;
+        returns integer
+        //
+        send DoResize 2 //FALSE
+        set piReply to mbReplyOne
+        move (MessageBeep(MB_ICONEXCLAMATION)) to WINDOWINDEX
+        set Label to "Quantity variance options"
+        set Label of oTextbox1    ;
+            to ("Quoted component" * sComponentId * "quantity (" + IntToStrTS(iEstQty) + ")")
+        set Label of oTextbox2    ;
+            to ("differs from quoted main order quantity (" + IntToStrTS(iJobQty) + ")")
+        set Label of oTextbox3    to ("by a factor of" * sFactor * "X and a difference of" *IntToStrTS((iEstQty-iJobQty)))
+        set Label of oButtonOne   to "Maintain diff."
+        set Label of oButtonTwo   to "Match order qty."
+        set Label of oButtonThree to "Keep comp qty."
+        set Label of oButtonFour  to "Maintain factor"
+        send Popup
+        function_return (piReply(self))
+    end_function
+
+    function IsOrderQuantityVarianceOption ;
+        string sComponentId ;
+        integer iCompQty     ;
+        integer iWasQty      ;
+        string sFactor      ;
+        returns integer
+        //
+
+        send DoResize 2 //FALSE
+        set piReply to mbReplyOne
+        move (MessageBeep(MB_ICONEXCLAMATION)) to WINDOWINDEX
+        set Label to "Quantity variance options"
+        set Label of oTextbox1    ;
+            to ("Component" * sComponentId * "quantity (" + IntToStrTS(iCompQty) + ")")
+        set Label of oTextbox2    ;
+            to ("differs from original main order quantity (" + IntToStrTS(iWasQty) + ")")
+        set Label of oTextbox3    to ("by a factor of" * sFactor * "X and a difference of" *IntToStrTS((iCompQty-iWasQty)))
+        set Label of oButtonOne   to "Maintain diff."
+        set Label of oButtonTwo   to "Match order qty."
+        set Label of oButtonThree to "Keep comp qty."
+        set Label of oButtonFour  to "Maintain factor"
+        send Popup
+        function_return (piReply(self))
+    end_function
+
+    function IsEstimateQuantityVarianceOption ;
+        string sLabel       ;
+        string sComponentId ;
+        integer iCompQty     ;
+        integer iHeadQty     ;
+        string sFactor      ;
+        returns integer
+        //
+        send DoResize 2 //FALSE
+        set piReply to mbReplyOne
+        move (MessageBeep(MB_ICONEXCLAMATION)) to WINDOWINDEX
+        set Label to sLabel
+        set Label of oTextbox1    ;
+            to ("Component" * sComponentId * "quantity (" + IntToStrTS(iCompQty) + ")")
+        set Label of oTextbox2    ;
+            to ("differs from main estimate quantity (" + IntToStrTS(iHeadQty) + ")")
+        set Label of oTextbox3    to ("by a factor of" * sFactor * "X and a difference of" *IntToStrTS((iCompQty-iHeadQty)))
+        set Label of oButtonOne   to "Maintain diff."
+        set Label of oButtonTwo   to "Match main qty."
+        set Label of oButtonThree to "Keep comp qty."
+        set Label of oButtonFour  to "Maintain factor"
+        send Popup
+        function_return (piReply(self))
+    end_function
+
+    function IsCopyItemOption returns integer
+        send DoResize 3 //FALSE
+        set piReply to mbReplyOne
+        move (MessageBeep(MB_ICONEXCLAMATION)) to WINDOWINDEX
+        set Label to "The selected item was self-vended"
+        set Label of oTextbox1    to "You may default a Job/Component"
+        set Label of oTextbox2    to "or an Inventory Item, but not both"
+        set Label of oTextbox3    to ""
+        set Label of oButtonOne   to "Job/Component"
+        set Label of oButtonTwo   to "Inventory Item"
+        set Label of oButtonThree to "Cancel"
+        send Popup
+        function_return (piReply(self))
+    end_function
+
+End_Object    // oMsgBox

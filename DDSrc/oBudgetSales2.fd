@@ -1,0 +1,14 @@
+#REPLACE FILE107 oBudgetSales2
+#REPLACE oBudgetSales2.Recnum |FN107,0
+#REPLACE oBudgetSales2.Budget_Hdr_Idno |FN107,1
+#REPLACE oBudgetSales2.Budget_Idno |FN107,2
+#REPLACE oBudgetSales2.Budget_Yr |FM107,3
+#REPLACE oBudgetSales2.Rep_Idno |FN107,4
+#REPLACE oBudgetSales2.Snow_Amt |FN107,5
+#REPLACE oBudgetSales2.Melt_Amt |FN107,6
+#REPLACE oBudgetSales2.Pave_Amt |FN107,7
+#REPLACE oBudgetSales2.Concrete_Amt |FN107,8
+#REPLACE oBudgetSales2.Excavation_Amt |FN107,9
+#REPLACE oBudgetSales2.Sweep_Amp |FN107,10
+#REPLACE oBudgetSales2.Mark_Amt |FN107,11
+#REPLACE oBudgetSales2.Other_Amt |FN107,12

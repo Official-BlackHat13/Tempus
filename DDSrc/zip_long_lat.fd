@@ -1,0 +1,7 @@
+#REPLACE FILE132 zip_long_lat
+#REPLACE zip_long_lat.Recnum |FN132,0
+#REPLACE zip_long_lat.ZipCode |FN132,1
+#REPLACE zip_long_lat.City |FS132,2
+#REPLACE zip_long_lat.State |FS132,3
+#REPLACE zip_long_lat.Longitude |FN132,4
+#REPLACE zip_long_lat.Latitude |FN132,5

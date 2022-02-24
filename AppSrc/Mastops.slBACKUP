@@ -1,0 +1,357 @@
+// Mastops.sl
+// Mastops Lookup List
+#IFDEF qtAll
+#ELSE
+Enum_List
+    Define qtAll
+    Define qtPavementMaintenance
+    Define qtSnowRemoval
+End_Enum_List
+#ENDIF
+
+Use DFClient.pkg
+Use DFSelLst.pkg
+Use Windows.pkg
+Use cGlblDbModalPanel.pkg
+Use cGlblDbList.pkg
+
+Use MastOps.DD
+Use cWorkTypeGlblDataDictionary.dd
+Use cDivisionMgrGlblDataDictionary.dd
+Use dfcentry.pkg
+Use dfallent.pkg
+
+Object Mastops_sl is a cGlblDbModalPanel
+    Set Size to 247 459
+
+    Property Boolean pbQuoteEntry
+    Property Boolean pbCostType
+    Property Boolean pbReportType
+    Property String  psCostType
+    Property String  psReportType
+    Property Integer piIdno
+    Property Integer piActivityType
+
+    Set Location to 5 5
+    Set Label To "Mastops Lookup List"
+    Set Border_Style to Border_Thick
+    Set Minimize_Icon to False
+
+    Property Integer peQuoteType qtAll
+
+    Object oDivisionMgr_DD is a cDivisionMgrGlblDataDictionary
+    End_Object
+
+    Object oWorkType_DD is a cWorkTypeGlblDataDictionary
+        Set DDO_Server to oDivisionMgr_DD
+    End_Object
+
+    Object oMastops_DD is a Mastops_DataDictionary
+        Set DDO_Server to oWorkType_DD
+        
+        Procedure OnConstrain
+            // Constrain CostType depending on view
+            If (pbQuoteEntry(Self)) Begin
+                Constrain MastOps.ReportCategory ne "Job Cost"
+            End
+            Else Begin
+                If (pbCostType(Self)) Begin
+                    Constrain MastOps.CostType eq (psCostType(Self))
+                End
+                // Constrain ReportType depending on view
+                If (pbReportType(Self)) Begin
+                    Constrain MastOps.ReportCategory eq (psReportType(Self))
+                End  
+            End
+            // Constrain from Filter on SL
+            String sValue
+            Get Value of oWorkTypeCombo to sValue
+            Move (Ltrim(sValue)) to sValue
+            If ((Length(sValue))>1) Begin
+                Constrain MastOps.ActivityType eq sValue
+            End  
+            //Status
+            If (not(Checked_State(oActiveCheckBox(Self)))) Constrain MastOps.Status ne "A"
+            If (not(Checked_State(oInactiveCheckBox(Self)))) Constrain MastOps.Status ne "I"
+            If (not(Checked_State(oHiddenCheckBox(Self)))) Constrain MastOps.Status ne "H"
+        End_Procedure
+
+    End_Object
+
+    Set Main_DD To oMastops_DD
+    Set Server  to oMastops_DD
+    Set piMinSize to 200 350
+
+    Object oSelList is a cGlblDbList
+        Set Size to 213 444
+        Set Location to -1 1
+        Set peAnchors to anAll
+        Set Main_File to Mastops.File_Number
+        Set Ordering to 3
+        Set peResizeColumn to rcAll
+//        Set Auto_Server_State to True
+        Set pbHeaderTogglesDirection to True
+
+        Begin_row
+            Entry_Item Mastops.MastOpsIdno
+            Entry_Item MastOps.DisplaySequence
+            Entry_Item Mastops.Name
+            Entry_Item MastOps.ActivityType
+            Entry_Item MastOps.SellRate
+        End_row
+
+        Set Form_Width 0 to 26
+        Set Header_Label 0 to "Oper#"
+
+        Set Form_Width 1 to 59
+        Set Header_Label 1 to "Seq"
+
+        Set Form_Width 2 to 163
+        Set Header_Label 2 to "Name"
+        Set Form_Width 3 to 124
+        Set Header_Label 3 to "ActivityType"
+        Set Column_Combo_State 3 to True
+        Set Form_Width 4 to 60
+        Set Header_Label 4 to "SellRate"
+
+        Procedure Ok
+            If (pbCostType(Self)) Begin
+                Set piIdno to MastOps.MastOpsIdno
+                Send Close_Panel
+            End
+            Else Begin
+                Forward Send Ok
+            End
+        End_Procedure
+
+    End_Object // oSelList
+
+    Object oOk_bn Is A Button
+        Set Label to "&Ok"
+        Set Location to 225 300
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send OK of oSelList
+        End_Procedure
+
+    End_Object // oOk_bn
+
+    Object oCancel_bn Is A Button
+        Set Label to "&Cancel"
+        Set Location to 225 350
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Cancel of oSelList
+        End_Procedure
+
+    End_Object // oCancel_bn
+
+    Object oSearch_bn Is A Button
+        Set Label to "&Search..."
+        Set Location to 225 400
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Search of oSelList
+        End_Procedure
+
+    End_Object // oSearch_bn
+
+    Object oDbGroup1 is a dbGroup
+        Set Size to 25 135
+        Set Location to 216 153
+        Set Label to 'Activity Type Filter'
+
+        Object oWorkTypeCombo is a dbComboForm
+            Set Size to 14 100
+            Set Entry_State to False
+            Set Allow_Blank_State to False
+            Set Location to 9 4
+            Set Combo_Data_File to 74
+            Set Code_Field to 1
+            Set Combo_Index to 1
+            Set Description_Field to 1
+            Set Label to ""
+            Set Label_Justification_Mode to JMode_Right
+            Set Label_Col_Offset to 5
+            
+            Procedure OnChange
+                Send Rebuild_Constraints of oMastops_DD
+                Send Beginning_of_Data of oSelList
+                Send Activate of oSelList
+            End_Procedure
+        End_Object
+        Object oButton1 is a Button
+            Set Size to 15 25
+            Set Location to 8 106
+            Set Label to 'Clear'
+        
+            // fires when the button is clicked
+            Procedure OnClick
+                //Clear Value in Filter
+                Set Value of oWorkTypeCombo to ""
+            End_Procedure
+        
+        End_Object
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_bn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_bn
+    On_Key Key_Alt+Key_S Send KeyAction of oSearch_bn
+
+    Procedure DoQuotePrompt
+//        Set Auto_Server_State of oSelList   to False
+        Set pbQuoteEntry                    to True
+        Set Auto_Index_State  of oSelList   to False
+        Set Ordering          of oSelList   to 2
+        Set Form_Width        of oSelList 0 to 0 // 36
+        Set Form_Width        of oSelList 1 to 0 // 36
+        Set Form_Width        of oSelList 2 to 222 // 150
+        //Set peQuoteType                     to qtPavementMaintenance
+        Send Rebuild_Constraints of oMastops_DD
+        Send Beginning_of_Data   of oSelList
+        Send Popup
+        //Set peQuoteType                     to qtAll
+        Send Rebuild_Constraints of oMastops_DD
+        Set Auto_Index_State  of oSelList   to True
+        Set pbQuoteEntry                    to False
+//        Set Auto_Server_State of oSelList   to True
+        Set Ordering          of oSelList   to 1
+        Set Form_Width        of oSelList 0 to 36
+        Set Form_Width        of oSelList 1 to 36
+        Set Form_Width        of oSelList 2 to 150
+    End_Procedure
+
+    Procedure DoAddOpersPrompt
+//        Set Auto_Server_State of oSelList   to False
+        Set pbQuoteEntry                    to True
+        Set Auto_Index_State  of oSelList   to False
+        Set Ordering          of oSelList   to 2
+        //Set Form_Width        of oSelList 0 to 0 // 36
+        //Set Form_Width        of oSelList 1 to 0 // 36
+        //Set Form_Width        of oSelList 2 to 222 // 150
+        //Set peQuoteType                     to qtPavementMaintenance
+        Send Rebuild_Constraints of oMastops_DD
+        Send Beginning_of_Data   of oSelList
+        Send Popup
+        //Set peQuoteType                     to qtAll
+        Send Rebuild_Constraints of oMastops_DD
+        Set Auto_Index_State  of oSelList   to True
+        Set pbQuoteEntry                    to False
+//        Set Auto_Server_State of oSelList   to True
+        Set Ordering          of oSelList   to 1
+        //Set Form_Width        of oSelList 0 to 36
+        //Set Form_Width        of oSelList 1 to 36
+        //Set Form_Width        of oSelList 2 to 150
+    End_Procedure
+
+//    Procedure DoInvoicePrompt
+//        Set Auto_Server_State of oSelList   to False
+//        //Set pbQuoteEntry                    to True
+//        Set Auto_Index_State  of oSelList   to False
+//        Set Ordering          of oSelList   to 5
+//        Set Form_Width        of oSelList 0 to 0 // 36
+//        Set Form_Width        of oSelList 1 to 0 // 36
+//        Set Form_Width        of oSelList 2 to 222 // 150
+//        //Set peQuoteType                     to qtPavementMaintenance
+//        Send Rebuild_Constraints of oMastops_DD
+//        Send Beginning_of_Data   of oSelList
+//        Send Popup
+//        //Set peQuoteType                     to qtAll
+//        Send Rebuild_Constraints of oMastops_DD
+//        Set Auto_Index_State  of oSelList   to True
+//        //Set pbQuoteEntry                    to False
+//        Set Auto_Server_State of oSelList   to True
+//        Set Ordering          of oSelList   to 1
+//        Set Form_Width        of oSelList 0 to 36
+//        Set Form_Width        of oSelList 1 to 36
+//        Set Form_Width        of oSelList 2 to 150
+//    End_Procedure
+
+    Function IsSelectedJobCostOperation String sCostType String sReportType Returns Integer
+//        Set Auto_Server_State of oSelList to False
+        Set piIdno                        to 0
+        Set pbCostType                    to True
+        Set psCostType                    to sCostType
+        Set pbReportType                  to True
+        Set psReportType                  to sReportType
+        Send Rebuild_Constraints of oMastops_DD
+        Send Beginning_of_Data   of oSelList
+        Send Popup
+        Set pbCostType                    to False
+        Set psCostType                    to ""
+        Set pbReportType                  to False
+        Set psReportType                  to ""
+        Send Rebuild_Constraints of oMastops_DD
+//        Set Auto_Server_State of oSelList to True
+        Function_Return (piIdno(Self))
+    End_Function
+    
+    Function SelectMastOps Integer iMastOpsIdno Returns Integer
+        Set piIdno to iMastOpsIdno
+        Send Rebuild_Constraints of oMastops_DD
+        Send Beginning_of_Data of oSelList
+        Send Popup
+        Send Rebuild_Constraints of oMastops_DD
+        Set piIdno to MastOps.MastOpsIdno
+        Function_Return (piIdno(Self))
+    End_Function
+
+    Object oStatusGroup is a Group
+        Set Size to 24 133
+        Set Location to 217 9
+        Set Label to 'Status'
+        Set peAnchors to anTopLeft
+
+        Object oActiveCheckBox is a CheckBox
+            Set Size to 10 38
+            Set Location to 11 12
+            Set Label to 'Active'
+            Set Checked_State to True
+        
+            //Fires whenever the value of the control is changed
+            Procedure OnChange
+                Boolean bChecked
+                Get Checked_State to bChecked
+                Send Rebuild_Constraints of oMastops_DD
+                Send Beginning_of_Data to oSelList
+            End_Procedure
+        End_Object
+
+        Object oInactiveCheckBox is a CheckBox
+            Set Size to 10 50
+            Set Location to 11 49
+            Set Label to 'Inactive'
+        
+            //Fires whenever the value of the control is changed
+            Procedure OnChange
+                Boolean bChecked
+            
+                Get Checked_State to bChecked
+                Send Rebuild_Constraints of oMastops_DD
+                Send Beginning_of_Data to oSelList
+            End_Procedure
+        
+        End_Object
+        
+        Object oHiddenCheckBox is a CheckBox
+            Set Size to 10 50
+            Set Location to 11 92
+            Set Label to 'Hidden'
+        
+            //Fires whenever the value of the control is changed
+            Procedure OnChange
+                Boolean bChecked
+            
+                Get Checked_State to bChecked
+                Send Rebuild_Constraints of oMastops_DD
+                Send Beginning_of_Data to oSelList
+            End_Procedure
+        
+        End_Object
+        
+    End_Object
+    
+End_Object

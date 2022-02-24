@@ -1,0 +1,51 @@
+-----------------------------------------------------------------------------
+  DATE: 03/16/2016      TIME: 16:14                                  PAGE:  1
+  FILE DEFINITION FOR FILE: OrderDtl (# 60)
+-----------------------------------------------------------------------------
+  DRIVER NAME               : MSSQLDRV
+  FILE ROOT NAME            : MSSQLDRV:OrderDtl
+  USER DISPLAY NAME         : OrderDtl
+  DATAFLEX FILE NAME        : OrderDtl
+-----------------------------------------------------------------------------
+  RECORD LENGTH             : 16626     ( USED: 16626 )
+  MAX NUMBER OF RECORDS     : 2147483647  ( USED: 12 )
+  FILE COMPRESSION          : NONE
+  RE-USE DELETED SPACE      : YES
+  LOCKING TYPE              : RECORD
+  HEADER INTEGRITY CHECKING : NO 
+  TRANSACTION TYPE          : SERVER LOGGED
+  RECORD IDENTITY INDEX     : 0 ( 0 , 0 )
+  FILE LOGIN PARAMETER      : SERVER=IPM-150\SQLExpress;UID=Tempus_User;PWD=Tempu$1User;DATABASE=Tempus
+  SYSTEM FILE               : NO 
+-----------------------------------------------------------------------------
+
+NUM  FIELD NAME       TYPE SIZE  OFFST IX   RELATES TO FILE.FIELD
+---  ---------------  ---- ----- ----- --   ---------------------------------
+  1  OrderDtlIdno     NUM    8.0     1  1   
+  2  JobNumber        NUM    8.0    12  2   Order.FIELD_3 (8,3)
+  3  MastOpsIdno      NUM    8.0    23      MastOps.FIELD_1 (11,1)
+  4  OpersIdno        NUM    8.0    34      
+  5  Quantity         NUM   10.2    45      
+  6  Price            NUM    8.2    59      
+  7  TaxRate          NUM    2.4    71      
+  8  TaxAmount        NUM    4.4    79      
+  9  Amount           NUM   10.4    89      
+ 10  Description      TEX    512   105      
+ 11  Sequence         NUM    6.2 16488  2   
+ 12  CreatedOn        DTM     23 16498      
+ 13  LastModifyedOn   DTM     23 16533      
+ 14  RecordOwner      NUM    8.0 16568      
+ 15  QuoteDtlIdno     NUM    8.0 16579      
+ 16  ManHours         NUM    6.2 16590      
+ 17  CrewSize         NUM    2.0 16600      
+ 18  CrewHours        NUM    6.2 16606      
+
+
+INDEX# FIELDS          DES U/C    LENGTH LEVELS SEGMENTS MODE
+------ --------------- --- ---    ------ ------ -------- -------
+  1    OrderDtlIdno    NO  NO       0      0       1     ON-LINE
+
+  2    JobNumber       NO  NO       0      0       3     ON-LINE
+       Sequence        NO  NO 
+       OrderDtlIdno    NO  NO 
+
